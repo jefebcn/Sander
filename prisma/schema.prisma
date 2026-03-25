@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum PlayerRole {
+  BLOCKER
+  DEFENDER
+}
+
+enum TournamentType {
+  KING_OF_THE_BEACH
+  BRACKETS
+}
+
+enum TournamentStatus {
+  DRAFT
+  LIVE
+  COMPLETED
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model Player {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name          String
+  preferredRole PlayerRole @default(DEFENDER)
+  avatarUrl     String?
+
+  // Aggregate lifetime stats (denormalised for fast SanderCard reads)
+  matchesWon     Int @default(0)
+  matchesLost    Int @default(0)
+  tournamentsWon Int @default(0)
+  // Stored as integer 0-100 for fast sorting
+  winRatePct     Int @default(0)
+
+  // Relations
+  registrations TournamentRegistration[]
+  matchPlayers  MatchPlayer[]
+  standings     TournamentStanding[]
+
+  @@map("players")
+}
+
+model Tournament {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name   String
+  date   DateTime
+  type   TournamentType
+  status TournamentStatus @default(DRAFT)
+
+  // KOTB specific: how many rounds were generated
+  kotbTotalRounds Int?
+
+  // Relations
+  registrations TournamentRegistration[]
+  matches       Match[]
+  standings     TournamentStanding[]
+
+  @@map("tournaments")
+}
+
+model TournamentRegistration {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  tournamentId String
+  playerId     String
+  seedPosition Int?
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  player     Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, playerId])
+  @@map("tournament_registrations")
+}
+
+model Match {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  round       Int
+  matchNumber Int
+  courtLabel  String?
+
+  teamAScore Int?
+  teamBScore Int?
+
+  // Bracket advancement: winner of this match goes to nextMatchId at nextMatchSlot
+  nextMatchId   String?
+  nextMatchSlot Int? // 0 = Team A slot, 1 = Team B slot
+
+  isCompleted Boolean @default(false)
+  isBye       Boolean @default(false)
+
+  players MatchPlayer[]
+
+  @@map("matches")
+}
+
+model MatchPlayer {
+  id      String @id @default(cuid())
+  matchId String
+  team    Int // 0 = Team A, 1 = Team B
+
+  playerId String
+  match    Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, playerId])
+  @@map("match_players")
+}
+
+model TournamentStanding {
+  id        String   @id @default(cuid())
+  updatedAt DateTime @updatedAt
+
+  tournamentId String
+  playerId     String
+
+  points        Int @default(0)
+  matchesWon    Int @default(0)
+  matchesLost   Int @default(0)
+  pointsFor     Int @default(0)
+  pointsAgainst Int @default(0)
+  rank          Int @default(0)
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  player     Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, playerId])
+  @@map("tournament_standings")
+}

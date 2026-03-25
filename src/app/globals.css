@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+/* ─── Sander High-Contrast Dark Theme ─────────────────────────────────────── */
+/* Designed for outdoor beach volleyball use: maximum contrast under direct sun */
+
+:root {
+  /* Always dark — beach app is always dark mode */
+  --background: #0a0a0a;
+  --foreground: #ffffff;
+
+  --surface-1: #141414;
+  --surface-2: #1c1c1c;
+  --surface-3: #242424;
+
+  /* Amber/gold accent — sand & sun */
+  --accent: #ffd600;
+  --accent-dim: #cc9f00;
+
+  /* Electric blue — sky */
+  --sky: #00b4f0;
+
+  /* Role colours */
+  --blocker: #3b82f6;  /* blue */
+  --defender: #f97316; /* orange */
+
+  /* Status colours */
+  --live: #22c55e;
+  --draft: #6b7280;
+  --completed: #a855f7;
+
+  --border: #2a2a2a;
+  --muted: #3f3f3f;
+  --muted-text: #a3a3a3;
+
+  /* Touch target minimum */
+  --tap-min: 3.5rem; /* 56px */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-sky: var(--sky);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-muted-text: var(--muted-text);
+  --color-live: var(--live);
+  --color-draft: var(--draft);
+  --color-completed: var(--completed);
+  --color-blocker: var(--blocker);
+  --color-defender: var(--defender);
+}
+
+/* ─── Base ────────────────────────────────────────────────────────────────── */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+
+/* ─── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track { background: var(--surface-1); }
+::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 2px; }
+
+/* ─── Touch Targets ───────────────────────────────────────────────────────── */
+/* Enforced minimum size for sun-glare usability */
+.btn-touch {
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
+}
