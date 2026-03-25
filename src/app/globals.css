@@ -4,36 +4,52 @@
 /* Designed for outdoor beach volleyball use: maximum contrast under direct sun */
 
 :root {
-  /* Always dark — beach app is always dark mode */
+  /* Always dark */
   --background: #0a0a0a;
   --foreground: #ffffff;
 
   --surface-1: #141414;
   --surface-2: #1c1c1c;
-  --surface-3: #242424;
+  --surface-3: #262626;
+  --surface-4: #2e2e2e;
 
-  /* Amber/gold accent — sand & sun */
+  /* Amber/gold — sand & sun */
   --accent: #ffd600;
   --accent-dim: #cc9f00;
+  --accent-fg: #000000;
 
   /* Electric blue — sky */
   --sky: #00b4f0;
 
   /* Role colours */
-  --blocker: #3b82f6;  /* blue */
-  --defender: #f97316; /* orange */
+  --blocker: #3b82f6;
+  --defender: #f97316;
 
   /* Status colours */
   --live: #22c55e;
   --draft: #6b7280;
   --completed: #a855f7;
 
+  /* Semantic */
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --success: #22c55e;
+
+  /* Medal colours */
+  --gold: #ffd700;
+  --silver: #c0c0c0;
+  --bronze: #cd7f32;
+
   --border: #2a2a2a;
   --muted: #3f3f3f;
   --muted-text: #a3a3a3;
 
+  /* Interaction */
+  --interactive: var(--surface-2);
+  --interactive-hover: var(--surface-3);
+
   /* Touch target minimum */
-  --tap-min: 3.5rem; /* 56px */
+  --tap-min: 3.5rem;
 }
 
 @theme inline {
@@ -50,8 +66,12 @@
   --color-live: var(--live);
   --color-draft: var(--draft);
   --color-completed: var(--completed);
+  --color-danger: var(--danger);
   --color-blocker: var(--blocker);
   --color-defender: var(--defender);
+  --color-gold: var(--gold);
+  --color-silver: var(--silver);
+  --color-bronze: var(--bronze);
 }
 
 /* ─── Base ────────────────────────────────────────────────────────────────── */
@@ -72,17 +92,56 @@ body {
   min-height: 100dvh;
 }
 
-/* ─── Scrollbar ───────────────────────────────────────────────────────────── */
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+/* ─── Page fade-in ────────────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
+
+.page-enter {
+  animation: fadeUp 220ms ease-out both;
+}
+
+/* ─── Skeleton shimmer ───────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 25%,
+    var(--surface-3) 50%,
+    var(--surface-2) 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: 0.75rem;
+}
+
+/* ─── LIVE pulse ─────────────────────────────────────────────────────────── */
+@keyframes livePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(1.3); }
+}
+
+.live-dot {
+  animation: livePulse 1.5s ease-in-out infinite;
+}
+
+/* ─── Score flash ────────────────────────────────────────────────────────── */
+@keyframes scoreFlash {
+  0%   { background-color: transparent; }
+  30%  { background-color: color-mix(in srgb, var(--accent) 20%, transparent); }
+  100% { background-color: transparent; }
+}
+
+.score-flash {
+  animation: scoreFlash 800ms ease-out;
+}
+
+/* ─── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--surface-1); }
 ::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 2px; }
-
-/* ─── Touch Targets ───────────────────────────────────────────────────────── */
-/* Enforced minimum size for sun-glare usability */
-.btn-touch {
-  min-height: var(--tap-min);
-  min-width: var(--tap-min);
-}

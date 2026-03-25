@@ -168,7 +168,10 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
       </div>
 
       {error && (
-        <p className="rounded-xl bg-red-900/30 px-4 py-3 text-sm font-medium text-red-400">
+        <p
+          role="alert"
+          className="rounded-xl bg-[var(--danger)]/15 px-4 py-3 text-sm font-medium text-[var(--danger)]"
+        >
           {error}
         </p>
       )}
@@ -176,10 +179,13 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
       <button
         type="submit"
         disabled={isPending || selectedPlayerIds.length < 4}
-        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-bold text-black transition-opacity disabled:opacity-40"
+        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-bold text-black transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {isPending ? (
-          "Creazione..."
+          <>
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent" />
+            Creazione...
+          </>
         ) : (
           <>
             Crea Torneo

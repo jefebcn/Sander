@@ -1,8 +1,10 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
+import { RefreshCw } from "lucide-react"
 import { getTournamentDashboard } from "@/actions/standings"
 import { MatchCard } from "./MatchCard"
+import { MatchCardSkeleton } from "@/components/ui/Skeleton"
 import { StandingsTable } from "./StandingsTable"
 import { RoundProgress } from "./RoundProgress"
 
@@ -15,7 +17,7 @@ interface LiveDashboardProps {
 }
 
 export function LiveDashboard({ tournamentId, initialData, readOnly }: LiveDashboardProps) {
-  const { data } = useQuery({
+  const { data, isRefetching } = useQuery({
     queryKey: ["dashboard", tournamentId],
     queryFn: () => getTournamentDashboard(tournamentId),
     initialData,
@@ -44,10 +46,15 @@ export function LiveDashboard({ tournamentId, initialData, readOnly }: LiveDashb
 
       {/* Current round matches */}
       {currentRoundMatches.length > 0 && (
-        <div>
-          <p className="mb-2 px-1 text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
-            Round {currentRound} — In corso
-          </p>
+        <section aria-label={`Round ${currentRound} — partite in corso`}>
+          <div className="mb-2 flex items-center gap-2 px-1">
+            <p className="text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
+              Round {currentRound} — In corso
+            </p>
+            {isRefetching && !readOnly && (
+              <RefreshCw className="h-3 w-3 animate-spin text-[var(--muted-text)]" aria-label="Aggiornamento..." />
+            )}
+          </div>
           <div className="space-y-3">
             {currentRoundMatches.map((match) => (
               <MatchCard
@@ -58,20 +65,27 @@ export function LiveDashboard({ tournamentId, initialData, readOnly }: LiveDashb
               />
             ))}
           </div>
+        </section>
+      )}
+
+      {currentRoundMatches.length === 0 && !readOnly && (
+        <div className="space-y-3">
+          <MatchCardSkeleton />
+          <MatchCardSkeleton />
         </div>
       )}
 
-      {/* Standings top 5 */}
-      <div>
+      {/* Standings */}
+      <section aria-label="Classifica">
         <p className="mb-2 px-1 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
           Classifica
         </p>
         <StandingsTable standings={standings.slice(0, 8)} compact />
-      </div>
+      </section>
 
       {/* Next round preview */}
       {nextRoundMatches.length > 0 && (
-        <div>
+        <section aria-label="Prossimo round">
           <p className="mb-2 px-1 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
             Prossimo Round
           </p>
@@ -86,7 +100,7 @@ export function LiveDashboard({ tournamentId, initialData, readOnly }: LiveDashb
               />
             ))}
           </div>
-        </div>
+        </section>
       )}
     </div>
   )

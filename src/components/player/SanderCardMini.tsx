@@ -13,7 +13,7 @@ export function SanderCardMini({ player }: SanderCardMiniProps) {
   return (
     <Link
       href={`/players/${player.id}`}
-      className="flex min-h-[4rem] items-center gap-4 rounded-2xl bg-[var(--surface-1)] px-4 active:opacity-80"
+      className="flex min-h-[4rem] items-center gap-4 rounded-2xl bg-[var(--surface-1)] px-4 transition-colors hover:bg-[var(--surface-2)] active:scale-[0.99] active:opacity-80"
     >
       {/* Avatar */}
       <div

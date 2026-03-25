@@ -1,6 +1,7 @@
 import { Shield, Swords, Trophy, TrendingUp, Award, Activity } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { StatusBadge } from "@/components/tournament/StatusBadge"
 import type { Player, TournamentRegistration, Tournament } from "@/generated/prisma/client"
 
 type PlayerWithHistory = Player & {
@@ -87,8 +88,8 @@ export function SanderCard({ player }: SanderCardProps) {
       <div className="grid grid-cols-4 divide-x divide-[var(--border)] bg-[var(--surface-1)]">
         {[
           { icon: TrendingUp, label: "Vinte", value: player.matchesWon, color: "text-[var(--live)]" },
-          { icon: Activity, label: "Perse", value: player.matchesLost, color: "text-red-400" },
-          { icon: Award, label: "Win%", value: `${player.winRatePct}%`, color: "text-[var(--sky)]" },
+          { icon: Activity, label: "Perse", value: player.matchesLost, color: "text-[var(--danger)]" },
+          { icon: Award, label: "Win%", value: `${player.winRatePct}%`, color: "text-[var(--completed)]" },
           {
             icon: Trophy,
             label: "Tornei",
@@ -115,23 +116,10 @@ export function SanderCard({ player }: SanderCardProps) {
               <Link
                 key={reg.id}
                 href={`/tournaments/${reg.tournamentId}`}
-                className="flex items-center justify-between rounded-xl bg-[var(--surface-3)] px-3 py-2.5"
+                className="flex items-center justify-between rounded-xl bg-[var(--surface-3)] px-3 py-2.5 transition-colors hover:bg-[var(--surface-4)]"
               >
                 <span className="text-sm font-semibold">{reg.tournament.name}</span>
-                <span
-                  className={cn(
-                    "rounded-full px-2 py-0.5 text-xs font-medium",
-                    reg.tournament.status === "LIVE"
-                      ? "bg-[var(--live)]/20 text-[var(--live)]"
-                      : "text-[var(--muted-text)]",
-                  )}
-                >
-                  {reg.tournament.status === "LIVE"
-                    ? "● LIVE"
-                    : reg.tournament.status === "COMPLETED"
-                      ? "Completato"
-                      : "Bozza"}
-                </span>
+                <StatusBadge status={reg.tournament.status as "DRAFT" | "LIVE" | "COMPLETED"} />
               </Link>
             ))}
           </div>

@@ -84,17 +84,27 @@ export function CreatePlayerForm() {
       </div>
 
       {error && (
-        <p className="rounded-xl bg-red-900/30 px-4 py-3 text-sm font-medium text-red-400">
+        <p
+          role="alert"
+          className="rounded-xl bg-[var(--danger)]/15 px-4 py-3 text-sm font-medium text-[var(--danger)]"
+        >
           {error}
         </p>
       )}
 
       <button
         type="submit"
-        disabled={isPending || name.length < 2}
-        className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl bg-[var(--accent)] font-bold text-black disabled:opacity-40"
+        disabled={isPending || name.trim().length < 2}
+        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-bold text-black transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        {isPending ? "Creazione..." : "Crea Giocatore"}
+        {isPending ? (
+          <>
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent" />
+            Creazione...
+          </>
+        ) : (
+          "Crea Giocatore"
+        )}
       </button>
     </form>
   )
