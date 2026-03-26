@@ -2,12 +2,42 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Trophy, Users, Volleyball } from "lucide-react"
+import { Home, Trophy, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
+
+function BeachNetIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      {/* Left pole */}
+      <line x1="3" y1="3" x2="3" y2="20" />
+      {/* Right pole */}
+      <line x1="21" y1="3" x2="21" y2="20" />
+      {/* Top tape */}
+      <line x1="3" y1="9" x2="21" y2="9" />
+      {/* Net bottom edge */}
+      <line x1="3" y1="15" x2="21" y2="15" />
+      {/* Vertical net dividers */}
+      <line x1="8" y1="9" x2="8" y2="15" />
+      <line x1="12" y1="9" x2="12" y2="15" />
+      <line x1="16" y1="9" x2="16" y2="15" />
+      {/* Ground */}
+      <line x1="1" y1="20" x2="23" y2="20" />
+    </svg>
+  )
+}
 
 const NAV_ITEMS = [
   { href: "/", icon: Home, label: "Home" },
-  { href: "/sessions", icon: Volleyball, label: "Partite" },
+  { href: "/sessions", icon: BeachNetIcon, label: "Partite" },
   { href: "/tournaments", icon: Trophy, label: "Tornei" },
   { href: "/players", icon: Users, label: "Giocatori" },
 ]
@@ -37,7 +67,7 @@ export function MobileNav() {
                 active ? "text-[var(--accent)]" : "text-[var(--muted-text)] hover:text-[var(--foreground)]",
               )}
             >
-              <Icon className="h-6 w-6" aria-hidden="true" />
+              <Icon className="h-6 w-6" />
               <span>{label}</span>
               {active && (
                 <span className="absolute bottom-0 left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-[var(--accent)]" />
