@@ -2,20 +2,25 @@ export const dynamic = "force-dynamic"
 
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronRight, ExternalLink } from "lucide-react"
+import { ChevronRight, ExternalLink, Sparkles, MapPin, Trophy } from "lucide-react"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { ratingToDisplayLevel } from "@/lib/tournament/glicko2"
+import { getPersonalizedRecommendations } from "@/actions/recommendations"
 
 export default async function Home() {
   const player = await getCurrentPlayer()
 
   let fullPlayer = null
+  let recs = null
   if (player) {
-    fullPlayer = await db.player.findUnique({
-      where: { id: player.id },
-      include: { _count: { select: { organizedSessions: true } } },
-    })
+    ;[fullPlayer, recs] = await Promise.all([
+      db.player.findUnique({
+        where: { id: player.id },
+        include: { _count: { select: { organizedSessions: true } } },
+      }),
+      getPersonalizedRecommendations(player.id),
+    ])
   }
 
   const avgDisplay =
@@ -209,6 +214,77 @@ export default async function Home() {
                 </Link>
               </div>
             </div>
+
+            {/* ── Per te (Personalised recommendations) ──────── */}
+            {recs && (recs.performanceInsight || recs.suggestedSessions.length > 0 || recs.suggestedTournaments.length > 0) && (
+              <div className="slide-up stagger-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-[var(--accent)]" />
+                  <p className="text-sm font-bold text-white/80">Per te</p>
+                </div>
+
+                {/* Performance insight */}
+                {recs.performanceInsight && (
+                  <div className={`rounded-2xl px-4 py-3 text-sm font-semibold ${
+                    recs.performanceInsight.kind === "streak"
+                      ? "bg-[var(--accent)]/10 text-[var(--accent)]"
+                      : recs.performanceInsight.kind === "inactive"
+                      ? "bg-[var(--surface-2)] text-[var(--muted-text)]"
+                      : "bg-[var(--surface-2)] text-white/80"
+                  }`}>
+                    {recs.performanceInsight.label}
+                  </div>
+                )}
+
+                {/* Suggested sessions */}
+                {recs.suggestedSessions.map((s) => (
+                  <Link
+                    key={s.id}
+                    href={`/sessions/${s.id}`}
+                    className="flex items-center gap-3 rounded-2xl bg-[var(--surface-2)] p-4"
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-3)]">
+                      <MapPin className="h-4 w-4 text-[var(--accent)]" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-bold text-sm">{s.title}</p>
+                      <p className="text-xs text-[var(--muted-text)]">
+                        {s.location}
+                        {s.familiarity === "known" && " · 📍 posto noto"}
+                        {" · "}
+                        {s.spotsLeft > 0 ? `${s.spotsLeft} posti liberi` : "Completa"}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-[var(--accent)]" />
+                  </Link>
+                ))}
+
+                {/* Suggested tournaments */}
+                {recs.suggestedTournaments.map((t) => (
+                  <Link
+                    key={t.id}
+                    href={`/tournaments/${t.id}`}
+                    className="flex items-center gap-3 rounded-2xl bg-[var(--surface-2)] p-4"
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-3)]">
+                      <Trophy className="h-4 w-4 text-[var(--accent)]" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-bold text-sm">{t.name}</p>
+                      <p className="text-xs text-[var(--muted-text)]">
+                        {t.type === "KING_OF_THE_BEACH" ? "KOTB"
+                          : t.type === "ROUND_ROBIN" ? "Round Robin"
+                          : t.type === "DOUBLE_ELIMINATION" ? "Doppia Elim."
+                          : "Brackets"}
+                        {" · "}
+                        {t.playerCount} iscritti
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-[var(--accent)]" />
+                  </Link>
+                ))}
+              </div>
+            )}
 
             {/* ── Social section ────────────────────────────────── */}
             <div className="mt-1">
