@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Trophy, Users } from "lucide-react"
+import { Home, Trophy, Users, Activity } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 function BeachNetIcon({ className }: { className?: string }) {
@@ -38,6 +38,7 @@ function BeachNetIcon({ className }: { className?: string }) {
 const NAV_ITEMS = [
   { href: "/", icon: Home, label: "Home" },
   { href: "/sessions", icon: BeachNetIcon, label: "Partite" },
+  { href: "/feed", icon: Activity, label: "Feed" },
   { href: "/tournaments", icon: Trophy, label: "Tornei" },
   { href: "/players", icon: Users, label: "Giocatori" },
 ]
