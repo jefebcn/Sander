@@ -4,11 +4,8 @@ import { BracketView } from "@/components/tournament/BracketView"
 
 export const dynamic = "force-dynamic"
 
-interface Props {
-  params: Promise<{ id: string }>
-}
 
-export default async function BracketPage({ params }: Props) {
+export default async function BracketPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
   const [tournament, matches] = await Promise.all([

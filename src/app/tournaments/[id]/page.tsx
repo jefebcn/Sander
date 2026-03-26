@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ChevronRight, Play, CheckCircle2, Trophy } from "lucide-react"
+import { ChevronRight, Play, Trophy } from "lucide-react"
 import { getTournamentDashboard } from "@/actions/standings"
 import { startTournament, completeTournament } from "@/actions/tournaments"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
@@ -9,11 +9,7 @@ import { formatDate } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
 
-interface Props {
-  params: Promise<{ id: string }>
-}
-
-export default async function TournamentPage({ params }: Props) {
+export default async function TournamentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const data = await getTournamentDashboard(id)
   const { tournament } = data

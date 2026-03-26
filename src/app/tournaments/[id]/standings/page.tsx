@@ -5,11 +5,7 @@ import { db } from "@/lib/db"
 
 export const dynamic = "force-dynamic"
 
-interface Props {
-  params: Promise<{ id: string }>
-}
-
-export default async function StandingsPage({ params }: Props) {
+export default async function StandingsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const [standings, tournament] = await Promise.all([
     getStandings(id),
