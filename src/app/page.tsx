@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic"
 
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronRight, Instagram } from "lucide-react"
+import { ChevronRight, ExternalLink } from "lucide-react"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 
@@ -241,7 +241,7 @@ export default async function Home() {
                         "radial-gradient(circle at 30% 107%, #fdf497 0%, #fd5949 35%, #d6249f 60%, #285AEB 90%)",
                     }}
                   >
-                    <Instagram className="h-5 w-5 text-white" />
+                    <ExternalLink className="h-5 w-5 text-white" />
                   </div>
                   <span className="text-base font-bold text-white">
                     Entra nella community su Instagram
