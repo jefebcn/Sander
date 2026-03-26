@@ -2,11 +2,12 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Trophy, Users } from "lucide-react"
+import { Home, Trophy, Users, Volleyball } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const NAV_ITEMS = [
   { href: "/", icon: Home, label: "Home" },
+  { href: "/sessions", icon: Volleyball, label: "Partite" },
   { href: "/tournaments", icon: Trophy, label: "Tornei" },
   { href: "/players", icon: Users, label: "Giocatori" },
 ]

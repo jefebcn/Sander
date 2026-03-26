@@ -27,7 +27,12 @@ export function SanderCardMini({ player }: SanderCardMiniProps) {
 
       {/* Info */}
       <div className="flex-1">
-        <p className="font-bold">{player.name}</p>
+        <div className="flex items-center gap-1.5">
+          <p className="font-bold">{player.name}</p>
+          <span className="rounded-full bg-[var(--surface-3)] px-1.5 py-0.5 text-[10px] font-black text-[var(--muted-text)]">
+            Lv.{player.level}
+          </span>
+        </div>
         <div className="flex items-center gap-3 text-xs text-[var(--muted-text)]">
           <span className="flex items-center gap-1">
             {isBlocker ? <Swords className="h-3 w-3" /> : <Shield className="h-3 w-3" />}

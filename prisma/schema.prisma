@@ -25,7 +25,82 @@ enum TournamentStatus {
   COMPLETED
 }
 
-// ─── Models ───────────────────────────────────────────────────────────────────
+enum SessionStatus {
+  OPEN
+  FULL
+  COMPLETED
+  CANCELLED
+}
+
+enum SessionFormat {
+  TWO_VS_TWO
+  THREE_VS_THREE
+  FOUR_VS_FOUR
+}
+
+enum RatingType {
+  SUPER
+  TOP
+  FLOP
+}
+
+// ─── Auth Models (NextAuth v5) ────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+
+  accounts    Account[]
+  authSessions AuthSession[]
+  player      Player?
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model AuthSession {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("auth_sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ─── Player ───────────────────────────────────────────────────────────────────
 
 model Player {
   id        String   @id @default(cuid())
@@ -36,20 +111,43 @@ model Player {
   preferredRole PlayerRole @default(DEFENDER)
   avatarUrl     String?
 
-  // Aggregate lifetime stats (denormalised for fast SanderCard reads)
+  // Auth link (optional — existing players created before auth won't have this)
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id])
+
+  // Tournament aggregate stats
   matchesWon     Int @default(0)
   matchesLost    Int @default(0)
   tournamentsWon Int @default(0)
-  // Stored as integer 0-100 for fast sorting
   winRatePct     Int @default(0)
 
+  // Level & XP
+  level Int @default(1)
+  xp    Int @default(0)
+
+  // Social rating (raw vote counts; avgRating derived)
+  superVotes Int @default(0)
+  topVotes   Int @default(0)
+  flopVotes  Int @default(0)
+  // Stored 0–50: (super*50 + top*30) / max(1, total) → display as (v/10).toFixed(1)
+  avgRating  Int @default(0)
+
+  // Session stats
+  sessionsPlayed Int @default(0)
+
   // Relations
-  registrations TournamentRegistration[]
-  matchPlayers  MatchPlayer[]
-  standings     TournamentStanding[]
+  registrations       TournamentRegistration[]
+  matchPlayers        MatchPlayer[]
+  standings           TournamentStanding[]
+  organizedSessions   Session[]
+  sessionParticipants SessionParticipant[]
+  ratingsGiven        PlayerRating[] @relation("Rater")
+  ratingsReceived     PlayerRating[] @relation("Rated")
 
   @@map("players")
 }
+
+// ─── Tournament ───────────────────────────────────────────────────────────────
 
 model Tournament {
   id        String   @id @default(cuid())
@@ -61,10 +159,8 @@ model Tournament {
   type   TournamentType
   status TournamentStatus @default(DRAFT)
 
-  // KOTB specific: how many rounds were generated
   kotbTotalRounds Int?
 
-  // Relations
   registrations TournamentRegistration[]
   matches       Match[]
   standings     TournamentStanding[]
@@ -102,9 +198,8 @@ model Match {
   teamAScore Int?
   teamBScore Int?
 
-  // Bracket advancement: winner of this match goes to nextMatchId at nextMatchSlot
   nextMatchId   String?
-  nextMatchSlot Int? // 0 = Team A slot, 1 = Team B slot
+  nextMatchSlot Int?
 
   isCompleted Boolean @default(false)
   isBye       Boolean @default(false)
@@ -117,7 +212,7 @@ model Match {
 model MatchPlayer {
   id      String @id @default(cuid())
   matchId String
-  team    Int // 0 = Team A, 1 = Team B
+  team    Int
 
   playerId String
   match    Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
@@ -146,4 +241,59 @@ model TournamentStanding {
 
   @@unique([tournamentId, playerId])
   @@map("tournament_standings")
+}
+
+// ─── Sessions ─────────────────────────────────────────────────────────────────
+
+model Session {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organizerId String
+  organizer   Player @relation(fields: [organizerId], references: [id])
+
+  title      String
+  location   String
+  date       DateTime
+  format     SessionFormat @default(TWO_VS_TWO)
+  maxPlayers Int
+  courtCost  Int?
+  notes      String?
+
+  status SessionStatus @default(OPEN)
+
+  participants SessionParticipant[]
+  ratings      PlayerRating[]
+
+  @@map("sessions")
+}
+
+model SessionParticipant {
+  id        String @id @default(cuid())
+  sessionId String
+  playerId  String
+  team      Int?   // null=unassigned, 0=Team A, 1=Team B
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  player  Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, playerId])
+  @@map("session_participants")
+}
+
+model PlayerRating {
+  id        String     @id @default(cuid())
+  createdAt DateTime   @default(now())
+  sessionId String
+  raterId   String
+  ratedId   String
+  type      RatingType
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  rater   Player  @relation("Rater", fields: [raterId], references: [id], onDelete: Cascade)
+  rated   Player  @relation("Rated", fields: [ratedId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, raterId, ratedId])
+  @@map("player_ratings")
 }

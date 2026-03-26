@@ -6,6 +6,7 @@ import type { Player, TournamentRegistration, Tournament } from "@/generated/pri
 
 type PlayerWithHistory = Player & {
   registrations: (TournamentRegistration & { tournament: Tournament })[]
+  streak?: number
 }
 
 interface SanderCardProps {
@@ -14,11 +15,14 @@ interface SanderCardProps {
 
 export function SanderCard({ player }: SanderCardProps) {
   const isBlocker = player.preferredRole === "BLOCKER"
-  const total = player.matchesWon + player.matchesLost
+  const avgDisplay = player.avgRating > 0 ? (player.avgRating / 10).toFixed(1) : "—"
+  const xpToNext = 100 - (player.xp % 100)
+  const xpPct = Math.round(((player.xp % 100) / 100) * 100)
+  const streak = player.streak ?? 0
 
   return (
     <div className="overflow-hidden rounded-3xl">
-      {/* Card header — gradient based on role */}
+      {/* Card header */}
       <div
         className={cn(
           "relative px-6 pt-8 pb-10",
@@ -27,15 +31,20 @@ export function SanderCard({ player }: SanderCardProps) {
             : "bg-gradient-to-br from-orange-900 via-orange-800 to-amber-900",
         )}
       >
-        {/* Decorative circles */}
         <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-white/5" />
         <div className="absolute -bottom-4 -left-4 h-20 w-20 rounded-full bg-white/5" />
 
-        {/* Top label */}
+        {/* Top row: brand + role badge */}
         <div className="relative mb-6 flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-widest text-white/60">
-            ☀ Sander Beach Volley
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold uppercase tracking-widest text-white/60">
+              ☀ Sander
+            </span>
+            {/* Level badge */}
+            <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs font-black text-white">
+              Lv.{player.level}
+            </span>
+          </div>
           <span
             className={cn(
               "flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold",
@@ -45,19 +54,22 @@ export function SanderCard({ player }: SanderCardProps) {
             )}
           >
             {isBlocker ? (
-              <>
-                <Swords className="h-3 w-3" /> ATTACCANTE
-              </>
+              <><Swords className="h-3 w-3" /> ATTACCANTE</>
             ) : (
-              <>
-                <Shield className="h-3 w-3" /> DIFENSORE
-              </>
+              <><Shield className="h-3 w-3" /> DIFENSORE</>
             )}
           </span>
         </div>
 
-        {/* Avatar */}
-        <div className="relative mb-4 flex justify-center">
+        {/* Level number + avatar */}
+        <div className="relative mb-4 flex items-end justify-center gap-4">
+          {/* Big level */}
+          <div className="absolute -left-0 bottom-0 text-left">
+            <p className="text-xs font-bold uppercase tracking-widest text-white/50">Level</p>
+            <p className="text-5xl font-black leading-none text-white">{player.level}</p>
+          </div>
+
+          {/* Avatar */}
           <div
             className={cn(
               "flex h-24 w-24 items-center justify-center rounded-full text-3xl font-black",
@@ -66,9 +78,11 @@ export function SanderCard({ player }: SanderCardProps) {
           >
             {player.name.slice(0, 2).toUpperCase()}
           </div>
+
+          {/* Trophy count */}
           {player.tournamentsWon > 0 && (
-            <div className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-xs font-black text-black">
-              {player.tournamentsWon}🏆
+            <div className="absolute -right-0 bottom-0 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-xs font-black text-black">
+              {player.tournamentsWon}
             </div>
           )}
         </div>
@@ -76,26 +90,56 @@ export function SanderCard({ player }: SanderCardProps) {
         {/* Name */}
         <div className="text-center">
           <h2 className="text-3xl font-black tracking-tight text-white">{player.name}</h2>
-          {player.winRatePct > 0 && (
-            <p className="mt-1 text-sm font-medium text-white/60">
-              Win Rate #{player.winRatePct}%
-            </p>
-          )}
+        </div>
+
+        {/* XP bar */}
+        <div className="mt-4">
+          <div className="mb-1 flex justify-between text-xs text-white/50">
+            <span>{player.xp} XP</span>
+            <span>+{xpToNext} al prossimo livello</span>
+          </div>
+          <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full bg-[var(--accent)] transition-all duration-500"
+              style={{ width: `${xpPct}%` }}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Stats grid */}
+      {/* Social stats row: AVG + STREAK */}
+      <div className="grid grid-cols-2 divide-x divide-[var(--border)] bg-[var(--surface-2)]">
+        <div className="flex flex-col items-center gap-0.5 py-4">
+          <span className="text-3xl font-black text-[var(--accent)]">{avgDisplay}</span>
+          <span className="text-xs text-[var(--muted-text)]">AVG Rating</span>
+        </div>
+        <div className="flex flex-col items-center gap-0.5 py-4">
+          <div className="mb-1 flex items-center gap-1.5">
+            <span className="text-3xl font-black">{streak}</span>
+          </div>
+          {/* STREAK bar */}
+          <div className="flex gap-0.5">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "h-2 w-2 rounded-sm",
+                  i < streak ? "bg-[var(--live)]" : "bg-[var(--surface-3)]",
+                )}
+              />
+            ))}
+          </div>
+          <span className="mt-0.5 text-xs text-[var(--muted-text)]">Streak (4 sett.)</span>
+        </div>
+      </div>
+
+      {/* Tournament stats grid */}
       <div className="grid grid-cols-4 divide-x divide-[var(--border)] bg-[var(--surface-1)]">
         {[
           { icon: TrendingUp, label: "Vinte", value: player.matchesWon, color: "text-[var(--live)]" },
           { icon: Activity, label: "Perse", value: player.matchesLost, color: "text-[var(--danger)]" },
           { icon: Award, label: "Win%", value: `${player.winRatePct}%`, color: "text-[var(--completed)]" },
-          {
-            icon: Trophy,
-            label: "Tornei",
-            value: player.tournamentsWon,
-            color: "text-[var(--accent)]",
-          },
+          { icon: Trophy, label: "Tornei", value: player.tournamentsWon, color: "text-[var(--accent)]" },
         ].map(({ icon: Icon, label, value, color }) => (
           <div key={label} className="flex flex-col items-center gap-1 py-4">
             <Icon className={cn("h-4 w-4", color)} />
