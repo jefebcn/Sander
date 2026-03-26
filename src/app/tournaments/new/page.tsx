@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { listPlayers } from "@/actions/players"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { CreateTournamentForm } from "@/components/tournament/CreateTournamentForm"

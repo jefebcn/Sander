@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import Link from "next/link"
 import { Trophy, Users, Sun } from "lucide-react"
 

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { getPlayer } from "@/actions/players"
 import { SanderCard } from "@/components/player/SanderCard"
 import { PageHeader } from "@/components/layout/PageHeader"

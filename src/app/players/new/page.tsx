@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { PageHeader } from "@/components/layout/PageHeader"
 import { CreatePlayerForm } from "@/components/player/CreatePlayerForm"
 
