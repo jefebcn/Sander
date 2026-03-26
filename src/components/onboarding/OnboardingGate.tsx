@@ -5,22 +5,32 @@ import { OnboardingCarousel } from "./OnboardingCarousel"
 
 const STORAGE_KEY = "sander_onboarded"
 
+type Status = "loading" | "onboarding" | "done"
+
 export function OnboardingGate() {
-  const [show, setShow] = useState(false)
+  const [status, setStatus] = useState<Status>("loading")
 
   useEffect(() => {
-    // Only show on first visit
-    if (!localStorage.getItem(STORAGE_KEY)) {
-      setShow(true)
+    if (localStorage.getItem(STORAGE_KEY)) {
+      setStatus("done")
+    } else {
+      setStatus("onboarding")
     }
   }, [])
 
   function handleComplete() {
     localStorage.setItem(STORAGE_KEY, "1")
-    setShow(false)
+    setStatus("done")
   }
 
-  if (!show) return null
+  // Always cover the screen until we know what to show — prevents flash
+  if (status === "loading") {
+    return <div className="fixed inset-0 z-[200] bg-black" />
+  }
 
-  return <OnboardingCarousel onComplete={handleComplete} />
+  if (status === "onboarding") {
+    return <OnboardingCarousel onComplete={handleComplete} />
+  }
+
+  return null
 }
