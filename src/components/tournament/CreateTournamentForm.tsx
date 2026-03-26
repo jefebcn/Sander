@@ -18,6 +18,7 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
   const [name, setName] = useState("")
   const [date, setDate] = useState(new Date().toISOString().split("T")[0])
   const [type, setType] = useState<"KING_OF_THE_BEACH" | "BRACKETS" | "ROUND_ROBIN">("KING_OF_THE_BEACH")
+  const [numCourts, setNumCourts] = useState(2)
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
 
@@ -48,6 +49,7 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
           date: new Date(date),
           type,
           playerIds: selectedPlayerIds,
+          numCourts,
         })
         router.push(`/tournaments/${tournament.id}`)
       } catch (err) {
@@ -117,6 +119,31 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
             Coppie fisse — ogni coppia affronta tutte le altre una volta
           </p>
         )}
+      </div>
+
+      {/* Courts */}
+      <div className="space-y-1.5">
+        <label className="text-sm font-semibold text-[var(--muted-text)]">Campi disponibili</label>
+        <div className="grid grid-cols-4 gap-2">
+          {[1, 2, 3, 4].map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => setNumCourts(n)}
+              className={cn(
+                "flex min-h-[3rem] flex-col items-center justify-center rounded-2xl border-2 text-sm font-bold transition-colors",
+                numCourts === n
+                  ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
+                  : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted-text)]",
+              )}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-[var(--muted-text)]">
+          Campi A–{["A","B","C","D"][numCourts - 1]} · onde AM e PM assegnate automaticamente
+        </p>
       </div>
 
       {/* Players */}

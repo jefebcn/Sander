@@ -186,6 +186,7 @@ model Tournament {
   status TournamentStatus @default(DRAFT)
 
   kotbTotalRounds Int?
+  numCourts       Int @default(2)
 
   registrations TournamentRegistration[]
   matches       Match[]

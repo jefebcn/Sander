@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "tournaments" ADD COLUMN IF NOT EXISTS "numCourts" INTEGER NOT NULL DEFAULT 2;

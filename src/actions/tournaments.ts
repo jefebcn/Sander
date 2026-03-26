@@ -7,6 +7,7 @@ import type { CreateTournamentInput } from "@/lib/validators/tournament.schema"
 import { generateKOTBSchedule } from "@/lib/tournament/kotb"
 import { generateBracket } from "@/lib/tournament/bracket"
 import { generateRoundRobinSchedule } from "@/lib/tournament/roundRobin"
+import { assignCourtLabel } from "@/lib/tournament/courtSchedule"
 
 export async function createTournament(input: CreateTournamentInput) {
   const data = CreateTournamentSchema.parse(input)
@@ -17,6 +18,7 @@ export async function createTournament(input: CreateTournamentInput) {
       date: data.date,
       type: data.type,
       status: "DRAFT",
+      numCourts: data.numCourts ?? 2,
       registrations: {
         create: data.playerIds.map((playerId, i) => ({
           playerId,
@@ -92,7 +94,7 @@ export async function startTournament(tournamentId: string) {
 }
 
 async function startKOTBTournament(
-  tournament: { id: string; kotbTotalRounds?: number | null },
+  tournament: { id: string; kotbTotalRounds?: number | null; numCourts: number },
   playerIds: string[],
 ) {
   const schedule = generateKOTBSchedule(playerIds, tournament.kotbTotalRounds ?? undefined)
@@ -106,6 +108,12 @@ async function startKOTBTournament(
             tournamentId: tournament.id,
             round: round.roundNumber,
             matchNumber: match.matchNumber,
+            courtLabel: assignCourtLabel(
+              round.roundNumber,
+              match.matchNumber,
+              schedule.totalRounds,
+              tournament.numCourts,
+            ),
             players: {
               create: [
                 { playerId: match.teamA[0], team: 0 },
@@ -145,7 +153,7 @@ async function startKOTBTournament(
 }
 
 async function startRoundRobinTournament(
-  tournament: { id: string },
+  tournament: { id: string; numCourts: number },
   playerIds: string[],
 ) {
   const schedule = generateRoundRobinSchedule(playerIds)
@@ -158,6 +166,12 @@ async function startRoundRobinTournament(
             tournamentId: tournament.id,
             round: round.roundNumber,
             matchNumber: match.matchNumber,
+            courtLabel: assignCourtLabel(
+              round.roundNumber,
+              match.matchNumber,
+              schedule.totalRounds,
+              tournament.numCourts,
+            ),
             players: {
               create: [
                 { playerId: match.teamA[0], team: 0 },
@@ -193,7 +207,7 @@ async function startRoundRobinTournament(
 }
 
 async function startBracketTournament(
-  tournament: { id: string },
+  tournament: { id: string; numCourts: number },
   playerIds: string[],
 ) {
   // For brackets, players are paired into teams by seed order (pair 1+2, 3+4, etc.)
@@ -209,16 +223,25 @@ async function startBracketTournament(
   // Map tempId → created match ID
   const tempIdToDbId = new Map<string, string>()
 
+  // Brackets use countdown rounds (highest = first). Compute sequential round for court labels.
+  const maxRound = bracketMatches.reduce((m, bm) => Math.max(m, bm.round), 0)
+  const totalBracketRounds = maxRound
+
   await db.$transaction(async (tx) => {
     // Create matches in round order (highest round first = first round)
     const sorted = [...bracketMatches].sort((a, b) => b.round - a.round)
 
     for (const bm of sorted) {
+      // Convert countdown round to sequential (1 = first played, totalBracketRounds = final)
+      const seqRound = maxRound - bm.round + 1
       const created = await tx.match.create({
         data: {
           tournamentId: tournament.id,
           round: bm.round,
           matchNumber: bm.matchNumber,
+          courtLabel: bm.isBye
+            ? null
+            : assignCourtLabel(seqRound, bm.matchNumber, totalBracketRounds, tournament.numCourts),
           isBye: bm.isBye,
           isCompleted: bm.isBye,
           nextMatchId: bm.nextMatchTempId

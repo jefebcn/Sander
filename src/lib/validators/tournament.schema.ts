@@ -9,6 +9,7 @@ export const CreateTournamentSchema = z.object({
     .min(4, "At least 4 players required")
     .max(32, "Maximum 32 players"),
   kotbRounds: z.number().int().min(1).max(30).optional(),
+  numCourts: z.number().int().min(1).max(4).optional(),
 })
 
 export const UpdateTournamentSchema = z.object({
