@@ -12,9 +12,22 @@ const geist = Geist({
 })
 
 export const metadata: Metadata = {
-  title: "Sander — Beach Volleyball",
-  description: "Tournament manager for beach volleyball",
+  title: "SANDER — Beach Volleyball",
+  description: "Beach Volleyball Tournament Manager",
   manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/sander-logo.png", type: "image/png" },
+    ],
+    apple: [
+      { url: "/sander-logo.png", type: "image/png" },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "SANDER",
+  },
 }
 
 export const viewport: Viewport = {
