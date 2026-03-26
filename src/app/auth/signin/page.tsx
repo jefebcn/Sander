@@ -10,7 +10,7 @@ export default async function SignInPage({
   searchParams: Promise<{ callbackUrl?: string }>
 }) {
   const { callbackUrl } = await searchParams
-  const resolvedCallback = callbackUrl ?? "/sessions"
+  const resolvedCallback = callbackUrl ?? "/"
 
   return (
     <div className="relative flex min-h-dvh flex-col bg-[#0a0a0a] px-6 pb-10">

@@ -36,7 +36,7 @@ export default async function Home() {
   return (
     <div
       className="relative min-h-dvh overflow-x-hidden"
-      style={{ backgroundColor: "#0b0f0b" }}
+      style={{ backgroundColor: "#0d1209" }}
     >
       {/* Sander logo background watermark */}
       <div
@@ -48,7 +48,7 @@ export default async function Home() {
           alt=""
           width={520}
           height={520}
-          className="object-contain opacity-[0.04]"
+          className="object-contain opacity-[0.07]"
           priority
         />
       </div>
