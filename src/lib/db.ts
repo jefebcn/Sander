@@ -12,12 +12,10 @@ function createPrismaClient(): PrismaClient {
     process.env.POSTGRES_URL ??
     ""
 
-  if (url.includes(".neon.tech") || process.env.NEON_DB === "1") {
-    // Neon serverless driver — HTTP-based, no persistent connections, ideal for Vercel
-    const { neon } = require("@neondatabase/serverless")
-    const { PrismaNeon } = require("@prisma/adapter-neon")
-    const sql = neon(url)
-    const adapter = new PrismaNeon(sql)
+  if (url.includes("neon.tech") || url.includes("neon.") || process.env.NEON_DB === "1") {
+    // Neon serverless HTTP driver — no WebSocket needed, ideal for Vercel
+    const { PrismaNeonHttp } = require("@prisma/adapter-neon")
+    const adapter = new PrismaNeonHttp(url)
     return new PrismaClient({ adapter })
   }
 
