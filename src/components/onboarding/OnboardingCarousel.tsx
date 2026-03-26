@@ -39,8 +39,8 @@ export function OnboardingCarousel({ onComplete }: OnboardingCarouselProps) {
       advance(current + 1)
       return
     }
-    onComplete()
-    router.push("/auth/signin?callbackUrl=/sessions")
+    // Don't mark as onboarded yet — that happens after profile is completed
+    router.push("/onboarding/profile")
   }
 
   function handleTouchStart(e: React.TouchEvent) {

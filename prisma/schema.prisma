@@ -108,6 +108,11 @@ model Player {
   updatedAt DateTime @updatedAt
 
   name          String
+  firstName     String?
+  lastName      String?
+  birthDate     DateTime?
+  gender        String?
+  nationality   String?
   preferredRole PlayerRole @default(DEFENDER)
   avatarUrl     String?
 
