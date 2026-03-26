@@ -53,6 +53,8 @@ model User {
   emailVerified DateTime?
   image         String?
 
+  password     String?   // null for OAuth-only users
+
   accounts    Account[]
   authSessions AuthSession[]
   player      Player?
