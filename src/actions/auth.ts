@@ -4,17 +4,29 @@ import bcrypt from "bcryptjs"
 import { db } from "@/lib/db"
 import { RegisterSchema } from "@/lib/validators/auth.schema"
 
-export async function registerWithEmail(input: unknown) {
-  const { email, password } = RegisterSchema.parse(input)
+type RegisterResult =
+  | { success: true }
+  | { error: string }
 
-  const existing = await db.user.findUnique({ where: { email } })
-  if (existing) throw new Error("Email già in uso")
+export async function registerWithEmail(input: unknown): Promise<RegisterResult> {
+  try {
+    const { email, password } = RegisterSchema.parse(input)
 
-  const hashed = await bcrypt.hash(password, 12)
+    const existing = await db.user.findUnique({ where: { email } })
+    if (existing) {
+      return { error: "Email già in uso. Prova ad accedere." }
+    }
 
-  await db.user.create({
-    data: { email, password: hashed },
-  })
+    const hashed = await bcrypt.hash(password, 12)
+    await db.user.create({ data: { email, password: hashed } })
 
-  return { success: true }
+    return { success: true }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Errore durante la registrazione"
+    // Zod parse error
+    if (msg.includes("invalid") || msg.includes("min")) {
+      return { error: "Email o password non validi (min. 8 caratteri)" }
+    }
+    return { error: msg }
+  }
 }

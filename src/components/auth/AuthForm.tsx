@@ -33,7 +33,11 @@ export function AuthForm({ callbackUrl }: AuthFormProps) {
     startTransition(async () => {
       try {
         if (mode === "register") {
-          await registerWithEmail({ email, password })
+          const reg = await registerWithEmail({ email, password })
+          if ("error" in reg) {
+            setError(reg.error)
+            return
+          }
         }
         const result = await signIn("credentials", {
           email,
@@ -42,12 +46,12 @@ export function AuthForm({ callbackUrl }: AuthFormProps) {
           redirect: false,
         })
         if (result?.error) {
-          setError("Credenziali non valide")
+          setError("Email o password non corretti")
           return
         }
         window.location.href = callbackUrl
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Errore")
+        setError(err instanceof Error ? err.message : "Errore imprevisto")
       }
     })
   }
