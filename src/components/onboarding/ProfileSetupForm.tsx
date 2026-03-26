@@ -200,8 +200,9 @@ export function ProfileSetupForm() {
         })
         if (typeof window !== "undefined") {
           localStorage.setItem("sander_onboarded", "1")
+          // Full reload so OnboardingGate re-reads localStorage and stays hidden
+          window.location.href = "/sessions"
         }
-        router.push("/sessions")
       } catch (err) {
         setError(err instanceof Error ? err.message : "Errore durante il salvataggio")
       }
