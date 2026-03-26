@@ -5,6 +5,7 @@ import Link from "next/link"
 import { ChevronRight, ExternalLink } from "lucide-react"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
+import { ratingToDisplayLevel } from "@/lib/tournament/glicko2"
 
 export default async function Home() {
   const player = await getCurrentPlayer()
@@ -32,6 +33,7 @@ export default async function Home() {
     totalMatches > 0
       ? Math.round((fullPlayer!.matchesWon / totalMatches) * 100)
       : 0
+  const glickoDisplay = ratingToDisplayLevel(fullPlayer?.glickoRating ?? 1500)
 
   return (
     <div
@@ -148,8 +150,8 @@ export default async function Home() {
               {/* Top stats row */}
               <div className="grid grid-cols-5 divide-x divide-[var(--border)] pb-3 pt-5">
                 {[
-                  { label: "MV", value: avgDisplay },
-                  { label: "MVP", value: fullPlayer.superVotes },
+                  { label: "MV",  value: avgDisplay },
+                  { label: "GLK", value: glickoDisplay },
                   { label: "PLA", value: fullPlayer.sessionsPlayed },
                   { label: "ORG", value: fullPlayer._count.organizedSessions },
                   { label: "PEN", value: fullPlayer.flopVotes },
