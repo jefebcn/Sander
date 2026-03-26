@@ -1,85 +1,95 @@
-import { Shield, Swords, Trophy, TrendingUp, Award, Activity } from "lucide-react"
+import { Shield, Swords, Trophy, TrendingUp, Activity, Award } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
-import type { Player, TournamentRegistration, Tournament } from "@/generated/prisma/client"
+import { ratingToDisplayLevel, BADGE_LABELS, BADGE_EMOJIS } from "@/lib/tournament/glicko2"
+import type {
+  Player,
+  TournamentRegistration,
+  Tournament,
+  BadgeAward,
+} from "@/generated/prisma/client"
 
 type PlayerWithHistory = Player & {
-  registrations: (TournamentRegistration & { tournament: Tournament })[]
-  streak?: number
+  registrations:  (TournamentRegistration & { tournament: Tournament })[]
+  badgesReceived?: BadgeAward[]
+  streak?:         number
 }
 
 interface SanderCardProps {
   player: PlayerWithHistory
 }
 
+// Count badge occurrences and return top-N
+function topBadges(badges: BadgeAward[], n = 3) {
+  const counts: Record<string, number> = {}
+  for (const b of badges) counts[b.badge] = (counts[b.badge] ?? 0) + 1
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, n)
+}
+
 export function SanderCard({ player }: SanderCardProps) {
-  const isBlocker = player.preferredRole === "BLOCKER"
-  const avgDisplay = player.avgRating > 0 ? (player.avgRating / 10).toFixed(1) : "—"
-  const xpToNext = 100 - (player.xp % 100)
-  const xpPct = Math.round(((player.xp % 100) / 100) * 100)
-  const streak = player.streak ?? 0
+  const isBlocker   = player.preferredRole === "BLOCKER"
+  const avgDisplay  = player.avgRating > 0 ? (player.avgRating / 10).toFixed(1) : "—"
+  const glicko      = ratingToDisplayLevel(player.glickoRating)
+  const xpToNext    = 100 - (player.xp % 100)
+  const xpPct       = Math.round(((player.xp % 100) / 100) * 100)
+  const streak      = player.streak ?? 0
+  const badges      = player.badgesReceived ?? []
+  const top3        = topBadges(badges)
 
   return (
-    <div className="overflow-hidden rounded-3xl">
-      {/* Card header */}
+    <div className="overflow-hidden rounded-3xl" style={{ border: "1px solid var(--border)" }}>
+      {/* ── Card header ──────────────────────────────────────────────────── */}
       <div
         className={cn(
           "relative px-6 pt-8 pb-10",
           isBlocker
-            ? "bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900"
-            : "bg-gradient-to-br from-orange-900 via-orange-800 to-amber-900",
+            ? "bg-gradient-to-br from-blue-950 via-blue-900 to-blue-950"
+            : "bg-gradient-to-br from-[#0e2a10] via-[#1a4020] to-[#0e2a10]",
         )}
       >
         <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-white/5" />
         <div className="absolute -bottom-4 -left-4 h-20 w-20 rounded-full bg-white/5" />
 
-        {/* Top row: brand + role badge */}
+        {/* Brand + role badge */}
         <div className="relative mb-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold uppercase tracking-widest text-white/60">
-              ☀ Sander
+              SANDER
             </span>
-            {/* Level badge */}
             <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs font-black text-white">
               Lv.{player.level}
             </span>
           </div>
-          <span
-            className={cn(
-              "flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold",
-              isBlocker
-                ? "bg-blue-500/30 text-blue-200"
-                : "bg-orange-500/30 text-orange-200",
-            )}
-          >
-            {isBlocker ? (
-              <><Swords className="h-3 w-3" /> ATTACCANTE</>
-            ) : (
-              <><Shield className="h-3 w-3" /> DIFENSORE</>
-            )}
+          {/* Glicko badge */}
+          <span className="rounded-full bg-[var(--accent)]/20 px-3 py-1 text-xs font-bold text-[var(--accent)]">
+            {glicko} GLK
           </span>
         </div>
 
-        {/* Level number + avatar */}
+        {/* Role + avatar + trophy */}
         <div className="relative mb-4 flex items-end justify-center gap-4">
-          {/* Big level */}
           <div className="absolute -left-0 bottom-0 text-left">
             <p className="text-xs font-bold uppercase tracking-widest text-white/50">Level</p>
             <p className="text-5xl font-black leading-none text-white">{player.level}</p>
           </div>
 
-          {/* Avatar */}
           <div
             className={cn(
-              "flex h-24 w-24 items-center justify-center rounded-full text-3xl font-black",
-              isBlocker ? "bg-blue-600 text-blue-100" : "bg-orange-600 text-orange-100",
+              "flex h-24 w-24 items-center justify-center overflow-hidden rounded-full text-3xl font-black",
+              isBlocker ? "bg-blue-600 text-blue-100" : "bg-[var(--accent)] text-black",
             )}
           >
-            {player.name.slice(0, 2).toUpperCase()}
+            {player.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={player.avatarUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              player.name.slice(0, 2).toUpperCase()
+            )}
           </div>
 
-          {/* Trophy count */}
           {player.tournamentsWon > 0 && (
             <div className="absolute -right-0 bottom-0 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-xs font-black text-black">
               {player.tournamentsWon}
@@ -90,6 +100,13 @@ export function SanderCard({ player }: SanderCardProps) {
         {/* Name */}
         <div className="text-center">
           <h2 className="text-3xl font-black tracking-tight text-white">{player.name}</h2>
+          <p className="mt-1 flex items-center justify-center gap-1.5 text-xs text-white/50">
+            {isBlocker ? (
+              <><Swords className="h-3 w-3" /> ATTACCANTE</>
+            ) : (
+              <><Shield className="h-3 w-3" /> DIFENSORE</>
+            )}
+          </p>
         </div>
 
         {/* XP bar */}
@@ -107,39 +124,53 @@ export function SanderCard({ player }: SanderCardProps) {
         </div>
       </div>
 
-      {/* Social stats row: AVG + STREAK */}
-      <div className="grid grid-cols-2 divide-x divide-[var(--border)] bg-[var(--surface-2)]">
+      {/* ── Rating row: AVG + GLK + STREAK ───────────────────────────────── */}
+      <div
+        className="grid grid-cols-3 divide-x bg-[var(--surface-2)]"
+        style={{ borderBottom: "1px solid var(--border)", borderColor: "var(--border)" }}
+      >
         <div className="flex flex-col items-center gap-0.5 py-4">
           <span className="text-3xl font-black text-[var(--accent)]">{avgDisplay}</span>
-          <span className="text-xs text-[var(--muted-text)]">AVG Rating</span>
+          <span className="text-xs text-[var(--muted-text)]">Media voti</span>
         </div>
         <div className="flex flex-col items-center gap-0.5 py-4">
-          <div className="mb-1 flex items-center gap-1.5">
-            <span className="text-3xl font-black">{streak}</span>
-          </div>
-          {/* STREAK bar */}
-          <div className="flex gap-0.5">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div
-                key={i}
-                className={cn(
-                  "h-2 w-2 rounded-sm",
-                  i < streak ? "bg-[var(--live)]" : "bg-[var(--surface-3)]",
-                )}
-              />
-            ))}
-          </div>
-          <span className="mt-0.5 text-xs text-[var(--muted-text)]">Streak (4 sett.)</span>
+          <span className="text-3xl font-black text-[var(--accent)]">{glicko}</span>
+          <span className="text-xs text-[var(--muted-text)]">Glicko-2</span>
+        </div>
+        <div className="flex flex-col items-center gap-0.5 py-4">
+          <span className="text-3xl font-black">{streak}</span>
+          <span className="text-xs text-[var(--muted-text)]">Streak</span>
         </div>
       </div>
 
-      {/* Tournament stats grid */}
-      <div className="grid grid-cols-4 divide-x divide-[var(--border)] bg-[var(--surface-1)]">
+      {/* ── Badges ───────────────────────────────────────────────────────── */}
+      {top3.length > 0 && (
+        <div className="flex flex-wrap gap-2 bg-[var(--surface-1)] px-4 py-3">
+          {top3.map(([badge, count]) => (
+            <span
+              key={badge}
+              className="flex items-center gap-1 rounded-full bg-[var(--surface-3)] px-3 py-1 text-xs font-semibold text-white"
+            >
+              <span>{BADGE_EMOJIS[badge]}</span>
+              {BADGE_LABELS[badge]}
+              {count > 1 && (
+                <span className="ml-1 font-black text-[var(--accent)]">×{count}</span>
+              )}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* ── Tournament stats grid ─────────────────────────────────────────── */}
+      <div
+        className="grid grid-cols-4 divide-x bg-[var(--surface-1)]"
+        style={{ borderTop: "1px solid var(--border)", borderColor: "var(--border)" }}
+      >
         {[
-          { icon: TrendingUp, label: "Vinte", value: player.matchesWon, color: "text-[var(--live)]" },
-          { icon: Activity, label: "Perse", value: player.matchesLost, color: "text-[var(--danger)]" },
-          { icon: Award, label: "Win%", value: `${player.winRatePct}%`, color: "text-[var(--completed)]" },
-          { icon: Trophy, label: "Tornei", value: player.tournamentsWon, color: "text-[var(--accent)]" },
+          { icon: TrendingUp, label: "Vinte",  value: player.matchesWon,    color: "text-[var(--live)]" },
+          { icon: Activity,   label: "Perse",  value: player.matchesLost,   color: "text-[var(--danger)]" },
+          { icon: Award,      label: "Win%",   value: `${player.winRatePct}%`, color: "text-[var(--completed)]" },
+          { icon: Trophy,     label: "Tornei", value: player.tournamentsWon, color: "text-[var(--accent)]" },
         ].map(({ icon: Icon, label, value, color }) => (
           <div key={label} className="flex flex-col items-center gap-1 py-4">
             <Icon className={cn("h-4 w-4", color)} />
@@ -149,7 +180,7 @@ export function SanderCard({ player }: SanderCardProps) {
         ))}
       </div>
 
-      {/* Recent tournaments */}
+      {/* ── Recent tournaments ────────────────────────────────────────────── */}
       {player.registrations.length > 0 && (
         <div className="rounded-b-3xl bg-[var(--surface-2)] p-4">
           <p className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">

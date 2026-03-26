@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#0a0a0a",
+  themeColor: "#0d1a0d",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -46,9 +46,18 @@ export default function RootLayout({
   return (
     <html lang="it" className={`${geist.variable} h-full`}>
       <body className="min-h-dvh flex flex-col bg-[var(--background)] text-[var(--foreground)]">
+        {/* SANDER logo watermark — fixed behind all content */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/sander-logo.png"
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none fixed left-1/2 top-1/2 z-0 w-[75vw] max-w-xs -translate-x-1/2 -translate-y-1/2 select-none opacity-[0.05]"
+          style={{ filter: "blur(2px)" }}
+        />
         <Providers>
           <OnboardingGate />
-          <main className="flex-1 pb-20">{children}</main>
+          <main className="relative z-10 flex-1 pb-20">{children}</main>
           <MobileNav />
           <Toaster />
         </Providers>

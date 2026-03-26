@@ -44,6 +44,17 @@ enum RatingType {
   FLOP
 }
 
+enum BadgeType {
+  MURO_IMPENETRABILE
+  DIFESA_ACROBATICA
+  LEADER_CARISMATICO
+  SCHIACCIATA_POTENTE
+  SERVIZIO_PRECISO
+  SPIRITO_DI_SQUADRA
+  MVP_PARTITA
+  FAIR_PLAY
+}
+
 // ─── Auth Models (NextAuth v5) ────────────────────────────────────────────────
 
 model User {
@@ -132,6 +143,11 @@ model Player {
   level Int @default(1)
   xp    Int @default(0)
 
+  // Glicko-2 skill rating (initial values per algorithm spec)
+  glickoRating     Float @default(1500)
+  glickoRD         Float @default(350)
+  glickoVolatility Float @default(0.06)
+
   // Social rating (raw vote counts; avgRating derived)
   superVotes Int @default(0)
   topVotes   Int @default(0)
@@ -150,6 +166,8 @@ model Player {
   sessionParticipants SessionParticipant[]
   ratingsGiven        PlayerRating[] @relation("Rater")
   ratingsReceived     PlayerRating[] @relation("Rated")
+  badgesGiven         BadgeAward[]   @relation("BadgeGiver")
+  badgesReceived      BadgeAward[]   @relation("BadgeReceiver")
 
   @@map("players")
 }
@@ -272,6 +290,7 @@ model Session {
 
   participants SessionParticipant[]
   ratings      PlayerRating[]
+  badgeAwards  BadgeAward[]
 
   @@map("sessions")
 }
@@ -303,4 +322,20 @@ model PlayerRating {
 
   @@unique([sessionId, raterId, ratedId])
   @@map("player_ratings")
+}
+
+model BadgeAward {
+  id         String    @id @default(cuid())
+  createdAt  DateTime  @default(now())
+  sessionId  String
+  giverId    String
+  receiverId String
+  badge      BadgeType
+
+  session  Session @relation(fields: [sessionId],  references: [id], onDelete: Cascade)
+  giver    Player  @relation("BadgeGiver",    fields: [giverId],    references: [id], onDelete: Cascade)
+  receiver Player  @relation("BadgeReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, giverId, receiverId, badge])
+  @@map("badge_awards")
 }
