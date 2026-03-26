@@ -125,7 +125,8 @@ export function OnboardingCarousel({ onComplete }: OnboardingCarouselProps) {
             alt="SANDER"
             width={260}
             height={260}
-            className="object-contain drop-shadow-[0_4px_32px_rgba(0,0,0,0.7)]"
+            className="object-contain"
+            style={{ mixBlendMode: "screen" }}
             draggable={false}
           />
         </div>
