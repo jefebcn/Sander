@@ -4,11 +4,14 @@ import { ChevronLeft, Sun } from "lucide-react"
 import Link from "next/link"
 import { SignInButton } from "@/components/auth/SignInButton"
 
-export default function SignInPage({
+export default async function SignInPage({
   searchParams,
 }: {
   searchParams: Promise<{ callbackUrl?: string }>
 }) {
+  const { callbackUrl } = await searchParams
+  const resolvedCallback = callbackUrl ?? "/sessions"
+
   return (
     <div className="relative flex min-h-dvh flex-col bg-[#0a0a0a] px-6 pb-10 pt-safe">
       {/* Subtle glow */}
@@ -16,7 +19,7 @@ export default function SignInPage({
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 70% 35% at 50% 0%, rgba(255,214,0,0.08) 0%, transparent 60%)",
+            "radial-gradient(ellipse 70% 35% at 50% 0%, rgba(201,243,29,0.08) 0%, transparent 60%)",
         }}
         aria-hidden="true"
       />
@@ -55,40 +58,31 @@ export default function SignInPage({
         </div>
 
         {/* Auth buttons */}
-        <AuthButtons />
+        <div className="space-y-3">
+          <p className="text-center text-xs font-medium uppercase tracking-widest text-[var(--muted-text)]">
+            Scegli come accedere
+          </p>
+
+          <SignInButton callbackUrl={resolvedCallback} />
+
+          <div className="flex items-center gap-3 py-1">
+            <div className="h-px flex-1 bg-[var(--border)]" />
+            <span className="text-xs text-[var(--muted-text)]">oppure</span>
+            <div className="h-px flex-1 bg-[var(--border)]" />
+          </div>
+
+          <Link
+            href="/sessions"
+            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] text-sm font-semibold text-[var(--foreground)] transition-all active:bg-[var(--surface-3)]"
+          >
+            Continua senza account
+          </Link>
+
+          <p className="text-center text-xs text-[var(--muted-text)]">
+            Accedendo accetti i nostri Termini di Servizio
+          </p>
+        </div>
       </div>
-    </div>
-  )
-}
-
-function AuthButtons() {
-  return (
-    <div className="space-y-3">
-      <p className="text-center text-xs font-medium uppercase tracking-widest text-[var(--muted-text)]">
-        Scegli come accedere
-      </p>
-
-      {/* Google */}
-      <SignInButton callbackUrl="/sessions" />
-
-      {/* Divider */}
-      <div className="flex items-center gap-3 py-1">
-        <div className="h-px flex-1 bg-[var(--border)]" />
-        <span className="text-xs text-[var(--muted-text)]">oppure</span>
-        <div className="h-px flex-1 bg-[var(--border)]" />
-      </div>
-
-      {/* Continue as guest */}
-      <Link
-        href="/sessions"
-        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] text-sm font-semibold text-[var(--foreground)] transition-all active:bg-[var(--surface-3)]"
-      >
-        Continua senza account
-      </Link>
-
-      <p className="text-center text-xs text-[var(--muted-text)]">
-        Accedendo accetti i nostri Termini di Servizio
-      </p>
     </div>
   )
 }
