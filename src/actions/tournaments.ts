@@ -6,6 +6,7 @@ import { CreateTournamentSchema } from "@/lib/validators/tournament.schema"
 import type { CreateTournamentInput } from "@/lib/validators/tournament.schema"
 import { generateKOTBSchedule } from "@/lib/tournament/kotb"
 import { generateBracket } from "@/lib/tournament/bracket"
+import { generateRoundRobinSchedule } from "@/lib/tournament/roundRobin"
 
 export async function createTournament(input: CreateTournamentInput) {
   const data = CreateTournamentSchema.parse(input)
@@ -80,6 +81,8 @@ export async function startTournament(tournamentId: string) {
 
   if (tournament.type === "KING_OF_THE_BEACH") {
     await startKOTBTournament(tournament, playerIds)
+  } else if (tournament.type === "ROUND_ROBIN") {
+    await startRoundRobinTournament(tournament, playerIds)
   } else {
     await startBracketTournament(tournament, playerIds)
   }
@@ -137,6 +140,54 @@ async function startKOTBTournament(
         status: "LIVE",
         kotbTotalRounds: schedule.totalRounds,
       },
+    })
+  })
+}
+
+async function startRoundRobinTournament(
+  tournament: { id: string },
+  playerIds: string[],
+) {
+  const schedule = generateRoundRobinSchedule(playerIds)
+
+  await db.$transaction(async (tx) => {
+    for (const round of schedule.rounds) {
+      for (const match of round.matches) {
+        await tx.match.create({
+          data: {
+            tournamentId: tournament.id,
+            round: round.roundNumber,
+            matchNumber: match.matchNumber,
+            players: {
+              create: [
+                { playerId: match.teamA[0], team: 0 },
+                { playerId: match.teamA[1], team: 0 },
+                { playerId: match.teamB[0], team: 1 },
+                { playerId: match.teamB[1], team: 1 },
+              ],
+            },
+          },
+        })
+      }
+    }
+
+    await tx.tournamentStanding.createMany({
+      data: playerIds.map((playerId) => ({
+        tournamentId: tournament.id,
+        playerId,
+        points: 0,
+        matchesWon: 0,
+        matchesLost: 0,
+        pointsFor: 0,
+        pointsAgainst: 0,
+        rank: 0,
+      })),
+      skipDuplicates: true,
+    })
+
+    await tx.tournament.update({
+      where: { id: tournament.id },
+      data: { status: "LIVE" },
     })
   })
 }

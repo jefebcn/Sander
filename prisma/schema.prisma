@@ -17,6 +17,7 @@ enum PlayerRole {
 enum TournamentType {
   KING_OF_THE_BEACH
   BRACKETS
+  ROUND_ROBIN
 }
 
 enum TournamentStatus {

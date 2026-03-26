@@ -25,7 +25,12 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
           </div>
           <p className="mt-0.5 text-sm text-[var(--muted-text)]">
             {formatDate(tournament.date)} ·{" "}
-            {tournament.type === "KING_OF_THE_BEACH" ? "King of the Beach" : "Brackets"} ·{" "}
+            {tournament.type === "KING_OF_THE_BEACH"
+              ? "King of the Beach"
+              : tournament.type === "ROUND_ROBIN"
+              ? "Round Robin"
+              : "Brackets"}{" "}
+            ·{" "}
             {tournament.registrations.length} giocatori
           </p>
         </div>

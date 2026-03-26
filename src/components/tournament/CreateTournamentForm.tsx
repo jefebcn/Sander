@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronRight, Check, Trophy, Crown, Users } from "lucide-react"
+import { ChevronRight, Check, Trophy, Crown, Users, RotateCcw } from "lucide-react"
 import { createTournament } from "@/actions/tournaments"
 import { cn } from "@/lib/utils"
 import type { Player } from "@/generated/prisma/client"
@@ -17,7 +17,7 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
 
   const [name, setName] = useState("")
   const [date, setDate] = useState(new Date().toISOString().split("T")[0])
-  const [type, setType] = useState<"KING_OF_THE_BEACH" | "BRACKETS">("KING_OF_THE_BEACH")
+  const [type, setType] = useState<"KING_OF_THE_BEACH" | "BRACKETS" | "ROUND_ROBIN">("KING_OF_THE_BEACH")
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
 
@@ -33,6 +33,11 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
 
     if (selectedPlayerIds.length < 4) {
       setError("Seleziona almeno 4 giocatori")
+      return
+    }
+
+    if (type === "ROUND_ROBIN" && selectedPlayerIds.length % 2 !== 0) {
+      setError("Round Robin richiede un numero pari di giocatori")
       return
     }
 
@@ -83,11 +88,12 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
       {/* Type */}
       <div className="space-y-1.5">
         <label className="text-sm font-semibold text-[var(--muted-text)]">Formato</label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           {(
             [
               { value: "KING_OF_THE_BEACH", label: "King of the Beach", icon: Crown },
               { value: "BRACKETS", label: "Brackets", icon: Trophy },
+              { value: "ROUND_ROBIN", label: "Round Robin", icon: RotateCcw },
             ] as const
           ).map(({ value, label, icon: Icon }) => (
             <button
@@ -106,6 +112,11 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
             </button>
           ))}
         </div>
+        {type === "ROUND_ROBIN" && (
+          <p className="text-xs text-[var(--muted-text)] pt-1">
+            Coppie fisse — ogni coppia affronta tutte le altre una volta
+          </p>
+        )}
       </div>
 
       {/* Players */}

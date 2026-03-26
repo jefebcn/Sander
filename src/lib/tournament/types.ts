@@ -35,6 +35,26 @@ export interface BracketMatch {
   isBye: boolean
 }
 
+// ─── Round Robin Types ────────────────────────────────────────────────────────
+
+export interface RRMatch {
+  matchNumber: number
+  teamA: [string, string] // playerIds
+  teamB: [string, string] // playerIds
+}
+
+export interface RRRound {
+  roundNumber: number
+  matches: RRMatch[]
+  byes: string[] // playerIds sitting out this round
+}
+
+export interface RRSchedule {
+  rounds: RRRound[]
+  teams: [string, string][] // fixed teams for the tournament
+  totalRounds: number
+}
+
 // ─── Standings Types ──────────────────────────────────────────────────────────
 
 export interface StandingEntry {
