@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Home, Trophy, Users, Activity } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useHaptic } from "@/lib/useHaptic"
 
 function BeachNetIcon({ className }: { className?: string }) {
   return (
@@ -45,6 +46,7 @@ const NAV_ITEMS = [
 
 export function MobileNav() {
   const pathname = usePathname()
+  const haptic = useHaptic()
 
   // Hide nav on auth and onboarding routes
   if (pathname.startsWith("/auth/") || pathname.startsWith("/onboarding/")) return null
@@ -63,6 +65,7 @@ export function MobileNav() {
               href={href}
               aria-label={label}
               aria-current={active ? "page" : undefined}
+              onClick={() => haptic("light")}
               className={cn(
                 "relative flex flex-1 flex-col items-center gap-1 py-3 text-xs font-medium transition-colors duration-150",
                 active ? "text-[var(--accent)]" : "text-[var(--muted-text)] hover:text-[var(--foreground)]",

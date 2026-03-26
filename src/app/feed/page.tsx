@@ -159,13 +159,27 @@ export default async function FeedPage() {
         )}
 
         {feed.map((item, i) => {
+          const stagger = i < 6 ? `stagger-${i + 1}` : ""
+          const cls = `slide-up ${stagger}`
           if (item.kind === "match") {
-            return <MatchResultCard key={`m-${i}`} match={item.data} />
+            return (
+              <div key={`m-${i}`} className={cls}>
+                <MatchResultCard match={item.data} />
+              </div>
+            )
           }
           if (item.kind === "session") {
-            return <SessionCard key={`s-${i}`} session={item.data} />
+            return (
+              <div key={`s-${i}`} className={cls}>
+                <SessionCard session={item.data} />
+              </div>
+            )
           }
-          return <TournamentEventCard key={`t-${i}`} tournament={item.data} />
+          return (
+            <div key={`t-${i}`} className={cls}>
+              <TournamentEventCard tournament={item.data} />
+            </div>
+          )
         })}
       </div>
     </div>

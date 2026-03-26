@@ -6,6 +6,7 @@ import { CheckCircle2, Minus, Plus } from "lucide-react"
 import { toast } from "sonner"
 import { submitScore } from "@/actions/matches"
 import { cn } from "@/lib/utils"
+import { useHaptic } from "@/lib/useHaptic"
 import type { Match, MatchPlayer, Player } from "@/generated/prisma/client"
 
 type MatchWithPlayers = Match & {
@@ -21,6 +22,7 @@ interface MatchCardProps {
 
 export function MatchCard({ match, tournamentId, readOnly, preview }: MatchCardProps) {
   const qc = useQueryClient()
+  const haptic = useHaptic()
   const [isPending, startTransition] = useTransition()
   const [scoreA, setScoreA] = useState(match.teamAScore ?? 0)
   const [scoreB, setScoreB] = useState(match.teamBScore ?? 0)
@@ -33,10 +35,12 @@ export function MatchCard({ match, tournamentId, readOnly, preview }: MatchCardP
   const canEdit = !readOnly && !isCompleted && !preview
 
   function handleSubmit() {
+    haptic("success")
     startTransition(async () => {
       await submitScore({ matchId: match.id, teamAScore: scoreA, teamBScore: scoreB })
       qc.invalidateQueries({ queryKey: ["dashboard", tournamentId] })
-      // Flash animation
+      // Flash + haptic on completion
+      haptic("heavy")
       cardRef.current?.classList.add("score-flash")
       setTimeout(() => cardRef.current?.classList.remove("score-flash"), 850)
       const winnerNames =
@@ -193,19 +197,26 @@ interface ScoreInputProps {
 }
 
 function ScoreInput({ value, onChange, disabled, "aria-label": ariaLabel }: ScoreInputProps) {
+  const haptic = useHaptic()
+
+  function tap(newVal: number) {
+    haptic("light")
+    onChange(newVal)
+  }
+
   return (
     <div className="flex flex-col items-center gap-1" role="group" aria-label={ariaLabel}>
       <button
         type="button"
-        onClick={() => onChange(Math.min(99, value + 1))}
+        onClick={() => tap(Math.min(99, value + 1))}
         disabled={disabled}
         aria-label="Aumenta punteggio"
-        className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--surface-3)] text-[var(--foreground)] transition-colors hover:bg-[var(--surface-4)] active:scale-95 disabled:opacity-40"
+        className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--surface-3)] text-[var(--foreground)] transition-all hover:bg-[var(--surface-4)] active:scale-90 active:bg-[var(--accent)]/20 disabled:opacity-40"
       >
         <Plus className="h-5 w-5" aria-hidden="true" />
       </button>
       <span
-        className="w-10 text-center text-2xl font-black tabular-nums"
+        className="w-10 text-center text-2xl font-black tabular-nums transition-all"
         aria-live="polite"
         aria-atomic="true"
       >
@@ -213,10 +224,10 @@ function ScoreInput({ value, onChange, disabled, "aria-label": ariaLabel }: Scor
       </span>
       <button
         type="button"
-        onClick={() => onChange(Math.max(0, value - 1))}
+        onClick={() => tap(Math.max(0, value - 1))}
         disabled={disabled}
         aria-label="Diminuisci punteggio"
-        className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--surface-3)] text-[var(--foreground)] transition-colors hover:bg-[var(--surface-4)] active:scale-95 disabled:opacity-40"
+        className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--surface-3)] text-[var(--foreground)] transition-all hover:bg-[var(--surface-4)] active:scale-90 active:bg-[var(--accent)]/20 disabled:opacity-40"
       >
         <Minus className="h-5 w-5" aria-hidden="true" />
       </button>

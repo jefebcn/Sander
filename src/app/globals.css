@@ -141,6 +141,86 @@ body {
   animation: scoreFlash 800ms ease-out;
 }
 
+/* ─── Pop-in (badges, XP gain, level-up) ─────────────────────────────────── */
+@keyframes popIn {
+  0%   { opacity: 0; transform: scale(0.6); }
+  65%  { opacity: 1; transform: scale(1.12); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.pop-in {
+  animation: popIn 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ─── Slide-up stagger (feed items, stat rows) ───────────────────────────── */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.slide-up {
+  animation: slideUp 240ms ease-out both;
+}
+
+/* Stagger delays for lists */
+.stagger-1  { animation-delay:  40ms; }
+.stagger-2  { animation-delay:  80ms; }
+.stagger-3  { animation-delay: 120ms; }
+.stagger-4  { animation-delay: 160ms; }
+.stagger-5  { animation-delay: 200ms; }
+.stagger-6  { animation-delay: 240ms; }
+
+/* ─── Bounce (interactive buttons on press) ──────────────────────────────── */
+@keyframes bouncePress {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(0.93); }
+  70%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+.bounce-press {
+  animation: bouncePress 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ─── XP fill animation ─────────────────────────────────────────────────── */
+@keyframes xpFill {
+  from { width: 0%; }
+}
+
+.xp-bar-fill {
+  animation: xpFill 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 300ms;
+}
+
+/* ─── Shake (validation error) ───────────────────────────────────────────── */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-6px); }
+  40%       { transform: translateX( 6px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX( 4px); }
+}
+
+.shake {
+  animation: shake 400ms ease-out;
+}
+
+/* ─── Celebration burst (level up, tournament win) ───────────────────────── */
+@keyframes celebrationPop {
+  0%   { opacity: 0; transform: scale(0.5) rotate(-6deg); }
+  60%  { opacity: 1; transform: scale(1.18) rotate(2deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+.celebrate {
+  animation: celebrationPop 480ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ─── Smooth interactive button baseline ─────────────────────────────────── */
+button, a {
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* ─── Scrollbar ───────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--surface-1); }

@@ -76,7 +76,7 @@ export default async function Home() {
         {fullPlayer ? (
           <>
             {/* ── Profile Card ──────────────────────────────────── */}
-            <div className="flex items-center gap-4 rounded-2xl bg-[var(--surface-2)] p-5">
+            <div className="slide-up flex items-center gap-4 rounded-2xl bg-[var(--surface-2)] p-5">
               {/* Avatar */}
               <div className="h-[4.5rem] w-[4.5rem] flex-shrink-0 overflow-hidden rounded-full bg-[var(--accent)] flex items-center justify-center">
                 {fullPlayer.avatarUrl ? (
@@ -104,7 +104,7 @@ export default async function Home() {
                 </p>
               </div>
               {/* Level badge */}
-              <div className="flex flex-shrink-0 flex-col items-center justify-center rounded-xl bg-[var(--surface-3)] px-4 py-2">
+              <div className="pop-in flex flex-shrink-0 flex-col items-center justify-center rounded-xl bg-[var(--surface-3)] px-4 py-2">
                 <span className="text-[0.6rem] font-bold uppercase tracking-widest text-[var(--muted-text)]">
                   LIVELLO
                 </span>
@@ -115,7 +115,7 @@ export default async function Home() {
             </div>
 
             {/* ── XP Progress Card ──────────────────────────────── */}
-            <div className="rounded-2xl bg-[var(--surface-2)] p-5">
+            <div className="slide-up stagger-2 rounded-2xl bg-[var(--surface-2)] p-5">
               <div className="mb-2 flex items-center justify-between">
                 <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
                   PROSSIMO LIVELLO{" "}
@@ -128,7 +128,7 @@ export default async function Home() {
               </div>
               <div className="mb-3 h-1 overflow-hidden rounded-full bg-[var(--surface-3)]">
                 <div
-                  className="h-full rounded-full bg-[var(--accent)]"
+                  className="xp-bar-fill h-full rounded-full bg-[var(--accent)]"
                   style={{ width: `${Math.max(2, xpPct)}%` }}
                 />
               </div>
@@ -146,7 +146,7 @@ export default async function Home() {
             </div>
 
             {/* ── Stats Card ────────────────────────────────────── */}
-            <div className="overflow-hidden rounded-2xl bg-[var(--surface-2)]">
+            <div className="slide-up stagger-3 overflow-hidden rounded-2xl bg-[var(--surface-2)]">
               {/* Top stats row */}
               <div className="grid grid-cols-5 divide-x divide-[var(--border)] pb-3 pt-5">
                 {[
