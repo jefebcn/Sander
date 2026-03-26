@@ -30,6 +30,52 @@ const COUNTRIES = [
   "Zimbabwe",
 ].sort()
 
+// ISO 3166-1 alpha-2 codes for Italian country names
+const COUNTRY_ISO: Record<string, string> = {
+  "Afghanistan":"AF","Albania":"AL","Algeria":"DZ","Andorra":"AD","Angola":"AO",
+  "Argentina":"AR","Armenia":"AM","Australia":"AU","Austria":"AT","Azerbaigian":"AZ",
+  "Bahamas":"BS","Bahrain":"BH","Bangladesh":"BD","Belgio":"BE","Belize":"BZ",
+  "Benin":"BJ","Bielorussia":"BY","Bolivia":"BO","Bosnia ed Erzegovina":"BA",
+  "Botswana":"BW","Brasile":"BR","Bulgaria":"BG","Burkina Faso":"BF","Burundi":"BI",
+  "Cambogia":"KH","Camerun":"CM","Canada":"CA","Ciad":"TD","Cile":"CL","Cina":"CN",
+  "Cipro":"CY","Colombia":"CO","Congo":"CG","Corea del Nord":"KP","Corea del Sud":"KR",
+  "Costa Rica":"CR","Croazia":"HR","Cuba":"CU","Danimarca":"DK","Ecuador":"EC",
+  "Egitto":"EG","El Salvador":"SV","Emirati Arabi Uniti":"AE","Eritrea":"ER",
+  "Estonia":"EE","Etiopia":"ET","Filippine":"PH","Finlandia":"FI","Francia":"FR",
+  "Georgia":"GE","Germania":"DE","Ghana":"GH","Giappone":"JP","Gibuti":"DJ",
+  "Giordania":"JO","Grecia":"GR","Guatemala":"GT","Guinea":"GN","Haiti":"HT",
+  "Honduras":"HN","India":"IN","Indonesia":"ID","Iran":"IR","Iraq":"IQ",
+  "Irlanda":"IE","Islanda":"IS","Israele":"IL","Italia":"IT","Kazakistan":"KZ",
+  "Kenya":"KE","Kosovo":"XK","Kuwait":"KW","Laos":"LA","Lettonia":"LV",
+  "Libano":"LB","Libia":"LY","Liechtenstein":"LI","Lituania":"LT","Lussemburgo":"LU",
+  "Macedonia":"MK","Madagascar":"MG","Malawi":"MW","Malaysia":"MY","Maldive":"MV",
+  "Mali":"ML","Malta":"MT","Marocco":"MA","Mauritania":"MR","Messico":"MX",
+  "Moldavia":"MD","Monaco":"MC","Mongolia":"MN","Montenegro":"ME","Mozambico":"MZ",
+  "Myanmar":"MM","Namibia":"NA","Nepal":"NP","Nicaragua":"NI","Niger":"NE",
+  "Nigeria":"NG","Norvegia":"NO","Nuova Zelanda":"NZ","Oman":"OM","Pakistan":"PK",
+  "Panama":"PA","Paraguay":"PY","Perù":"PE","Polonia":"PL","Portogallo":"PT",
+  "Qatar":"QA","Repubblica Ceca":"CZ","Repubblica Dominicana":"DO","Romania":"RO",
+  "Russia":"RU","Ruanda":"RW","San Marino":"SM","Senegal":"SN","Serbia":"RS",
+  "Sierra Leone":"SL","Singapore":"SG","Siria":"SY","Slovenia":"SI","Somalia":"SO",
+  "Spagna":"ES","Sri Lanka":"LK","Sudafrica":"ZA","Sudan":"SD","Svezia":"SE",
+  "Svizzera":"CH","Taiwan":"TW","Tanzania":"TZ","Thailandia":"TH","Togo":"TG",
+  "Tunisia":"TN","Turchia":"TR","Ucraina":"UA","Uganda":"UG","Ungheria":"HU",
+  "Uruguay":"UY","Uzbekistan":"UZ","Venezuela":"VE","Vietnam":"VN","Yemen":"YE",
+  "Zambia":"ZM","Zimbabwe":"ZW",
+}
+
+function flagEmoji(iso: string): string {
+  return iso.toUpperCase().split("").map(c =>
+    String.fromCodePoint(c.charCodeAt(0) - 65 + 0x1F1E6)
+  ).join("")
+}
+
+function countryDisplay(name: string): string {
+  if (!name) return ""
+  const iso = COUNTRY_ISO[name]
+  return iso ? `${flagEmoji(iso)} ${name}` : name
+}
+
 const GENDERS = ["Uomo", "Donna", "Altro"] as const
 type Gender = typeof GENDERS[number]
 
@@ -201,7 +247,7 @@ export function ProfileSetupForm() {
         if (typeof window !== "undefined") {
           localStorage.setItem("sander_onboarded", "1")
           // Full reload so OnboardingGate re-reads localStorage and stays hidden
-          window.location.href = "/sessions"
+          window.location.href = "/"
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Errore durante il salvataggio")
@@ -297,7 +343,7 @@ export function ProfileSetupForm() {
           />
           <FormRow
             label="Nazionalità"
-            value={nationality}
+            value={countryDisplay(nationality)}
             placeholder="Seleziona nazionalità"
             onClick={() => setNationalityOpen(true)}
           />
@@ -392,7 +438,7 @@ export function ProfileSetupForm() {
               }}
               className="flex min-h-[3.5rem] w-full items-center justify-between border-b border-[#2a2a2a] px-5 active:bg-white/5"
             >
-              <span className="text-base text-white">{country}</span>
+              <span className="text-base text-white">{countryDisplay(country)}</span>
               {nationality === country && (
                 <div className="h-3 w-3 rounded-full bg-[var(--accent)]" />
               )}
