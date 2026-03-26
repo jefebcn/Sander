@@ -4,6 +4,7 @@ import "./globals.css"
 import { Providers } from "@/lib/providers"
 import { MobileNav } from "@/components/layout/MobileNav"
 import { Toaster } from "@/components/ui/Toaster"
+import { OnboardingGate } from "@/components/onboarding/OnboardingGate"
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -31,6 +32,7 @@ export default function RootLayout({
     <html lang="it" className={`${geist.variable} h-full`}>
       <body className="min-h-dvh flex flex-col bg-[var(--background)] text-[var(--foreground)]">
         <Providers>
+          <OnboardingGate />
           <main className="flex-1 pb-20">{children}</main>
           <MobileNav />
           <Toaster />
