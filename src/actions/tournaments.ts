@@ -7,6 +7,7 @@ import type { CreateTournamentInput } from "@/lib/validators/tournament.schema"
 import { generateKOTBSchedule } from "@/lib/tournament/kotb"
 import { generateBracket } from "@/lib/tournament/bracket"
 import { generateRoundRobinSchedule } from "@/lib/tournament/roundRobin"
+import { generateDoubleElimination } from "@/lib/tournament/doubleElim"
 import { assignCourtLabel } from "@/lib/tournament/courtSchedule"
 
 export async function createTournament(input: CreateTournamentInput) {
@@ -85,6 +86,8 @@ export async function startTournament(tournamentId: string) {
     await startKOTBTournament(tournament, playerIds)
   } else if (tournament.type === "ROUND_ROBIN") {
     await startRoundRobinTournament(tournament, playerIds)
+  } else if (tournament.type === "DOUBLE_ELIMINATION") {
+    await startDoubleEliminationTournament(tournament, playerIds)
   } else {
     await startBracketTournament(tournament, playerIds)
   }
@@ -182,6 +185,111 @@ async function startRoundRobinTournament(
             },
           },
         })
+      }
+    }
+
+    await tx.tournamentStanding.createMany({
+      data: playerIds.map((playerId) => ({
+        tournamentId: tournament.id,
+        playerId,
+        points: 0,
+        matchesWon: 0,
+        matchesLost: 0,
+        pointsFor: 0,
+        pointsAgainst: 0,
+        rank: 0,
+      })),
+      skipDuplicates: true,
+    })
+
+    await tx.tournament.update({
+      where: { id: tournament.id },
+      data: { status: "LIVE" },
+    })
+  })
+}
+
+async function startDoubleEliminationTournament(
+  tournament: { id: string; numCourts: number },
+  playerIds: string[],
+) {
+  // Pair players into teams by seed order
+  const teams = []
+  for (let i = 0; i < playerIds.length; i += 2) {
+    if (playerIds[i + 1]) teams.push({ playerIds: [playerIds[i], playerIds[i + 1]] })
+  }
+
+  const deMatches = generateDoubleElimination(teams)
+
+  // Compute total rounds per section for court labels
+  const wbTotalRounds = Math.max(
+    ...deMatches.filter((m) => m.bracketSection === "WB").map((m) => m.round),
+    0,
+  )
+
+  const tempIdToDbId = new Map<string, string>()
+
+  await db.$transaction(async (tx) => {
+    // Create matches ordered: WB (highest round first), LB (round asc), GF last
+    const wbMatches = [...deMatches.filter((m) => m.bracketSection === "WB")].sort(
+      (a, b) => b.round - a.round,
+    )
+    const lbMatches = [...deMatches.filter((m) => m.bracketSection === "LB")].sort(
+      (a, b) => a.round - b.round,
+    )
+    const gfMatches = deMatches.filter((m) => m.bracketSection === "GF")
+    const ordered = [...wbMatches, ...lbMatches, ...gfMatches]
+
+    for (const dm of ordered) {
+      // Sequential round for court label (WB uses countdown → convert)
+      const seqRound =
+        dm.bracketSection === "WB"
+          ? wbTotalRounds - dm.round + 1
+          : dm.bracketSection === "LB"
+            ? dm.round
+            : wbTotalRounds + 99 // GF comes last, wave = PM always
+
+      const created = await tx.match.create({
+        data: {
+          tournamentId: tournament.id,
+          round: dm.round,
+          matchNumber: dm.matchNumber,
+          bracketSection: dm.bracketSection,
+          courtLabel: dm.isBye
+            ? null
+            : assignCourtLabel(seqRound, dm.matchNumber, wbTotalRounds + 2, tournament.numCourts),
+          isBye: dm.isBye,
+          isCompleted: dm.isBye,
+          loserNextMatchId: null,   // fixed up below
+          loserNextMatchSlot: dm.loserNextMatchSlot,
+          nextMatchId: null,        // fixed up below
+          nextMatchSlot: dm.nextMatchSlot,
+          players:
+            dm.isBye || (!dm.teamA && !dm.teamB)
+              ? undefined
+              : {
+                  create: [
+                    ...(dm.teamA?.playerIds ?? []).map((pid) => ({ playerId: pid, team: 0 })),
+                    ...(dm.teamB?.playerIds ?? []).map((pid) => ({ playerId: pid, team: 1 })),
+                  ],
+                },
+        },
+      })
+      tempIdToDbId.set(dm.tempId, created.id)
+    }
+
+    // Fix up nextMatchId and loserNextMatchId cross-references
+    for (const dm of ordered) {
+      const dbId = tempIdToDbId.get(dm.tempId)!
+      const updates: { nextMatchId?: string | null; loserNextMatchId?: string | null } = {}
+      if (dm.nextMatchTempId) {
+        updates.nextMatchId = tempIdToDbId.get(dm.nextMatchTempId) ?? null
+      }
+      if (dm.loserNextMatchTempId) {
+        updates.loserNextMatchId = tempIdToDbId.get(dm.loserNextMatchTempId) ?? null
+      }
+      if (Object.keys(updates).length > 0) {
+        await tx.match.update({ where: { id: dbId }, data: updates })
       }
     }
 

@@ -18,6 +18,7 @@ enum TournamentType {
   KING_OF_THE_BEACH
   BRACKETS
   ROUND_ROBIN
+  DOUBLE_ELIMINATION
 }
 
 enum TournamentStatus {
@@ -218,9 +219,14 @@ model Match {
   tournamentId String
   tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
 
-  round       Int
-  matchNumber Int
-  courtLabel  String?
+  round         Int
+  matchNumber   Int
+  bracketSection String @default("WB")   // "WB" | "LB" | "GF"
+  courtLabel    String?
+
+  // For DOUBLE_ELIMINATION: loser drops to LB instead of being eliminated
+  loserNextMatchId   String?
+  loserNextMatchSlot Int?
 
   teamAScore Int?
   teamBScore Int?

@@ -19,7 +19,7 @@ export default async function BracketPage({ params }: { params: Promise<{ id: st
     }),
   ])
 
-  if (tournament.type !== "BRACKETS") {
+  if (tournament.type !== "BRACKETS" && tournament.type !== "DOUBLE_ELIMINATION") {
     return (
       <div className="px-4 pt-8 text-center text-[var(--muted-text)]">
         Questa vista è disponibile solo per tornei a eliminazione diretta.

@@ -12,7 +12,7 @@ export async function submitScore(input: SubmitScoreInput) {
     where: { id: matchId },
     include: {
       players: true,
-      tournament: true,
+      tournament: { select: { type: true } },
     },
   })
 
@@ -94,8 +94,11 @@ export async function submitScore(input: SubmitScoreInput) {
       })
     }
 
-    // For BRACKETS: advance winner to next match
-    if (match.tournament.type === "BRACKETS" && match.nextMatchId) {
+    // For BRACKETS and DOUBLE_ELIMINATION: advance winner to next match
+    const isBracketType =
+      match.tournament.type === "BRACKETS" || match.tournament.type === "DOUBLE_ELIMINATION"
+
+    if (isBracketType && match.nextMatchId) {
       const winnerTeam = teamAWon ? 0 : 1
       const winnerPlayerIds = winnerTeam === 0 ? teamAPlayerIds : teamBPlayerIds
 
@@ -109,11 +112,27 @@ export async function submitScore(input: SubmitScoreInput) {
         })
       }
     }
+
+    // For DOUBLE_ELIMINATION: advance loser to Losers Bracket
+    if (match.tournament.type === "DOUBLE_ELIMINATION" && match.loserNextMatchId) {
+      const loserTeam = teamAWon ? 1 : 0
+      const loserPlayerIds = loserTeam === 0 ? teamAPlayerIds : teamBPlayerIds
+
+      for (const playerId of loserPlayerIds) {
+        await tx.matchPlayer.create({
+          data: {
+            matchId: match.loserNextMatchId,
+            playerId,
+            team: match.loserNextMatchSlot ?? 0,
+          },
+        })
+      }
+    }
   })
 
   revalidatePath(`/tournaments/${match.tournamentId}`)
   revalidatePath(`/tournaments/${match.tournamentId}/standings`)
-  if (match.tournament.type === "BRACKETS") {
+  if (match.tournament.type === "BRACKETS" || match.tournament.type === "DOUBLE_ELIMINATION") {
     revalidatePath(`/tournaments/${match.tournamentId}/bracket`)
   }
 }

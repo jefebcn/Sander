@@ -3,7 +3,7 @@ import { z } from "zod"
 export const CreateTournamentSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(80),
   date: z.coerce.date(),
-  type: z.enum(["KING_OF_THE_BEACH", "BRACKETS", "ROUND_ROBIN"]),
+  type: z.enum(["KING_OF_THE_BEACH", "BRACKETS", "ROUND_ROBIN", "DOUBLE_ELIMINATION"]),
   playerIds: z
     .array(z.string().min(1))
     .min(4, "At least 4 players required")

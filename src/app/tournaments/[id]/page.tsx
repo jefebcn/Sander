@@ -29,6 +29,8 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               ? "King of the Beach"
               : tournament.type === "ROUND_ROBIN"
               ? "Round Robin"
+              : tournament.type === "DOUBLE_ELIMINATION"
+              ? "Doppia Eliminazione"
               : "Brackets"}{" "}
             ·{" "}
             {tournament.registrations.length} giocatori
@@ -76,7 +78,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
       {/* Navigation links */}
       {tournament.status !== "DRAFT" && (
         <div className="mt-4 space-y-2 px-4">
-          {tournament.type === "BRACKETS" && (
+          {(tournament.type === "BRACKETS" || tournament.type === "DOUBLE_ELIMINATION") && (
             <Link
               href={`/tournaments/${id}/bracket`}
               className="flex min-h-[3.5rem] items-center justify-between rounded-2xl bg-[var(--surface-1)] px-4 transition-colors hover:bg-[var(--surface-2)]"
