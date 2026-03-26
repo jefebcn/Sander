@@ -15,6 +15,9 @@ const NAV_ITEMS = [
 export function MobileNav() {
   const pathname = usePathname()
 
+  // Hide nav on auth and onboarding routes
+  if (pathname.startsWith("/auth/") || pathname.startsWith("/onboarding/")) return null
+
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border)] bg-[var(--surface-1)]/95 backdrop-blur-md md:hidden"

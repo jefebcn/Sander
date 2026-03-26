@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic"
 
-import { ChevronLeft, Sun } from "lucide-react"
+import { ChevronLeft } from "lucide-react"
 import Link from "next/link"
 import { AuthForm } from "@/components/auth/AuthForm"
 
@@ -35,21 +35,25 @@ export default async function SignInPage({
         </Link>
       </div>
 
-      <div className="relative z-10 mt-8 space-y-8">
-        {/* Header */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent)]/10 ring-1 ring-[var(--accent)]/20">
-              <Sun className="h-6 w-6 text-[var(--accent)]" aria-hidden="true" />
-            </div>
-            <span className="text-2xl font-black tracking-tight text-white">SANDER</span>
+      <div className="relative z-10 mt-4 space-y-8">
+        {/* Logo centrato */}
+        <div className="flex flex-col items-center gap-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/sander-logo.png"
+            alt="SANDER"
+            width={140}
+            height={140}
+            className="object-contain"
+          />
+          <div className="space-y-1 text-center">
+            <h1 className="text-3xl font-black leading-tight text-white">
+              Entra nel campo.
+            </h1>
+            <p className="text-sm text-[var(--muted-text)]">
+              Crea un account o accedi per continuare
+            </p>
           </div>
-          <h1 className="text-3xl font-black leading-tight text-white">
-            Entra nel campo.
-          </h1>
-          <p className="text-sm text-[var(--muted-text)]">
-            Crea un account o accedi per continuare
-          </p>
         </div>
 
         {/* Form */}
