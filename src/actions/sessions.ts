@@ -8,7 +8,7 @@ import {
   RatePlayerSchema,
   AssignTeamSchema,
 } from "@/lib/validators/session.schema"
-import { notifyPlayer } from "@/lib/push"
+import { notifyPlayer, notifyPlayers } from "@/lib/push"
 
 // ─── Format helpers ────────────────────────────────────────────────────────
 
@@ -201,6 +201,14 @@ export async function completeSession(sessionId: string) {
       },
     })
   }
+
+  // Notify all participants to rate each other (fire-and-forget)
+  const playerIds = session.participants.map((p) => p.playerId)
+  notifyPlayers(playerIds, {
+    title: "Partita finita! Vota i giocatori ⭐",
+    body: `Come è andata in ${session.title}? Dai un voto ai tuoi compagni!`,
+    url: `/sessions/${sessionId}`,
+  }).catch(() => {})
 
   revalidatePath(`/sessions/${sessionId}`)
   revalidatePath("/sessions")
