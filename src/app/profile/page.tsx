@@ -175,6 +175,14 @@ export default async function ProfilePage({ searchParams }: Props) {
             }}
           />
           <Link
+            href="/stats-guide"
+            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-semibold text-[var(--accent)]"
+            style={{ background: "rgba(201,243,29,0.07)", border: "1px solid rgba(201,243,29,0.2)" }}
+          >
+            <ArrowUpRight className="h-4 w-4" />
+            Come funzionano i parametri?
+          </Link>
+          <Link
             href="/onboarding/profile"
             className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-semibold text-[var(--foreground)]"
           >
