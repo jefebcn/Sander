@@ -12,7 +12,7 @@ export function VideoCarousel() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([])
 
-  // Sync play/pause based on active index
+  // Play active video, pause others
   useEffect(() => {
     videoRefs.current.forEach((v, i) => {
       if (!v) return
@@ -25,7 +25,6 @@ export function VideoCarousel() {
     })
   }, [activeIdx])
 
-  // Detect which video is centred via scroll
   function onScroll() {
     const container = scrollRef.current
     if (!container) return
@@ -35,18 +34,29 @@ export function VideoCarousel() {
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Scroll container */}
+      {/* Scroll container — each slide is 100vw wide, fixed height */}
       <div
         ref={scrollRef}
         onScroll={onScroll}
-        className="relative flex overflow-x-auto snap-x snap-mandatory"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        style={{
+          display: "flex",
+          overflowX: "auto",
+          scrollSnapType: "x mandatory",
+          scrollbarWidth: "none",
+          WebkitOverflowScrolling: "touch",
+        }}
       >
         {VIDEOS.map((v, i) => (
           <div
             key={v.src}
-            className="relative snap-center shrink-0 w-full overflow-hidden rounded-2xl"
-            style={{ aspectRatio: "9/16", maxHeight: "70vh" }}
+            style={{
+              flex: "0 0 100%",
+              scrollSnapAlign: "center",
+              height: "60vh",
+              borderRadius: "1rem",
+              overflow: "hidden",
+              position: "relative",
+            }}
           >
             <video
               ref={(el) => { videoRefs.current[i] = el }}
@@ -55,7 +65,7 @@ export function VideoCarousel() {
               playsInline
               muted
               autoPlay={i === 0}
-              className="h-full w-full object-cover"
+              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
             />
           </div>
         ))}
