@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { VolumeX, Volume2 } from "lucide-react"
 
 const VIDEOS = [
   { src: "/videos/clip1.mp4" },
@@ -10,7 +9,6 @@ const VIDEOS = [
 
 export function VideoCarousel() {
   const [activeIdx, setActiveIdx] = useState(0)
-  const [muted, setMuted] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([])
 
@@ -18,7 +16,6 @@ export function VideoCarousel() {
   useEffect(() => {
     videoRefs.current.forEach((v, i) => {
       if (!v) return
-      v.muted = muted
       if (i === activeIdx) {
         v.play().catch(() => {})
       } else {
@@ -26,7 +23,7 @@ export function VideoCarousel() {
         v.currentTime = 0
       }
     })
-  }, [activeIdx, muted])
+  }, [activeIdx])
 
   // Detect which video is centred via scroll
   function onScroll() {
@@ -56,22 +53,10 @@ export function VideoCarousel() {
               src={v.src}
               loop
               playsInline
-              muted={muted}
+              muted
               autoPlay={i === 0}
               className="h-full w-full object-cover"
             />
-            {/* Tap area to toggle mute */}
-            <button
-              onClick={() => setMuted((m) => !m)}
-              className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full"
-              style={{ background: "rgba(0,0,0,0.5)" }}
-              aria-label={muted ? "Attiva audio" : "Disattiva audio"}
-            >
-              {muted
-                ? <VolumeX className="h-4 w-4 text-white" />
-                : <Volume2 className="h-4 w-4 text-white" />
-              }
-            </button>
           </div>
         ))}
       </div>
