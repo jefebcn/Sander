@@ -96,13 +96,29 @@ export default async function ProfilePage({ searchParams }: Props) {
   const promoCode = buildPromoCode(player.id)
 
   // Admin data (only fetched when admin views the admin tab)
-  const pendingVideos = isAdmin && activeTab === "admin"
-    ? await getPendingVideos()
+  const pendingVideosRaw = isAdmin && activeTab === "admin"
+    ? await getPendingVideos().catch(() => [])
     : []
-  const approvedVideosFull = isAdmin && activeTab === "admin"
-    ? await getApprovedVideosFull()
+  const approvedVideosRaw = isAdmin && activeTab === "admin"
+    ? await getApprovedVideosFull().catch(() => [])
     : []
-  const myVideos = activeTab === "profilo" ? await getMyVideos() : []
+  const myVideosRaw = activeTab === "profilo"
+    ? await getMyVideos().catch(() => [])
+    : []
+
+  // Serialize dates to strings for client components
+  const pendingVideos = pendingVideosRaw.map((v) => ({
+    ...v,
+    createdAt: v.createdAt.toISOString(),
+  }))
+  const approvedVideosFull = approvedVideosRaw.map((v) => ({
+    ...v,
+    reviewedAt: v.reviewedAt?.toISOString() ?? null,
+  }))
+  const myVideos = myVideosRaw.map((v) => ({
+    ...v,
+    createdAt: v.createdAt.toISOString(),
+  }))
 
   const adminSessions = isAdmin && activeTab === "admin"
     ? await db.session.findMany({

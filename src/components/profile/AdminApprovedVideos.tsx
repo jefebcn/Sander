@@ -7,7 +7,7 @@ import { deleteVideo } from "@/actions/videos"
 type Submission = {
   id: string
   blobUrl: string
-  reviewedAt: Date | null
+  reviewedAt: string | null
   player: { id: string; name: string; avatarUrl: string | null }
 }
 

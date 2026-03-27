@@ -9,7 +9,7 @@ type VideoItem = {
   blobUrl: string
   status: string
   note: string | null
-  createdAt: Date
+  createdAt: string
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; Icon: React.ElementType }> = {

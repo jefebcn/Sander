@@ -7,7 +7,7 @@ import { approveVideo, rejectVideo, deleteVideo } from "@/actions/videos"
 type Submission = {
   id: string
   blobUrl: string
-  createdAt: Date
+  createdAt: string
   player: { id: string; name: string; avatarUrl: string | null }
 }
 
