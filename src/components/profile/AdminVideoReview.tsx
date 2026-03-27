@@ -15,6 +15,7 @@ export function AdminVideoReview({ submissions }: { submissions: Submission[] })
   const [busy, setBusy] = useState<string | null>(null)
   const [rejectId, setRejectId] = useState<string | null>(null)
   const [rejectNote, setRejectNote] = useState("")
+  const [error, setError] = useState<string | null>(null)
 
   if (submissions.length === 0) {
     return (
@@ -25,13 +26,25 @@ export function AdminVideoReview({ submissions }: { submissions: Submission[] })
   }
 
   async function handleApprove(id: string) {
+    setError(null)
     setBusy(id)
-    try { await approveVideo(id) } finally { setBusy(null) }
+    try {
+      await approveVideo(id)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Errore durante la pubblicazione")
+    } finally {
+      setBusy(null)
+    }
   }
 
   async function handleReject(id: string) {
+    setError(null)
     setBusy(id)
-    try { await rejectVideo(id, rejectNote || undefined) } finally {
+    try {
+      await rejectVideo(id, rejectNote || undefined)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Errore durante il rifiuto")
+    } finally {
       setBusy(null)
       setRejectId(null)
       setRejectNote("")
@@ -39,12 +52,24 @@ export function AdminVideoReview({ submissions }: { submissions: Submission[] })
   }
 
   async function handleDelete(id: string) {
+    setError(null)
     setBusy(id)
-    try { await deleteVideo(id) } finally { setBusy(null) }
+    try {
+      await deleteVideo(id)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Errore durante l'eliminazione")
+    } finally {
+      setBusy(null)
+    }
   }
 
   return (
     <div className="flex flex-col gap-4">
+      {error && (
+        <p className="rounded-xl px-4 py-3 text-sm font-semibold" style={{ background: "#ef444420", color: "#ef4444" }}>
+          {error}
+        </p>
+      )}
       {submissions.map((s) => (
         <div key={s.id} className="rounded-2xl bg-[var(--surface-2)] overflow-hidden">
           {/* Video preview */}

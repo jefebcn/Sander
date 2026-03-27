@@ -65,11 +65,12 @@ export async function approveVideo(id: string) {
     include: { player: { select: { id: true, name: true } } },
   })
 
-  await notifyPlayer(sub.playerId, {
+  // Push notification — best effort, don't fail the action if it throws
+  notifyPlayer(sub.playerId, {
     title: "Il tuo video è stato pubblicato! 🎉",
     body: "Il tuo video di beach volley è ora visibile nella community",
     url: "/",
-  })
+  }).catch(() => {})
 
   revalidatePath("/")
   revalidatePath("/profile")
@@ -84,11 +85,12 @@ export async function rejectVideo(id: string, note?: string) {
     data: { status: "REJECTED", note: note ?? null, reviewedAt: new Date() },
   })
 
-  await notifyPlayer(sub.playerId, {
+  // Push notification — best effort
+  notifyPlayer(sub.playerId, {
     title: "Video non approvato",
     body: note ?? "Il tuo video non rispetta le linee guida della community",
     url: "/",
-  })
+  }).catch(() => {})
 
   revalidatePath("/")
   revalidatePath("/profile")
