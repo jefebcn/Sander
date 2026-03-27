@@ -53,7 +53,7 @@ export default async function Home() {
       <div
         className="pointer-events-none fixed top-0 right-0"
         aria-hidden="true"
-        style={{ transform: "translate(28%, -12%)" }}
+        style={{ transform: "translate(22%, 8%)" }}
       >
         <Image
           src="/sander-logo.png"
