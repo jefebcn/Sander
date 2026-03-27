@@ -13,22 +13,28 @@ type Status = "loading" | "onboarding" | "done"
 const EXEMPT = ["/onboarding/", "/auth/"]
 
 export function OnboardingGate() {
-  const [status, setStatus] = useState<Status>("loading")
+  // Read localStorage synchronously on first render (client only).
+  // If the key already exists the user has been through onboarding —
+  // jump straight to "done" so there is zero black flash for returning users.
+  const [status, setStatus] = useState<Status>(() => {
+    if (typeof window === "undefined") return "loading"
+    return localStorage.getItem(STORAGE_KEY) ? "done" : "loading"
+  })
+
   const pathname = usePathname()
   const { data: session, status: sessionStatus } = useSession()
 
   useEffect(() => {
-    // Wait for session to resolve
     if (sessionStatus === "loading") return
 
-    // If user has an active session, they're already registered — skip onboarding
     if (session?.user) {
       localStorage.setItem(STORAGE_KEY, "1")
       setStatus("done")
       return
     }
 
-    // Fallback: check localStorage for users who completed onboarding
+    // No session — check localStorage (already read above, but re-check in
+    // case it was cleared externally, e.g. sign-out)
     if (localStorage.getItem(STORAGE_KEY)) {
       setStatus("done")
     } else {
@@ -39,6 +45,7 @@ export function OnboardingGate() {
   // Never block the profile setup or auth pages
   if (EXEMPT.some((p) => pathname.startsWith(p))) return null
 
+  // Only show the black loading screen for first-time visitors (no localStorage key)
   if (status === "loading") {
     return <div className="fixed inset-0 z-[200] bg-black" />
   }

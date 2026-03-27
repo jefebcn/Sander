@@ -3,7 +3,7 @@
  * Version format: 1.MINOR.PATCH where MINOR = floor(BUILD/100), PATCH = BUILD % 100
  * e.g. 51 → 1.0.51 | 99 → 1.0.99 | 100 → 1.1.0 | 200 → 1.2.0
  */
-export const BUILD_NUMBER = 64
+export const BUILD_NUMBER = 65
 
 const MAJOR = 1
 const MINOR = Math.floor(BUILD_NUMBER / 100)
