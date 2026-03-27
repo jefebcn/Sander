@@ -11,7 +11,7 @@ interface OnboardingCarouselProps {
 const SCREENS = [
   { id: 0, slogan: "Scendi in campo.", cta: "Avanti" },
   { id: 1, slogan: "Trova la partita.", cta: "Avanti" },
-  { id: 2, slogan: "Sali di livello.", cta: "Registrati o Accedi" },
+  { id: 2, slogan: "Sali di livello.", cta: "Accedi o Registrati" },
 ]
 
 export function OnboardingCarousel({ onComplete }: OnboardingCarouselProps) {
@@ -39,8 +39,7 @@ export function OnboardingCarousel({ onComplete }: OnboardingCarouselProps) {
       advance(current + 1)
       return
     }
-    // Don't mark as onboarded yet — that happens after profile is completed
-    router.push("/onboarding/profile")
+    router.push("/auth/signin")
   }
 
   function handleTouchStart(e: React.TouchEvent) {

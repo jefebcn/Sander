@@ -14,7 +14,11 @@ export function SignOutButton({ className, children, iconOnly }: SignOutButtonPr
   const haptic = useHaptic()
   return (
     <button
-      onClick={() => { haptic("light"); signOut({ callbackUrl: "/" }) }}
+      onClick={() => {
+        haptic("light")
+        localStorage.removeItem("sander_onboarded")
+        signOut({ callbackUrl: "/" })
+      }}
       className={className}
       aria-label="Esci dall'account"
     >

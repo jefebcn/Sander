@@ -8,7 +8,6 @@ import { db } from "@/lib/db"
 import { ratingToDisplayLevel } from "@/lib/tournament/glicko2"
 import { getPersonalizedRecommendations } from "@/actions/recommendations"
 import { LevelUpCelebration } from "@/components/home/LevelUpCelebration"
-import { OnboardingSlider } from "@/components/auth/OnboardingSlider"
 import { formatDate } from "@/lib/utils"
 
 export default async function Home() {
@@ -379,10 +378,7 @@ export default async function Home() {
               </a>
             </div>
           </>
-        ) : (
-          /* ── Not logged in — onboarding slides ───────────────── */
-          <OnboardingSlider callbackUrl="/" />
-        )}
+        ) : null}
       </div>
     </div>
   )
