@@ -78,6 +78,8 @@
 
 * {
   box-sizing: border-box;
+  /* Removes the 300ms tap delay on mobile — makes every touch instant */
+  touch-action: manipulation;
 }
 
 html {
@@ -217,8 +219,14 @@ body {
 }
 
 /* ─── Smooth interactive button baseline ─────────────────────────────────── */
-button, a {
+button, a, [role="button"] {
   -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* Active feedback fires in ≤80ms instead of the default 150ms */
+button:active, a:active, [role="button"]:active {
+  transition-duration: 80ms !important;
 }
 
 /* ─── Scrollbar ───────────────────────────────────────────────────────────── */
