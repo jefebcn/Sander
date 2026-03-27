@@ -3,7 +3,8 @@ export const dynamic = "force-dynamic"
 import Image from "next/image"
 import Link from "next/link"
 import { ChevronRight, ExternalLink, Sparkles, MapPin, Trophy, Shuffle } from "lucide-react"
-import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
+import { redirect } from "next/navigation"
+import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { ratingToDisplayLevel } from "@/lib/tournament/glicko2"
 import { getPersonalizedRecommendations } from "@/actions/recommendations"
@@ -11,7 +12,13 @@ import { LevelUpCelebration } from "@/components/home/LevelUpCelebration"
 import { formatDate } from "@/lib/utils"
 
 export default async function Home() {
+  const session = await getCurrentSession()
   const player = await getCurrentPlayer()
+
+  // Logged in but no player profile yet → complete profile setup
+  if (session?.user && !player) {
+    redirect("/onboarding/profile")
+  }
 
   let fullPlayer = null
   let recs = null
