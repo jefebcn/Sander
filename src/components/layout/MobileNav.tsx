@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Trophy, User, Activity } from "lucide-react"
+import { Home, Users, User, Activity } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useHaptic } from "@/lib/useHaptic"
 
@@ -40,7 +40,7 @@ const NAV_ITEMS = [
   { href: "/", icon: Home, label: "Home" },
   { href: "/sessions", icon: BeachNetIcon, label: "Partite" },
   { href: "/feed", icon: Activity, label: "Feed" },
-  { href: "/tournaments", icon: Trophy, label: "Tornei" },
+  { href: "/players", icon: Users, label: "Giocatori" },
   { href: "/profile", icon: User, label: "Profilo" },
 ]
 

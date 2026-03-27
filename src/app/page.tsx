@@ -113,15 +113,18 @@ export default async function Home() {
                     fullPlayer.name.split(" ").slice(1).join(" ")}
                 </p>
               </div>
-              {/* Level badge */}
-              <div className="pop-in flex flex-shrink-0 flex-col items-center justify-center rounded-xl bg-[var(--surface-3)] px-4 py-2">
+              {/* Level badge — tap to see how XP works */}
+              <Link
+                href="/level-info"
+                className="pop-in flex flex-shrink-0 flex-col items-center justify-center rounded-xl bg-[var(--surface-3)] px-4 py-2 active:opacity-70"
+              >
                 <span className="text-[0.6rem] font-bold uppercase tracking-widest text-[var(--muted-text)]">
                   LIVELLO
                 </span>
                 <span className="text-3xl font-black leading-tight text-white">
                   {fullPlayer.level}
                 </span>
-              </div>
+              </Link>
             </div>
 
             {/* ── XP Progress Card ──────────────────────────────── */}
