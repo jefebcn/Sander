@@ -11,7 +11,7 @@ type Submission = {
   player: { id: string; name: string; avatarUrl: string | null }
 }
 
-export function AdminApprovedVideos({ submissions }: { submissions: Submission[] }) {
+export function AdminApprovedVideos({ submissions, onAction }: { submissions: Submission[]; onAction?: () => void }) {
   const [busy, setBusy] = useState<string | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
 
@@ -25,7 +25,10 @@ export function AdminApprovedVideos({ submissions }: { submissions: Submission[]
 
   async function handleDelete(id: string) {
     setBusy(id)
-    try { await deleteVideo(id) } finally {
+    try {
+      await deleteVideo(id)
+      onAction?.()
+    } finally {
       setBusy(null)
       setConfirmId(null)
     }

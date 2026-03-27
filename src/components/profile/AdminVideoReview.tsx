@@ -11,7 +11,7 @@ type Submission = {
   player: { id: string; name: string; avatarUrl: string | null }
 }
 
-export function AdminVideoReview({ submissions }: { submissions: Submission[] }) {
+export function AdminVideoReview({ submissions, onAction }: { submissions: Submission[]; onAction?: () => void }) {
   const [busy, setBusy] = useState<string | null>(null)
   const [rejectId, setRejectId] = useState<string | null>(null)
   const [rejectNote, setRejectNote] = useState("")
@@ -30,6 +30,7 @@ export function AdminVideoReview({ submissions }: { submissions: Submission[] })
     setBusy(id)
     try {
       await approveVideo(id)
+      onAction?.()
     } catch (e) {
       setError(e instanceof Error ? e.message : "Errore durante la pubblicazione")
     } finally {
@@ -42,6 +43,7 @@ export function AdminVideoReview({ submissions }: { submissions: Submission[] })
     setBusy(id)
     try {
       await rejectVideo(id, rejectNote || undefined)
+      onAction?.()
     } catch (e) {
       setError(e instanceof Error ? e.message : "Errore durante il rifiuto")
     } finally {
@@ -56,6 +58,7 @@ export function AdminVideoReview({ submissions }: { submissions: Submission[] })
     setBusy(id)
     try {
       await deleteVideo(id)
+      onAction?.()
     } catch (e) {
       setError(e instanceof Error ? e.message : "Errore durante l'eliminazione")
     } finally {
