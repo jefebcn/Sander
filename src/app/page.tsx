@@ -9,6 +9,7 @@ import { db } from "@/lib/db"
 import { ratingToDisplayLevel } from "@/lib/tournament/glicko2"
 import { getPersonalizedRecommendations } from "@/actions/recommendations"
 import { LevelUpCelebration } from "@/components/home/LevelUpCelebration"
+import { VideoCarousel } from "@/components/home/VideoCarousel"
 import { formatDate } from "@/lib/utils"
 
 export default async function Home() {
@@ -342,6 +343,9 @@ export default async function Home() {
                 <ChevronRight className="h-4 w-4 shrink-0 text-[var(--accent)]" />
               </Link>
             )}
+
+            {/* ── Video carousel ────────────────────────────────── */}
+            <VideoCarousel />
 
             {/* ── Social section ────────────────────────────────── */}
             <div className="mt-1">
