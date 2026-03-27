@@ -8,6 +8,7 @@ import { generateKOTBSchedule } from "@/lib/tournament/kotb"
 import { generateBracket } from "@/lib/tournament/bracket"
 import { generateRoundRobinSchedule } from "@/lib/tournament/roundRobin"
 import { generateDoubleElimination } from "@/lib/tournament/doubleElim"
+import { notifyPlayers } from "@/lib/push"
 import { assignCourtLabel } from "@/lib/tournament/courtSchedule"
 
 export async function createTournament(input: CreateTournamentInput) {
@@ -94,6 +95,9 @@ export async function startTournament(tournamentId: string) {
   } else {
     await startBracketTournament(tournament, playerIds)
   }
+
+  // Notify all players of their first match
+  notifyFirstRoundMatches(tournamentId, tournament.name).catch(() => {})
 
   revalidatePath("/tournaments")
   revalidatePath(`/tournaments/${tournamentId}`)
@@ -629,4 +633,46 @@ export async function completeTournament(tournamentId: string) {
   revalidatePath("/tournaments")
   revalidatePath(`/tournaments/${tournamentId}`)
   revalidatePath("/players")
+}
+
+// ─── Push notification helpers ────────────────────────────────────────────────
+
+/**
+ * After a tournament starts, notify every player in round-1 matches
+ * telling them their court assignment.
+ */
+async function notifyFirstRoundMatches(tournamentId: string, tournamentName: string) {
+  const round1Matches = await db.match.findMany({
+    where: { tournamentId, round: 1, isBye: false },
+    include: { players: { select: { playerId: true } } },
+  })
+
+  for (const match of round1Matches) {
+    const playerIds = match.players.map((p) => p.playerId)
+    const court = match.courtLabel ? ` — ${match.courtLabel}` : ""
+    await notifyPlayers(playerIds, {
+      title: `${tournamentName} — Il torneo è iniziato!`,
+      body: `Il tuo primo match è pronto${court}. Vai al tabellone!`,
+      url: `/tournaments/${tournamentId}`,
+    })
+  }
+}
+
+/**
+ * Notify players when their next match in a bracket/advancement is ready.
+ */
+export async function notifyMatchReady(matchId: string, tournamentName: string, tournamentId: string) {
+  const match = await db.match.findUnique({
+    where: { id: matchId },
+    include: { players: { select: { playerId: true } } },
+  })
+  if (!match || match.isBye || match.players.length < 2) return
+
+  const playerIds = match.players.map((p) => p.playerId)
+  const court = match.courtLabel ? ` al ${match.courtLabel}` : ""
+  await notifyPlayers(playerIds, {
+    title: `${tournamentName} — È il tuo turno!`,
+    body: `Il tuo prossimo match è pronto${court}. Forza!`,
+    url: `/tournaments/${tournamentId}`,
+  })
 }

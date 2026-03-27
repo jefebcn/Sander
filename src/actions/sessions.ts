@@ -8,6 +8,7 @@ import {
   RatePlayerSchema,
   AssignTeamSchema,
 } from "@/lib/validators/session.schema"
+import { notifyPlayer } from "@/lib/push"
 
 // ─── Format helpers ────────────────────────────────────────────────────────
 
@@ -150,10 +151,24 @@ export async function assignTeam(input: unknown) {
   })
   if (session.organizerId !== player.id) throw new Error("Solo l'organizzatore può assegnare le squadre")
 
-  await db.sessionParticipant.update({
+  const participant = await db.sessionParticipant.update({
     where: { id: data.participantId },
     data: { team: data.team },
+    include: {
+      player: { select: { id: true, name: true } },
+      session: { select: { title: true } },
+    },
   })
+
+  // Notify the assigned player (fire-and-forget)
+  if (data.team !== null) {
+    const teamLabel = data.team === 0 ? "Team A" : "Team B"
+    notifyPlayer(participant.player.id, {
+      title: "Sei stato assegnato a una squadra!",
+      body: `${participant.session.title} — ${teamLabel}. Preparati!`,
+      url: `/sessions/${data.sessionId}`,
+    }).catch(() => {})
+  }
 
   revalidatePath(`/sessions/${data.sessionId}`)
 }

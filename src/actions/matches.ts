@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { SubmitScoreSchema } from "@/lib/validators/match.schema"
 import type { SubmitScoreInput } from "@/lib/validators/match.schema"
+import { notifyPlayers } from "@/lib/push"
 
 export async function submitScore(input: SubmitScoreInput) {
   const { matchId, teamAScore, teamBScore } = SubmitScoreSchema.parse(input)
@@ -130,11 +131,38 @@ export async function submitScore(input: SubmitScoreInput) {
     }
   })
 
+  // Notify players when their next match is fully populated
+  if (match.nextMatchId) {
+    notifyIfMatchReady(match.nextMatchId, match.tournamentId).catch(() => {})
+  }
+  if (match.loserNextMatchId) {
+    notifyIfMatchReady(match.loserNextMatchId, match.tournamentId).catch(() => {})
+  }
+
   revalidatePath(`/tournaments/${match.tournamentId}`)
   revalidatePath(`/tournaments/${match.tournamentId}/standings`)
   if (match.tournament.type === "BRACKETS" || match.tournament.type === "DOUBLE_ELIMINATION") {
     revalidatePath(`/tournaments/${match.tournamentId}/bracket`)
   }
+}
+
+async function notifyIfMatchReady(matchId: string, tournamentId: string) {
+  const nextMatch = await db.match.findUnique({
+    where: { id: matchId },
+    include: {
+      players: { select: { playerId: true } },
+      tournament: { select: { name: true } },
+    },
+  })
+  if (!nextMatch || nextMatch.isBye || nextMatch.players.length < 4) return
+
+  const playerIds = nextMatch.players.map((p) => p.playerId)
+  const court = nextMatch.courtLabel ? ` al ${nextMatch.courtLabel}` : ""
+  await notifyPlayers(playerIds, {
+    title: `${nextMatch.tournament.name} — È il tuo turno!`,
+    body: `Il tuo prossimo match è pronto${court}. Vai al tabellone!`,
+    url: `/tournaments/${tournamentId}`,
+  })
 }
 
 export async function getMatchesForRound(tournamentId: string, round: number) {
