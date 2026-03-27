@@ -5,6 +5,8 @@ import { Providers } from "@/lib/providers"
 import { MobileNav } from "@/components/layout/MobileNav"
 import { Toaster } from "@/components/ui/Toaster"
 import { OnboardingGate } from "@/components/onboarding/OnboardingGate"
+import { CookieBanner } from "@/components/layout/CookieBanner"
+import { PWAInstallBanner } from "@/components/layout/PWAInstallBanner"
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -59,6 +61,11 @@ export default function RootLayout({
           <OnboardingGate />
           <main className="relative z-10 flex-1 pb-20">{children}</main>
           <MobileNav />
+          {/* Banners stacked just above the navbar */}
+          <div className="fixed bottom-[4.5rem] left-0 right-0 z-40 flex flex-col gap-2 pointer-events-none [&>*]:pointer-events-auto">
+            <PWAInstallBanner />
+            <CookieBanner />
+          </div>
           <Toaster />
         </Providers>
       </body>
