@@ -142,7 +142,7 @@ export default async function Home() {
                   style={{ width: `${Math.max(2, xpPct)}%` }}
                 />
               </div>
-              <Link href="/players" className="flex items-center justify-between">
+              <Link href="/profile" className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="rounded-full bg-[var(--accent)] px-2.5 py-0.5 text-xs font-black text-black">
                     -{xpToNext} punti
