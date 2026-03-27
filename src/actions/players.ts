@@ -67,6 +67,50 @@ export async function listPlayers() {
   })
 }
 
+export async function getHeadToHeadStats(playerAId: string, playerBId: string) {
+  // Find all completed tournament matches where BOTH players participated
+  const matches = await db.match.findMany({
+    where: {
+      isCompleted: true,
+      AND: [
+        { players: { some: { playerId: playerAId } } },
+        { players: { some: { playerId: playerBId } } },
+      ],
+    },
+    include: { players: true },
+  })
+
+  const together = { played: 0, won: 0, lost: 0 }
+  const versus   = { played: 0, won: 0, lost: 0 }
+
+  for (const match of matches) {
+    const mpA = match.players.find((p) => p.playerId === playerAId)
+    const mpB = match.players.find((p) => p.playerId === playerBId)
+    if (!mpA || !mpB) continue
+
+    const teamAWon =
+      match.teamAScore !== null &&
+      match.teamBScore !== null &&
+      match.teamAScore > match.teamBScore
+
+    const aWon = mpA.team === 0 ? teamAWon : !teamAWon
+
+    if (mpA.team === mpB.team) {
+      // Same team — together
+      together.played++
+      if (aWon) together.won++
+      else together.lost++
+    } else {
+      // Different teams — versus
+      versus.played++
+      if (aWon) versus.won++
+      else versus.lost++
+    }
+  }
+
+  return { together, versus }
+}
+
 export async function deletePlayer(id: string) {
   const session = await getCurrentSession()
   if (!session?.user?.id) throw new Error("Non autenticato")
