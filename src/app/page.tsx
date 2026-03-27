@@ -8,6 +8,7 @@ import { db } from "@/lib/db"
 import { ratingToDisplayLevel } from "@/lib/tournament/glicko2"
 import { getPersonalizedRecommendations } from "@/actions/recommendations"
 import { LevelUpCelebration } from "@/components/home/LevelUpCelebration"
+import { OnboardingSlider } from "@/components/auth/OnboardingSlider"
 import { formatDate } from "@/lib/utils"
 
 export default async function Home() {
@@ -379,23 +380,8 @@ export default async function Home() {
             </div>
           </>
         ) : (
-          /* ── Not logged in ──────────────────────────────────── */
-          <div className="flex flex-col items-center gap-6 px-2 py-16">
-            <div className="text-center">
-              <h1 className="mb-2 text-5xl font-black tracking-tight text-white">
-                SANDER
-              </h1>
-              <p className="text-base text-[var(--muted-text)]">
-                Beach Volleyball Tournament Manager
-              </p>
-            </div>
-            <Link
-              href="/auth/signin"
-              className="flex min-h-[4rem] w-full max-w-sm items-center justify-center rounded-2xl bg-[var(--accent)] text-xl font-black text-black"
-            >
-              Accedi
-            </Link>
-          </div>
+          /* ── Not logged in — onboarding slides ───────────────── */
+          <OnboardingSlider callbackUrl="/" />
         )}
       </div>
     </div>
