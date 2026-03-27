@@ -2,12 +2,13 @@ export const dynamic = "force-dynamic"
 
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronRight, ExternalLink, Sparkles, MapPin, Trophy } from "lucide-react"
+import { ChevronRight, ExternalLink, Sparkles, MapPin, Trophy, Shuffle } from "lucide-react"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { ratingToDisplayLevel } from "@/lib/tournament/glicko2"
 import { getPersonalizedRecommendations } from "@/actions/recommendations"
 import { LevelUpCelebration } from "@/components/home/LevelUpCelebration"
+import { formatDate } from "@/lib/utils"
 
 export default async function Home() {
   const player = await getCurrentPlayer()
@@ -23,6 +24,11 @@ export default async function Home() {
       getPersonalizedRecommendations(player.id),
     ])
   }
+
+  const upcomingChicece = await db.tournament.findFirst({
+    where: { type: "CHICECE", status: { in: ["DRAFT", "LIVE"] } },
+    orderBy: { date: "asc" },
+  })
 
   const avgDisplay =
     fullPlayer && fullPlayer.avgRating > 0
@@ -300,6 +306,35 @@ export default async function Home() {
               currentLevel={fullPlayer.level}
               playerName={fullPlayer.name}
             />
+
+            {/* ── Torneo in arrivo: Chicece ─────────────────────── */}
+            {upcomingChicece && (
+              <Link
+                href={`/tournaments/${upcomingChicece.id}`}
+                className="flex items-center gap-3 rounded-2xl p-4 active:opacity-80"
+                style={{
+                  background: "var(--surface-2)",
+                  border: "1px solid rgba(201,243,29,0.3)",
+                }}
+              >
+                <div
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                  style={{ background: "rgba(201,243,29,0.12)" }}
+                >
+                  <Shuffle className="h-5 w-5 text-[var(--accent)]" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
+                    Torneo in arrivo
+                  </p>
+                  <p className="font-bold text-white truncate">{upcomingChicece.name}</p>
+                  <p className="text-xs text-[var(--muted-text)]">
+                    {formatDate(upcomingChicece.date)} · Chicece
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--accent)]" />
+              </Link>
+            )}
 
             {/* ── Social section ────────────────────────────────── */}
             <div className="mt-1">

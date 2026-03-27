@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronRight, Check, Trophy, Crown, Users, RotateCcw, Swords } from "lucide-react"
+import { ChevronRight, Check, Trophy, Crown, Users, RotateCcw, Swords, Shuffle } from "lucide-react"
 import { createTournament } from "@/actions/tournaments"
 import { cn } from "@/lib/utils"
 import type { Player } from "@/generated/prisma/client"
@@ -17,7 +17,8 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
 
   const [name, setName] = useState("")
   const [date, setDate] = useState(new Date().toISOString().split("T")[0])
-  const [type, setType] = useState<"KING_OF_THE_BEACH" | "BRACKETS" | "ROUND_ROBIN" | "DOUBLE_ELIMINATION">("KING_OF_THE_BEACH")
+  const [type, setType] = useState<"KING_OF_THE_BEACH" | "BRACKETS" | "ROUND_ROBIN" | "DOUBLE_ELIMINATION" | "CHICECE">("KING_OF_THE_BEACH")
+  const [chiceceMatchCount, setChiceceMatchCount] = useState<4 | 6>(4)
   const [numCourts, setNumCourts] = useState(2)
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -42,6 +43,11 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
       return
     }
 
+    if (type === "CHICECE" && selectedPlayerIds.length % 4 !== 0) {
+      setError("Chicece richiede un numero di giocatori multiplo di 4")
+      return
+    }
+
     startTransition(async () => {
       try {
         const tournament = await createTournament({
@@ -50,6 +56,7 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
           type,
           playerIds: selectedPlayerIds,
           numCourts,
+          chiceceMatchCount: type === "CHICECE" ? chiceceMatchCount : undefined,
         })
         router.push(`/tournaments/${tournament.id}`)
       } catch (err) {
@@ -94,9 +101,10 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
           {(
             [
               { value: "KING_OF_THE_BEACH", label: "King of the Beach", icon: Crown },
-              { value: "BRACKETS", label: "Brackets", icon: Trophy },
+              { value: "BRACKETS", label: "Classico", icon: Trophy },
               { value: "ROUND_ROBIN", label: "Round Robin", icon: RotateCcw },
               { value: "DOUBLE_ELIMINATION", label: "Doppia Elim.", icon: Swords },
+              { value: "CHICECE", label: "Chicece", icon: Shuffle },
             ] as const
           ).map(({ value, label, icon: Icon }) => (
             <button
@@ -124,6 +132,30 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
           <p className="text-xs text-[var(--muted-text)] pt-1">
             Occorrono 2 sconfitte per essere eliminati — Winners e Losers Bracket
           </p>
+        )}
+        {type === "CHICECE" && (
+          <div className="pt-1 space-y-2">
+            <p className="text-xs text-[var(--muted-text)]">
+              Gironi a coppie variabili — punteggio individuale +/−. Top 4 avanzano alla finale.
+            </p>
+            <div className="flex gap-2">
+              {([4, 6] as const).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setChiceceMatchCount(n)}
+                  className={cn(
+                    "flex-1 rounded-xl border-2 py-2 text-sm font-bold transition-colors",
+                    chiceceMatchCount === n
+                      ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
+                      : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted-text)]",
+                  )}
+                >
+                  {n} partite {n === 4 ? "(veloce)" : "(standard)"}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
       </div>
 

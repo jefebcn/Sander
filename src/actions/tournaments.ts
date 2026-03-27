@@ -20,6 +20,7 @@ export async function createTournament(input: CreateTournamentInput) {
       type: data.type,
       status: "DRAFT",
       numCourts: data.numCourts ?? 2,
+      chiceceMatchCount: data.chiceceMatchCount ?? 4,
       registrations: {
         create: data.playerIds.map((playerId, i) => ({
           playerId,
@@ -88,6 +89,8 @@ export async function startTournament(tournamentId: string) {
     await startRoundRobinTournament(tournament, playerIds)
   } else if (tournament.type === "DOUBLE_ELIMINATION") {
     await startDoubleEliminationTournament(tournament, playerIds)
+  } else if (tournament.type === "CHICECE") {
+    await startChiceceTournament(tournament, playerIds)
   } else {
     await startBracketTournament(tournament, playerIds)
   }
@@ -394,6 +397,200 @@ async function startBracketTournament(
       data: { status: "LIVE" },
     })
   })
+}
+
+// ── Chicece helpers ────────────────────────────────────────────────────────
+
+function generateChiceceGroupSchedule(
+  playerIds: string[],
+  numRounds: number,
+): Array<{ roundNumber: number; matches: Array<{ teamA: [string, string]; teamB: [string, string]; matchNumber: number }> }> {
+  const n = playerIds.length
+  if (n % 4 !== 0) throw new Error("Chicece richiede un numero di giocatori multiplo di 4")
+
+  const ring = [...playerIds]
+  const quarter = n / 4
+  const rounds = []
+
+  for (let round = 0; round < numRounds; round++) {
+    const matches: Array<{ teamA: [string, string]; teamB: [string, string]; matchNumber: number }> = []
+    for (let i = 0; i < quarter; i++) {
+      matches.push({
+        teamA: [ring[i], ring[quarter + i]],
+        teamB: [ring[2 * quarter + i], ring[3 * quarter + i]],
+        matchNumber: round * quarter + i + 1,
+      })
+    }
+    rounds.push({ roundNumber: round + 1, matches })
+    // Circle-method rotation: keep ring[0] fixed, move last element to position 1
+    const last = ring.splice(n - 1, 1)[0]
+    ring.splice(1, 0, last)
+  }
+  return rounds
+}
+
+async function startChiceceTournament(
+  tournament: { id: string; numCourts: number; chiceceMatchCount: number },
+  playerIds: string[],
+) {
+  if (playerIds.length % 4 !== 0 || playerIds.length < 4) {
+    throw new Error("Chicece richiede almeno 4 giocatori, multiplo di 4")
+  }
+
+  const schedule = generateChiceceGroupSchedule(playerIds, tournament.chiceceMatchCount)
+
+  await db.$transaction(async (tx) => {
+    for (const round of schedule) {
+      for (const match of round.matches) {
+        await tx.match.create({
+          data: {
+            tournamentId: tournament.id,
+            round: round.roundNumber,
+            matchNumber: match.matchNumber,
+            bracketSection: "GROUP",
+            players: {
+              create: [
+                { playerId: match.teamA[0], team: 0 },
+                { playerId: match.teamA[1], team: 0 },
+                { playerId: match.teamB[0], team: 1 },
+                { playerId: match.teamB[1], team: 1 },
+              ],
+            },
+          },
+        })
+      }
+    }
+
+    await tx.tournament.update({
+      where: { id: tournament.id },
+      data: { status: "LIVE", chicecePhase: "GROUP" },
+    })
+  })
+}
+
+export async function submitChiceceGroupMatchScore(
+  matchId: string,
+  teamAScore: number,
+  teamBScore: number,
+) {
+  if (teamAScore === teamBScore) throw new Error("Il risultato non può essere in parità")
+
+  const match = await db.match.findUniqueOrThrow({
+    where: { id: matchId },
+    include: { players: true },
+  })
+
+  if (match.isCompleted) throw new Error("Partita già completata")
+  if (match.bracketSection !== "GROUP") throw new Error("Non è una partita del girone")
+
+  const delta = Math.abs(teamAScore - teamBScore)
+  const teamAWon = teamAScore > teamBScore
+  const teamAPlayerIds = match.players.filter((p) => p.team === 0).map((p) => p.playerId)
+  const teamBPlayerIds = match.players.filter((p) => p.team === 1).map((p) => p.playerId)
+
+  await db.$transaction(async (tx) => {
+    await tx.match.update({
+      where: { id: matchId },
+      data: { teamAScore, teamBScore, isCompleted: true },
+    })
+
+    for (const playerId of teamAPlayerIds) {
+      await tx.tournamentRegistration.update({
+        where: { tournamentId_playerId: { tournamentId: match.tournamentId, playerId } },
+        data: {
+          chicecePlusMinus: { increment: teamAWon ? delta : -delta },
+          chiceceMatchesPlayed: { increment: 1 },
+        },
+      })
+    }
+    for (const playerId of teamBPlayerIds) {
+      await tx.tournamentRegistration.update({
+        where: { tournamentId_playerId: { tournamentId: match.tournamentId, playerId } },
+        data: {
+          chicecePlusMinus: { increment: teamAWon ? -delta : delta },
+          chiceceMatchesPlayed: { increment: 1 },
+        },
+      })
+    }
+  })
+
+  revalidatePath(`/tournaments/${match.tournamentId}`)
+}
+
+export async function advanceChiceceToFinals(tournamentId: string) {
+  const tournament = await db.tournament.findUniqueOrThrow({
+    where: { id: tournamentId },
+    include: {
+      registrations: {
+        include: { player: true },
+        orderBy: { chicecePlusMinus: "desc" },
+      },
+    },
+  })
+
+  if (tournament.chicecePhase !== "GROUP") throw new Error("Non in fase gironi")
+
+  const top4 = tournament.registrations.slice(0, 4)
+  if (top4.length < 4) throw new Error("Servono almeno 4 giocatori per la finale")
+
+  // Snake draft: Pair A = (1st + 4th), Pair B = (2nd + 3rd)
+  const pairA = [top4[0].playerId, top4[3].playerId]
+  const pairB = [top4[1].playerId, top4[2].playerId]
+
+  await db.$transaction(async (tx) => {
+    await tx.match.create({
+      data: {
+        tournamentId,
+        round: 1,
+        matchNumber: 1,
+        bracketSection: "FINAL",
+        players: {
+          create: [
+            { playerId: pairA[0], team: 0 },
+            { playerId: pairA[1], team: 0 },
+            { playerId: pairB[0], team: 1 },
+            { playerId: pairB[1], team: 1 },
+          ],
+        },
+      },
+    })
+
+    await tx.tournament.update({
+      where: { id: tournamentId },
+      data: { chicecePhase: "FINAL" },
+    })
+  })
+
+  revalidatePath(`/tournaments/${tournamentId}`)
+}
+
+export async function submitChiceceFinalScore(
+  matchId: string,
+  teamAScore: number,
+  teamBScore: number,
+) {
+  if (teamAScore === teamBScore) throw new Error("Il risultato non può essere in parità")
+
+  const match = await db.match.findUniqueOrThrow({
+    where: { id: matchId },
+    include: { players: true },
+  })
+
+  if (match.isCompleted) throw new Error("Finale già completata")
+  if (match.bracketSection !== "FINAL") throw new Error("Non è la partita finale")
+
+  await db.match.update({
+    where: { id: matchId },
+    data: { teamAScore, teamBScore, isCompleted: true },
+  })
+
+  await db.tournament.update({
+    where: { id: match.tournamentId },
+    data: { status: "COMPLETED" },
+  })
+
+  revalidatePath(`/tournaments/${match.tournamentId}`)
+  revalidatePath("/tournaments")
 }
 
 export async function completeTournament(tournamentId: string) {

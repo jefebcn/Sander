@@ -19,6 +19,7 @@ enum TournamentType {
   BRACKETS
   ROUND_ROBIN
   DOUBLE_ELIMINATION
+  CHICECE
 }
 
 enum TournamentStatus {
@@ -186,8 +187,10 @@ model Tournament {
   type   TournamentType
   status TournamentStatus @default(DRAFT)
 
-  kotbTotalRounds Int?
-  numCourts       Int @default(2)
+  kotbTotalRounds   Int?
+  numCourts         Int @default(2)
+  chiceceMatchCount Int @default(4)
+  chicecePhase      String @default("GROUP")
 
   registrations TournamentRegistration[]
   matches       Match[]
@@ -200,9 +203,11 @@ model TournamentRegistration {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
 
-  tournamentId String
-  playerId     String
-  seedPosition Int?
+  tournamentId         String
+  playerId             String
+  seedPosition         Int?
+  chicecePlusMinus     Int @default(0)
+  chiceceMatchesPlayed Int @default(0)
 
   tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   player     Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
