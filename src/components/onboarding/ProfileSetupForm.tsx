@@ -2,6 +2,7 @@
 
 import { useState, useRef, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import { signOut } from "next-auth/react"
 import { ChevronLeft, Camera, ChevronRight, X } from "lucide-react"
 import { saveProfile } from "@/actions/profile"
 import { cn } from "@/lib/utils"
@@ -263,7 +264,10 @@ export function ProfileSetupForm() {
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 3.5rem)" }}
       >
         <button
-          onClick={() => router.push("/")}
+          onClick={() => {
+            localStorage.removeItem("sander_onboarded")
+            signOut({ callbackUrl: "/" })
+          }}
           aria-label="Indietro"
           className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2a2a2a] text-white transition-colors active:bg-[#333]"
         >
