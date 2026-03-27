@@ -94,22 +94,31 @@ export default async function ProfilePage({ searchParams }: Props) {
   const promoCode = buildPromoCode(player.id)
 
   // Admin data (only fetched when admin views the admin tab)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let adminSessions: any[] = []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let adminTournaments: any[] = []
+  let adminError: string | null = null
 
-  const adminSessions = isAdmin && activeTab === "admin"
-    ? await db.session.findMany({
-        orderBy: { date: "desc" },
-        include: {
-          organizer: { select: { name: true } },
-          _count: { select: { participants: true } },
-        },
-      })
-    : []
-  const adminTournaments = isAdmin && activeTab === "admin"
-    ? await db.tournament.findMany({
-        orderBy: { date: "desc" },
-        include: { _count: { select: { registrations: true } } },
-      })
-    : []
+  if (isAdmin && activeTab === "admin") {
+    try {
+      ;[adminSessions, adminTournaments] = await Promise.all([
+        db.session.findMany({
+          orderBy: { date: "desc" },
+          include: {
+            organizer: { select: { name: true } },
+            _count: { select: { participants: true } },
+          },
+        }),
+        db.tournament.findMany({
+          orderBy: { date: "desc" },
+          include: { _count: { select: { registrations: true } } },
+        }),
+      ])
+    } catch (e) {
+      adminError = e instanceof Error ? e.message : String(e)
+    }
+  }
 
   const TABS = [
     { id: "profilo",      label: "Profilo" },
@@ -341,6 +350,14 @@ export default async function ProfilePage({ searchParams }: Props) {
               </div>
             ))}
           </div>
+
+          {/* DB error display */}
+          {adminError && (
+            <div className="rounded-2xl px-4 py-3 text-xs font-mono break-all"
+              style={{ background: "#ef444420", color: "#ef4444" }}>
+              {adminError}
+            </div>
+          )}
 
           {/* Video management — fully client-side to avoid SSR serialization issues */}
           <AdminVideoSection />
