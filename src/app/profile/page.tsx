@@ -107,17 +107,24 @@ export default async function ProfilePage({ searchParams }: Props) {
     ? await getMyVideos().catch(() => [])
     : []
 
-  // Serialize dates to strings for client components
+  // Serialize ALL Date fields — Next.js cannot pass Date objects Server→Client
   const pendingVideos = pendingVideosRaw.map((v) => ({
-    ...v,
+    id: v.id,
+    blobUrl: v.blobUrl,
     createdAt: v.createdAt.toISOString(),
+    player: v.player,
   }))
   const approvedVideosFull = approvedVideosRaw.map((v) => ({
-    ...v,
+    id: v.id,
+    blobUrl: v.blobUrl,
     reviewedAt: v.reviewedAt?.toISOString() ?? null,
+    player: v.player,
   }))
   const myVideos = myVideosRaw.map((v) => ({
-    ...v,
+    id: v.id,
+    blobUrl: v.blobUrl,
+    status: v.status,
+    note: v.note,
     createdAt: v.createdAt.toISOString(),
   }))
 
