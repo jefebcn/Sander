@@ -16,6 +16,7 @@ import { AdminVideoReview } from "@/components/profile/AdminVideoReview"
 import { AdminApprovedVideos } from "@/components/profile/AdminApprovedVideos"
 import { MyVideos } from "@/components/profile/MyVideos"
 import { getPendingVideos, getApprovedVideosFull, getMyVideos } from "@/actions/videos"
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary"
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
 
@@ -387,7 +388,9 @@ export default async function ProfilePage({ searchParams }: Props) {
                 </span>
               )}
             </div>
-            <AdminVideoReview submissions={pendingVideos} />
+            <ErrorBoundary label="Errore caricamento video in attesa">
+              <AdminVideoReview submissions={pendingVideos} />
+            </ErrorBoundary>
           </div>
 
           {/* Approved videos — admin can delete from community */}
@@ -395,7 +398,9 @@ export default async function ProfilePage({ searchParams }: Props) {
             <p className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
               Video pubblicati
             </p>
-            <AdminApprovedVideos submissions={approvedVideosFull} />
+            <ErrorBoundary label="Errore caricamento video pubblicati">
+              <AdminApprovedVideos submissions={approvedVideosFull} />
+            </ErrorBoundary>
           </div>
 
           {/* All sessions */}
