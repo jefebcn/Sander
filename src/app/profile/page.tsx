@@ -2,14 +2,17 @@ export const dynamic = "force-dynamic"
 
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { ArrowUpRight, MapPin, Calendar, Settings } from "lucide-react"
-import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
+import { ArrowUpRight, MapPin, Calendar, Settings, ShieldCheck, Users, Trophy } from "lucide-react"
+import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { SanderCardFifa } from "@/components/player/SanderCardFifa"
 import { SignOutButton } from "@/components/auth/SignOutButton"
 import { InviteTab } from "@/components/profile/InviteTab"
 import { APP_VERSION_DISPLAY } from "@/lib/appVersion"
 import { formatDate } from "@/lib/utils"
+import { StatusBadge } from "@/components/tournament/StatusBadge"
+
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
 
 // ── helpers ──────────────────────────────────────────────────────────
 
@@ -46,12 +49,13 @@ interface Props { searchParams: Promise<{ tab?: string }> }
 
 export default async function ProfilePage({ searchParams }: Props) {
   const { tab } = await searchParams
-  const activeTab = ["profilo", "partite", "organizzate", "invita", "app"].includes(tab ?? "")
-    ? (tab as string)
-    : "profilo"
+  const validTabs = ["profilo", "partite", "organizzate", "invita", "app", "admin"]
+  const activeTab = validTabs.includes(tab ?? "") ? (tab as string) : "profilo"
 
-  const player = await getCurrentPlayer()
+  const [player, session] = await Promise.all([getCurrentPlayer(), getCurrentSession()])
   if (!player) redirect("/auth/signin?callbackUrl=/profile")
+
+  const isAdmin = ADMIN_EMAIL && session?.user?.email === ADMIN_EMAIL
 
   // Always fetch core player data
   const [fullPlayer, streak] = await Promise.all([
@@ -86,12 +90,30 @@ export default async function ProfilePage({ searchParams }: Props) {
 
   const promoCode = buildPromoCode(player.id)
 
+  // Admin data (only fetched when admin views the admin tab)
+  const adminSessions = isAdmin && activeTab === "admin"
+    ? await db.session.findMany({
+        orderBy: { date: "desc" },
+        include: {
+          organizer: { select: { name: true } },
+          _count: { select: { participants: true } },
+        },
+      })
+    : []
+  const adminTournaments = isAdmin && activeTab === "admin"
+    ? await db.tournament.findMany({
+        orderBy: { date: "desc" },
+        include: { _count: { select: { registrations: true } } },
+      })
+    : []
+
   const TABS = [
     { id: "profilo",      label: "Profilo" },
     { id: "partite",      label: "Partite" },
     { id: "organizzate",  label: "Organizzate" },
     { id: "invita",       label: "Invita" },
     { id: "app",          label: "App" },
+    ...(isAdmin ? [{ id: "admin", label: "⚙ Admin" }] : []),
   ]
 
   return (
@@ -282,6 +304,80 @@ export default async function ProfilePage({ searchParams }: Props) {
           <p className="pt-4 text-xs text-[var(--muted-text)] px-2">
             Versione app {APP_VERSION_DISPLAY}
           </p>
+        </div>
+      )}
+
+      {/* ══ Admin tab ═════════════════════════════════════════ */}
+      {activeTab === "admin" && isAdmin && (
+        <div className="px-4 space-y-5">
+
+          {/* Stats row */}
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: "Sessioni", value: adminSessions.length, icon: Users },
+              { label: "Tornei",   value: adminTournaments.length, icon: Trophy },
+              { label: "Totale",   value: adminSessions.length + adminTournaments.length, icon: ShieldCheck },
+            ].map(({ label, value, icon: Icon }) => (
+              <div key={label} className="flex flex-col items-center gap-1 rounded-2xl bg-[var(--surface-2)] py-4">
+                <Icon className="h-5 w-5 text-[var(--accent)]" />
+                <span className="text-2xl font-black text-white">{value}</span>
+                <span className="text-xs text-[var(--muted-text)]">{label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* All sessions */}
+          <div>
+            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
+              Tutte le sessioni
+            </p>
+            <div className="space-y-2">
+              {adminSessions.map((s) => (
+                <Link
+                  key={s.id}
+                  href={`/sessions/${s.id}`}
+                  className="flex items-start gap-3 rounded-2xl bg-[var(--surface-2)] p-3 active:opacity-80"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-white text-sm truncate">{s.title}</p>
+                    <p className="text-xs text-[var(--muted-text)]">
+                      {s.organizer.name} · {formatDate(s.date)} · {s._count.participants} partecipanti
+                    </p>
+                  </div>
+                  <span
+                    className="shrink-0 text-xs font-bold"
+                    style={{ color: STATUS_COLORS[s.status] ?? "var(--muted-text)" }}
+                  >
+                    {STATUS_LABELS[s.status] ?? s.status}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* All tournaments */}
+          <div>
+            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
+              Tutti i tornei
+            </p>
+            <div className="space-y-2">
+              {adminTournaments.map((t) => (
+                <Link
+                  key={t.id}
+                  href={`/tournaments/${t.id}`}
+                  className="flex items-start gap-3 rounded-2xl bg-[var(--surface-2)] p-3 active:opacity-80"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-white text-sm truncate">{t.name}</p>
+                    <p className="text-xs text-[var(--muted-text)]">
+                      {formatDate(t.date)} · {t._count.registrations} iscritti
+                    </p>
+                  </div>
+                  <StatusBadge status={t.status as "DRAFT" | "LIVE" | "COMPLETED"} />
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>

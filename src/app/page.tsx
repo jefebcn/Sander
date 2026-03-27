@@ -7,6 +7,7 @@ import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { ratingToDisplayLevel } from "@/lib/tournament/glicko2"
 import { getPersonalizedRecommendations } from "@/actions/recommendations"
+import { LevelUpCelebration } from "@/components/home/LevelUpCelebration"
 
 export default async function Home() {
   const player = await getCurrentPlayer()
@@ -293,6 +294,12 @@ export default async function Home() {
                 ))}
               </div>
             )}
+
+            {/* ── Level up celebration (client, checks localStorage) ── */}
+            <LevelUpCelebration
+              currentLevel={fullPlayer.level}
+              playerName={fullPlayer.name}
+            />
 
             {/* ── Social section ────────────────────────────────── */}
             <div className="mt-1">

@@ -1,7 +1,7 @@
 "use client"
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { useState, useTransition, useEffect } from "react"
+import { useRouter, usePathname } from "next/navigation"
 import { Home, Users, User, Activity } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useHaptic } from "@/lib/useHaptic"
@@ -18,38 +18,47 @@ function BeachNetIcon({ className }: { className?: string }) {
       className={className}
       aria-hidden="true"
     >
-      {/* Left pole */}
       <line x1="3" y1="3" x2="3" y2="20" />
-      {/* Right pole */}
       <line x1="21" y1="3" x2="21" y2="20" />
-      {/* Top tape */}
       <line x1="3" y1="9" x2="21" y2="9" />
-      {/* Net bottom edge */}
       <line x1="3" y1="15" x2="21" y2="15" />
-      {/* Vertical net dividers */}
       <line x1="8" y1="9" x2="8" y2="15" />
       <line x1="12" y1="9" x2="12" y2="15" />
       <line x1="16" y1="9" x2="16" y2="15" />
-      {/* Ground */}
       <line x1="1" y1="20" x2="23" y2="20" />
     </svg>
   )
 }
 
 const NAV_ITEMS = [
-  { href: "/", icon: Home, label: "Home" },
+  { href: "/",        icon: Home,        label: "Home" },
   { href: "/sessions", icon: BeachNetIcon, label: "Partite" },
-  { href: "/feed", icon: Activity, label: "Feed" },
-  { href: "/players", icon: Users, label: "Giocatori" },
-  { href: "/profile", icon: User, label: "Profilo" },
+  { href: "/feed",    icon: Activity,    label: "Feed" },
+  { href: "/players", icon: Users,       label: "Giocatori" },
+  { href: "/profile", icon: User,        label: "Profilo" },
 ]
 
 export function MobileNav() {
+  const router = useRouter()
   const pathname = usePathname()
   const haptic = useHaptic()
+  const [, startTransition] = useTransition()
+  // Optimistic path — updates immediately on tap for instant active-state feedback
+  const [optimisticPath, setOptimisticPath] = useState<string | null>(null)
 
-  // Hide nav on auth and onboarding routes
+  // Sync back once real navigation completes
+  useEffect(() => { setOptimisticPath(null) }, [pathname])
+
   if (pathname.startsWith("/auth/") || pathname.startsWith("/onboarding/")) return null
+
+  const displayPath = optimisticPath ?? pathname
+
+  function navigate(href: string) {
+    if (displayPath === href || (href !== "/" && displayPath.startsWith(href))) return
+    haptic("light")
+    setOptimisticPath(href)           // instant visual switch
+    startTransition(() => router.push(href))
+  }
 
   return (
     <nav
@@ -61,25 +70,29 @@ export function MobileNav() {
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
       >
         {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
-          const active = pathname === href || (href !== "/" && pathname.startsWith(href))
+          const active = displayPath === href || (href !== "/" && displayPath.startsWith(href))
           return (
-            <Link
+            <button
               key={href}
-              href={href}
+              onClick={() => navigate(href)}
               aria-label={label}
               aria-current={active ? "page" : undefined}
-              onClick={() => haptic("light")}
               className={cn(
-                "relative flex flex-1 flex-col items-center gap-1.5 pb-1 text-xs font-medium transition-colors duration-150",
-                active ? "text-[var(--accent)]" : "text-[var(--muted-text)] hover:text-[var(--foreground)]",
+                "relative flex flex-1 flex-col items-center gap-1.5 pb-1 text-xs font-medium",
+                "transition-colors duration-100",
+                "active:scale-90",
+                active
+                  ? "text-[var(--accent)]"
+                  : "text-[var(--muted-text)]",
               )}
+              style={{ WebkitTapHighlightColor: "transparent" }}
             >
               <Icon className="h-7 w-7" />
               <span>{label}</span>
               {active && (
                 <span className="absolute top-0 left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-[var(--accent)]" />
               )}
-            </Link>
+            </button>
           )
         })}
       </div>
