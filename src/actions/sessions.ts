@@ -45,6 +45,9 @@ export async function createSession(input: unknown) {
       maxPlayers,
       courtCost: data.courtCost ?? null,
       notes: data.notes ?? null,
+      paymentType: data.paymentType ?? "FREE",
+      quotaAmount: data.paymentType === "QUOTA" ? (data.quotaAmount ?? null) : null,
+      loserPays: data.paymentType === "LOSER_PAYS" ? (data.loserPays ?? null) : null,
     },
   })
 

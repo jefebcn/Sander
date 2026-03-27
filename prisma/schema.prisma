@@ -299,6 +299,11 @@ model Session {
   courtCost  Int?
   notes      String?
 
+  // Payment
+  paymentType String  @default("FREE")  // "FREE" | "QUOTA" | "LOSER_PAYS"
+  quotaAmount Int?                       // cents, per-person fixed quota
+  loserPays   String?                    // e.g. "1 birra", "una cena"
+
   status SessionStatus @default(OPEN)
 
   participants SessionParticipant[]

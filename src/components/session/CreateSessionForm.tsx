@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { MapPin, ChevronRight } from "lucide-react"
+import { MapPin, ChevronRight, Banknote, Beer, Gift } from "lucide-react"
 import { createSession } from "@/actions/sessions"
 import { cn } from "@/lib/utils"
 
@@ -13,6 +13,13 @@ const FORMATS = [
 ] as const
 
 type Format = (typeof FORMATS)[number]["value"]
+type PaymentType = "FREE" | "QUOTA" | "LOSER_PAYS"
+
+const PAYMENT_OPTIONS: { value: PaymentType; label: string; sub: string; icon: React.ElementType }[] = [
+  { value: "FREE",        label: "Gratis",        sub: "Nessuna quota",         icon: Gift },
+  { value: "QUOTA",       label: "A quota",        sub: "Ognuno paga la sua parte", icon: Banknote },
+  { value: "LOSER_PAYS",  label: "Chi perde paga", sub: "Birra, cena…",          icon: Beer },
+]
 
 export function CreateSessionForm() {
   const router = useRouter()
@@ -23,8 +30,11 @@ export function CreateSessionForm() {
   const [location, setLocation] = useState("")
   const [date, setDate] = useState(new Date().toISOString().slice(0, 16))
   const [format, setFormat] = useState<Format>("TWO_VS_TWO")
-  const [courtCost, setCourtCost] = useState("")
   const [notes, setNotes] = useState("")
+
+  const [paymentType, setPaymentType] = useState<PaymentType>("FREE")
+  const [quotaAmount, setQuotaAmount] = useState("")
+  const [loserPays, setLoserPays] = useState("")
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -36,8 +46,12 @@ export function CreateSessionForm() {
           location,
           date: new Date(date),
           format,
-          courtCost: courtCost ? Math.round(parseFloat(courtCost) * 100) : undefined,
           notes: notes || undefined,
+          paymentType,
+          quotaAmount: paymentType === "QUOTA" && quotaAmount
+            ? Math.round(parseFloat(quotaAmount) * 100)
+            : undefined,
+          loserPays: paymentType === "LOSER_PAYS" && loserPays ? loserPays : undefined,
         })
         router.push(`/sessions/${session.id}`)
       } catch (err) {
@@ -112,24 +126,65 @@ export function CreateSessionForm() {
         </div>
       </div>
 
-      {/* Court cost (optional) */}
-      <div className="space-y-1.5">
-        <label className="text-sm font-semibold text-[var(--muted-text)]">
-          Costo campo (€) <span className="font-normal opacity-60">— opzionale</span>
-        </label>
-        <input
-          type="number"
-          min="0"
-          step="0.5"
-          value={courtCost}
-          onChange={(e) => setCourtCost(e.target.value)}
-          placeholder="es. 20"
-          className="w-full rounded-xl bg-[var(--surface-2)] px-4 py-3 text-base text-[var(--foreground)] placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-        />
-        {courtCost && (
-          <p className="text-xs text-[var(--muted-text)]">
-            ≈ €{(parseFloat(courtCost) / { TWO_VS_TWO: 4, THREE_VS_THREE: 6, FOUR_VS_FOUR: 8 }[format]).toFixed(2)} a persona
-          </p>
+      {/* Payment type */}
+      <div className="space-y-2">
+        <label className="text-sm font-semibold text-[var(--muted-text)]">Modalità di pagamento</label>
+        <div className="grid grid-cols-3 gap-2">
+          {PAYMENT_OPTIONS.map(({ value, label, sub, icon: Icon }) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setPaymentType(value)}
+              className={cn(
+                "flex min-h-[5rem] flex-col items-center justify-center gap-1 rounded-2xl border-2 p-3 text-xs font-bold transition-colors",
+                paymentType === value
+                  ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
+                  : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted-text)]",
+              )}
+            >
+              <Icon className="h-5 w-5" />
+              {label}
+              <span className="text-[0.65rem] font-normal text-center leading-tight opacity-70">{sub}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* QUOTA — amount input */}
+        {paymentType === "QUOTA" && (
+          <div className="flex items-center gap-3 rounded-2xl bg-[var(--surface-2)] px-4 py-3">
+            <Banknote className="h-5 w-5 shrink-0 text-[var(--accent)]" />
+            <div className="flex-1">
+              <p className="text-xs text-[var(--muted-text)] mb-1">Quota a persona (€)</p>
+              <input
+                type="number"
+                min="0"
+                step="0.50"
+                value={quotaAmount}
+                onChange={(e) => setQuotaAmount(e.target.value)}
+                placeholder="es. 8.00"
+                className="w-full bg-transparent text-lg font-black text-white focus:outline-none placeholder:text-[var(--muted-text)] placeholder:font-normal placeholder:text-base"
+              />
+            </div>
+            <span className="text-2xl font-black text-[var(--accent)]">€</span>
+          </div>
+        )}
+
+        {/* LOSER_PAYS — description input */}
+        {paymentType === "LOSER_PAYS" && (
+          <div className="flex items-center gap-3 rounded-2xl bg-[var(--surface-2)] px-4 py-3">
+            <Beer className="h-5 w-5 shrink-0 text-[var(--accent)]" />
+            <div className="flex-1">
+              <p className="text-xs text-[var(--muted-text)] mb-1">Cosa paga chi perde?</p>
+              <input
+                type="text"
+                maxLength={60}
+                value={loserPays}
+                onChange={(e) => setLoserPays(e.target.value)}
+                placeholder="es. 1 birra a testa, una cena…"
+                className="w-full bg-transparent text-base font-semibold text-white focus:outline-none placeholder:text-[var(--muted-text)] placeholder:font-normal"
+              />
+            </div>
+          </div>
         )}
       </div>
 

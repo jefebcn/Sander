@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { MapPin, Users, Euro } from "lucide-react"
+import { MapPin, Users, Euro, Beer } from "lucide-react"
 import { SessionStatusBadge } from "./SessionStatusBadge"
 import { cn } from "@/lib/utils"
 
@@ -18,6 +18,9 @@ interface SessionCardProps {
     format: string
     maxPlayers: number
     courtCost: number | null
+    paymentType?: string | null
+    quotaAmount?: number | null
+    loserPays?: string | null
     status: "OPEN" | "FULL" | "COMPLETED" | "CANCELLED"
     organizer: { name: string }
     _count: { participants: number }
@@ -26,10 +29,15 @@ interface SessionCardProps {
 
 export function SessionCard({ session }: SessionCardProps) {
   const spotsLeft = session.maxPlayers - session._count.participants
-  const costPerPlayer =
-    session.courtCost && session._count.participants > 0
-      ? Math.ceil(session.courtCost / session.maxPlayers / 100)
-      : null
+
+  // Resolve what to show for payment
+  const paymentType = session.paymentType ?? "FREE"
+  const quotaDisplay =
+    paymentType === "QUOTA" && session.quotaAmount != null
+      ? `${(session.quotaAmount / 100).toFixed(2)} €`
+      : paymentType === "FREE" && session.courtCost && session._count.participants > 0
+        ? `${Math.ceil(session.courtCost / session.maxPlayers / 100)} €`
+        : null
 
   const dateObj = new Date(session.date)
   const timeStr = dateObj.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })
@@ -77,10 +85,18 @@ export function SessionCard({ session }: SessionCardProps) {
               {spotsLeft} {spotsLeft === 1 ? "posto" : "posti"}
             </span>
           )}
-          {costPerPlayer !== null && (
-            <span className="flex items-center gap-0.5 text-[var(--muted-text)]">
-              <Euro className="h-3 w-3" />
-              {costPerPlayer}
+          {/* QUOTA: show amount */}
+          {quotaDisplay && (
+            <span className="flex items-center gap-0.5 font-bold text-white">
+              <Euro className="h-3 w-3 text-[var(--accent)]" />
+              {quotaDisplay}
+            </span>
+          )}
+          {/* LOSER_PAYS: show beer icon + short text */}
+          {paymentType === "LOSER_PAYS" && (
+            <span className="flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold bg-amber-500/15 text-amber-400">
+              <Beer className="h-3 w-3" />
+              {session.loserPays ? session.loserPays : "Chi perde paga"}
             </span>
           )}
         </div>
