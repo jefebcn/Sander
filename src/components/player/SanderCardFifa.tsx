@@ -29,32 +29,40 @@ function clamp(v: number, lo: number, hi: number) {
 }
 
 function computeStats(p: FifaCardPlayer) {
-  const avg = p.avgRating            // 0–100 stored, shown as /10
+  const avg    = p.avgRating         // 0–100 stored, shown as /10
   const glicko = p.glickoRating      // ~1500 default
-  const wr = p.winRatePct            // 0–100
+  const wr     = p.winRatePct        // 0–100
 
   // Overall — blend avgRating (60%), glicko (30%), level bonus (10%)
   const overall = clamp(avg * 0.6 + (glicko / 2400) * 99 * 0.3 + Math.min(p.level * 2, 20) * 0.1, 40, 99)
 
-  // ATT — how well they score / win
+  // ATT — offensive power (avg + win rate)
   const att = clamp(avg * 0.7 + wr * 0.3, 40, 99)
 
-  // DIF — consistency + low flop
-  const flopPenalty = Math.min(p.flopVotes * 3, 20)
-  const dif = clamp(avg * 0.5 + wr * 0.3 + 20 - flopPenalty, 40, 99)
+  // DIF — defensive consistency, penalised by flop votes
+  const flopPenDif = Math.min(p.flopVotes * 3, 20)
+  const dif = clamp(avg * 0.5 + wr * 0.3 + 20 - flopPenDif, 40, 99)
 
-  // SKL — glicko-driven
-  const skl = clamp((glicko / 2400) * 99 * 0.65 + avg * 0.35, 40, 99)
+  // MUR — blocking / technical ceiling (Glicko-driven)
+  const mur = clamp((glicko / 2400) * 99 * 0.6 + wr * 0.4, 40, 99)
 
-  // SOC — social / participation
-  const socBase = Math.min(p.sessionsPlayed * 2.5, 50) + Math.min(p.organizedSessions * 5, 30)
-  const soc = clamp(avg * 0.5 + socBase * 0.5, 40, 99)
+  // ALZ — setting / game vision (avg rating + experience level)
+  const lvlBonus = Math.min(p.level * 4, 30)
+  const alz = clamp(avg * 0.7 + lvlBonus * 0.3, 40, 99)
 
-  return { overall, att, dif, skl, soc }
+  // RIC — reception / passing (consistency, fewer errors)
+  const flopPenRic = Math.min(p.flopVotes * 2, 15)
+  const ric = clamp(avg * 0.6 + wr * 0.25 + 15 - flopPenRic, 40, 99)
+
+  // STA — stamina / activity (sessions played + recent streak)
+  const sessBase = Math.min(p.sessionsPlayed * 2, 50)
+  const sta = clamp(avg * 0.3 + sessBase * 0.5 + p.streak * 2, 40, 99)
+
+  return { overall, att, dif, mur, alz, ric, sta }
 }
 
 export function SanderCardFifa({ player }: SanderCardFifaProps) {
-  const { overall, att, dif, skl, soc } = computeStats(player)
+  const { overall, att, dif, mur, alz, ric, sta } = computeStats(player)
   const avgDisplay = player.avgRating > 0 ? (player.avgRating / 10).toFixed(1) : "—"
   const streakPct = player.matchesWon + player.matchesLost > 0
     ? Math.round((player.matchesWon / (player.matchesWon + player.matchesLost)) * 100)
@@ -81,7 +89,6 @@ export function SanderCardFifa({ player }: SanderCardFifaProps) {
 
         {/* ── Top row: overall + avatar ─────────────────────── */}
         <div className="flex items-start justify-between">
-          {/* Left: overall + flag + level badge */}
           <div className="flex flex-col items-start gap-2">
             <span
               className="text-[5.5rem] font-black leading-none text-white"
@@ -89,9 +96,7 @@ export function SanderCardFifa({ player }: SanderCardFifaProps) {
             >
               {overall}
             </span>
-            {/* Italian flag */}
             <span className="text-2xl">🇮🇹</span>
-            {/* Level badge */}
             <div
               className="flex h-10 w-10 items-center justify-center rounded-full text-xs font-black text-[var(--accent)]"
               style={{
@@ -103,7 +108,6 @@ export function SanderCardFifa({ player }: SanderCardFifaProps) {
             </div>
           </div>
 
-          {/* Right: circular avatar */}
           <div
             className="h-36 w-36 overflow-hidden rounded-full flex-shrink-0"
             style={{
@@ -163,27 +167,29 @@ export function SanderCardFifa({ player }: SanderCardFifaProps) {
           ))}
         </div>
 
-        {/* ── ATT / DIF / SKL / SOC ─────────────────────────── */}
+        {/* ── ATT / DIF / MUR / ALZ / RIC / STA — 3×2 grid ── */}
         <div
-          className="grid grid-cols-2 divide-x"
-          style={{ borderColor: "rgba(255,255,255,0.1)" }}
+          className="grid grid-cols-3"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}
         >
           {[
             { label: "ATT", value: att },
             { label: "DIF", value: dif },
-            { label: "SKL", value: skl },
-            { label: "SOC", value: soc },
+            { label: "MUR", value: mur },
+            { label: "ALZ", value: alz },
+            { label: "RIC", value: ric },
+            { label: "STA", value: sta },
           ].map(({ label, value }, i) => (
             <div
               key={label}
-              className="flex items-baseline gap-2 px-4 py-3"
+              className="flex items-baseline gap-1.5 px-3 py-3"
               style={{
-                borderColor: "rgba(255,255,255,0.1)",
-                borderBottom: i < 2 ? "1px solid rgba(255,255,255,0.1)" : undefined,
+                borderRight: (i + 1) % 3 !== 0 ? "1px solid rgba(255,255,255,0.1)" : undefined,
+                borderBottom: i < 3 ? "1px solid rgba(255,255,255,0.1)" : undefined,
               }}
             >
-              <span className="text-4xl font-black text-white leading-none">{value}</span>
-              <span className="text-sm font-bold" style={{ color: "rgba(255,255,255,0.5)" }}>{label}</span>
+              <span className="text-3xl font-black text-white leading-none">{value}</span>
+              <span className="text-xs font-bold" style={{ color: "rgba(255,255,255,0.5)" }}>{label}</span>
             </div>
           ))}
         </div>
@@ -205,7 +211,6 @@ export function SanderCardFifa({ player }: SanderCardFifaProps) {
                   style={{ left: `${streakPct}%`, background: "rgba(14,34,8,0.75)" }}
                 />
               )}
-              {/* Thumb */}
               <div
                 className="absolute top-1/2 h-4 w-1.5 -translate-y-1/2 rounded-sm bg-white shadow"
                 style={{ left: `${Math.max(0, Math.min(93, streakPct))}%` }}
@@ -222,7 +227,7 @@ export function SanderCardFifa({ player }: SanderCardFifaProps) {
 
         {/* ── Condividi su Instagram ────────────────────────── */}
         <a
-          href="https://www.instagram.com"
+          href="https://www.instagram.com/sanderbeachvolley/"
           target="_blank"
           rel="noopener noreferrer"
           className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl text-base font-black text-[var(--accent)] transition-opacity active:opacity-70"

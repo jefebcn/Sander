@@ -1,5 +1,9 @@
 import Link from "next/link"
-import { ChevronLeft, Zap, Shield, Sparkles, Users, Star, BarChart2, Trophy, ClipboardList, TrendingUp } from "lucide-react"
+import {
+  ChevronLeft,
+  Zap, Shield, Square, ArrowUp, Radio, Activity,
+  Star, BarChart2, Trophy, ClipboardList, TrendingUp,
+} from "lucide-react"
 
 export default function StatsGuidePage() {
   return (
@@ -35,7 +39,7 @@ export default function StatsGuidePage() {
           </p>
         </div>
 
-        {/* Section: Stats tecnici */}
+        {/* Section: Stats di gioco */}
         <SectionTitle>Statistiche di gioco</SectionTitle>
 
         <StatCard
@@ -43,12 +47,12 @@ export default function StatsGuidePage() {
           abbr="ATT"
           fullName="Attacco"
           color="#f97316"
-          description="Misura la tua capacità offensiva: quanto sei efficace nel segnare punti e vincere le partite."
+          description="Misura la tua capacità offensiva: quanto sei efficace nel fare punti e nel vincere le partite."
           formula={[
             { pct: "70%", label: "Media voti ricevuti" },
             { pct: "30%", label: "Percentuale di vittorie" },
           ]}
-          tip="Vinci partite e fatti votare bene per far crescere l'ATT."
+          tip="Vinci partite e fatti votare bene dai compagni per far crescere l'ATT."
         />
 
         <StatCard
@@ -56,40 +60,69 @@ export default function StatsGuidePage() {
           abbr="DIF"
           fullName="Difesa"
           color="#3b82f6"
-          description="Rappresenta la tua solidità e consistenza in campo. Pochi errori gravi (flop) = alta DIF."
+          description="Rappresenta la tua solidità difensiva e la tua consistenza in campo. Pochi errori gravi (voti Flop) = alta DIF."
           formula={[
             { pct: "50%", label: "Media voti ricevuti" },
             { pct: "30%", label: "Percentuale di vittorie" },
             { pct: "20%", label: "Bonus base, ridotto dai voti Flop" },
           ]}
-          tip="Ogni voto Flop che ricevi riduce la tua DIF. Gioca pulito!"
+          tip="Ogni voto Flop riduce la tua DIF. Gioca pulito e senza errori grossolani!"
           warning="I voti Flop possono abbassare questo parametro fino a -20 punti."
         />
 
         <StatCard
-          icon={Sparkles}
-          abbr="SKL"
-          fullName="Tecnica"
+          icon={Square}
+          abbr="MUR"
+          fullName="Muro"
           color="#a855f7"
-          description="Il tuo livello tecnico reale, basato principalmente sul rating Glicko-2 che si aggiorna partita dopo partita in base alla forza degli avversari."
+          description="Riflette la tua abilità a muro e il tuo livello tecnico reale. Basato principalmente sul rating Glicko-2, che cresce battendo avversari più forti."
           formula={[
-            { pct: "65%", label: "Rating Glicko-2 (sistema ELO avanzato)" },
-            { pct: "35%", label: "Media voti ricevuti" },
+            { pct: "60%", label: "Rating Glicko-2 (sistema ELO avanzato)" },
+            { pct: "40%", label: "Percentuale di vittorie" },
           ]}
-          tip="La SKL cresce battendo avversari più forti di te."
+          tip="Il MUR cresce sfidando e battendo giocatori più forti di te nei tornei."
         />
 
         <StatCard
-          icon={Users}
-          abbr="SOC"
-          fullName="Socialità"
-          color="#22c55e"
-          description="Quanto sei presente nella community: partecipazione alle sessioni e sessioni organizzate."
+          icon={ArrowUp}
+          abbr="ALZ"
+          fullName="Alzata"
+          color="#06b6d4"
+          description="Rappresenta la tua visione di gioco e la qualità dell'alzata. Combina la valutazione dei compagni con l'esperienza accumulata nel tempo."
           formula={[
-            { pct: "50%", label: "Media voti ricevuti" },
-            { pct: "50%", label: "Presenze (max 50 pt) + sessioni organizzate (max 30 pt)" },
+            { pct: "70%", label: "Media voti ricevuti" },
+            { pct: "30%", label: "Bonus livello (esperienza, max +30 pt)" },
           ]}
-          tip="Organizza sessioni e partecipa regolarmente per massimizzare la SOC."
+          tip="Più livelli accumuli e più voti positivi ricevi, più la tua ALZ cresce."
+        />
+
+        <StatCard
+          icon={Radio}
+          abbr="RIC"
+          fullName="Ricezione"
+          color="#22c55e"
+          description="Indica la tua qualità in ricezione e il tuo contributo difensivo al gioco di squadra. Penalizzata dagli errori ripetuti."
+          formula={[
+            { pct: "60%", label: "Media voti ricevuti" },
+            { pct: "25%", label: "Percentuale di vittorie" },
+            { pct: "15%", label: "Bonus base, ridotto dai voti Flop" },
+          ]}
+          tip="Meno flop ricevi, più alta sarà la tua RIC. Concentrati sulla precisione."
+          warning="I voti Flop riducono anche la RIC, fino a -15 punti."
+        />
+
+        <StatCard
+          icon={Activity}
+          abbr="STA"
+          fullName="Stamina"
+          color="#f59e0b"
+          description="Misura la tua resistenza fisica e la continuità di allenamento. Chi gioca spesso e di recente ha una STA alta."
+          formula={[
+            { pct: "30%", label: "Media voti ricevuti" },
+            { pct: "50%", label: "Sessioni totali giocate (max 50 pt)" },
+            { pct: "20%", label: "Streak recente (sessioni nelle ultime 4 settimane)" },
+          ]}
+          tip="Gioca regolarmente — anche 2-3 sessioni al mese tengono alta la tua STA."
         />
 
         {/* Section: Stats personali */}
@@ -110,7 +143,7 @@ export default function StatsGuidePage() {
           fullName="Media Voti"
           color="var(--accent)"
           description='La media dei voti che hai ricevuto dagli altri giocatori, su scala da 1.0 a 10.0. "—" significa che non hai ancora ricevuto voti.'
-          howUpdated="I giocatori ti votano Super (10), Top (7) o Flop (3) dopo ogni sessione. La media è calcolata su tutti i voti ricevuti."
+          howUpdated="I giocatori ti votano Super (10), Top (7) o Flop (3) dopo ogni sessione. La media è calcolata su tutti i voti ricevuti nel tempo."
         />
 
         <SimpleStatCard
@@ -119,7 +152,7 @@ export default function StatsGuidePage() {
           fullName="Man of the Match"
           color="#facc15"
           description="Quante volte sei stato eletto MVP della partita dai tuoi compagni. È il riconoscimento più alto che puoi ricevere in una sessione."
-          howUpdated="Assegnato automaticamente al termine di una sessione quando ricevi il maggior numero di voti Super."
+          howUpdated="Assegnato automaticamente al termine di una sessione a chi riceve il maggior numero di voti Super."
         />
 
         <SimpleStatCard
@@ -128,7 +161,7 @@ export default function StatsGuidePage() {
           fullName="Organizzate"
           color="var(--accent)"
           description="Il numero di sessioni di beach volley che hai creato e organizzato per la community."
-          howUpdated="Aumenta ogni volta che crei una sessione che viene poi completata."
+          howUpdated="Aumenta ogni volta che organizzi una sessione che viene poi completata."
         />
 
         {/* Section: Streak */}
@@ -153,6 +186,7 @@ export default function StatsGuidePage() {
           <p className="text-sm text-[var(--muted-text)] leading-relaxed">
             La barra Streak mostra quante sessioni hai giocato nelle <strong className="text-white">ultime 4 settimane</strong> (massimo 10).
             Va dal rosso (inattivo) al verde (in forma), con il numero a destra che indica le sessioni recenti.
+            Influisce direttamente sulla tua <strong className="text-white">STA (Stamina)</strong>.
           </p>
           <div
             className="rounded-xl p-3 text-xs text-[var(--muted-text)]"
@@ -171,12 +205,7 @@ export default function StatsGuidePage() {
         >
           <div className="flex items-center justify-between">
             <p className="font-black text-white text-base">OVERALL (40–99)</p>
-            <span
-              className="text-2xl font-black"
-              style={{ color: "var(--accent)" }}
-            >
-              OVR
-            </span>
+            <span className="text-2xl font-black" style={{ color: "var(--accent)" }}>OVR</span>
           </div>
           <p className="text-sm text-[var(--muted-text)] leading-relaxed">
             Il numero grande in alto a sinistra della tua card è il tuo <strong className="text-white">punteggio globale</strong>.
@@ -185,7 +214,7 @@ export default function StatsGuidePage() {
           <div className="space-y-2">
             {[
               { pct: "60%", label: "Media voti ricevuti (AVG)" },
-              { pct: "30%", label: "Rating Glicko-2 (SKL)" },
+              { pct: "30%", label: "Rating Glicko-2 (MUR)" },
               { pct: "10%", label: "Bonus livello (max +20 pt)" },
             ].map(({ pct, label }) => (
               <div key={label} className="flex items-center gap-3">
@@ -217,14 +246,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 function StatCard({
-  icon: Icon,
-  abbr,
-  fullName,
-  color,
-  description,
-  formula,
-  tip,
-  warning,
+  icon: Icon, abbr, fullName, color, description, formula, tip, warning,
 }: {
   icon: React.ElementType
   abbr: string
@@ -240,7 +262,6 @@ function StatCard({
       className="rounded-2xl p-4 space-y-3"
       style={{ background: "var(--surface-2)", border: "1px solid rgba(255,255,255,0.06)" }}
     >
-      {/* Header */}
       <div className="flex items-center gap-3">
         <div
           className="flex h-11 w-11 items-center justify-center rounded-xl flex-shrink-0"
@@ -248,18 +269,14 @@ function StatCard({
         >
           <Icon className="h-5 w-5" style={{ color }} />
         </div>
-        <div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-white">{abbr}</span>
-            <span className="text-sm font-semibold" style={{ color }}>{fullName}</span>
-          </div>
+        <div className="flex items-baseline gap-2">
+          <span className="text-2xl font-black text-white">{abbr}</span>
+          <span className="text-sm font-semibold" style={{ color }}>{fullName}</span>
         </div>
       </div>
 
-      {/* Description */}
       <p className="text-sm text-[var(--muted-text)] leading-relaxed">{description}</p>
 
-      {/* Formula */}
       <div className="space-y-1.5">
         <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.35)" }}>
           Come si calcola
@@ -277,7 +294,6 @@ function StatCard({
         ))}
       </div>
 
-      {/* Warning */}
       {warning && (
         <div
           className="rounded-xl p-3 text-xs leading-relaxed"
@@ -287,7 +303,6 @@ function StatCard({
         </div>
       )}
 
-      {/* Tip */}
       <div
         className="rounded-xl p-3 text-xs leading-relaxed"
         style={{ background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.55)" }}
@@ -299,12 +314,7 @@ function StatCard({
 }
 
 function SimpleStatCard({
-  icon: Icon,
-  abbr,
-  fullName,
-  color,
-  description,
-  howUpdated,
+  icon: Icon, abbr, fullName, color, description, howUpdated,
 }: {
   icon: React.ElementType
   abbr: string
