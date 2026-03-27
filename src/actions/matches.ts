@@ -5,8 +5,15 @@ import { db } from "@/lib/db"
 import { SubmitScoreSchema } from "@/lib/validators/match.schema"
 import type { SubmitScoreInput } from "@/lib/validators/match.schema"
 import { notifyPlayers } from "@/lib/push"
+import { getCurrentSession } from "@/lib/getCurrentPlayer"
+
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
 
 export async function submitScore(input: SubmitScoreInput) {
+  // Must be authenticated
+  const session = await getCurrentSession()
+  if (!session?.user?.id) throw new Error("Non autenticato")
+
   const { matchId, teamAScore, teamBScore } = SubmitScoreSchema.parse(input)
 
   const match = await db.match.findUniqueOrThrow({
@@ -16,6 +23,10 @@ export async function submitScore(input: SubmitScoreInput) {
       tournament: { select: { type: true } },
     },
   })
+
+  // Only admin can submit scores
+  const isAdmin = ADMIN_EMAIL && session.user.email === ADMIN_EMAIL
+  if (!isAdmin) throw new Error("Solo l'amministratore può inserire i risultati")
 
   if (match.isCompleted) {
     throw new Error("Match is already completed")

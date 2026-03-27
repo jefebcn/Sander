@@ -2,7 +2,17 @@
 
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
+import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { CreateTournamentSchema } from "@/lib/validators/tournament.schema"
+
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
+
+async function requireAdmin() {
+  const session = await getCurrentSession()
+  if (!session?.user?.id) throw new Error("Non autenticato")
+  if (!ADMIN_EMAIL || session.user.email !== ADMIN_EMAIL) throw new Error("Accesso non autorizzato")
+}
+
 import type { CreateTournamentInput } from "@/lib/validators/tournament.schema"
 import { generateKOTBSchedule } from "@/lib/tournament/kotb"
 import { generateBracket } from "@/lib/tournament/bracket"
@@ -71,6 +81,7 @@ export async function listTournaments() {
 }
 
 export async function startTournament(tournamentId: string) {
+  await requireAdmin()
   const tournament = await db.tournament.findUniqueOrThrow({
     where: { id: tournamentId },
     include: {
@@ -477,6 +488,7 @@ export async function submitChiceceGroupMatchScore(
   teamAScore: number,
   teamBScore: number,
 ) {
+  await requireAdmin()
   if (teamAScore === teamBScore) throw new Error("Il risultato non può essere in parità")
 
   const match = await db.match.findUniqueOrThrow({
@@ -522,6 +534,7 @@ export async function submitChiceceGroupMatchScore(
 }
 
 export async function advanceChiceceToFinals(tournamentId: string) {
+  await requireAdmin()
   const tournament = await db.tournament.findUniqueOrThrow({
     where: { id: tournamentId },
     include: {
@@ -573,6 +586,7 @@ export async function submitChiceceFinalScore(
   teamAScore: number,
   teamBScore: number,
 ) {
+  await requireAdmin()
   if (teamAScore === teamBScore) throw new Error("Il risultato non può essere in parità")
 
   const match = await db.match.findUniqueOrThrow({
@@ -598,6 +612,7 @@ export async function submitChiceceFinalScore(
 }
 
 export async function completeTournament(tournamentId: string) {
+  await requireAdmin()
   await db.tournament.update({
     where: { id: tournamentId },
     data: { status: "COMPLETED" },

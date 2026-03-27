@@ -2,10 +2,17 @@
 
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
+import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { CreatePlayerSchema, UpdatePlayerSchema } from "@/lib/validators/player.schema"
 import type { CreatePlayerInput, UpdatePlayerInput } from "@/lib/validators/player.schema"
 
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
+
 export async function createPlayer(input: CreatePlayerInput) {
+  // Must be authenticated to create a player profile
+  const session = await getCurrentSession()
+  if (!session?.user?.id) throw new Error("Non autenticato")
+
   const data = CreatePlayerSchema.parse(input)
 
   const player = await db.player.create({
@@ -21,12 +28,20 @@ export async function createPlayer(input: CreatePlayerInput) {
 }
 
 export async function updatePlayer(id: string, input: UpdatePlayerInput) {
-  const data = UpdatePlayerSchema.parse(input)
+  const session = await getCurrentSession()
+  if (!session?.user?.id) throw new Error("Non autenticato")
 
-  const player = await db.player.update({
-    where: { id },
-    data,
-  })
+  // Verify the player belongs to the current user (or caller is admin)
+  const target = await db.player.findUnique({ where: { id }, select: { userId: true } })
+  if (!target) throw new Error("Giocatore non trovato")
+
+  const isAdmin = ADMIN_EMAIL && session.user.email === ADMIN_EMAIL
+  if (!isAdmin && target.userId !== session.user.id) {
+    throw new Error("Non autorizzato")
+  }
+
+  const data = UpdatePlayerSchema.parse(input)
+  const player = await db.player.update({ where: { id }, data })
 
   revalidatePath("/players")
   revalidatePath(`/players/${id}`)
@@ -38,9 +53,7 @@ export async function getPlayer(id: string) {
     where: { id },
     include: {
       registrations: {
-        include: {
-          tournament: true,
-        },
+        include: { tournament: true },
         orderBy: { tournament: { date: "desc" } },
         take: 5,
       },
@@ -55,6 +68,13 @@ export async function listPlayers() {
 }
 
 export async function deletePlayer(id: string) {
+  const session = await getCurrentSession()
+  if (!session?.user?.id) throw new Error("Non autenticato")
+
+  // Only admin can delete players
+  const isAdmin = ADMIN_EMAIL && session.user.email === ADMIN_EMAIL
+  if (!isAdmin) throw new Error("Solo l'amministratore può eliminare i giocatori")
+
   await db.player.delete({ where: { id } })
   revalidatePath("/players")
 }

@@ -222,11 +222,25 @@ body {
 button, a, [role="button"] {
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+  cursor: pointer;
+  /* Promote to GPU layer — eliminates compositor latency on touch */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
-/* Active feedback fires in ≤80ms instead of the default 150ms */
-button:active, a:active, [role="button"]:active {
-  transition-duration: 80ms !important;
+/* On touch screens: kill all transition delays on press — instant feedback */
+@media (hover: none) {
+  button:active, a:active, [role="button"]:active {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* On pointer devices (mouse): fast but smooth */
+@media (hover: hover) {
+  button:active, a:active, [role="button"]:active {
+    transition-duration: 60ms !important;
+  }
 }
 
 /* ─── Scrollbar ───────────────────────────────────────────────────────────── */
