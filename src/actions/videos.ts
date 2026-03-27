@@ -114,7 +114,7 @@ export async function getApprovedVideos() {
   })
 }
 
-/** Admin: delete a submission + its blob */
+/** Admin: delete any submission + its blob */
 export async function deleteVideo(id: string) {
   await requireAdmin()
   const sub = await db.videoSubmission.findUniqueOrThrow({ where: { id } })
@@ -122,4 +122,38 @@ export async function deleteVideo(id: string) {
   await db.videoSubmission.delete({ where: { id } })
   revalidatePath("/")
   revalidatePath("/profile")
+}
+
+/** Admin: list approved videos */
+export async function getApprovedVideosFull() {
+  await requireAdmin()
+  return db.videoSubmission.findMany({
+    where: { status: "APPROVED" },
+    include: { player: { select: { id: true, name: true, avatarUrl: true } } },
+    orderBy: { reviewedAt: "desc" },
+  })
+}
+
+/** User: list own video submissions */
+export async function getMyVideos() {
+  const player = await getCurrentPlayer()
+  if (!player) return []
+  return db.videoSubmission.findMany({
+    where: { playerId: player.id },
+    orderBy: { createdAt: "desc" },
+  })
+}
+
+/** User: delete own video */
+export async function deleteOwnVideo(id: string) {
+  const player = await getCurrentPlayer()
+  if (!player) throw new Error("Non autenticato")
+
+  const sub = await db.videoSubmission.findUniqueOrThrow({ where: { id } })
+  if (sub.playerId !== player.id) throw new Error("Non autorizzato")
+
+  await del(sub.blobUrl)
+  await db.videoSubmission.delete({ where: { id } })
+  revalidatePath("/profile")
+  revalidatePath("/")
 }

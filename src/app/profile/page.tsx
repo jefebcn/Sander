@@ -13,7 +13,9 @@ import { formatDate } from "@/lib/utils"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
 import { NotifyPermission } from "@/components/push/NotifyPermission"
 import { AdminVideoReview } from "@/components/profile/AdminVideoReview"
-import { getPendingVideos } from "@/actions/videos"
+import { AdminApprovedVideos } from "@/components/profile/AdminApprovedVideos"
+import { MyVideos } from "@/components/profile/MyVideos"
+import { getPendingVideos, getApprovedVideosFull, getMyVideos } from "@/actions/videos"
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
 
@@ -97,6 +99,10 @@ export default async function ProfilePage({ searchParams }: Props) {
   const pendingVideos = isAdmin && activeTab === "admin"
     ? await getPendingVideos()
     : []
+  const approvedVideosFull = isAdmin && activeTab === "admin"
+    ? await getApprovedVideosFull()
+    : []
+  const myVideos = activeTab === "profilo" ? await getMyVideos() : []
 
   const adminSessions = isAdmin && activeTab === "admin"
     ? await db.session.findMany({
@@ -197,6 +203,16 @@ export default async function ProfilePage({ searchParams }: Props) {
             <Settings className="h-4 w-4 text-[var(--muted-text)]" />
             Modifica profilo
           </Link>
+
+          {/* I miei video */}
+          {myVideos.length > 0 && (
+            <div className="space-y-3 pt-1">
+              <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
+                I miei video
+              </p>
+              <MyVideos videos={myVideos} />
+            </div>
+          )}
         </div>
       )}
 
@@ -356,6 +372,14 @@ export default async function ProfilePage({ searchParams }: Props) {
               )}
             </div>
             <AdminVideoReview submissions={pendingVideos} />
+          </div>
+
+          {/* Approved videos — admin can delete from community */}
+          <div>
+            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
+              Video pubblicati
+            </p>
+            <AdminApprovedVideos submissions={approvedVideosFull} />
           </div>
 
           {/* All sessions */}
