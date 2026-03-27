@@ -349,7 +349,7 @@ export default async function Home() {
                 Segui Sander sui social
               </p>
               <a
-                href="https://www.instagram.com"
+                href="https://www.instagram.com/sanderbeachvolley/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="relative flex h-44 items-end overflow-hidden rounded-2xl"
