@@ -10,6 +10,8 @@ import { ratingToDisplayLevel } from "@/lib/tournament/glicko2"
 import { getPersonalizedRecommendations } from "@/actions/recommendations"
 import { LevelUpCelebration } from "@/components/home/LevelUpCelebration"
 import { VideoCarousel } from "@/components/home/VideoCarousel"
+import { VideoUploadButton } from "@/components/home/VideoUploadButton"
+import { getApprovedVideos } from "@/actions/videos"
 import { formatDate } from "@/lib/utils"
 
 export default async function Home() {
@@ -20,6 +22,8 @@ export default async function Home() {
   if (session?.user && !player) {
     redirect("/onboarding/profile")
   }
+
+  const approvedVideos = await getApprovedVideos()
 
   let fullPlayer = null
   let recs = null
@@ -345,7 +349,13 @@ export default async function Home() {
             )}
 
             {/* ── Video carousel ────────────────────────────────── */}
-            <VideoCarousel />
+            <div className="flex flex-col gap-3">
+              <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
+                Video della community
+              </p>
+              <VideoCarousel approvedVideos={approvedVideos} />
+              <VideoUploadButton />
+            </div>
 
             {/* ── Social section ────────────────────────────────── */}
             <div className="mt-1">

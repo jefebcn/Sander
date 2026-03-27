@@ -1,22 +1,11 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useRef } from "react"
 
-const VIDEOS = [
-  { src: "/videos/clip1.mp4" },
-  { src: "/videos/clip2.mp4" },
-]
+type VideoItem = { src: string; label?: string; avatarUrl?: string | null }
 
-function VideoThumb({ src, autoplay }: { src: string; autoplay?: boolean }) {
+function VideoThumb({ item, autoplay }: { item: VideoItem; autoplay?: boolean }) {
   const videoRef = useRef<HTMLVideoElement>(null)
-
-  // Autoplay first video on mount
-  useEffect(() => {
-    if (!autoplay) return
-    const v = videoRef.current
-    if (!v) return
-    v.play().catch(() => {})
-  }, [autoplay])
 
   function startPlay() {
     videoRef.current?.play().catch(() => {})
@@ -31,8 +20,8 @@ function VideoThumb({ src, autoplay }: { src: string; autoplay?: boolean }) {
 
   return (
     <div
-      className="relative overflow-hidden rounded-xl bg-[var(--surface-2)]"
-      style={{ aspectRatio: "9/16", width: "100%" }}
+      className="relative overflow-hidden rounded-xl bg-[var(--surface-2)] flex-shrink-0"
+      style={{ aspectRatio: "9/16", width: "calc(50% - 4px)" }}
       onMouseEnter={startPlay}
       onMouseLeave={stopPlay}
       onTouchStart={startPlay}
@@ -40,11 +29,12 @@ function VideoThumb({ src, autoplay }: { src: string; autoplay?: boolean }) {
     >
       <video
         ref={videoRef}
-        src={src}
-        preload="auto"
+        src={item.src}
+        preload="metadata"
         loop
         playsInline
         muted
+        autoPlay={autoplay}
         style={{
           position: "absolute",
           inset: 0,
@@ -54,18 +44,47 @@ function VideoThumb({ src, autoplay }: { src: string; autoplay?: boolean }) {
           display: "block",
         }}
       />
+      {item.label && (
+        <div
+          className="absolute bottom-0 left-0 right-0 px-2 py-1.5"
+          style={{ background: "linear-gradient(transparent, rgba(0,0,0,0.7))" }}
+        >
+          <p className="text-xs font-semibold text-white truncate">{item.label}</p>
+        </div>
+      )}
     </div>
   )
 }
 
-export function VideoCarousel() {
+const DEFAULT_VIDEOS: VideoItem[] = [
+  { src: "/videos/clip1.mp4" },
+  { src: "/videos/clip2.mp4" },
+]
+
+export function VideoCarousel({
+  approvedVideos = [],
+}: {
+  approvedVideos?: { blobUrl: string; player: { name: string; avatarUrl: string | null } }[]
+}) {
+  const items: VideoItem[] = [
+    ...DEFAULT_VIDEOS,
+    ...approvedVideos.map((v) => ({
+      src: v.blobUrl,
+      label: v.player.name,
+      avatarUrl: v.player.avatarUrl,
+    })),
+  ]
+
   return (
     <div
-      className="grid gap-2"
-      style={{ gridTemplateColumns: "1fr 1fr", maxWidth: "100%" }}
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: "8px",
+      }}
     >
-      {VIDEOS.map((v, i) => (
-        <VideoThumb key={v.src} src={v.src} autoplay={i === 0} />
+      {items.map((item, i) => (
+        <VideoThumb key={item.src} item={item} autoplay={i === 0} />
       ))}
     </div>
   )

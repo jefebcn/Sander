@@ -172,6 +172,7 @@ model Player {
   badgesGiven         BadgeAward[]       @relation("BadgeGiver")
   badgesReceived      BadgeAward[]       @relation("BadgeReceiver")
   pushSubscriptions   PushSubscription[]
+  videoSubmissions    VideoSubmission[]
 
   @@map("players")
 }
@@ -355,6 +356,22 @@ model PushSubscription {
   player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@map("push_subscriptions")
+}
+
+model VideoSubmission {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  playerId  String
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  blobUrl   String
+  status    String   @default("PENDING") // "PENDING" | "APPROVED" | "REJECTED"
+  note      String?  // admin rejection note
+
+  reviewedAt DateTime?
+
+  @@map("video_submissions")
 }
 
 model BadgeAward {

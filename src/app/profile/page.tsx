@@ -12,6 +12,8 @@ import { APP_VERSION_DISPLAY } from "@/lib/appVersion"
 import { formatDate } from "@/lib/utils"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
 import { NotifyPermission } from "@/components/push/NotifyPermission"
+import { AdminVideoReview } from "@/components/profile/AdminVideoReview"
+import { getPendingVideos } from "@/actions/videos"
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
 
@@ -92,6 +94,10 @@ export default async function ProfilePage({ searchParams }: Props) {
   const promoCode = buildPromoCode(player.id)
 
   // Admin data (only fetched when admin views the admin tab)
+  const pendingVideos = isAdmin && activeTab === "admin"
+    ? await getPendingVideos()
+    : []
+
   const adminSessions = isAdmin && activeTab === "admin"
     ? await db.session.findMany({
         orderBy: { date: "desc" },
@@ -334,6 +340,22 @@ export default async function ProfilePage({ searchParams }: Props) {
                 <span className="text-xs text-[var(--muted-text)]">{label}</span>
               </div>
             ))}
+          </div>
+
+          {/* Video submissions review */}
+          <div>
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
+                Video in attesa
+              </p>
+              {pendingVideos.length > 0 && (
+                <span className="rounded-full px-2 py-0.5 text-xs font-black text-black"
+                  style={{ background: "var(--accent)" }}>
+                  {pendingVideos.length}
+                </span>
+              )}
+            </div>
+            <AdminVideoReview submissions={pendingVideos} />
           </div>
 
           {/* All sessions */}
