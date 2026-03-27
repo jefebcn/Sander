@@ -12,9 +12,8 @@ import { APP_VERSION_DISPLAY } from "@/lib/appVersion"
 import { formatDate } from "@/lib/utils"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
 import { NotifyPermission } from "@/components/push/NotifyPermission"
-import { MyVideos } from "@/components/profile/MyVideos"
 import { AdminVideoSection } from "@/components/profile/AdminVideoSection"
-import { getMyVideos } from "@/actions/videos"
+import { MyVideosSection } from "@/components/profile/MyVideosSection"
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
 
@@ -95,17 +94,6 @@ export default async function ProfilePage({ searchParams }: Props) {
   const promoCode = buildPromoCode(player.id)
 
   // Admin data (only fetched when admin views the admin tab)
-  const myVideosRaw = activeTab === "profilo"
-    ? await getMyVideos().catch(() => [])
-    : []
-
-  const myVideos = myVideosRaw.map((v) => ({
-    id: v.id,
-    blobUrl: v.blobUrl,
-    status: v.status,
-    note: v.note,
-    createdAt: v.createdAt instanceof Date ? v.createdAt.toISOString() : String(v.createdAt),
-  }))
 
   const adminSessions = isAdmin && activeTab === "admin"
     ? await db.session.findMany({
@@ -207,15 +195,8 @@ export default async function ProfilePage({ searchParams }: Props) {
             Modifica profilo
           </Link>
 
-          {/* I miei video */}
-          {myVideos.length > 0 && (
-            <div className="space-y-3 pt-1">
-              <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
-                I miei video
-              </p>
-              <MyVideos videos={myVideos} />
-            </div>
-          )}
+          {/* I miei video — fetched client-side */}
+          <MyVideosSection />
         </div>
       )}
 
