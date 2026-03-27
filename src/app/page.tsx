@@ -43,19 +43,24 @@ export default async function Home() {
   return (
     <div
       className="relative min-h-dvh overflow-x-hidden"
-      style={{ backgroundColor: "#0d1209" }}
+      style={{
+        background:
+          "radial-gradient(ellipse 75% 45% at 105% 0%, rgba(201,243,29,0.13) 0%, transparent 65%), " +
+          "linear-gradient(175deg, #0d1209 0%, #090b09 40%, #040504 100%)",
+      }}
     >
-      {/* Sander logo background watermark */}
+      {/* Large logo — top-right decorative, partially off-screen */}
       <div
-        className="pointer-events-none fixed inset-0 flex items-center justify-center"
+        className="pointer-events-none fixed top-0 right-0"
         aria-hidden="true"
+        style={{ transform: "translate(28%, -12%)" }}
       >
         <Image
           src="/sander-logo.png"
           alt=""
-          width={520}
-          height={520}
-          className="object-contain opacity-[0.07]"
+          width={320}
+          height={320}
+          className="object-contain opacity-[0.13]"
           priority
         />
       </div>

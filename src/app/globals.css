@@ -4,14 +4,14 @@
 /* Designed for outdoor beach volleyball use: maximum contrast under direct sun */
 
 :root {
-  /* Always dark — deep beach-green base */
-  --background: #0d1a0d;
+  /* Always dark — near-black with micro green tint */
+  --background: #07090a;
   --foreground: #ffffff;
 
-  --surface-1: #111f11;
-  --surface-2: #172117;
-  --surface-3: #1c2a1c;
-  --surface-4: #223022;
+  --surface-1: #0d100d;
+  --surface-2: #121512;
+  --surface-3: #181c18;
+  --surface-4: #1e221e;
 
   /* Neon yellow-green — SANDER brand */
   --accent: #c9f31d;
@@ -40,8 +40,8 @@
   --silver: #c0c0c0;
   --bronze: #cd7f32;
 
-  --border: #1d2e1d;
-  --muted: #2e3e2e;
+  --border: #1a1e1a;
+  --muted: #252c25;
   --muted-text: #a3a3a3;
 
   /* Interaction */
