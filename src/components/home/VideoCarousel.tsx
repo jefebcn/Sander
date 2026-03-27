@@ -1,31 +1,38 @@
 "use client"
 
-import { useRef } from "react"
+import { useRef, useState } from "react"
 
 type VideoItem = { src: string; label?: string; avatarUrl?: string | null }
 
-function VideoThumb({ item, autoplay }: { item: VideoItem; autoplay?: boolean }) {
+function VideoThumb({ item }: { item: VideoItem }) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const [playing, setPlaying] = useState(false)
 
-  function startPlay() {
-    videoRef.current?.play().catch(() => {})
-  }
-
-  function stopPlay() {
+  // Force first frame to render as thumbnail
+  function onLoadedMetadata() {
     const v = videoRef.current
     if (!v) return
-    v.pause()
-    v.currentTime = 0
+    v.currentTime = 0.01
+  }
+
+  function togglePlay() {
+    const v = videoRef.current
+    if (!v) return
+    if (playing) {
+      v.pause()
+      v.currentTime = 0
+      setPlaying(false)
+    } else {
+      v.play().catch(() => {})
+      setPlaying(true)
+    }
   }
 
   return (
     <div
       className="relative overflow-hidden rounded-xl bg-[var(--surface-2)] flex-shrink-0"
       style={{ aspectRatio: "9/16", width: "calc(50% - 4px)" }}
-      onMouseEnter={startPlay}
-      onMouseLeave={stopPlay}
-      onTouchStart={startPlay}
-      onTouchEnd={stopPlay}
+      onClick={togglePlay}
     >
       <video
         ref={videoRef}
@@ -34,7 +41,7 @@ function VideoThumb({ item, autoplay }: { item: VideoItem; autoplay?: boolean })
         loop
         playsInline
         muted
-        autoPlay={autoplay}
+        onLoadedMetadata={onLoadedMetadata}
         style={{
           position: "absolute",
           inset: 0,
@@ -83,8 +90,8 @@ export function VideoCarousel({
         gap: "8px",
       }}
     >
-      {items.map((item, i) => (
-        <VideoThumb key={item.src} item={item} autoplay={i === 0} />
+      {items.map((item) => (
+        <VideoThumb key={item.src} item={item} />
       ))}
     </div>
   )
