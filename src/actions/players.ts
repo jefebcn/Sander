@@ -57,6 +57,8 @@ export async function getPlayer(id: string) {
         orderBy: { tournament: { date: "desc" } },
         take: 5,
       },
+      _count: { select: { organizedSessions: true } },
+      badgesReceived: { where: { badge: "MVP_PARTITA" } },
     },
   })
 }

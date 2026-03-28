@@ -70,12 +70,26 @@ export function SanderCardFifa({ player }: SanderCardFifaProps) {
         {/* ── Top row: overall (glicko) + avatar ─────────────── */}
         <div className="flex items-start justify-between">
           <div className="flex flex-col items-start gap-2">
-            <span
-              className="text-[4rem] font-black leading-none text-white"
-              style={{ textShadow: "0 2px 12px rgba(0,0,0,0.4)" }}
-            >
-              {glickoDisplay}
-            </span>
+            <div className="flex items-baseline gap-3">
+              <span
+                className="text-[4rem] font-black leading-none text-white"
+                style={{ textShadow: "0 2px 12px rgba(0,0,0,0.4)" }}
+              >
+                {glickoDisplay}
+              </span>
+              <span
+                className="rounded-lg px-2 py-0.5 text-xs font-black uppercase tracking-wider"
+                style={{
+                  background: player.difPct >= player.murPct
+                    ? "rgba(59,130,246,0.25)"
+                    : "rgba(239,68,68,0.25)",
+                  color: player.difPct >= player.murPct ? "#93c5fd" : "#fca5a5",
+                  border: `1px solid ${player.difPct >= player.murPct ? "rgba(59,130,246,0.4)" : "rgba(239,68,68,0.4)"}`,
+                }}
+              >
+                {player.difPct >= player.murPct ? "DIF" : "MUR"}
+              </span>
+            </div>
             <span
               className="text-[0.65rem] font-bold uppercase tracking-widest"
               style={{ color: "rgba(255,255,255,0.45)" }}
