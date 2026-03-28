@@ -12,7 +12,6 @@ import { InviteTab } from "@/components/profile/InviteTab"
 import { APP_VERSION_DISPLAY } from "@/lib/appVersion"
 import { formatDate } from "@/lib/utils"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
-import { NotifyPermission } from "@/components/push/NotifyPermission"
 import { AdminDeleteSessionButton } from "@/components/profile/AdminDeleteSessionButton"
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
@@ -210,7 +209,6 @@ export default async function ProfilePage({ searchParams }: Props) {
               staPct: fullPlayer.staPct,
             }}
           />
-          <NotifyPermission />
           <Link
             href="/stats-guide"
             className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-semibold text-[var(--accent)]"

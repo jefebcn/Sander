@@ -7,7 +7,6 @@ import { Toaster } from "@/components/ui/Toaster"
 import { OnboardingGate } from "@/components/onboarding/OnboardingGate"
 import { CookieBanner } from "@/components/layout/CookieBanner"
 import { PWAInstallBanner } from "@/components/layout/PWAInstallBanner"
-import { SwRegistrar } from "@/components/push/SwRegistrar"
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -62,7 +61,6 @@ export default function RootLayout({
           style={{ filter: "blur(2px)" }}
         />
         <Providers>
-          <SwRegistrar />
           <OnboardingGate />
           <main className="relative z-10 flex-1 pb-20">{children}</main>
           <MobileNav />
