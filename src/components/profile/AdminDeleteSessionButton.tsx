@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { Trash2 } from "lucide-react"
 import { adminDeleteSession } from "@/actions/sessions"
 
 export function AdminDeleteSessionButton({ id }: { id: string }) {
@@ -19,15 +18,19 @@ export function AdminDeleteSessionButton({ id }: { id: string }) {
   }
 
   if (loading) {
-    return <span className="shrink-0 text-xs text-[var(--muted-text)]">...</span>
+    return (
+      <span className="shrink-0 rounded-lg px-2 py-1 text-xs text-[var(--muted-text)]">
+        ...
+      </span>
+    )
   }
 
   if (confirm) {
     return (
       <button
         onClick={handleDelete}
-        className="shrink-0 text-xs font-bold"
-        style={{ color: "#ef4444" }}
+        className="shrink-0 rounded-lg px-2 py-1 text-xs font-bold text-white"
+        style={{ background: "#ef4444" }}
       >
         Conferma
       </button>
@@ -37,9 +40,10 @@ export function AdminDeleteSessionButton({ id }: { id: string }) {
   return (
     <button
       onClick={(e) => { e.preventDefault(); setConfirm(true) }}
-      className="shrink-0 p-1 text-[var(--muted-text)]"
+      className="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold"
+      style={{ background: "#ef444420", color: "#ef4444" }}
     >
-      <Trash2 className="h-3.5 w-3.5" />
+      Elimina
     </button>
   )
 }
