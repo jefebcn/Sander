@@ -109,7 +109,7 @@ export function SanderCardFifa({ player }: SanderCardFifaProps) {
           </div>
 
           <div
-            className="h-36 w-36 overflow-hidden rounded-full flex-shrink-0"
+            className="h-36 w-36 overflow-hidden rounded-full flex-shrink-0 mt-2"
             style={{
               border: "3px solid rgba(201,243,29,0.3)",
               boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
