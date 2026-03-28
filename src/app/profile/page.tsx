@@ -5,7 +5,7 @@ import Link from "next/link"
 import { ArrowUpRight, MapPin, Calendar, Settings, ShieldCheck, Users, Trophy } from "lucide-react"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
-import { SanderCardFifa } from "@/components/player/SanderCardFifa"
+import { SanderCardFut, playerToCardData } from "@/components/player/SanderCardFut"
 import { StatPercentageEditor } from "@/components/player/StatPercentageEditor"
 import { SignOutButton } from "@/components/auth/SignOutButton"
 import { InviteTab } from "@/components/profile/InviteTab"
@@ -174,32 +174,7 @@ export default async function ProfilePage({ searchParams }: Props) {
       {/* ══ Profilo tab ═══════════════════════════════════════ */}
       {activeTab === "profilo" && (
         <div className="px-4 space-y-3">
-          <SanderCardFifa
-            player={{
-              name: fullPlayer.name,
-              firstName: fullPlayer.firstName,
-              lastName: fullPlayer.lastName,
-              avatarUrl: fullPlayer.avatarUrl,
-              avgRating: fullPlayer.avgRating,
-              glickoRating: fullPlayer.glickoRating,
-              level: fullPlayer.level,
-              xp: fullPlayer.xp,
-              winRatePct: fullPlayer.winRatePct,
-              matchesWon: fullPlayer.matchesWon,
-              matchesLost: fullPlayer.matchesLost,
-              sessionsPlayed: fullPlayer.sessionsPlayed,
-              tournamentsWon: fullPlayer.tournamentsWon,
-              organizedSessions: fullPlayer._count.organizedSessions,
-              streak,
-              mvpCount: fullPlayer.badgesReceived.length,
-              attPct: fullPlayer.attPct,
-              difPct: fullPlayer.difPct,
-              murPct: fullPlayer.murPct,
-              alzPct: fullPlayer.alzPct,
-              ricPct: fullPlayer.ricPct,
-              staPct: fullPlayer.staPct,
-            }}
-          />
+          <SanderCardFut playerData={playerToCardData(fullPlayer)} />
           <StatPercentageEditor
             glickoRating={fullPlayer.glickoRating}
             initial={{
