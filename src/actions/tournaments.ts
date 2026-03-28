@@ -10,7 +10,7 @@ import { generateBracket } from "@/lib/tournament/bracket"
 import { generateRoundRobinSchedule } from "@/lib/tournament/roundRobin"
 import { generateDoubleElimination } from "@/lib/tournament/doubleElim"
 import { assignCourtLabel } from "@/lib/tournament/courtSchedule"
-import { applyGlickoUpdate } from "@/actions/matches"
+import { applyTournamentGlicko } from "@/actions/matches"
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
 
@@ -532,9 +532,6 @@ export async function submitChiceceGroupMatchScore(
     }
   })
 
-  // Update Glicko-2 ratings for this match
-  await applyGlickoUpdate(teamAPlayerIds, teamBPlayerIds, teamAWon).catch(() => {})
-
   revalidatePath(`/tournaments/${match.tournamentId}`)
 }
 
@@ -602,10 +599,6 @@ export async function submitChiceceFinalScore(
   if (match.isCompleted) throw new Error("Finale già completata")
   if (match.bracketSection !== "FINAL") throw new Error("Non è la partita finale")
 
-  const teamAWon = teamAScore > teamBScore
-  const teamAPlayerIds = match.players.filter((p) => p.team === 0).map((p) => p.playerId)
-  const teamBPlayerIds = match.players.filter((p) => p.team === 1).map((p) => p.playerId)
-
   await db.match.update({
     where: { id: matchId },
     data: { teamAScore, teamBScore, isCompleted: true },
@@ -616,11 +609,12 @@ export async function submitChiceceFinalScore(
     data: { status: "COMPLETED" },
   })
 
-  // Update Glicko-2 ratings for the final match
-  await applyGlickoUpdate(teamAPlayerIds, teamBPlayerIds, teamAWon).catch(() => {})
+  // Apply per-tournament Glicko-2 update (final match completes the tournament)
+  await applyTournamentGlicko(match.tournamentId).catch(() => {})
 
   revalidatePath(`/tournaments/${match.tournamentId}`)
   revalidatePath("/tournaments")
+  revalidatePath("/players")
 }
 
 export async function completeTournament(tournamentId: string) {
@@ -657,8 +651,25 @@ export async function completeTournament(tournamentId: string) {
     await db.player.update({ where: { id: s.playerId }, data: { winRatePct: pct } })
   }
 
+  // Apply per-tournament Glicko-2 update (one rating period = one tournament)
+  await applyTournamentGlicko(tournamentId).catch(() => {})
+
   revalidatePath("/tournaments")
   revalidatePath(`/tournaments/${tournamentId}`)
   revalidatePath("/players")
+}
+
+export async function deleteTournament(tournamentId: string) {
+  await requireAdmin()
+  // Cascade: delete all related records first, then the tournament
+  await db.$transaction([
+    db.matchPlayer.deleteMany({ where: { match: { tournamentId } } }),
+    db.match.deleteMany({ where: { tournamentId } }),
+    db.tournamentStanding.deleteMany({ where: { tournamentId } }),
+    db.tournamentRegistration.deleteMany({ where: { tournamentId } }),
+    db.tournament.delete({ where: { id: tournamentId } }),
+  ])
+  revalidatePath("/tournaments")
+  revalidatePath("/profile")
 }
 

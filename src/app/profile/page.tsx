@@ -13,6 +13,7 @@ import { APP_VERSION_DISPLAY } from "@/lib/appVersion"
 import { formatDate } from "@/lib/utils"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
 import { AdminDeleteSessionButton } from "@/components/profile/AdminDeleteSessionButton"
+import { AdminDeleteTournamentButton } from "@/components/profile/AdminDeleteTournamentButton"
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
 
@@ -484,19 +485,24 @@ export default async function ProfilePage({ searchParams }: Props) {
             </p>
             <div className="space-y-2">
               {adminTournaments.map((t) => (
-                <Link
+                <div
                   key={t.id}
-                  href={`/tournaments/${t.id}`}
-                  className="flex items-start gap-3 rounded-2xl bg-[var(--surface-2)] p-3 active:opacity-80"
+                  className="flex items-center gap-2 rounded-2xl bg-[var(--surface-2)] p-3"
                 >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-white text-sm truncate">{t.name}</p>
-                    <p className="text-xs text-[var(--muted-text)]">
-                      {formatDate(t.date)} · {t._count.registrations} iscritti
-                    </p>
-                  </div>
-                  <StatusBadge status={t.status as "DRAFT" | "LIVE" | "COMPLETED"} />
-                </Link>
+                  <Link
+                    href={`/tournaments/${t.id}`}
+                    className="flex-1 min-w-0 flex items-center gap-3 active:opacity-80"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-white text-sm truncate">{t.name}</p>
+                      <p className="text-xs text-[var(--muted-text)]">
+                        {formatDate(t.date)} · {t._count.registrations} iscritti
+                      </p>
+                    </div>
+                    <StatusBadge status={t.status as "DRAFT" | "LIVE" | "COMPLETED"} />
+                  </Link>
+                  <AdminDeleteTournamentButton id={t.id} />
+                </div>
               ))}
             </div>
           </div>
