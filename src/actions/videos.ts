@@ -6,16 +6,6 @@ import { db } from "@/lib/db"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
 
-/** Fire-and-forget push notification — dynamic import keeps web-push out of the bundle graph */
-async function safeNotify(playerId: string, payload: { title: string; body: string; url?: string }) {
-  try {
-    const { notifyPlayer } = await import("@/lib/push")
-    await notifyPlayer(playerId, payload)
-  } catch {
-    // best-effort — never block the main action
-  }
-}
-
 async function requireAdmin() {
   const session = await getCurrentSession()
   if (!session?.user?.id) throw new Error("Non autenticato")
@@ -46,19 +36,6 @@ export async function uploadVideo(formData: FormData) {
     data: { playerId: player.id, blobUrl: blob.url },
   })
 
-  // Notify admin via push
-  const adminPlayer = await db.player.findFirst({
-    where: { user: { email: ADMIN_EMAIL } },
-    select: { id: true },
-  })
-  if (adminPlayer) {
-    safeNotify(adminPlayer.id, {
-      title: "Nuovo video in attesa",
-      body: `${player.name} ha caricato un video — revisiona dal profilo`,
-      url: "/profile",
-    })
-  }
-
   revalidatePath("/")
   return { ok: true }
 }
@@ -73,12 +50,6 @@ export async function approveVideo(id: string) {
     include: { player: { select: { id: true, name: true } } },
   })
 
-  safeNotify(sub.playerId, {
-    title: "Il tuo video è stato pubblicato! 🎉",
-    body: "Il tuo video di beach volley è ora visibile nella community",
-    url: "/",
-  })
-
   revalidatePath("/")
   revalidatePath("/profile")
 }
@@ -87,15 +58,9 @@ export async function approveVideo(id: string) {
 export async function rejectVideo(id: string, note?: string) {
   await requireAdmin()
 
-  const sub = await db.videoSubmission.update({
+  await db.videoSubmission.update({
     where: { id },
     data: { status: "REJECTED", note: note ?? null, reviewedAt: new Date() },
-  })
-
-  safeNotify(sub.playerId, {
-    title: "Video non approvato",
-    body: note ?? "Il tuo video non rispetta le linee guida della community",
-    url: "/",
   })
 
   revalidatePath("/")
