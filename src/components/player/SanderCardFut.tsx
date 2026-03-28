@@ -1,5 +1,3 @@
-"use client"
-
 import {
   Swords,
   Shield,
@@ -9,7 +7,6 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react"
-import Image from "next/image"
 import { cn } from "@/lib/utils"
 
 /* ──────────────────────────────────────────────────────────────────────────── */
@@ -315,12 +312,11 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
                 }}
               >
                 {playerData.imageUrl ? (
-                  <Image
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
                     src={playerData.imageUrl}
                     alt={playerData.name}
-                    fill
-                    className="object-cover object-[center_15%]"
-                    sizes="200px"
+                    className="h-full w-full object-cover object-[center_15%]"
                   />
                 ) : (
                   <div
