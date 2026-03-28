@@ -6,6 +6,7 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 import { getSession } from "@/actions/sessions"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
+import { db } from "@/lib/db"
 import { ShareButton } from "@/components/ui/ShareButton"
 import { SessionStatusBadge } from "@/components/session/SessionStatusBadge"
 import { ParticipantList } from "@/components/session/ParticipantList"
@@ -42,6 +43,11 @@ const FORMAT_LABEL: Record<string, string> = {
 export default async function SessionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const [session, currentPlayer] = await Promise.all([getSession(id), getCurrentPlayer()])
+
+  // Separate sets query — graceful fallback if table doesn't exist yet
+  const sets = session.status === "COMPLETED"
+    ? await db.sessionSet.findMany({ where: { sessionId: id }, orderBy: { setNumber: "asc" } }).catch(() => [])
+    : []
 
   // Completed sessions are private — only participants can view them
   if (session.status === "COMPLETED") {
@@ -113,8 +119,7 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
           )}
 
           {/* Score summary (COMPLETED sessions with recorded sets) */}
-          {session.status === "COMPLETED" && session.sets && session.sets.length > 0 && (() => {
-            const sets = session.sets
+          {session.status === "COMPLETED" && sets.length > 0 && (() => {
             const teamAWins = sets.filter((s) => s.teamAScore > s.teamBScore).length
             const teamBWins = sets.filter((s) => s.teamBScore > s.teamAScore).length
             return (

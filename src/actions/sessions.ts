@@ -114,7 +114,6 @@ export async function getSession(id: string) {
         orderBy: { team: "asc" },
       },
       ratings: { select: { raterId: true, ratedId: true, type: true } },
-      sets: { orderBy: { setNumber: "asc" } },
     },
   })
 }
