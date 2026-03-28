@@ -661,7 +661,21 @@ export async function completeTournament(tournamentId: string) {
 
 export async function deleteTournament(tournamentId: string) {
   await requireAdmin()
-  // Cascade: delete all related records first, then the tournament
+
+  // Fetch before deletion so we can revert player stats
+  const tournament = await db.tournament.findUniqueOrThrow({
+    where: { id: tournamentId },
+    select: { status: true, type: true },
+  })
+
+  const standings = tournament.status === "COMPLETED"
+    ? await db.tournamentStanding.findMany({
+        where: { tournamentId },
+        orderBy: { rank: "asc" },
+      })
+    : []
+
+  // Cascade delete
   await db.$transaction([
     db.matchPlayer.deleteMany({ where: { match: { tournamentId } } }),
     db.match.deleteMany({ where: { tournamentId } }),
@@ -669,7 +683,65 @@ export async function deleteTournament(tournamentId: string) {
     db.tournamentRegistration.deleteMany({ where: { tournamentId } }),
     db.tournament.delete({ where: { id: tournamentId } }),
   ])
+
+  // ── Revert career stats ──────────────────────────────────────────────────
+  // CHICECE auto-completes via submitChiceceFinalScore which never calls
+  // completeTournament, so career stats (matchesWon/Lost/tournamentsWon)
+  // were never applied for CHICECE — only Glicko was.
+  // For all other COMPLETED types, completeTournament applied the standings.
+  if (standings.length > 0 && tournament.type !== "CHICECE") {
+    await db.$transaction(
+      standings.map((s) =>
+        db.player.update({
+          where: { id: s.playerId },
+          data: {
+            matchesWon:    { decrement: s.matchesWon },
+            matchesLost:   { decrement: s.matchesLost },
+            tournamentsWon: s.rank === 1 ? { decrement: 1 } : undefined,
+          },
+        })
+      )
+    )
+
+    // Recalculate winRatePct
+    for (const s of standings) {
+      const player = await db.player.findUniqueOrThrow({ where: { id: s.playerId } })
+      const total = Math.max(0, player.matchesWon) + Math.max(0, player.matchesLost)
+      const pct = total === 0 ? 0 : Math.round((Math.max(0, player.matchesWon) / total) * 100)
+      await db.player.update({ where: { id: s.playerId }, data: { winRatePct: pct } })
+    }
+  }
+
+  // ── Full Glicko-2 recalculation ──────────────────────────────────────────
+  // Glicko ratings are cumulative — the only way to correctly remove a
+  // tournament's contribution is to reset all players and replay every
+  // remaining completed tournament in chronological order.
+  if (tournament.status === "COMPLETED") {
+    await fullGlickoRecalculation()
+  }
+
   revalidatePath("/tournaments")
+  revalidatePath("/players")
   revalidatePath("/profile")
+}
+
+/**
+ * Reset every player's Glicko-2 to defaults, then replay all completed
+ * tournaments in date order. Used after deleting a completed tournament.
+ */
+async function fullGlickoRecalculation() {
+  await db.player.updateMany({
+    data: { glickoRating: 1500, glickoRD: 350, glickoVolatility: 0.06 },
+  })
+
+  const completed = await db.tournament.findMany({
+    where: { status: "COMPLETED" },
+    orderBy: { date: "asc" },
+    select: { id: true },
+  })
+
+  for (const t of completed) {
+    await applyTournamentGlicko(t.id)
+  }
 }
 
