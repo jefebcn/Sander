@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic"
 
 import { MapPin, Calendar, Euro, FileText } from "lucide-react"
+import { notFound } from "next/navigation"
 import { getSession } from "@/actions/sessions"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { SessionStatusBadge } from "@/components/session/SessionStatusBadge"
@@ -17,6 +18,12 @@ const FORMAT_LABEL: Record<string, string> = {
 export default async function SessionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const [session, currentPlayer] = await Promise.all([getSession(id), getCurrentPlayer()])
+
+  // Completed sessions are private — only participants can view them
+  if (session.status === "COMPLETED") {
+    const isParticipant = session.participants.some((p) => p.player.id === currentPlayer?.id)
+    if (!isParticipant) notFound()
+  }
 
   const dateObj = new Date(session.date)
   const dateStr = dateObj.toLocaleDateString("it-IT", {

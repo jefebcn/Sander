@@ -17,9 +17,9 @@ export default async function SessionsPage({ searchParams }: Props) {
   const { tab } = await searchParams
   const activeTab = tab === "tornei" ? "tornei" : "partite"
 
-  const [currentPlayer, sessions, tournaments] = await Promise.all([
-    getCurrentPlayer(),
-    activeTab === "partite" ? getSessions() : Promise.resolve([]),
+  const currentPlayer = await getCurrentPlayer()
+  const [sessions, tournaments] = await Promise.all([
+    activeTab === "partite" ? getSessions(currentPlayer?.id) : Promise.resolve([]),
     activeTab === "tornei" ? listTournaments() : Promise.resolve([]),
   ])
 

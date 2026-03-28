@@ -12,6 +12,7 @@ import { APP_VERSION_DISPLAY } from "@/lib/appVersion"
 import { formatDate } from "@/lib/utils"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
 import { NotifyPermission } from "@/components/push/NotifyPermission"
+import { AdminDeleteSessionButton } from "@/components/profile/AdminDeleteSessionButton"
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
 
@@ -362,24 +363,27 @@ export default async function ProfilePage({ searchParams }: Props) {
             </p>
             <div className="space-y-2">
               {adminSessions.map((s) => (
-                <Link
+                <div
                   key={s.id}
-                  href={`/sessions/${s.id}`}
-                  className="flex items-start gap-3 rounded-2xl bg-[var(--surface-2)] p-3 active:opacity-80"
+                  className="flex items-center gap-2 rounded-2xl bg-[var(--surface-2)] p-3"
                 >
-                  <div className="flex-1 min-w-0">
+                  <Link
+                    href={`/sessions/${s.id}`}
+                    className="flex-1 min-w-0 active:opacity-80"
+                  >
                     <p className="font-bold text-white text-sm truncate">{s.title}</p>
                     <p className="text-xs text-[var(--muted-text)]">
                       {s.organizer.name} · {formatDate(s.date)} · {s._count.participants} partecipanti
                     </p>
-                  </div>
+                  </Link>
                   <span
                     className="shrink-0 text-xs font-bold"
                     style={{ color: STATUS_COLORS[s.status] ?? "var(--muted-text)" }}
                   >
                     {STATUS_LABELS[s.status] ?? s.status}
                   </span>
-                </Link>
+                  <AdminDeleteSessionButton id={s.id} />
+                </div>
               ))}
             </div>
           </div>

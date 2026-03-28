@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
-import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
+import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import {
   CreateSessionSchema,
   RatePlayerSchema,
@@ -56,22 +56,42 @@ export async function createSession(input: unknown) {
   return session
 }
 
-export async function getSessions() {
+export async function getSessions(playerId?: string) {
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
 
-  return db.session.findMany({
-    where: {
-      OR: [
-        { status: { in: ["OPEN", "FULL"] } },
-        { status: "COMPLETED", date: { gte: thirtyDaysAgo } },
-      ],
-    },
-    include: {
-      organizer: { select: { id: true, name: true } },
-      _count: { select: { participants: true } },
-    },
-    orderBy: [{ status: "asc" }, { date: "asc" }],
-  })
+  const include = {
+    organizer: { select: { id: true, name: true } },
+    _count: { select: { participants: true } },
+  } as const
+
+  const [openSessions, completedSessions] = await Promise.all([
+    db.session.findMany({
+      where: { status: { in: ["OPEN", "FULL"] } },
+      include,
+      orderBy: [{ status: "asc" }, { date: "asc" }],
+    }),
+    playerId
+      ? db.session.findMany({
+          where: {
+            status: "COMPLETED",
+            date: { gte: thirtyDaysAgo },
+            participants: { some: { playerId } },
+          },
+          include,
+          orderBy: { date: "desc" },
+        })
+      : Promise.resolve([] as Awaited<ReturnType<typeof db.session.findMany<{ include: typeof include }>>>),
+  ])
+
+  return [...openSessions, ...completedSessions]
+}
+
+export async function adminDeleteSession(id: string) {
+  const authSession = await getCurrentSession()
+  if (authSession?.user?.email !== process.env.ADMIN_EMAIL) throw new Error("Non autorizzato")
+  await db.session.delete({ where: { id } })
+  revalidatePath("/sessions")
+  revalidatePath("/profile")
 }
 
 export async function getSession(id: string) {
