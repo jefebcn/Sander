@@ -1,30 +1,30 @@
 import { PrismaClient } from "@/generated/prisma/client"
 
 /**
- * Prisma client factory — auto-selects adapter based on DATABASE_URL.
- * Checks multiple env var names used by different Vercel/Neon integration methods.
+ * Prisma client using pg.Pool (supports transactions).
+ * PrismaNeonHttp was removed — it doesn't support db.$transaction() or
+ * nested creates (which Prisma wraps in implicit transactions).
+ *
+ * Priority order for connection URL:
+ *  1. POSTGRES_URL_NON_POOLING — Neon direct connection (full SQL features)
+ *  2. DATABASE_URL             — standard pooled connection
+ *  3. POSTGRES_PRISMA_URL      — Vercel Neon integration pooled URL
+ *  4. POSTGRES_URL             — fallback
  */
 function createPrismaClient(): PrismaClient {
   const url =
+    process.env.POSTGRES_URL_NON_POOLING ??
     process.env.DATABASE_URL ??
     process.env.POSTGRES_PRISMA_URL ??
-    process.env.POSTGRES_URL_NON_POOLING ??
     process.env.POSTGRES_URL ??
     ""
 
-  if (url.includes("neon.tech") || url.includes("neon.") || process.env.NEON_DB === "1") {
-    // Neon serverless HTTP driver — no WebSocket needed, ideal for Vercel
-    const { PrismaNeonHttp } = require("@prisma/adapter-neon")
-    const adapter = new PrismaNeonHttp(url)
-    return new PrismaClient({ adapter })
-  }
-
-  // Standard pg Pool — for local Docker/Supabase/self-hosted Postgres
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Pool } = require("pg")
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { PrismaPg } = require("@prisma/adapter-pg")
-  const pool = new Pool({ connectionString: url })
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const adapter = new PrismaPg(pool as any)
+  const pool = new Pool({ connectionString: url, max: 5 })
+  const adapter = new PrismaPg(pool)
   return new PrismaClient({ adapter })
 }
 
