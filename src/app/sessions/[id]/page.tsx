@@ -18,6 +18,9 @@ export async function generateMetadata(
   const { id } = await params
   const session = await getSession(id).catch(() => null)
   const title = session ? `${session.title} — SANDER` : "SANDER — Beach Volleyball"
+  const ogUrl = session
+    ? `/api/og?title=${encodeURIComponent(session.title)}&subtitle=${encodeURIComponent(session.location)}&type=session`
+    : `/api/og?title=SANDER&subtitle=Beach+Volleyball&type=session`
   return {
     title,
     openGraph: {
@@ -25,7 +28,7 @@ export async function generateMetadata(
       description: session
         ? `${session.location} · Unisciti alla partita su SANDER 🏐`
         : "Beach Volleyball Tournament Manager",
-      images: [{ url: "/sander-logo.png", width: 512, height: 512, alt: "SANDER" }],
+      images: [{ url: ogUrl, width: 1200, height: 630, alt: title }],
     },
   }
 }

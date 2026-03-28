@@ -18,8 +18,11 @@ export async function generateMetadata(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<Metadata> {
   const { id } = await params
-  const tournament = await db.tournament.findUnique({ where: { id }, select: { name: true, date: true } }).catch(() => null)
+  const tournament = await db.tournament.findUnique({ where: { id }, select: { name: true } }).catch(() => null)
   const title = tournament ? `${tournament.name} — SANDER` : "SANDER — Beach Volleyball"
+  const ogUrl = tournament
+    ? `/api/og?title=${encodeURIComponent(tournament.name)}&subtitle=Torneo+Beach+Volleyball&type=tournament`
+    : `/api/og?title=SANDER&subtitle=Beach+Volleyball&type=tournament`
   return {
     title,
     openGraph: {
@@ -27,7 +30,7 @@ export async function generateMetadata(
       description: tournament
         ? `Torneo di beach volley · Unisciti su SANDER 🏐`
         : "Beach Volleyball Tournament Manager",
-      images: [{ url: "/sander-logo.png", width: 512, height: 512, alt: "SANDER" }],
+      images: [{ url: ogUrl, width: 1200, height: 630, alt: title }],
     },
   }
 }
