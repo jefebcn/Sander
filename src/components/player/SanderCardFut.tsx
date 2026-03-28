@@ -61,13 +61,52 @@ function glickoToOverall(glicko: number): number {
   return Math.min(99, Math.max(1, Math.round(raw)))
 }
 
-/** ISO-3166-1 alpha-2 country code to flag emoji. */
-function countryFlag(code: string): string {
-  return code
-    .toUpperCase()
-    .split("")
-    .map((c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65))
-    .join("")
+/* ──────────────────────────────────────────────────────────────────────────── */
+/*  Country flag SVG component                                                 */
+/* ──────────────────────────────────────────────────────────────────────────── */
+
+const FLAGS: Record<string, { colors: string[] }> = {
+  IT: { colors: ["#009246", "#ffffff", "#CE2B37"] },
+  FR: { colors: ["#0055A4", "#ffffff", "#EF4135"] },
+  DE: { colors: ["#000000", "#DD0000", "#FFCE00"] },
+  ES: { colors: ["#AA151B", "#F1BF00", "#AA151B"] },
+  BR: { colors: ["#009739", "#FEDD00", "#009739"] },
+  AR: { colors: ["#74ACDF", "#ffffff", "#74ACDF"] },
+  NO: { colors: ["#EF2B2D", "#002868", "#EF2B2D"] },
+}
+
+function CountryFlag({ code }: { code: string }) {
+  const upper = code.toUpperCase()
+  const flag = FLAGS[upper]
+
+  if (!flag) {
+    return (
+      <div className="flex h-full w-full items-center justify-center rounded-sm bg-gray-500 text-[0.45rem] font-black text-white">
+        {upper}
+      </div>
+    )
+  }
+
+  // Vertical tricolor (IT, FR) vs horizontal (DE)
+  const isHorizontal = upper === "DE"
+
+  return (
+    <svg viewBox="0 0 30 20" className="h-full w-full rounded-[2px]">
+      {isHorizontal ? (
+        <>
+          <rect width="30" height="7" fill={flag.colors[0]} />
+          <rect y="7" width="30" height="6" fill={flag.colors[1]} />
+          <rect y="13" width="30" height="7" fill={flag.colors[2]} />
+        </>
+      ) : (
+        <>
+          <rect width="10" height="20" fill={flag.colors[0]} />
+          <rect x="10" width="10" height="20" fill={flag.colors[1]} />
+          <rect x="20" width="10" height="20" fill={flag.colors[2]} />
+        </>
+      )}
+    </svg>
+  )
 }
 
 /* ──────────────────────────────────────────────────────────────────────────── */
@@ -75,82 +114,81 @@ function countryFlag(code: string): string {
 /* ──────────────────────────────────────────────────────────────────────────── */
 
 interface RarityStyle {
-  /** Main card background gradient */
   bg: string
-  /** Photo frame & accent border color */
+  bgDarker: string
   border: string
-  /** Primary text color */
   text: string
-  /** Stat value / accent text */
   accent: string
-  /** Stat section background */
   statBg: string
-  /** Circuit pattern opacity */
   circuitOpacity: number
-  /** Shows animated shine on hover */
   isRare: boolean
-  /** Extra CSS class on outer shell */
   shellClass: string
 }
 
 const RARITY: Record<Rarity, RarityStyle> = {
   bronze: {
-    bg: "linear-gradient(165deg, #A0784C 0%, #8B6914 20%, #7A5A2E 45%, #96723C 70%, #A0784C 100%)",
-    border: "#8B6914",
-    text: "#F5E6D0",
-    accent: "#D4A843",
-    statBg: "rgba(100, 72, 30, 0.75)",
-    circuitOpacity: 0.08,
+    bg: "linear-gradient(170deg, #B0844A 0%, #8B6914 30%, #7A5A2E 55%, #96723C 80%, #A87840 100%)",
+    bgDarker: "linear-gradient(170deg, #7A5A2E 0%, #6B4E20 50%, #7A5A2E 100%)",
+    border: "#9B7530",
+    text: "#F0DCC0",
+    accent: "#E8C880",
+    statBg: "rgba(80, 58, 20, 0.85)",
+    circuitOpacity: 0.1,
     isRare: false,
     shellClass: "",
   },
   bronzeRare: {
-    bg: "linear-gradient(165deg, #B8860B 0%, #D4A843 20%, #CD7F32 40%, #E8C06A 65%, #B8860B 100%)",
-    border: "#CD7F32",
+    bg: "linear-gradient(170deg, #D4A843 0%, #CD7F32 30%, #B8860B 55%, #E8C06A 80%, #CD7F32 100%)",
+    bgDarker: "linear-gradient(170deg, #9B7530 0%, #8B6914 50%, #9B7530 100%)",
+    border: "#D4A843",
     text: "#FFF5E6",
     accent: "#FFD700",
-    statBg: "rgba(160, 120, 30, 0.65)",
-    circuitOpacity: 0.1,
+    statBg: "rgba(120, 90, 20, 0.8)",
+    circuitOpacity: 0.12,
     isRare: true,
     shellClass: "fut-shine",
   },
   silver: {
-    bg: "linear-gradient(165deg, #8A939E 0%, #B8C4CE 20%, #808B96 45%, #A0ABB5 70%, #8A939E 100%)",
-    border: "#9CA3AF",
+    bg: "linear-gradient(170deg, #A8B4BE 0%, #8A939E 30%, #7A8590 55%, #B0BCC6 80%, #98A4AE 100%)",
+    bgDarker: "linear-gradient(170deg, #6E7880 0%, #606A72 50%, #6E7880 100%)",
+    border: "#8A939E",
     text: "#F0F0F0",
-    accent: "#D4D4D4",
-    statBg: "rgba(100, 110, 125, 0.75)",
-    circuitOpacity: 0.08,
+    accent: "#D0D4D8",
+    statBg: "rgba(70, 78, 88, 0.85)",
+    circuitOpacity: 0.1,
     isRare: false,
     shellClass: "",
   },
   silverRare: {
-    bg: "linear-gradient(165deg, #B0BEC5 0%, #E0E8F0 20%, #A0B0C0 40%, #D0D8E0 65%, #B0BEC5 100%)",
-    border: "#C0CCD8",
+    bg: "linear-gradient(170deg, #C8D4DE 0%, #A8B8C8 30%, #98AAB8 55%, #D8E0E8 80%, #B8C8D4 100%)",
+    bgDarker: "linear-gradient(170deg, #8898A8 0%, #788898 50%, #8898A8 100%)",
+    border: "#B0C0D0",
     text: "#FFFFFF",
-    accent: "#F0F4FF",
-    statBg: "rgba(140, 155, 170, 0.65)",
-    circuitOpacity: 0.1,
+    accent: "#E8F0F8",
+    statBg: "rgba(90, 105, 120, 0.8)",
+    circuitOpacity: 0.12,
     isRare: true,
     shellClass: "fut-holo",
   },
   gold: {
-    bg: "linear-gradient(165deg, #C8960C 0%, #F0C420 20%, #B8860B 45%, #DAA520 70%, #C8960C 100%)",
-    border: "#DAA520",
+    bg: "linear-gradient(170deg, #E8B820 0%, #C8960C 30%, #B08008 55%, #E0B418 80%, #D0A010 100%)",
+    bgDarker: "linear-gradient(170deg, #907010 0%, #806008 50%, #907010 100%)",
+    border: "#D4A820",
     text: "#FFF8E0",
     accent: "#FFD700",
-    statBg: "rgba(150, 110, 10, 0.75)",
-    circuitOpacity: 0.08,
+    statBg: "rgba(100, 78, 10, 0.85)",
+    circuitOpacity: 0.1,
     isRare: false,
     shellClass: "",
   },
   goldRare: {
-    bg: "linear-gradient(165deg, #FFD700 0%, #FFF0A0 20%, #E0B000 40%, #FFE44D 60%, #DAA520 80%, #FFD700 100%)",
+    bg: "linear-gradient(170deg, #FFE040 0%, #F0C420 30%, #E0B000 55%, #FFE860 80%, #F0C820 100%)",
+    bgDarker: "linear-gradient(170deg, #B09020 0%, #A08018 50%, #B09020 100%)",
     border: "#FFE44D",
     text: "#FFFFFF",
     accent: "#FFF8D0",
-    statBg: "rgba(190, 150, 20, 0.6)",
-    circuitOpacity: 0.12,
+    statBg: "rgba(140, 110, 10, 0.8)",
+    circuitOpacity: 0.15,
     isRare: true,
     shellClass: "fut-shimmer",
   },
@@ -179,14 +217,14 @@ const STATS: StatDef[] = [
 /*  Circuit board SVG pattern (data URI)                                       */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
-const CIRCUIT_SVG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cpath d='M0 50h35m10 0h55M50 0v35m0 10v55' stroke='white' stroke-width='.6' opacity='.35' fill='none'/%3E%3Ccircle cx='50' cy='50' r='3' stroke='white' stroke-width='.5' opacity='.3' fill='none'/%3E%3Ccircle cx='50' cy='50' r='1' fill='white' opacity='.35'/%3E%3Cpath d='M25 0v20h-25M75 100v-20h25' stroke='white' stroke-width='.4' opacity='.2' fill='none'/%3E%3Ccircle cx='25' cy='20' r='1.5' fill='white' opacity='.2'/%3E%3Ccircle cx='75' cy='80' r='1.5' fill='white' opacity='.2'/%3E%3Cpath d='M0 75h12l4-4h6' stroke='white' stroke-width='.3' opacity='.15' fill='none'/%3E%3Cpath d='M100 25h-12l-4 4h-6' stroke='white' stroke-width='.3' opacity='.15' fill='none'/%3E%3C/svg%3E")`
+const CIRCUIT_SVG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cpath d='M0 40h28m8 0h44M40 0v28m0 8v44' stroke='white' stroke-width='.7' opacity='.4' fill='none'/%3E%3Ccircle cx='40' cy='40' r='2.5' stroke='white' stroke-width='.6' opacity='.35' fill='none'/%3E%3Ccircle cx='40' cy='40' r='.8' fill='white' opacity='.4'/%3E%3Cpath d='M20 0v16h-20M60 80v-16h20' stroke='white' stroke-width='.5' opacity='.25' fill='none'/%3E%3Ccircle cx='20' cy='16' r='1.2' fill='white' opacity='.25'/%3E%3Ccircle cx='60' cy='64' r='1.2' fill='white' opacity='.25'/%3E%3Cpath d='M0 60h10l3-3h5' stroke='white' stroke-width='.4' opacity='.2' fill='none'/%3E%3Cpath d='M80 20h-10l-3 3h-5' stroke='white' stroke-width='.4' opacity='.2' fill='none'/%3E%3Cpath d='M70 0v8l-4 4' stroke='white' stroke-width='.3' opacity='.15' fill='none'/%3E%3Cpath d='M10 80v-8l4-4' stroke='white' stroke-width='.3' opacity='.15' fill='none'/%3E%3C/svg%3E")`
 
 /* ──────────────────────────────────────────────────────────────────────────── */
-/*  Shield clip-path                                                           */
+/*  Shield clip-path (compact, closer to FUT reference)                        */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
 const SHIELD_CLIP =
-  "polygon(3% 0%, 97% 0%, 100% 2%, 100% 85%, 60% 96%, 50% 100%, 40% 96%, 0% 85%, 0% 2%)"
+  "polygon(0% 3%, 3% 0%, 97% 0%, 100% 3%, 100% 80%, 58% 94%, 50% 100%, 42% 94%, 0% 80%)"
 
 /* ──────────────────────────────────────────────────────────────────────────── */
 /*  Component                                                                  */
@@ -196,40 +234,33 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
   const rarity = getRarity(playerData.glicko2)
   const s = RARITY[rarity]
   const overall = glickoToOverall(playerData.glicko2)
-  const flag = countryFlag(playerData.nationalityCode)
 
   return (
     <div
       className={cn("relative mx-auto w-full max-w-[340px]", className)}
-      style={{ aspectRatio: "5 / 7" }}
+      style={{ aspectRatio: "10 / 14" }}
     >
       {/* ── Shield shell ──────────────────────────────────────────────── */}
       <div
-        className={cn(
-          "absolute inset-0 overflow-hidden",
-          s.shellClass,
-        )}
-        style={{
-          clipPath: SHIELD_CLIP,
-          background: s.bg,
-        }}
+        className={cn("absolute inset-0 overflow-hidden", s.shellClass)}
+        style={{ clipPath: SHIELD_CLIP, background: s.bg }}
       >
         {/* Circuit-board pattern overlay */}
         <div
           className="pointer-events-none absolute inset-0"
           style={{
             backgroundImage: CIRCUIT_SVG,
-            backgroundSize: "100px 100px",
+            backgroundSize: "80px 80px",
             opacity: s.circuitOpacity,
           }}
         />
 
-        {/* Brushed-metal texture (subtle noise) */}
+        {/* Brushed-metal texture */}
         <div
           className="pointer-events-none absolute inset-0 mix-blend-soft-light"
           style={{
             backgroundImage:
-              "repeating-linear-gradient(135deg, transparent, transparent 2px, rgba(255,255,255,0.015) 2px, rgba(255,255,255,0.015) 4px)",
+              "repeating-linear-gradient(120deg, transparent, transparent 1.5px, rgba(255,255,255,0.02) 1.5px, rgba(255,255,255,0.02) 3px)",
           }}
         />
 
@@ -237,18 +268,32 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
         <div
           className="pointer-events-none absolute"
           style={{
-            top: "8%",
-            right: "4%",
-            width: "30%",
-            height: "52%",
+            top: "5%",
+            right: "2%",
+            width: "28%",
+            height: "48%",
             border: `2px solid ${s.border}`,
             borderLeft: "none",
             borderRadius: "0 50% 50% 0",
-            opacity: 0.25,
+            opacity: 0.2,
           }}
         />
 
-        {/* Shine overlay for Rare variants (animated on hover) */}
+        {/* Small diagonal cuts at top corners */}
+        <div
+          className="pointer-events-none absolute left-0 top-0 h-[8%] w-[12%]"
+          style={{
+            background: `linear-gradient(135deg, transparent 60%, ${s.border}30 60%, ${s.border}30 65%, transparent 65%)`,
+          }}
+        />
+        <div
+          className="pointer-events-none absolute right-0 top-0 h-[8%] w-[12%]"
+          style={{
+            background: `linear-gradient(-135deg, transparent 60%, ${s.border}30 60%, ${s.border}30 65%, transparent 65%)`,
+          }}
+        />
+
+        {/* Shine overlay for Rare variants */}
         {s.isRare && (
           <div className="fut-shine-overlay pointer-events-none absolute inset-0" />
         )}
@@ -263,7 +308,7 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
                 style={{
                   width: i % 3 === 0 ? "3px" : "2px",
                   height: i % 3 === 0 ? "3px" : "2px",
-                  top: `${12 + ((i * 37) % 70)}%`,
+                  top: `${10 + ((i * 37) % 65)}%`,
                   left: `${8 + ((i * 29) % 80)}%`,
                   animationDelay: `${i * 0.4}s`,
                 }}
@@ -274,41 +319,36 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
 
         {/* ── Card content ──────────────────────────────────────────── */}
         <div className="relative flex h-full flex-col">
-          {/* ── Upper section: Name (vertical) + Photo + Rating ──── */}
-          <div className="relative flex flex-1 min-h-0">
+
+          {/* ── UPPER: Name + Photo + Rating (flex row) ────────────── */}
+          <div className="flex" style={{ height: "55%" }}>
+
             {/* Vertical player name (left rail) */}
             <div
-              className="flex w-[13%] items-center justify-center"
-              style={{
-                writingMode: "vertical-rl",
-                transform: "rotate(180deg)",
-              }}
+              className="flex w-[12%] items-center justify-center"
+              style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
             >
               <span
-                className="truncate text-base font-black uppercase tracking-[0.2em]"
+                className="truncate text-sm font-black uppercase tracking-[0.25em]"
                 style={{
                   color: s.text,
-                  textShadow: "0 1px 4px rgba(0,0,0,0.4)",
-                  maxHeight: "75%",
+                  textShadow: "0 1px 3px rgba(0,0,0,0.5)",
+                  maxHeight: "80%",
                 }}
               >
                 {playerData.name}
               </span>
             </div>
 
-            {/* Left vertical divider accent */}
-            <div
-              className="w-px self-stretch opacity-25"
-              style={{ background: s.border }}
-            />
-
-            {/* Center: Photo */}
-            <div className="flex flex-1 flex-col items-center justify-center pb-1 pt-[8%]">
+            {/* Center photo area */}
+            <div className="flex flex-1 items-center justify-center px-1">
               <div
-                className="relative aspect-square w-[62%] overflow-hidden rounded-lg"
+                className="relative overflow-hidden rounded-lg"
                 style={{
-                  border: `3px solid ${s.border}`,
-                  boxShadow: `inset 0 2px 6px rgba(0,0,0,0.35), 0 3px 8px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,0,0,0.15)`,
+                  width: "68%",
+                  aspectRatio: "1",
+                  border: `3.5px solid ${s.border}`,
+                  boxShadow: `inset 0 2px 8px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.5), 0 0 0 1.5px rgba(0,0,0,0.2)`,
                 }}
               >
                 {playerData.imageUrl ? (
@@ -316,13 +356,13 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
                   <img
                     src={playerData.imageUrl}
                     alt={playerData.name}
-                    className="h-full w-full object-cover object-[center_15%]"
+                    className="h-full w-full object-cover object-[center_20%]"
                   />
                 ) : (
                   <div
                     className="flex h-full w-full items-center justify-center text-4xl font-black"
                     style={{
-                      background: `linear-gradient(135deg, ${s.statBg}, rgba(0,0,0,0.3))`,
+                      background: `linear-gradient(135deg, ${s.statBg}, rgba(0,0,0,0.4))`,
                       color: s.accent,
                     }}
                   >
@@ -333,9 +373,9 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
             </div>
 
             {/* Right column: Overall + Flag */}
-            <div className="flex w-[22%] flex-col items-center gap-1 pt-[10%] pr-[4%]">
+            <div className="flex w-[24%] flex-col items-center pt-[6%] pr-[3%]">
               <span
-                className="text-[2.5rem] font-black leading-none"
+                className="text-[2.8rem] font-black leading-none"
                 style={{
                   color: s.text,
                   textShadow: "0 2px 8px rgba(0,0,0,0.5)",
@@ -343,91 +383,109 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
               >
                 {overall}
               </span>
-              <span
-                className="mt-1 rounded-sm border px-1.5 py-0.5 text-lg leading-none"
+              <div
+                className="mt-2 overflow-hidden rounded-[3px]"
                 style={{
-                  borderColor: `${s.border}88`,
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                  width: "36px",
+                  height: "24px",
+                  border: `1.5px solid ${s.border}60`,
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.4)",
                 }}
               >
-                {flag}
-              </span>
+                <CountryFlag code={playerData.nationalityCode} />
+              </div>
             </div>
           </div>
 
-          {/* ── Role banner ──────────────────────────────────────── */}
+          {/* ── ROLE BANNER ────────────────────────────────────────── */}
           <div
-            className="relative mx-[5%] flex items-center justify-center py-2"
+            className="flex items-center justify-center"
             style={{
-              borderTop: `1px solid ${s.border}55`,
-              borderBottom: `1px solid ${s.border}55`,
+              height: "7%",
+              borderTop: `1px solid ${s.border}40`,
+              borderBottom: `1px solid ${s.border}40`,
             }}
           >
             <span
-              className="text-sm font-black uppercase tracking-[0.3em]"
+              className="text-sm font-black uppercase tracking-[0.35em]"
               style={{
                 color: s.text,
-                textShadow: "0 1px 3px rgba(0,0,0,0.4)",
+                textShadow: "0 1px 3px rgba(0,0,0,0.5)",
               }}
             >
               {playerData.role}
             </span>
           </div>
 
-          {/* ── Stats section ────────────────────────────────────── */}
+          {/* ── STATS SECTION (darker panel) ───────────────────────── */}
           <div
-            className="mx-[3%] mt-1 rounded-xl px-2 py-2"
+            className="relative mx-[4%] mt-[2%] flex-1 overflow-hidden rounded-xl"
             style={{ background: s.statBg }}
           >
-            {/* Stat icons row */}
-            <div className="mb-1 grid grid-cols-6">
-              {STATS.map(({ key, Icon }) => (
-                <div key={key} className="flex justify-center">
-                  <Icon
-                    className="h-4 w-4"
-                    style={{ color: s.accent, opacity: 0.8 }}
-                    strokeWidth={2.5}
-                  />
-                </div>
-              ))}
-            </div>
+            {/* Circuit pattern on stats panel too */}
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{
+                backgroundImage: CIRCUIT_SVG,
+                backgroundSize: "80px 80px",
+                opacity: s.circuitOpacity * 1.5,
+              }}
+            />
 
-            {/* Stat labels row */}
-            <div className="mb-0.5 grid grid-cols-6">
-              {STATS.map(({ key, label }) => (
-                <span
-                  key={key}
-                  className="text-center text-[0.55rem] font-bold uppercase tracking-wider"
-                  style={{ color: s.text, opacity: 0.6 }}
-                >
-                  {label}
-                </span>
-              ))}
-            </div>
+            <div className="relative flex h-full flex-col items-center justify-center gap-0.5 px-2">
+              {/* Icons row */}
+              <div className="grid w-full grid-cols-6">
+                {STATS.map(({ key, Icon }) => (
+                  <div key={key} className="flex justify-center">
+                    <Icon
+                      className="h-[18px] w-[18px]"
+                      style={{ color: s.accent, opacity: 0.75 }}
+                      strokeWidth={2.5}
+                    />
+                  </div>
+                ))}
+              </div>
 
-            {/* Stat values row */}
-            <div className="grid grid-cols-6">
-              {STATS.map(({ key }) => (
-                <span
-                  key={key}
-                  className="text-center text-lg font-black leading-tight"
-                  style={{
-                    color: s.accent,
-                    textShadow: "0 1px 2px rgba(0,0,0,0.3)",
-                  }}
-                >
-                  {playerData.stats[key]}
-                </span>
-              ))}
+              {/* Labels row */}
+              <div className="grid w-full grid-cols-6">
+                {STATS.map(({ key, label }) => (
+                  <span
+                    key={key}
+                    className="text-center text-[0.6rem] font-bold uppercase tracking-wide"
+                    style={{ color: s.text, opacity: 0.55 }}
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
+
+              {/* Values row */}
+              <div className="grid w-full grid-cols-6">
+                {STATS.map(({ key }) => (
+                  <span
+                    key={key}
+                    className="text-center text-xl font-black leading-tight"
+                    style={{
+                      color: s.accent,
+                      textShadow: "0 1px 3px rgba(0,0,0,0.4)",
+                    }}
+                  >
+                    {playerData.stats[key]}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* ── Club logo (SANDER) ───────────────────────────────── */}
-          <div className="flex flex-1 items-center justify-center pb-[12%]">
+          {/* ── LOGO ───────────────────────────────────────────────── */}
+          <div
+            className="flex items-center justify-center"
+            style={{ height: "14%", paddingBottom: "4%" }}
+          >
             <div
-              className="flex h-8 w-8 items-center justify-center rounded-full"
+              className="flex h-7 w-7 items-center justify-center rounded-full"
               style={{
-                border: `1.5px solid ${s.border}66`,
+                border: `1px solid ${s.border}50`,
                 background: s.statBg,
               }}
             >
@@ -435,20 +493,21 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
               <img
                 src="/sander-logo.png"
                 alt="Sander"
-                className="h-5 w-5 object-contain"
-                style={{ filter: "brightness(1.2)" }}
+                className="h-4 w-4 object-contain"
+                style={{ filter: "brightness(1.3)" }}
               />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Outer drop shadow (outside clip-path via wrapper) */}
+      {/* Inner border highlight (inside clip) */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           clipPath: SHIELD_CLIP,
-          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(0,0,0,0.2)",
+          boxShadow:
+            "inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(0,0,0,0.15)",
         }}
       />
     </div>
@@ -459,7 +518,6 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
 /*  Helper: convert Prisma Player model to PlayerCardData                      */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
-/** Compute a single stat value from distribution percentage + Glicko-2. */
 function statValue(pct: number, glicko: number) {
   return Math.round(glicko / 40 + pct)
 }
@@ -478,10 +536,6 @@ export interface PrismaPlayerLike {
   staPct: number
 }
 
-/**
- * Convert a Prisma Player record into the props shape expected
- * by `<SanderCardFut>`.
- */
 export function playerToCardData(player: PrismaPlayerLike): PlayerCardData {
   const g = player.glickoRating
   return {
