@@ -10,6 +10,7 @@ import { ratingToDisplayLevel } from "@/lib/tournament/glicko2"
 import { getPersonalizedRecommendations } from "@/actions/recommendations"
 import { LevelUpCelebration } from "@/components/home/LevelUpCelebration"
 import { formatDate } from "@/lib/utils"
+import { VideoCarousel } from "@/components/home/VideoCarousel"
 
 export default async function Home() {
   const session = await getCurrentSession()
@@ -342,6 +343,14 @@ export default async function Home() {
                 <ChevronRight className="h-4 w-4 shrink-0 text-[var(--accent)]" />
               </Link>
             )}
+
+            {/* ── Video carousel ────────────────────────────────── */}
+            <div className="flex flex-col gap-3">
+              <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
+                Video della community
+              </p>
+              <VideoCarousel />
+            </div>
 
             {/* ── Social section ────────────────────────────────── */}
             <div className="mt-1">
