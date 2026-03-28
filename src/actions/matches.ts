@@ -5,6 +5,7 @@ import { db } from "@/lib/db"
 import { SubmitScoreSchema } from "@/lib/validators/match.schema"
 import type { SubmitScoreInput } from "@/lib/validators/match.schema"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
+import { updateRating } from "@/lib/tournament/glicko2"
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
 
@@ -140,6 +141,82 @@ export async function submitScore(input: SubmitScoreInput) {
       }
     }
   })
+
+  // ── Update Player career stats + Glicko-2 ─────────────────────────────────
+  // Fetch current glicko data for all players in this match
+  const allPlayerIds = [...teamAPlayerIds, ...teamBPlayerIds]
+  const playerRecords = await db.player.findMany({
+    where: { id: { in: allPlayerIds } },
+    select: {
+      id: true,
+      matchesWon: true,
+      matchesLost: true,
+      glickoRating: true,
+      glickoRD: true,
+      glickoVolatility: true,
+    },
+  })
+  const playerMap = Object.fromEntries(playerRecords.map((p) => [p.id, p]))
+
+  // For Glicko-2: winning team players beat each opponent on the losing team (score=1),
+  // losing team players lost to each opponent on the winning team (score=0).
+  const winnerIds = teamAWon ? teamAPlayerIds : teamBPlayerIds
+  const loserIds  = teamAWon ? teamBPlayerIds : teamAPlayerIds
+
+  const glickoUpdates: { id: string; rating: number; rd: number; volatility: number; matchesWon: number; matchesLost: number; winRatePct: number }[] = []
+
+  for (const playerId of allPlayerIds) {
+    const p = playerMap[playerId]
+    if (!p) continue
+
+    const isWinner = winnerIds.includes(playerId)
+    const opponentIds = isWinner ? loserIds : winnerIds
+
+    const results = opponentIds
+      .map((oppId) => playerMap[oppId])
+      .filter(Boolean)
+      .map((opp) => ({
+        opponent: { rating: opp.glickoRating, rd: opp.glickoRD, volatility: opp.glickoVolatility },
+        score: isWinner ? 1 : 0,
+      }))
+
+    const updated = updateRating(
+      { rating: p.glickoRating, rd: p.glickoRD, volatility: p.glickoVolatility },
+      results,
+    )
+
+    const newWon  = p.matchesWon  + (isWinner ? 1 : 0)
+    const newLost = p.matchesLost + (isWinner ? 0 : 1)
+    const total   = newWon + newLost
+
+    glickoUpdates.push({
+      id: playerId,
+      rating: updated.rating,
+      rd: updated.rd,
+      volatility: updated.volatility,
+      matchesWon: newWon,
+      matchesLost: newLost,
+      winRatePct: total > 0 ? Math.round((newWon / total) * 100) : 0,
+    })
+  }
+
+  await Promise.all(
+    glickoUpdates.map(({ id, rating, rd, volatility, matchesWon: mw, matchesLost: ml, winRatePct }) =>
+      db.player.update({
+        where: { id },
+        data: {
+          glickoRating: rating,
+          glickoRD: rd,
+          glickoVolatility: volatility,
+          matchesWon: mw,
+          matchesLost: ml,
+          winRatePct,
+        },
+      })
+    )
+  )
+
+  revalidatePath("/players")
 
   // Notify players when their next match is fully populated
   if (match.nextMatchId) {
