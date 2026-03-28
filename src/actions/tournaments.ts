@@ -18,8 +18,12 @@ import { generateKOTBSchedule } from "@/lib/tournament/kotb"
 import { generateBracket } from "@/lib/tournament/bracket"
 import { generateRoundRobinSchedule } from "@/lib/tournament/roundRobin"
 import { generateDoubleElimination } from "@/lib/tournament/doubleElim"
-import { notifyPlayers } from "@/lib/push"
+import type { PushPayload } from "@/lib/push"
 import { assignCourtLabel } from "@/lib/tournament/courtSchedule"
+
+function safeNotifyPlayers(playerIds: string[], payload: PushPayload) {
+  import("@/lib/push").then((m) => m.notifyPlayers(playerIds, payload)).catch(() => {})
+}
 
 export async function createTournament(input: CreateTournamentInput) {
   const data = CreateTournamentSchema.parse(input)
@@ -665,7 +669,7 @@ async function notifyFirstRoundMatches(tournamentId: string, tournamentName: str
   for (const match of round1Matches) {
     const playerIds = match.players.map((p) => p.playerId)
     const court = match.courtLabel ? ` — ${match.courtLabel}` : ""
-    await notifyPlayers(playerIds, {
+    safeNotifyPlayers(playerIds, {
       title: `${tournamentName} — Il torneo è iniziato!`,
       body: `Il tuo primo match è pronto${court}. Vai al tabellone!`,
       url: `/tournaments/${tournamentId}`,
@@ -685,7 +689,7 @@ export async function notifyMatchReady(matchId: string, tournamentName: string, 
 
   const playerIds = match.players.map((p) => p.playerId)
   const court = match.courtLabel ? ` al ${match.courtLabel}` : ""
-  await notifyPlayers(playerIds, {
+  safeNotifyPlayers(playerIds, {
     title: `${tournamentName} — È il tuo turno!`,
     body: `Il tuo prossimo match è pronto${court}. Forza!`,
     url: `/tournaments/${tournamentId}`,
