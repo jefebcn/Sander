@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic"
 import { getPlayer, getHeadToHeadStats } from "@/actions/players"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
-import { SanderCardFifa } from "@/components/player/SanderCardFifa"
+import { SanderCardFut, playerToCardData } from "@/components/player/SanderCardFut"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { Users, Swords } from "lucide-react"
 
@@ -39,30 +39,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
     <div>
       <PageHeader title="SanderCard" backHref="/players" />
       <div className="px-4 pb-6 flex flex-col gap-4">
-        <SanderCardFifa player={{
-          name: player.name,
-          firstName: player.firstName,
-          lastName: player.lastName,
-          avatarUrl: player.avatarUrl,
-          avgRating: player.avgRating,
-          glickoRating: player.glickoRating,
-          level: player.level,
-          xp: player.xp,
-          winRatePct: player.winRatePct,
-          matchesWon: player.matchesWon,
-          matchesLost: player.matchesLost,
-          sessionsPlayed: player.sessionsPlayed,
-          tournamentsWon: player.tournamentsWon,
-          organizedSessions: player._count.organizedSessions,
-          streak,
-          mvpCount: player.badgesReceived.length,
-          attPct: player.attPct,
-          difPct: player.difPct,
-          murPct: player.murPct,
-          alzPct: player.alzPct,
-          ricPct: player.ricPct,
-          staPct: player.staPct,
-        }} />
+        <SanderCardFut playerData={playerToCardData(player)} />
 
         {/* ── Head-to-head stats ──────────────────────────────── */}
         {h2h && (h2h.together.played > 0 || h2h.versus.played > 0) && (

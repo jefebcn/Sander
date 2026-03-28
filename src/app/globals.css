@@ -243,6 +243,84 @@ button, a, [role="button"] {
   }
 }
 
+/* ─── SanderCardFut — Trading card rarity effects ────────────────────────── */
+
+/* Shine sweep for Bronze Rare / generic rare */
+@keyframes futShine {
+  0%   { transform: translateX(-120%) skewX(-20deg); }
+  100% { transform: translateX(220%) skewX(-20deg); }
+}
+
+.fut-shine:hover .fut-shine-overlay {
+  animation: futShine 0.8s ease-out;
+}
+
+.fut-shine-overlay {
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.25) 45%,
+    rgba(255, 255, 255, 0.08) 55%,
+    transparent 70%
+  );
+  opacity: 0;
+}
+
+.fut-shine:hover .fut-shine-overlay {
+  opacity: 1;
+}
+
+/* Holographic prismatic shift for Silver Rare */
+@keyframes futHolo {
+  0%   { background-position: 0% 50%; filter: hue-rotate(0deg); }
+  50%  { background-position: 100% 50%; filter: hue-rotate(30deg); }
+  100% { background-position: 0% 50%; filter: hue-rotate(0deg); }
+}
+
+.fut-holo:hover .fut-shine-overlay {
+  background: linear-gradient(
+    120deg,
+    rgba(200, 220, 255, 0.12) 0%,
+    rgba(180, 200, 255, 0.2)  20%,
+    rgba(220, 200, 255, 0.12) 40%,
+    rgba(200, 240, 255, 0.2)  60%,
+    rgba(230, 210, 255, 0.12) 80%,
+    rgba(200, 220, 255, 0.2)  100%
+  );
+  background-size: 200% 100%;
+  opacity: 1;
+  animation: futHolo 3s ease-in-out infinite;
+}
+
+/* Gold Rare shimmer + sparkle particles */
+@keyframes futShimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.fut-shimmer:hover .fut-shine-overlay {
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    rgba(255, 255, 200, 0.3)  35%,
+    rgba(255, 240, 160, 0.15) 50%,
+    rgba(255, 255, 200, 0.3)  65%,
+    transparent 80%
+  );
+  background-size: 200% 100%;
+  opacity: 1;
+  animation: futShimmer 2s linear infinite;
+}
+
+@keyframes futSparkle {
+  0%, 100% { opacity: 0; transform: scale(0.5); }
+  50%      { opacity: 0.9; transform: scale(1.2); }
+}
+
+.fut-sparkle {
+  animation: futSparkle 2.4s ease-in-out infinite;
+}
+
 /* ─── Scrollbar ───────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--surface-1); }
