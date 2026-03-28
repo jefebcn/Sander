@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic"
 
+import type { Metadata } from "next"
 import { MapPin, Calendar, Euro, FileText } from "lucide-react"
 import { notFound } from "next/navigation"
 import Link from "next/link"
@@ -10,6 +11,24 @@ import { SessionStatusBadge } from "@/components/session/SessionStatusBadge"
 import { ParticipantList } from "@/components/session/ParticipantList"
 import { PlayerRatingForm } from "@/components/session/PlayerRatingForm"
 import { PageHeader } from "@/components/layout/PageHeader"
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ id: string }> }
+): Promise<Metadata> {
+  const { id } = await params
+  const session = await getSession(id).catch(() => null)
+  const title = session ? `${session.title} — SANDER` : "SANDER — Beach Volleyball"
+  return {
+    title,
+    openGraph: {
+      title,
+      description: session
+        ? `${session.location} · Unisciti alla partita su SANDER 🏐`
+        : "Beach Volleyball Tournament Manager",
+      images: [{ url: "/sander-logo.png", width: 512, height: 512, alt: "SANDER" }],
+    },
+  }
+}
 
 const FORMAT_LABEL: Record<string, string> = {
   TWO_VS_TWO: "2 vs 2",

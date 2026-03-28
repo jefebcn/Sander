@@ -15,16 +15,19 @@ const geist = Geist({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://sander-two.vercel.app"),
   title: "SANDER — Beach Volleyball",
   description: "Beach Volleyball Tournament Manager",
   manifest: "/manifest.json",
   icons: {
-    icon: [
-      { url: "/sander-logo.png", type: "image/png" },
-    ],
-    apple: [
-      { url: "/sander-logo.png", type: "image/png" },
-    ],
+    icon: [{ url: "/sander-logo.png", type: "image/png" }],
+    apple: [{ url: "/sander-logo.png", type: "image/png" }],
+  },
+  openGraph: {
+    title: "SANDER — Beach Volleyball",
+    description: "Beach Volleyball Tournament Manager",
+    images: [{ url: "/sander-logo.png", width: 512, height: 512, alt: "SANDER" }],
+    siteName: "SANDER",
   },
   appleWebApp: {
     capable: true,

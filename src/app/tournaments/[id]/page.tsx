@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import { ChevronRight, Play, Trophy, Shuffle } from "lucide-react"
 import { getTournamentDashboard } from "@/actions/standings"
@@ -12,6 +13,24 @@ import { ShareButton } from "@/components/ui/ShareButton"
 import { formatDate } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ id: string }> }
+): Promise<Metadata> {
+  const { id } = await params
+  const tournament = await db.tournament.findUnique({ where: { id }, select: { name: true, date: true } }).catch(() => null)
+  const title = tournament ? `${tournament.name} — SANDER` : "SANDER — Beach Volleyball"
+  return {
+    title,
+    openGraph: {
+      title,
+      description: tournament
+        ? `Torneo di beach volley · Unisciti su SANDER 🏐`
+        : "Beach Volleyball Tournament Manager",
+      images: [{ url: "/sander-logo.png", width: 512, height: 512, alt: "SANDER" }],
+    },
+  }
+}
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
 
