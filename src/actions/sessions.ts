@@ -8,9 +8,9 @@ import {
   RatePlayerSchema,
   AssignTeamSchema,
 } from "@/lib/validators/session.schema"
-import type { PushPayload } from "@/lib/push"
-
 // ─── Push helpers (dynamic import — keeps web-push out of SSR bundle) ────────
+
+type PushPayload = { title: string; body: string; url: string }
 
 function safeNotifyPlayer(playerId: string, payload: PushPayload) {
   import("@/lib/push").then((m) => m.notifyPlayer(playerId, payload)).catch(() => {})

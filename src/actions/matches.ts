@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { SubmitScoreSchema } from "@/lib/validators/match.schema"
 import type { SubmitScoreInput } from "@/lib/validators/match.schema"
-import { notifyPlayers } from "@/lib/push"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
@@ -169,11 +168,11 @@ async function notifyIfMatchReady(matchId: string, tournamentId: string) {
 
   const playerIds = nextMatch.players.map((p) => p.playerId)
   const court = nextMatch.courtLabel ? ` al ${nextMatch.courtLabel}` : ""
-  await notifyPlayers(playerIds, {
+  import("@/lib/push").then((m) => m.notifyPlayers(playerIds, {
     title: `${nextMatch.tournament.name} — È il tuo turno!`,
     body: `Il tuo prossimo match è pronto${court}. Vai al tabellone!`,
     url: `/tournaments/${tournamentId}`,
-  })
+  })).catch(() => {})
 }
 
 export async function getMatchesForRound(tournamentId: string, round: number) {

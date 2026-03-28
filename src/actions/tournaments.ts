@@ -4,6 +4,12 @@ import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { CreateTournamentSchema } from "@/lib/validators/tournament.schema"
+import type { CreateTournamentInput } from "@/lib/validators/tournament.schema"
+import { generateKOTBSchedule } from "@/lib/tournament/kotb"
+import { generateBracket } from "@/lib/tournament/bracket"
+import { generateRoundRobinSchedule } from "@/lib/tournament/roundRobin"
+import { generateDoubleElimination } from "@/lib/tournament/doubleElim"
+import { assignCourtLabel } from "@/lib/tournament/courtSchedule"
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
 
@@ -13,15 +19,7 @@ async function requireAdmin() {
   if (!ADMIN_EMAIL || session.user.email !== ADMIN_EMAIL) throw new Error("Accesso non autorizzato")
 }
 
-import type { CreateTournamentInput } from "@/lib/validators/tournament.schema"
-import { generateKOTBSchedule } from "@/lib/tournament/kotb"
-import { generateBracket } from "@/lib/tournament/bracket"
-import { generateRoundRobinSchedule } from "@/lib/tournament/roundRobin"
-import { generateDoubleElimination } from "@/lib/tournament/doubleElim"
-import type { PushPayload } from "@/lib/push"
-import { assignCourtLabel } from "@/lib/tournament/courtSchedule"
-
-function safeNotifyPlayers(playerIds: string[], payload: PushPayload) {
+function safeNotifyPlayers(playerIds: string[], payload: { title: string; body: string; url: string }) {
   import("@/lib/push").then((m) => m.notifyPlayers(playerIds, payload)).catch(() => {})
 }
 
