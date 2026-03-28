@@ -12,8 +12,16 @@ import { APP_VERSION_DISPLAY } from "@/lib/appVersion"
 import { formatDate } from "@/lib/utils"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
 import { NotifyPermission } from "@/components/push/NotifyPermission"
-import { AdminVideoSection } from "@/components/profile/AdminVideoSection"
-import { MyVideosSection } from "@/components/profile/MyVideosSection"
+import nextDynamic from "next/dynamic"
+
+const AdminVideoSection = nextDynamic(
+  () => import("@/components/profile/AdminVideoSection").then((m) => ({ default: m.AdminVideoSection })),
+  { ssr: false }
+)
+const MyVideosSection = nextDynamic(
+  () => import("@/components/profile/MyVideosSection").then((m) => ({ default: m.MyVideosSection })),
+  { ssr: false }
+)
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
 
