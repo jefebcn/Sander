@@ -19,33 +19,33 @@ async function requireAdmin() {
   if (!ADMIN_EMAIL || session.user.email !== ADMIN_EMAIL) throw new Error("Accesso non autorizzato")
 }
 
-function safeNotifyPlayers(playerIds: string[], payload: { title: string; body: string; url: string }) {
-  import("@/lib/push").then((m) => m.notifyPlayers(playerIds, payload)).catch(() => {})
-}
+export async function createTournament(input: CreateTournamentInput): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  try {
+    const data = CreateTournamentSchema.parse(input)
 
-export async function createTournament(input: CreateTournamentInput) {
-  const data = CreateTournamentSchema.parse(input)
-
-  const tournament = await db.tournament.create({
-    data: {
-      name: data.name,
-      date: data.date,
-      type: data.type,
-      status: "DRAFT",
-      numCourts: data.numCourts ?? 2,
-      chiceceMatchCount: data.chiceceMatchCount ?? 4,
-      registrations: {
-        create: data.playerIds.map((playerId, i) => ({
-          playerId,
-          seedPosition: i + 1,
-        })),
+    const tournament = await db.tournament.create({
+      data: {
+        name: data.name,
+        date: data.date,
+        type: data.type,
+        status: "DRAFT",
+        numCourts: data.numCourts ?? 2,
+        chiceceMatchCount: data.chiceceMatchCount ?? 4,
+        registrations: {
+          create: data.playerIds.map((playerId, i) => ({
+            playerId,
+            seedPosition: i + 1,
+          })),
+        },
       },
-    },
-    include: { registrations: true },
-  })
+      select: { id: true },
+    })
 
-  revalidatePath("/tournaments")
-  return tournament
+    revalidatePath("/tournaments")
+    return { ok: true, id: tournament.id }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+  }
 }
 
 export async function getTournament(id: string) {
@@ -109,8 +109,7 @@ export async function startTournament(tournamentId: string) {
     await startBracketTournament(tournament, playerIds)
   }
 
-  // Notify all players of their first match
-  notifyFirstRoundMatches(tournamentId, tournament.name).catch(() => {})
+  // push notifications removed (UI disabled)
 
   revalidatePath("/tournaments")
   revalidatePath(`/tournaments/${tournamentId}`)
@@ -652,44 +651,3 @@ export async function completeTournament(tournamentId: string) {
   revalidatePath("/players")
 }
 
-// ─── Push notification helpers ────────────────────────────────────────────────
-
-/**
- * After a tournament starts, notify every player in round-1 matches
- * telling them their court assignment.
- */
-async function notifyFirstRoundMatches(tournamentId: string, tournamentName: string) {
-  const round1Matches = await db.match.findMany({
-    where: { tournamentId, round: 1, isBye: false },
-    include: { players: { select: { playerId: true } } },
-  })
-
-  for (const match of round1Matches) {
-    const playerIds = match.players.map((p) => p.playerId)
-    const court = match.courtLabel ? ` — ${match.courtLabel}` : ""
-    safeNotifyPlayers(playerIds, {
-      title: `${tournamentName} — Il torneo è iniziato!`,
-      body: `Il tuo primo match è pronto${court}. Vai al tabellone!`,
-      url: `/tournaments/${tournamentId}`,
-    })
-  }
-}
-
-/**
- * Notify players when their next match in a bracket/advancement is ready.
- */
-export async function notifyMatchReady(matchId: string, tournamentName: string, tournamentId: string) {
-  const match = await db.match.findUnique({
-    where: { id: matchId },
-    include: { players: { select: { playerId: true } } },
-  })
-  if (!match || match.isBye || match.players.length < 2) return
-
-  const playerIds = match.players.map((p) => p.playerId)
-  const court = match.courtLabel ? ` al ${match.courtLabel}` : ""
-  safeNotifyPlayers(playerIds, {
-    title: `${tournamentName} — È il tuo turno!`,
-    body: `Il tuo prossimo match è pronto${court}. Forza!`,
-    url: `/tournaments/${tournamentId}`,
-  })
-}

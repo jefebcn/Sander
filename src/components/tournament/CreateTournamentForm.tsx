@@ -49,19 +49,19 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
     }
 
     startTransition(async () => {
-      try {
-        const tournament = await createTournament({
-          name,
-          date: new Date(date),
-          type,
-          playerIds: selectedPlayerIds,
-          numCourts,
-          chiceceMatchCount: type === "CHICECE" ? chiceceMatchCount : undefined,
-        })
-        router.push(`/tournaments/${tournament.id}`)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Errore durante la creazione")
+      const result = await createTournament({
+        name,
+        date: new Date(date),
+        type,
+        playerIds: selectedPlayerIds,
+        numCourts,
+        chiceceMatchCount: type === "CHICECE" ? chiceceMatchCount : undefined,
+      })
+      if (!result.ok) {
+        setError(result.error)
+        return
       }
+      router.push(`/tournaments/${result.id}`)
     })
   }
 
