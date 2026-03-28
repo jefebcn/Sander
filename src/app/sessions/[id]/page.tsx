@@ -89,12 +89,17 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
               <span className="text-[var(--muted-text)]">{session.notes}</span>
             </div>
           )}
-
-          {/* Share */}
-          <div className="border-t border-white/10 pt-3">
-            <ShareButton path={`/sessions/${session.id}`} title={session.title} text={`Unisciti a "${session.title}" su SANDER 🏐`} />
-          </div>
         </div>
+
+        {/* Share — full-width prominent button */}
+        {(session.status === "OPEN" || session.status === "FULL") && (
+          <ShareButton
+            path={`/sessions/${session.id}`}
+            title={session.title}
+            text={`Unisciti a "${session.title}" su SANDER 🏐`}
+            fullWidth
+          />
+        )}
 
         {/* CTA per utenti non autenticati */}
         {!currentPlayer && (session.status === "OPEN" || session.status === "FULL") && (
