@@ -8,7 +8,7 @@ interface SanderCardMiniProps {
 }
 
 export function SanderCardMini({ player }: SanderCardMiniProps) {
-  const isBlocker = player.preferredRole === "BLOCKER"
+  const isDif = player.difPct >= player.murPct
 
   return (
     <Link
@@ -18,11 +18,16 @@ export function SanderCardMini({ player }: SanderCardMiniProps) {
       {/* Avatar */}
       <div
         className={cn(
-          "flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-black",
-          isBlocker ? "bg-blue-800 text-blue-200" : "bg-orange-800 text-orange-200",
+          "flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-black overflow-hidden",
+          isDif ? "bg-blue-800 text-blue-200" : "bg-orange-800 text-orange-200",
         )}
       >
-        {player.name.slice(0, 2).toUpperCase()}
+        {player.avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={player.avatarUrl} alt={player.name} className="h-full w-full object-cover" />
+        ) : (
+          player.name.slice(0, 2).toUpperCase()
+        )}
       </div>
 
       {/* Info */}
@@ -35,8 +40,8 @@ export function SanderCardMini({ player }: SanderCardMiniProps) {
         </div>
         <div className="flex items-center gap-3 text-xs text-[var(--muted-text)]">
           <span className="flex items-center gap-1">
-            {isBlocker ? <Swords className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
-            {isBlocker ? "Attaccante" : "Difensore"}
+            {isDif ? <Shield className="h-3 w-3" /> : <Swords className="h-3 w-3" />}
+            {isDif ? "Difensore" : "Muratorer"}
           </span>
           <span className="flex items-center gap-1">
             <TrendingUp className="h-3 w-3" />
