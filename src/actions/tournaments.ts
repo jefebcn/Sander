@@ -745,3 +745,71 @@ async function fullGlickoRecalculation() {
   }
 }
 
+/**
+ * Admin-only: reset ALL player stats (Glicko + career) to zero/default,
+ * then replay every completed tournament to restore correct values.
+ * Use this to fix stats corrupted by deletions that happened before the
+ * revert logic was in place.
+ */
+export async function adminRecalculateAllStats() {
+  await requireAdmin()
+
+  // Reset all career stats
+  await db.player.updateMany({
+    data: {
+      glickoRating: 1500,
+      glickoRD: 350,
+      glickoVolatility: 0.06,
+      matchesWon: 0,
+      matchesLost: 0,
+      winRatePct: 0,
+      tournamentsWon: 0,
+    },
+  })
+
+  // Replay every completed tournament in chronological order
+  const completed = await db.tournament.findMany({
+    where: { status: "COMPLETED" },
+    orderBy: { date: "asc" },
+    select: { id: true, type: true },
+  })
+
+  for (const t of completed) {
+    // Re-apply career stats from standings (non-CHICECE only)
+    if (t.type !== "CHICECE") {
+      const standings = await db.tournamentStanding.findMany({
+        where: { tournamentId: t.id },
+        orderBy: { rank: "asc" },
+      })
+      if (standings.length > 0) {
+        await db.$transaction(
+          standings.map((s) =>
+            db.player.update({
+              where: { id: s.playerId },
+              data: {
+                matchesWon:    { increment: s.matchesWon },
+                matchesLost:   { increment: s.matchesLost },
+                tournamentsWon: s.rank === 1 ? { increment: 1 } : undefined,
+              },
+            })
+          )
+        )
+        for (const s of standings) {
+          const player = await db.player.findUniqueOrThrow({ where: { id: s.playerId } })
+          const total = player.matchesWon + player.matchesLost
+          await db.player.update({
+            where: { id: s.playerId },
+            data: { winRatePct: total === 0 ? 0 : Math.round((player.matchesWon / total) * 100) },
+          })
+        }
+      }
+    }
+
+    // Re-apply Glicko-2
+    await applyTournamentGlicko(t.id)
+  }
+
+  revalidatePath("/players")
+  revalidatePath("/profile")
+}
+

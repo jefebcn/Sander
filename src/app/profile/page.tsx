@@ -14,6 +14,7 @@ import { formatDate } from "@/lib/utils"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
 import { AdminDeleteSessionButton } from "@/components/profile/AdminDeleteSessionButton"
 import { AdminDeleteTournamentButton } from "@/components/profile/AdminDeleteTournamentButton"
+import { AdminRecalcStatsButton } from "@/components/profile/AdminRecalcStatsButton"
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
 
@@ -437,6 +438,9 @@ export default async function ProfilePage({ searchParams }: Props) {
               </div>
             ))}
           </div>
+
+          {/* Recalc button */}
+          <AdminRecalcStatsButton />
 
           {/* DB error display */}
           {adminError && (
