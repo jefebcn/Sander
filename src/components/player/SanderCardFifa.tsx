@@ -13,60 +13,40 @@ interface FifaCardPlayer {
   matchesWon: number
   matchesLost: number
   sessionsPlayed: number
-  flopVotes: number
   tournamentsWon: number
   organizedSessions: number
   streak: number
   mvpCount: number
+  // stat distribution (must sum to 100)
+  attPct: number
+  difPct: number
+  murPct: number
+  alzPct: number
+  ricPct: number
+  staPct: number
 }
 
 interface SanderCardFifaProps {
   player: FifaCardPlayer
 }
 
-function clamp(v: number, lo: number, hi: number) {
-  return Math.min(hi, Math.max(lo, Math.round(v)))
-}
-
-function computeStats(p: FifaCardPlayer) {
-  const avg    = p.avgRating         // 0–100 stored, shown as /10
-  const glicko = p.glickoRating      // ~1500 default
-  const wr     = p.winRatePct        // 0–100
-
-  // Overall — blend avgRating (60%), glicko (30%), level bonus (10%)
-  const overall = clamp(avg * 0.6 + (glicko / 2400) * 99 * 0.3 + Math.min(p.level * 2, 20) * 0.1, 40, 99)
-
-  // ATT — offensive power (avg + win rate)
-  const att = clamp(avg * 0.7 + wr * 0.3, 40, 99)
-
-  // DIF — defensive consistency, penalised by flop votes
-  const flopPenDif = Math.min(p.flopVotes * 3, 20)
-  const dif = clamp(avg * 0.5 + wr * 0.3 + 20 - flopPenDif, 40, 99)
-
-  // MUR — blocking / technical ceiling (Glicko-driven)
-  const mur = clamp((glicko / 2400) * 99 * 0.6 + wr * 0.4, 40, 99)
-
-  // ALZ — setting / game vision (avg rating + experience level)
-  const lvlBonus = Math.min(p.level * 4, 30)
-  const alz = clamp(avg * 0.7 + lvlBonus * 0.3, 40, 99)
-
-  // RIC — reception / passing (consistency, fewer errors)
-  const flopPenRic = Math.min(p.flopVotes * 2, 15)
-  const ric = clamp(avg * 0.6 + wr * 0.25 + 15 - flopPenRic, 40, 99)
-
-  // STA — stamina / activity (sessions played + recent streak)
-  const sessBase = Math.min(p.sessionsPlayed * 2, 50)
-  const sta = clamp(avg * 0.3 + sessBase * 0.5 + p.streak * 2, 40, 99)
-
-  return { overall, att, dif, mur, alz, ric, sta }
+function statValue(pct: number, glicko: number) {
+  return Math.round((pct / 100) * glicko)
 }
 
 export function SanderCardFifa({ player }: SanderCardFifaProps) {
-  const { overall, att, dif, mur, alz, ric, sta } = computeStats(player)
   const avgDisplay = player.avgRating > 0 ? (player.avgRating / 10).toFixed(1) : "—"
+  const glickoDisplay = Math.round(player.glickoRating)
   const streakPct = player.matchesWon + player.matchesLost > 0
     ? Math.round((player.matchesWon / (player.matchesWon + player.matchesLost)) * 100)
     : 0
+
+  const att = statValue(player.attPct, player.glickoRating)
+  const dif = statValue(player.difPct, player.glickoRating)
+  const mur = statValue(player.murPct, player.glickoRating)
+  const alz = statValue(player.alzPct, player.glickoRating)
+  const ric = statValue(player.ricPct, player.glickoRating)
+  const sta = statValue(player.staPct, player.glickoRating)
 
   return (
     <div
@@ -87,14 +67,20 @@ export function SanderCardFifa({ player }: SanderCardFifaProps) {
 
       <div className="relative px-6 pt-7 pb-6 space-y-5">
 
-        {/* ── Top row: overall + avatar ─────────────────────── */}
+        {/* ── Top row: overall (glicko) + avatar ─────────────── */}
         <div className="flex items-start justify-between">
           <div className="flex flex-col items-start gap-2">
             <span
-              className="text-[5.5rem] font-black leading-none text-white"
+              className="text-[4rem] font-black leading-none text-white"
               style={{ textShadow: "0 2px 12px rgba(0,0,0,0.4)" }}
             >
-              {overall}
+              {glickoDisplay}
+            </span>
+            <span
+              className="text-[0.65rem] font-bold uppercase tracking-widest"
+              style={{ color: "rgba(255,255,255,0.45)" }}
+            >
+              Glicko-2
             </span>
             <span className="text-2xl">🇮🇹</span>
             <div
@@ -173,23 +159,28 @@ export function SanderCardFifa({ player }: SanderCardFifaProps) {
           style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}
         >
           {[
-            { label: "ATT", value: att },
-            { label: "DIF", value: dif },
-            { label: "MUR", value: mur },
-            { label: "ALZ", value: alz },
-            { label: "RIC", value: ric },
-            { label: "STA", value: sta },
-          ].map(({ label, value }, i) => (
+            { label: "ATT", value: att, pct: player.attPct },
+            { label: "DIF", value: dif, pct: player.difPct },
+            { label: "MUR", value: mur, pct: player.murPct },
+            { label: "ALZ", value: alz, pct: player.alzPct },
+            { label: "RIC", value: ric, pct: player.ricPct },
+            { label: "STA", value: sta, pct: player.staPct },
+          ].map(({ label, value, pct }, i) => (
             <div
               key={label}
-              className="flex items-baseline gap-1.5 px-3 py-3"
+              className="flex flex-col px-3 py-3"
               style={{
                 borderRight: (i + 1) % 3 !== 0 ? "1px solid rgba(255,255,255,0.1)" : undefined,
                 borderBottom: i < 3 ? "1px solid rgba(255,255,255,0.1)" : undefined,
               }}
             >
-              <span className="text-3xl font-black text-white leading-none">{value}</span>
-              <span className="text-xs font-bold" style={{ color: "rgba(255,255,255,0.5)" }}>{label}</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-2xl font-black text-white leading-none">{value}</span>
+                <span className="text-xs font-bold" style={{ color: "rgba(255,255,255,0.5)" }}>{label}</span>
+              </div>
+              <span className="mt-0.5 text-[0.6rem]" style={{ color: "rgba(255,255,255,0.3)" }}>
+                {pct}%
+              </span>
             </div>
           ))}
         </div>

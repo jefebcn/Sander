@@ -6,6 +6,7 @@ import { ArrowUpRight, MapPin, Calendar, Settings, ShieldCheck, Users, Trophy } 
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { SanderCardFifa } from "@/components/player/SanderCardFifa"
+import { StatPercentageEditor } from "@/components/player/StatPercentageEditor"
 import { SignOutButton } from "@/components/auth/SignOutButton"
 import { InviteTab } from "@/components/profile/InviteTab"
 import { APP_VERSION_DISPLAY } from "@/lib/appVersion"
@@ -186,11 +187,27 @@ export default async function ProfilePage({ searchParams }: Props) {
               matchesWon: fullPlayer.matchesWon,
               matchesLost: fullPlayer.matchesLost,
               sessionsPlayed: fullPlayer.sessionsPlayed,
-              flopVotes: fullPlayer.flopVotes,
               tournamentsWon: fullPlayer.tournamentsWon,
               organizedSessions: fullPlayer._count.organizedSessions,
               streak,
               mvpCount: fullPlayer.badgesReceived.length,
+              attPct: fullPlayer.attPct,
+              difPct: fullPlayer.difPct,
+              murPct: fullPlayer.murPct,
+              alzPct: fullPlayer.alzPct,
+              ricPct: fullPlayer.ricPct,
+              staPct: fullPlayer.staPct,
+            }}
+          />
+          <StatPercentageEditor
+            glickoRating={fullPlayer.glickoRating}
+            initial={{
+              attPct: fullPlayer.attPct,
+              difPct: fullPlayer.difPct,
+              murPct: fullPlayer.murPct,
+              alzPct: fullPlayer.alzPct,
+              ricPct: fullPlayer.ricPct,
+              staPct: fullPlayer.staPct,
             }}
           />
           <NotifyPermission />

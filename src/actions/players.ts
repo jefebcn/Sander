@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
-import { CreatePlayerSchema, UpdatePlayerSchema } from "@/lib/validators/player.schema"
-import type { CreatePlayerInput, UpdatePlayerInput } from "@/lib/validators/player.schema"
+import { CreatePlayerSchema, UpdatePlayerSchema, UpdateStatPctSchema } from "@/lib/validators/player.schema"
+import type { CreatePlayerInput, UpdatePlayerInput, UpdateStatPctInput } from "@/lib/validators/player.schema"
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
 
@@ -109,6 +109,17 @@ export async function getHeadToHeadStats(playerAId: string, playerBId: string) {
   }
 
   return { together, versus }
+}
+
+export async function updateStatPercentages(input: UpdateStatPctInput) {
+  const player = await getCurrentPlayer()
+  if (!player) throw new Error("Non autenticato")
+
+  const data = UpdateStatPctSchema.parse(input)
+  await db.player.update({ where: { id: player.id }, data })
+
+  revalidatePath("/profile")
+  revalidatePath(`/players/${player.id}`)
 }
 
 export async function deletePlayer(id: string) {

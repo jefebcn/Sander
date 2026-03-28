@@ -161,6 +161,14 @@ model Player {
   // Session stats
   sessionsPlayed Int @default(0)
 
+  // Stat distribution (must sum to 100; default = equal split)
+  attPct Int @default(17)
+  difPct Int @default(17)
+  murPct Int @default(17)
+  alzPct Int @default(17)
+  ricPct Int @default(16)
+  staPct Int @default(16)
+
   // Relations
   registrations       TournamentRegistration[]
   matchPlayers        MatchPlayer[]
