@@ -12,8 +12,6 @@ import { APP_VERSION_DISPLAY } from "@/lib/appVersion"
 import { formatDate } from "@/lib/utils"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
 import { NotifyPermission } from "@/components/push/NotifyPermission"
-import { AdminVideoSection } from "@/components/profile/AdminVideoSection"
-import { MyVideosSection } from "@/components/profile/MyVideosSection"
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
 
@@ -204,8 +202,6 @@ export default async function ProfilePage({ searchParams }: Props) {
             Modifica profilo
           </Link>
 
-          {/* I miei video — fetched client-side */}
-          <MyVideosSection />
         </div>
       )}
 
@@ -358,9 +354,6 @@ export default async function ProfilePage({ searchParams }: Props) {
               {adminError}
             </div>
           )}
-
-          {/* Video management — fully client-side to avoid SSR serialization issues */}
-          <AdminVideoSection />
 
           {/* All sessions */}
           <div>
