@@ -4,9 +4,17 @@ import { revalidatePath } from "next/cache"
 import { put, del } from "@vercel/blob"
 import { db } from "@/lib/db"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
-import { notifyPlayer } from "@/lib/push"
-
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
+
+/** Fire-and-forget push notification — dynamic import keeps web-push out of the bundle graph */
+async function safeNotify(playerId: string, payload: { title: string; body: string; url?: string }) {
+  try {
+    const { notifyPlayer } = await import("@/lib/push")
+    await notifyPlayer(playerId, payload)
+  } catch {
+    // best-effort — never block the main action
+  }
+}
 
 async function requireAdmin() {
   const session = await getCurrentSession()
@@ -44,7 +52,7 @@ export async function uploadVideo(formData: FormData) {
     select: { id: true },
   })
   if (adminPlayer) {
-    await notifyPlayer(adminPlayer.id, {
+    safeNotify(adminPlayer.id, {
       title: "Nuovo video in attesa",
       body: `${player.name} ha caricato un video — revisiona dal profilo`,
       url: "/profile",
@@ -65,12 +73,11 @@ export async function approveVideo(id: string) {
     include: { player: { select: { id: true, name: true } } },
   })
 
-  // Push notification — best effort, don't fail the action if it throws
-  notifyPlayer(sub.playerId, {
+  safeNotify(sub.playerId, {
     title: "Il tuo video è stato pubblicato! 🎉",
     body: "Il tuo video di beach volley è ora visibile nella community",
     url: "/",
-  }).catch(() => {})
+  })
 
   revalidatePath("/")
   revalidatePath("/profile")
@@ -85,12 +92,11 @@ export async function rejectVideo(id: string, note?: string) {
     data: { status: "REJECTED", note: note ?? null, reviewedAt: new Date() },
   })
 
-  // Push notification — best effort
-  notifyPlayer(sub.playerId, {
+  safeNotify(sub.playerId, {
     title: "Video non approvato",
     body: note ?? "Il tuo video non rispetta le linee guida della community",
     url: "/",
-  }).catch(() => {})
+  })
 
   revalidatePath("/")
   revalidatePath("/profile")
