@@ -2,8 +2,10 @@ export const dynamic = "force-dynamic"
 
 import { MapPin, Calendar, Euro, FileText } from "lucide-react"
 import { notFound } from "next/navigation"
+import Link from "next/link"
 import { getSession } from "@/actions/sessions"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
+import { ShareButton } from "@/components/ui/ShareButton"
 import { SessionStatusBadge } from "@/components/session/SessionStatusBadge"
 import { ParticipantList } from "@/components/session/ParticipantList"
 import { PlayerRatingForm } from "@/components/session/PlayerRatingForm"
@@ -87,7 +89,23 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
               <span className="text-[var(--muted-text)]">{session.notes}</span>
             </div>
           )}
+
+          {/* Share */}
+          <div className="border-t border-white/10 pt-3">
+            <ShareButton path={`/sessions/${session.id}`} title={session.title} text={`Unisciti a "${session.title}" su SANDER 🏐`} />
+          </div>
         </div>
+
+        {/* CTA per utenti non autenticati */}
+        {!currentPlayer && (session.status === "OPEN" || session.status === "FULL") && (
+          <Link
+            href={`/auth/signin?callbackUrl=${encodeURIComponent(`/sessions/${session.id}`)}`}
+            className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl font-black text-black text-base"
+            style={{ background: "var(--accent)" }}
+          >
+            Accedi per partecipare
+          </Link>
+        )}
 
         {/* Participants + actions */}
         <ParticipantList

@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/tournament/StatusBadge"
 import { LiveDashboard } from "@/components/tournament/LiveDashboard"
 import { ConfirmActionButton } from "@/components/tournament/ConfirmActionButton"
 import { ChiceceDashboard } from "@/components/tournament/ChiceceDashboard"
+import { ShareButton } from "@/components/ui/ShareButton"
 import { formatDate } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
@@ -58,6 +59,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               {formatDate(tournament.date)} · {typeLabel} · {registrations.length} giocatori
             </p>
           </div>
+          <ShareButton path={`/tournaments/${id}`} title={tournament.name} text={`Unisciti al torneo "${tournament.name}" su SANDER 🏐`} />
         </div>
 
         {/* Draft — start */}
@@ -137,7 +139,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
     <div className="pb-6">
       {/* Header */}
       <div className="flex items-start justify-between gap-3 px-4 pt-5 pb-3">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h1 className="truncate text-2xl font-black">{tournament.name}</h1>
             <StatusBadge status={tournament.status} />
@@ -155,6 +157,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             {tournament.registrations.length} giocatori
           </p>
         </div>
+        <ShareButton path={`/tournaments/${id}`} title={tournament.name} text={`Unisciti al torneo "${tournament.name}" su SANDER 🏐`} />
       </div>
 
       {/* Draft — start action */}
