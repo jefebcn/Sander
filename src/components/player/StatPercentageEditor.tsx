@@ -72,7 +72,7 @@ export function StatPercentageEditor({ initial, glickoRating }: Props) {
       <div className="space-y-3">
         {STATS.map(({ key, label, desc }) => {
           const val = values[key]
-          const statVal = Math.round((val / 100) * glickoRating)
+          const statVal = Math.round(glickoRating / 40 + val)
           return (
             <div key={key} className="flex items-center gap-3">
               {/* Stat label */}
@@ -111,7 +111,7 @@ export function StatPercentageEditor({ initial, glickoRating }: Props) {
       </div>
 
       <p className="text-xs text-[var(--muted-text)]">
-        Valore = % × {Math.round(glickoRating)} (Glicko-2). Le percentuali devono sommare a 100.
+        Valore = Glicko-2 ÷ 40 + %. Con {Math.round(glickoRating)} GLK e 0%: base {Math.round(glickoRating / 40)}. Le percentuali devono sommare a 100.
       </p>
 
       {error && <p className="text-xs text-red-400">{error}</p>}

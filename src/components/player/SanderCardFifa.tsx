@@ -31,7 +31,7 @@ interface SanderCardFifaProps {
 }
 
 function statValue(pct: number, glicko: number) {
-  return Math.round((pct / 100) * glicko)
+  return Math.round(glicko / 40 + pct)
 }
 
 export function SanderCardFifa({ player }: SanderCardFifaProps) {
