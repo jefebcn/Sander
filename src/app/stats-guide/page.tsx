@@ -34,96 +34,178 @@ export default function StatsGuidePage() {
           style={{ background: "rgba(201,243,29,0.06)", border: "1px solid rgba(201,243,29,0.15)" }}
         >
           <p className="text-sm text-white leading-relaxed">
-            I tuoi parametri si aggiornano <strong className="text-[var(--accent)]">automaticamente</strong> dopo ogni sessione,
-            torneo e votazione. Più giochi e ricevi valutazioni positive, più i tuoi stats crescono.
+            La tua card si basa su <strong className="text-[var(--accent)]">due elementi</strong>:
+            il rating <strong className="text-[var(--accent)]">Glicko-2</strong> (oggettivo, calcolato automaticamente)
+            e la <strong className="text-[var(--accent)]">distribuzione percentuale</strong> che scegli tu per le 6 statistiche.
           </p>
         </div>
 
+        {/* Section: Glicko-2 overall */}
+        <SectionTitle>Overall — Glicko-2</SectionTitle>
+
+        <div
+          className="rounded-2xl p-4 space-y-3"
+          style={{ background: "var(--surface-2)", border: "1px solid rgba(255,255,255,0.06)" }}
+        >
+          <div className="flex items-center justify-between">
+            <p className="font-black text-white text-base">GLICKO-2</p>
+            <span className="text-2xl font-black" style={{ color: "var(--accent)" }}>OVR</span>
+          </div>
+          <p className="text-sm text-[var(--muted-text)] leading-relaxed">
+            Il numero grande in alto a sinistra della tua card è il tuo <strong className="text-white">rating Glicko-2</strong>.
+            È l&apos;unico valore completamente oggettivo — non lo puoi impostare, viene calcolato automaticamente
+            in base alle tue vittorie e sconfitte nei tornei.
+          </p>
+          <div className="space-y-2">
+            {[
+              { label: "Partenza", value: "1500" },
+              { label: "Principiante", value: "< 1200" },
+              { label: "Medio", value: "1200 – 1800" },
+              { label: "Avanzato", value: "1800 – 2200" },
+              { label: "Élite", value: "2200+" },
+            ].map(({ label, value }) => (
+              <div key={label} className="flex items-center justify-between">
+                <span className="text-sm text-[var(--muted-text)]">{label}</span>
+                <span className="text-sm font-black text-white">{value}</span>
+              </div>
+            ))}
+          </div>
+          <div
+            className="rounded-xl p-3 text-xs leading-relaxed"
+            style={{ background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.55)" }}
+          >
+            <span className="text-white font-semibold">Come cresce:</span> Batti avversari con Glicko-2 più alto del tuo
+            per guadagnare più punti. Perdere contro giocatori più deboli ti penalizza di più.
+          </div>
+        </div>
+
+        {/* Section: Formula */}
+        <SectionTitle>Formula delle statistiche</SectionTitle>
+
+        <div
+          className="rounded-2xl p-4 space-y-3"
+          style={{ background: "var(--surface-2)", border: "1px solid rgba(255,255,255,0.06)" }}
+        >
+          <p className="font-black text-white text-base">Come si calcola ogni stat</p>
+          <div
+            className="rounded-xl p-4 text-center"
+            style={{ background: "rgba(201,243,29,0.08)", border: "1px solid rgba(201,243,29,0.2)" }}
+          >
+            <p className="text-xs text-[var(--muted-text)] mb-1 uppercase tracking-wider">Formula</p>
+            <p className="text-lg font-black text-white">
+              Glicko-2 ÷ 40 + %
+            </p>
+          </div>
+          <p className="text-sm text-[var(--muted-text)] leading-relaxed">
+            Ogni statistica dipende dal tuo Glicko-2 (base fissa) più la percentuale che hai assegnato a quella stat.
+            Le 6 percentuali devono sempre sommare a <strong className="text-white">100</strong>.
+          </p>
+
+          {/* Examples table */}
+          <div className="space-y-2">
+            <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.35)" }}>
+              Esempi pratici
+            </p>
+            <div className="overflow-hidden rounded-xl" style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
+              {[
+                { glicko: "1500", pct: "0%",  result: "38", note: "base minima" },
+                { glicko: "1500", pct: "17%", result: "55", note: "bilanciato" },
+                { glicko: "1500", pct: "30%", result: "68", note: "specializzato" },
+                { glicko: "2000", pct: "17%", result: "67", note: "bilanciato avanzato" },
+                { glicko: "2400", pct: "30%", result: "90", note: "élite specializzato" },
+                { glicko: "2400", pct: "39%", result: "99", note: "massimo raggiungibile" },
+              ].map(({ glicko, pct, result, note }, i) => (
+                <div
+                  key={i}
+                  className="grid grid-cols-4 items-center px-3 py-2.5 text-sm"
+                  style={{
+                    borderBottom: i < 5 ? "1px solid rgba(255,255,255,0.06)" : undefined,
+                    background: i % 2 === 0 ? "rgba(255,255,255,0.02)" : undefined,
+                  }}
+                >
+                  <span className="font-bold text-[var(--accent)]">{glicko}</span>
+                  <span className="text-[var(--muted-text)]">{pct}</span>
+                  <span className="font-black text-white">{result}</span>
+                  <span className="text-xs text-[var(--muted-text)]">{note}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-[var(--muted-text)]">Glicko · % assegnata · Valore · Nota</p>
+          </div>
+        </div>
+
+        {/* Section: Distribution */}
+        <SectionTitle>Distribuzione percentuale</SectionTitle>
+
+        <div
+          className="rounded-2xl p-4 space-y-3"
+          style={{ background: "var(--surface-2)", border: "1px solid rgba(255,255,255,0.06)" }}
+        >
+          <p className="font-black text-white text-base">Come distribuire le % tra le 6 stat</p>
+          <p className="text-sm text-[var(--muted-text)] leading-relaxed">
+            Dal tuo <strong className="text-white">Profilo</strong> puoi spostare liberamente le percentuali tra le
+            statistiche con slider e campi numerici. La somma deve essere esattamente 100.
+          </p>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div
+              className="rounded-xl p-3 space-y-1"
+              style={{ background: "rgba(255,255,255,0.04)" }}
+            >
+              <p className="text-xs font-bold text-white">Giocatore bilanciato</p>
+              <p className="text-[0.65rem] text-[var(--muted-text)]">17–17–17–17–16–16</p>
+              <p className="text-xs text-[var(--muted-text)]">Tutte le stat uguali. Nessun punto debole evidente.</p>
+            </div>
+            <div
+              className="rounded-xl p-3 space-y-1"
+              style={{ background: "rgba(255,255,255,0.04)" }}
+            >
+              <p className="text-xs font-bold text-white">Specialista attacco</p>
+              <p className="text-[0.65rem] text-[var(--muted-text)]">35–10–15–15–15–10</p>
+              <p className="text-xs text-[var(--muted-text)]">ATT molto alto, DIF e STA sacrificate.</p>
+            </div>
+          </div>
+
+          <div
+            className="rounded-xl p-3 text-xs leading-relaxed"
+            style={{ background: "rgba(201,243,29,0.06)", color: "rgba(255,255,255,0.55)" }}
+          >
+            <span className="text-[var(--accent)] font-semibold">Nota:</span> Le percentuali servono
+            anche a trovare compagni e avversari compatibili. Mostra i tuoi punti di forza reali.
+          </div>
+        </div>
+
         {/* Section: Stats di gioco */}
-        <SectionTitle>Statistiche di gioco</SectionTitle>
+        <SectionTitle>Le 6 statistiche</SectionTitle>
 
-        <StatCard
-          icon={Zap}
-          abbr="ATT"
-          fullName="Attacco"
-          color="#f97316"
-          description="Misura la tua capacità offensiva: quanto sei efficace nel fare punti e nel vincere le partite."
-          formula={[
-            { pct: "70%", label: "Media voti ricevuti" },
-            { pct: "30%", label: "Percentuale di vittorie" },
-          ]}
-          tip="Vinci partite e fatti votare bene dai compagni per far crescere l'ATT."
-        />
-
-        <StatCard
-          icon={Shield}
-          abbr="DIF"
-          fullName="Difesa"
-          color="#3b82f6"
-          description="Rappresenta la tua solidità difensiva e la tua consistenza in campo. Pochi errori gravi (voti Flop) = alta DIF."
-          formula={[
-            { pct: "50%", label: "Media voti ricevuti" },
-            { pct: "30%", label: "Percentuale di vittorie" },
-            { pct: "20%", label: "Bonus base, ridotto dai voti Flop" },
-          ]}
-          tip="Ogni voto Flop riduce la tua DIF. Gioca pulito e senza errori grossolani!"
-          warning="I voti Flop possono abbassare questo parametro fino a -20 punti."
-        />
-
-        <StatCard
-          icon={Square}
-          abbr="MUR"
-          fullName="Muro"
-          color="#a855f7"
-          description="Riflette la tua abilità a muro e il tuo livello tecnico reale. Basato principalmente sul rating Glicko-2, che cresce battendo avversari più forti."
-          formula={[
-            { pct: "60%", label: "Rating Glicko-2 (sistema ELO avanzato)" },
-            { pct: "40%", label: "Percentuale di vittorie" },
-          ]}
-          tip="Il MUR cresce sfidando e battendo giocatori più forti di te nei tornei."
-        />
-
-        <StatCard
-          icon={ArrowUp}
-          abbr="ALZ"
-          fullName="Alzata"
-          color="#06b6d4"
-          description="Rappresenta la tua visione di gioco e la qualità dell'alzata. Combina la valutazione dei compagni con l'esperienza accumulata nel tempo."
-          formula={[
-            { pct: "70%", label: "Media voti ricevuti" },
-            { pct: "30%", label: "Bonus livello (esperienza, max +30 pt)" },
-          ]}
-          tip="Più livelli accumuli e più voti positivi ricevi, più la tua ALZ cresce."
-        />
-
-        <StatCard
-          icon={Radio}
-          abbr="RIC"
-          fullName="Ricezione"
-          color="#22c55e"
-          description="Indica la tua qualità in ricezione e il tuo contributo difensivo al gioco di squadra. Penalizzata dagli errori ripetuti."
-          formula={[
-            { pct: "60%", label: "Media voti ricevuti" },
-            { pct: "25%", label: "Percentuale di vittorie" },
-            { pct: "15%", label: "Bonus base, ridotto dai voti Flop" },
-          ]}
-          tip="Meno flop ricevi, più alta sarà la tua RIC. Concentrati sulla precisione."
-          warning="I voti Flop riducono anche la RIC, fino a -15 punti."
-        />
-
-        <StatCard
-          icon={Activity}
-          abbr="STA"
-          fullName="Stamina"
-          color="#f59e0b"
-          description="Misura la tua resistenza fisica e la continuità di allenamento. Chi gioca spesso e di recente ha una STA alta."
-          formula={[
-            { pct: "30%", label: "Media voti ricevuti" },
-            { pct: "50%", label: "Sessioni totali giocate (max 50 pt)" },
-            { pct: "20%", label: "Streak recente (sessioni nelle ultime 4 settimane)" },
-          ]}
-          tip="Gioca regolarmente — anche 2-3 sessioni al mese tengono alta la tua STA."
-        />
+        {[
+          { icon: Zap,      abbr: "ATT", fullName: "Attacco",    color: "#f97316", desc: "La tua capacità offensiva. Quanto sei efficace nel fare punti e creare occasioni per la squadra." },
+          { icon: Shield,   abbr: "DIF", fullName: "Difesa",     color: "#3b82f6", desc: "La tua solidità difensiva. Capacità di coprire il campo e limitare i punti degli avversari." },
+          { icon: Square,   abbr: "MUR", fullName: "Muro",       color: "#a855f7", desc: "La tua abilità a muro. Blocco a rete e lettura degli attacchi avversari." },
+          { icon: ArrowUp,  abbr: "ALZ", fullName: "Alzata",     color: "#06b6d4", desc: "La qualità della tua alzata. Visione di gioco e precisione nel servire l'attaccante." },
+          { icon: Radio,    abbr: "RIC", fullName: "Ricezione",  color: "#22c55e", desc: "La tua efficacia in ricezione. Qualità nella presa del servizio avversario." },
+          { icon: Activity, abbr: "STA", fullName: "Stamina",    color: "#f59e0b", desc: "La tua resistenza fisica. Capacità di mantenere il rendimento lungo tutta la partita." },
+        ].map(({ icon: Icon, abbr, fullName, color, desc }) => (
+          <div
+            key={abbr}
+            className="flex items-center gap-4 rounded-2xl p-4"
+            style={{ background: "var(--surface-2)", border: "1px solid rgba(255,255,255,0.06)" }}
+          >
+            <div
+              className="flex h-11 w-11 items-center justify-center rounded-xl flex-shrink-0"
+              style={{ background: `${color}22` }}
+            >
+              <Icon className="h-5 w-5" style={{ color }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-baseline gap-2 mb-0.5">
+                <span className="text-xl font-black text-white">{abbr}</span>
+                <span className="text-sm font-semibold" style={{ color }}>{fullName}</span>
+              </div>
+              <p className="text-xs text-[var(--muted-text)] leading-relaxed">{desc}</p>
+            </div>
+          </div>
+        ))}
 
         {/* Section: Stats personali */}
         <SectionTitle>Statistiche personali</SectionTitle>
@@ -186,47 +268,12 @@ export default function StatsGuidePage() {
           <p className="text-sm text-[var(--muted-text)] leading-relaxed">
             La barra Streak mostra quante sessioni hai giocato nelle <strong className="text-white">ultime 4 settimane</strong> (massimo 10).
             Va dal rosso (inattivo) al verde (in forma), con il numero a destra che indica le sessioni recenti.
-            Influisce direttamente sulla tua <strong className="text-white">STA (Stamina)</strong>.
           </p>
           <div
             className="rounded-xl p-3 text-xs text-[var(--muted-text)]"
             style={{ background: "rgba(255,255,255,0.04)" }}
           >
             <span className="text-white font-semibold">Come mantenerla alta:</span> gioca almeno 2–3 sessioni al mese per restare nella zona verde.
-          </div>
-        </div>
-
-        {/* Section: Overall */}
-        <SectionTitle>Punteggio globale</SectionTitle>
-
-        <div
-          className="rounded-2xl p-4 space-y-3"
-          style={{ background: "var(--surface-2)", border: "1px solid rgba(255,255,255,0.06)" }}
-        >
-          <div className="flex items-center justify-between">
-            <p className="font-black text-white text-base">OVERALL (40–99)</p>
-            <span className="text-2xl font-black" style={{ color: "var(--accent)" }}>OVR</span>
-          </div>
-          <p className="text-sm text-[var(--muted-text)] leading-relaxed">
-            Il numero grande in alto a sinistra della tua card è il tuo <strong className="text-white">punteggio globale</strong>.
-            Riassume in un unico valore la tua bravura complessiva come giocatore.
-          </p>
-          <div className="space-y-2">
-            {[
-              { pct: "60%", label: "Media voti ricevuti (AVG)" },
-              { pct: "30%", label: "Rating Glicko-2 (MUR)" },
-              { pct: "10%", label: "Bonus livello (max +20 pt)" },
-            ].map(({ pct, label }) => (
-              <div key={label} className="flex items-center gap-3">
-                <span
-                  className="shrink-0 rounded-lg px-2 py-1 text-xs font-black"
-                  style={{ background: "rgba(201,243,29,0.12)", color: "var(--accent)", minWidth: "3rem", textAlign: "center" }}
-                >
-                  {pct}
-                </span>
-                <span className="text-sm text-white">{label}</span>
-              </div>
-            ))}
           </div>
         </div>
 
@@ -242,74 +289,6 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
     <p className="pt-2 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
       {children}
     </p>
-  )
-}
-
-function StatCard({
-  icon: Icon, abbr, fullName, color, description, formula, tip, warning,
-}: {
-  icon: React.ElementType
-  abbr: string
-  fullName: string
-  color: string
-  description: string
-  formula: { pct: string; label: string }[]
-  tip: string
-  warning?: string
-}) {
-  return (
-    <div
-      className="rounded-2xl p-4 space-y-3"
-      style={{ background: "var(--surface-2)", border: "1px solid rgba(255,255,255,0.06)" }}
-    >
-      <div className="flex items-center gap-3">
-        <div
-          className="flex h-11 w-11 items-center justify-center rounded-xl flex-shrink-0"
-          style={{ background: `${color}22` }}
-        >
-          <Icon className="h-5 w-5" style={{ color }} />
-        </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-black text-white">{abbr}</span>
-          <span className="text-sm font-semibold" style={{ color }}>{fullName}</span>
-        </div>
-      </div>
-
-      <p className="text-sm text-[var(--muted-text)] leading-relaxed">{description}</p>
-
-      <div className="space-y-1.5">
-        <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.35)" }}>
-          Come si calcola
-        </p>
-        {formula.map(({ pct, label }) => (
-          <div key={label} className="flex items-center gap-3">
-            <span
-              className="shrink-0 rounded-lg px-2 py-1 text-xs font-black"
-              style={{ background: `${color}22`, color, minWidth: "3rem", textAlign: "center" }}
-            >
-              {pct}
-            </span>
-            <span className="text-sm text-white">{label}</span>
-          </div>
-        ))}
-      </div>
-
-      {warning && (
-        <div
-          className="rounded-xl p-3 text-xs leading-relaxed"
-          style={{ background: "rgba(239,68,68,0.08)", color: "#f87171", border: "1px solid rgba(239,68,68,0.2)" }}
-        >
-          ⚠ {warning}
-        </div>
-      )}
-
-      <div
-        className="rounded-xl p-3 text-xs leading-relaxed"
-        style={{ background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.55)" }}
-      >
-        <span className="text-white font-semibold">Consiglio:</span> {tip}
-      </div>
-    </div>
   )
 }
 
