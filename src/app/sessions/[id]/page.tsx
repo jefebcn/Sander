@@ -111,6 +111,35 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
               <span className="text-[var(--muted-text)]">{session.notes}</span>
             </div>
           )}
+
+          {/* Score summary (COMPLETED sessions with recorded sets) */}
+          {session.status === "COMPLETED" && session.sets && session.sets.length > 0 && (() => {
+            const sets = session.sets
+            const teamAWins = sets.filter((s) => s.teamAScore > s.teamBScore).length
+            const teamBWins = sets.filter((s) => s.teamBScore > s.teamAScore).length
+            return (
+              <div className="mt-1 rounded-xl bg-[var(--surface-2)] p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Risultato</p>
+                  <p className="text-xs font-bold text-[var(--accent)]">{teamAWins} — {teamBWins}</p>
+                </div>
+                <div className="grid grid-cols-[4rem_repeat(auto-fill,_2rem)] gap-1 items-center">
+                  <p className="text-xs font-bold text-[var(--accent)]">Team A</p>
+                  {sets.map((s) => (
+                    <p key={s.id} className={`text-center text-sm font-bold ${s.teamAScore > s.teamBScore ? "text-white" : "text-[var(--muted-text)]"}`}>
+                      {s.teamAScore}
+                    </p>
+                  ))}
+                  <p className="text-xs font-bold text-[var(--muted-text)]">Team B</p>
+                  {sets.map((s) => (
+                    <p key={s.id} className={`text-center text-sm font-bold ${s.teamBScore > s.teamAScore ? "text-white" : "text-[var(--muted-text)]"}`}>
+                      {s.teamBScore}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
         </div>
 
         {/* Share — full-width prominent button */}

@@ -8,7 +8,17 @@ import {
   RatePlayerSchema,
   AssignTeamSchema,
 } from "@/lib/validators/session.schema"
-import { notifyPlayer, notifyPlayers } from "@/lib/push"
+import type { PushPayload } from "@/lib/push"
+
+// ─── Push helpers (dynamic import — keeps web-push out of SSR bundle) ────────
+
+function safeNotifyPlayer(playerId: string, payload: PushPayload) {
+  import("@/lib/push").then((m) => m.notifyPlayer(playerId, payload)).catch(() => {})
+}
+
+function safeNotifyPlayers(playerIds: string[], payload: PushPayload) {
+  import("@/lib/push").then((m) => m.notifyPlayers(playerIds, payload)).catch(() => {})
+}
 
 // ─── Format helpers ────────────────────────────────────────────────────────
 
@@ -104,6 +114,7 @@ export async function getSession(id: string) {
         orderBy: { team: "asc" },
       },
       ratings: { select: { raterId: true, ratedId: true, type: true } },
+      sets: { orderBy: { setNumber: "asc" } },
     },
   })
 }
@@ -183,27 +194,68 @@ export async function assignTeam(input: unknown) {
   // Notify the assigned player (fire-and-forget)
   if (data.team !== null) {
     const teamLabel = data.team === 0 ? "Team A" : "Team B"
-    notifyPlayer(participant.player.id, {
+    safeNotifyPlayer(participant.player.id, {
       title: "Sei stato assegnato a una squadra!",
       body: `${participant.session.title} — ${teamLabel}. Preparati!`,
       url: `/sessions/${data.sessionId}`,
-    }).catch(() => {})
+    })
   }
 
   revalidatePath(`/sessions/${data.sessionId}`)
 }
 
-export async function completeSession(sessionId: string) {
+export async function completeSession(
+  sessionId: string,
+  sets?: { teamAScore: number; teamBScore: number }[]
+) {
   const player = await getCurrentPlayer()
   if (!player) throw new Error("Non autenticato")
 
   const session = await db.session.findUniqueOrThrow({
     where: { id: sessionId },
-    include: { participants: { select: { playerId: true } } },
+    include: { participants: { select: { playerId: true, team: true } } },
   })
   if (session.organizerId !== player.id) throw new Error("Solo l'organizzatore può completare la sessione")
 
   await db.session.update({ where: { id: sessionId }, data: { status: "COMPLETED" } })
+
+  // Save sets if provided
+  if (sets && sets.length > 0) {
+    await db.sessionSet.createMany({
+      data: sets.map((s, i) => ({
+        sessionId,
+        setNumber: i + 1,
+        teamAScore: s.teamAScore,
+        teamBScore: s.teamBScore,
+      })),
+    })
+
+    // Determine winning team (most sets won)
+    const teamAWins = sets.filter((s) => s.teamAScore > s.teamBScore).length
+    const teamBWins = sets.filter((s) => s.teamBScore > s.teamAScore).length
+    const winningTeam = teamAWins > teamBWins ? 0 : teamBWins > teamAWins ? 1 : null // null = draw
+
+    // Update matchesWon / matchesLost for participants with assigned teams
+    for (const p of session.participants) {
+      if (p.team === null || winningTeam === null) continue
+      const won = p.team === winningTeam
+      const current = await db.player.findUniqueOrThrow({
+        where: { id: p.playerId },
+        select: { matchesWon: true, matchesLost: true },
+      })
+      const newWon = current.matchesWon + (won ? 1 : 0)
+      const newLost = current.matchesLost + (won ? 0 : 1)
+      const total = newWon + newLost
+      await db.player.update({
+        where: { id: p.playerId },
+        data: {
+          matchesWon: newWon,
+          matchesLost: newLost,
+          winRatePct: total > 0 ? Math.round((newWon / total) * 100) : 0,
+        },
+      })
+    }
+  }
 
   // Update sessionsPlayed + XP for every participant
   for (const p of session.participants) {
@@ -224,11 +276,11 @@ export async function completeSession(sessionId: string) {
 
   // Notify all participants to rate each other (fire-and-forget)
   const playerIds = session.participants.map((p) => p.playerId)
-  notifyPlayers(playerIds, {
+  safeNotifyPlayers(playerIds, {
     title: "Partita finita! Vota i giocatori ⭐",
     body: `Come è andata in ${session.title}? Dai un voto ai tuoi compagni!`,
     url: `/sessions/${sessionId}`,
-  }).catch(() => {})
+  })
 
   revalidatePath(`/sessions/${sessionId}`)
   revalidatePath("/sessions")

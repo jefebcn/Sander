@@ -1,10 +1,11 @@
 "use client"
 
 import { useTransition } from "react"
-import { UserPlus, UserMinus, CheckCircle2 } from "lucide-react"
+import { UserPlus, UserMinus } from "lucide-react"
 import { toast } from "sonner"
-import { joinSession, leaveSession, assignTeam, completeSession, cancelSession } from "@/actions/sessions"
+import { joinSession, leaveSession, assignTeam, cancelSession } from "@/actions/sessions"
 import { cn } from "@/lib/utils"
+import { CompleteSessionForm } from "./CompleteSessionForm"
 
 type Participant = {
   id: string
@@ -68,17 +69,6 @@ export function ParticipantList({ session, participants, currentPlayerId }: Part
     startTransition(async () => {
       try {
         await assignTeam({ sessionId: session.id, participantId, team })
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Errore")
-      }
-    })
-  }
-
-  function handleComplete() {
-    startTransition(async () => {
-      try {
-        await completeSession(session.id)
-        toast.success("Sessione completata!")
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Errore")
       }
@@ -186,15 +176,7 @@ export function ParticipantList({ session, participants, currentPlayerId }: Part
       {/* Organizer controls */}
       {isOrganizer && session.status !== "COMPLETED" && session.status !== "CANCELLED" && (
         <div className="space-y-2 border-t border-[var(--border)] pt-4">
-          <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Gestione</p>
-          <button
-            onClick={handleComplete}
-            disabled={isPending || participants.length === 0}
-            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--live)] font-bold text-black transition-all active:scale-[0.98] disabled:opacity-40"
-          >
-            <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
-            Completa sessione
-          </button>
+          <CompleteSessionForm sessionId={session.id} participants={participants} />
           <button
             onClick={handleCancel}
             disabled={isPending}

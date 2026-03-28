@@ -311,8 +311,20 @@ model Session {
   participants SessionParticipant[]
   ratings      PlayerRating[]
   badgeAwards  BadgeAward[]
+  sets         SessionSet[]
 
   @@map("sessions")
+}
+
+model SessionSet {
+  id         String  @id @default(cuid())
+  sessionId  String
+  setNumber  Int
+  teamAScore Int
+  teamBScore Int
+  session    Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("session_sets")
 }
 
 model SessionParticipant {
