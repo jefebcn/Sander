@@ -1,4 +1,4 @@
-import { Star, BarChart2, Trophy, ClipboardList } from "lucide-react"
+import { Star, BarChart2, Trophy, ClipboardList, Shield, Hand } from "lucide-react"
 
 interface FifaCardPlayer {
   name: string
@@ -77,7 +77,7 @@ export function SanderCardFifa({ player }: SanderCardFifaProps) {
               {glickoDisplay}
             </span>
             <span
-              className="rounded-lg px-2 py-0.5 text-xs font-black uppercase tracking-wider"
+              className="flex items-center gap-1 rounded-lg px-2 py-0.5 text-xs font-black uppercase tracking-wider"
               style={{
                 background: player.difPct >= player.murPct
                   ? "rgba(59,130,246,0.25)"
@@ -86,7 +86,10 @@ export function SanderCardFifa({ player }: SanderCardFifaProps) {
                 border: `1px solid ${player.difPct >= player.murPct ? "rgba(59,130,246,0.4)" : "rgba(239,68,68,0.4)"}`,
               }}
             >
-              {player.difPct >= player.murPct ? "DIF" : "MUR"}
+              {player.difPct >= player.murPct
+                ? <><Shield className="h-3 w-3" /> DIF</>
+                : <><span className="flex gap-px"><Hand className="h-3 w-3 -scale-x-100" /><Hand className="h-3 w-3" /></span> MUR</>
+              }
             </span>
             <span
               className="text-[0.65rem] font-bold uppercase tracking-widest"

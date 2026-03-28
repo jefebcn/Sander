@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Shield, Swords, TrendingUp } from "lucide-react"
+import { Shield, Hand, TrendingUp } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Player } from "@/generated/prisma/client"
 
@@ -40,8 +40,11 @@ export function SanderCardMini({ player }: SanderCardMiniProps) {
         </div>
         <div className="flex items-center gap-3 text-xs text-[var(--muted-text)]">
           <span className="flex items-center gap-1">
-            {isDif ? <Shield className="h-3 w-3" /> : <Swords className="h-3 w-3" />}
-            {isDif ? "Difensore" : "Muratorer"}
+            {isDif
+              ? <Shield className="h-3 w-3" />
+              : <span className="flex gap-px"><Hand className="h-3 w-3 -scale-x-100" /><Hand className="h-3 w-3" /></span>
+            }
+            {isDif ? "Difensore" : "Giocatore di muro"}
           </span>
           <span className="flex items-center gap-1">
             <TrendingUp className="h-3 w-3" />

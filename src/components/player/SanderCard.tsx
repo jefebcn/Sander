@@ -1,4 +1,4 @@
-import { Shield, Swords, Trophy, TrendingUp, Activity, Award } from "lucide-react"
+import { Shield, Hand, Trophy, TrendingUp, Activity, Award } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
@@ -102,7 +102,7 @@ export function SanderCard({ player }: SanderCardProps) {
           <h2 className="text-3xl font-black tracking-tight text-white">{player.name}</h2>
           <p className="mt-1 flex items-center justify-center gap-1.5 text-xs text-white/50">
             {isBlocker ? (
-              <><Swords className="h-3 w-3" /> ATTACCANTE</>
+              <><span className="flex gap-px"><Hand className="h-3 w-3 -scale-x-100" /><Hand className="h-3 w-3" /></span> GIOCATORE DI MURO</>
             ) : (
               <><Shield className="h-3 w-3" /> DIFENSORE</>
             )}
