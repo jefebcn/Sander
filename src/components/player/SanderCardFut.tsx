@@ -59,94 +59,20 @@ function getRarity(glicko2: number): Rarity {
 /*  SVG Flag component (reliable, no emoji issues)                             */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
-const FLAGS: Record<string, { type: "v" | "h"; c: [string, string, string] }> = {
-  IT: { type: "v", c: ["#009246", "#fff", "#CE2B37"] },
-  FR: { type: "v", c: ["#0055A4", "#fff", "#EF4135"] },
-  DE: { type: "h", c: ["#000", "#DD0000", "#FFCE00"] },
-  ES: { type: "h", c: ["#AA151B", "#F1BF00", "#AA151B"] },
-  BR: { type: "v", c: ["#009739", "#FEDD00", "#009739"] },
-  AR: { type: "h", c: ["#74ACDF", "#fff", "#74ACDF"] },
-  NO: { type: "v", c: ["#EF2B2D", "#002868", "#EF2B2D"] },
-  PT: { type: "v", c: ["#006600", "#FF0000", "#FF0000"] },
-  RO: { type: "v", c: ["#002B7F", "#FCD116", "#CE1126"] },
-  PL: { type: "h", c: ["#fff", "#fff", "#DC143C"] },
-  GB: { type: "v", c: ["#012169", "#C8102E", "#012169"] },
-  HR: { type: "h", c: ["#FF0000", "#fff", "#171796"] },
-  RS: { type: "h", c: ["#C6363C", "#0C4076", "#fff"] },
-  AL: { type: "h", c: ["#E41E20", "#000", "#E41E20"] },
-  BE: { type: "v", c: ["#000", "#FAE042", "#ED2939"] },
-  NL: { type: "h", c: ["#AE1C28", "#fff", "#21468B"] },
-  CH: { type: "v", c: ["#FF0000", "#fff", "#FF0000"] },
-  AT: { type: "h", c: ["#ED2939", "#fff", "#ED2939"] },
-  GR: { type: "h", c: ["#0D5EAF", "#fff", "#0D5EAF"] },
-  SE: { type: "v", c: ["#006AA7", "#FECC00", "#006AA7"] },
-  US: { type: "h", c: ["#B22234", "#fff", "#3C3B6E"] },
-  TR: { type: "h", c: ["#E30A17", "#fff", "#E30A17"] },
-  UA: { type: "h", c: ["#0057B7", "#0057B7", "#FFD700"] },
-  CZ: { type: "v", c: ["#11457E", "#fff", "#D7141A"] },
-  SK: { type: "h", c: ["#fff", "#0B4EA2", "#EE1C25"] },
-  HU: { type: "h", c: ["#CE2939", "#fff", "#477050"] },
-  BG: { type: "h", c: ["#fff", "#00966E", "#D62612"] },
-  SI: { type: "h", c: ["#fff", "#003DA5", "#ED1C24"] },
-  IE: { type: "v", c: ["#169B62", "#fff", "#FF883E"] },
-  SA: { type: "h", c: ["#006C35", "#006C35", "#006C35"] },
-  MA: { type: "h", c: ["#C1272D", "#C1272D", "#C1272D"] },
-  TN: { type: "h", c: ["#E70013", "#fff", "#E70013"] },
-  EG: { type: "h", c: ["#CE1126", "#fff", "#000"] },
-  DZ: { type: "v", c: ["#006633", "#fff", "#D21034"] },
-  JP: { type: "h", c: ["#fff", "#BC002D", "#fff"] },
-  KR: { type: "h", c: ["#fff", "#CD2E3A", "#003478"] },
-  CN: { type: "h", c: ["#DE2910", "#DE2910", "#DE2910"] },
-  IN: { type: "h", c: ["#FF9933", "#fff", "#138808"] },
-  RU: { type: "h", c: ["#fff", "#0039A6", "#D52B1E"] },
-  MX: { type: "v", c: ["#006847", "#fff", "#CE1126"] },
-  CO: { type: "h", c: ["#FCD116", "#003893", "#CE1126"] },
-  PE: { type: "v", c: ["#D91023", "#fff", "#D91023"] },
-  CL: { type: "h", c: ["#fff", "#fff", "#D52B1E"] },
-  AU: { type: "h", c: ["#00008B", "#00008B", "#00008B"] },
-  FI: { type: "h", c: ["#fff", "#003580", "#fff"] },
-  DK: { type: "h", c: ["#C8102E", "#fff", "#C8102E"] },
-  LT: { type: "h", c: ["#FFB81C", "#006A44", "#BE3A34"] },
-  LV: { type: "h", c: ["#9E3039", "#fff", "#9E3039"] },
-  EE: { type: "h", c: ["#0072CE", "#000", "#fff"] },
-  ME: { type: "h", c: ["#D4AF37", "#CC0000", "#D4AF37"] },
-  BA: { type: "v", c: ["#002395", "#FECB00", "#002395"] },
-  MK: { type: "h", c: ["#CE2028", "#FFE600", "#CE2028"] },
-  XK: { type: "h", c: ["#244AA5", "#244AA5", "#244AA5"] },
-  MT: { type: "v", c: ["#fff", "#fff", "#CF142B"] },
-  CY: { type: "h", c: ["#fff", "#D47600", "#fff"] },
-  LU: { type: "h", c: ["#ED2939", "#fff", "#00A1DE"] },
-  IS: { type: "h", c: ["#003897", "#fff", "#D72828"] },
-}
+/* ──────────────────────────────────────────────────────────────────────────── */
+/*  SVG Flag component — uses flagcdn.com for real flags                       */
+/* ──────────────────────────────────────────────────────────────────────────── */
 
 function FlagIcon({ code }: { code: string }) {
-  const f = FLAGS[code.toUpperCase()]
-  if (!f) {
-    return (
-      <svg viewBox="0 0 30 20" className="h-full w-full rounded-[2px]">
-        <rect width="30" height="20" fill="#666" rx="1" />
-        <text x="15" y="13" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="bold">
-          {code.toUpperCase().slice(0, 2)}
-        </text>
-      </svg>
-    )
-  }
+  const iso = code.toLowerCase()
   return (
-    <svg viewBox="0 0 30 20" className="h-full w-full rounded-[2px]">
-      {f.type === "h" ? (
-        <>
-          <rect width="30" height="7" fill={f.c[0]} />
-          <rect y="7" width="30" height="6" fill={f.c[1]} />
-          <rect y="13" width="30" height="7" fill={f.c[2]} />
-        </>
-      ) : (
-        <>
-          <rect width="10" height="20" fill={f.c[0]} />
-          <rect x="10" width="10" height="20" fill={f.c[1]} />
-          <rect x="20" width="10" height="20" fill={f.c[2]} />
-        </>
-      )}
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={`https://flagcdn.com/w80/${iso}.png`}
+      alt={code}
+      className="h-full w-full object-cover"
+      loading="eager"
+    />
   )
 }
 
@@ -355,13 +281,13 @@ const STYLES: Record<Rarity, RS> = {
 /*  Stats                                                                      */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
-const STATS: { key: keyof PlayerCardData["stats"]; label: string; Icon: LucideIcon }[] = [
-  { key: "att", label: "ATT", Icon: Swords },
-  { key: "dif", label: "DIF", Icon: Shield },
-  { key: "ric", label: "RIC", Icon: Target },
-  { key: "mur", label: "MUR", Icon: Hand },
-  { key: "alz", label: "ALZ", Icon: ChevronsUp },
-  { key: "sta", label: "STA", Icon: Zap },
+const STATS: { key: keyof PlayerCardData["stats"]; label: string; Icon: LucideIcon; color: string }[] = [
+  { key: "att", label: "ATT", Icon: Swords, color: "#FF6B6B" },
+  { key: "dif", label: "DIF", Icon: Shield, color: "#4ECDC4" },
+  { key: "ric", label: "RIC", Icon: Target, color: "#FFE66D" },
+  { key: "mur", label: "MUR", Icon: Hand, color: "#A78BFA" },
+  { key: "alz", label: "ALZ", Icon: ChevronsUp, color: "#6BCB77" },
+  { key: "sta", label: "STA", Icon: Zap, color: "#FFA94D" },
 ]
 
 /* ──────────────────────────────────────────────────────────────────────────── */
@@ -376,17 +302,25 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
   return (
     <div
       className={cn(
-        "relative mx-auto w-full max-w-[360px] overflow-hidden rounded-2xl",
+        "relative mx-auto w-full max-w-[360px] overflow-hidden",
         s.fx,
         className,
       )}
       style={{
-        aspectRatio: "3 / 4",
+        aspectRatio: "3 / 4.3",
         background: s.statsBg,
-        border: `${s.borderW}px solid ${s.borderColor}`,
-        boxShadow: `0 10px 40px rgba(0,0,0,.55), 0 2px 10px rgba(0,0,0,.3), inset 0 0 0 1px ${s.borderColor}44`,
+        clipPath: "polygon(0% 0%, 100% 0%, 100% 82%, 50% 100%, 0% 82%)",
+        filter: `drop-shadow(0 10px 30px rgba(0,0,0,.55)) drop-shadow(0 2px 8px rgba(0,0,0,.3))`,
       }}
     >
+      {/* ── Border outline via inset shape ────────────────────────── */}
+      <div
+        className="pointer-events-none absolute inset-0 z-30"
+        style={{
+          clipPath: "polygon(0% 0%, 100% 0%, 100% 82%, 50% 100%, 0% 82%)",
+          border: `${s.borderW}px solid ${s.borderColor}`,
+        }}
+      />
       {/* ── Pattern overlay (chevrons, zigzag, stripes) ────────────── */}
       <div
         className="pointer-events-none absolute inset-0 z-10"
@@ -407,7 +341,7 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
 
       {/* ── Rare hover shine ───────────────────────────────────────── */}
       {s.fx && (
-        <div className="fut-shine-overlay pointer-events-none absolute inset-0 z-20 rounded-2xl" />
+        <div className="fut-shine-overlay pointer-events-none absolute inset-0 z-20" />
       )}
 
       {/* ── Gold Rare sparkles ─────────────────────────────────────── */}
@@ -432,12 +366,16 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
       {/* ── Inner decorative frame (silver+) ───────────────────────── */}
       {s.innerFrame && (
         <div
-          className="pointer-events-none absolute z-10 rounded-xl"
-          style={{ inset: "7px", border: `1px solid ${s.innerColor}` }}
+          className="pointer-events-none absolute z-10"
+          style={{
+            inset: "7px",
+            border: `1px solid ${s.innerColor}`,
+            clipPath: "polygon(0% 0%, 100% 0%, 100% 83%, 50% 100%, 0% 83%)",
+          }}
         />
       )}
 
-      {/* ── Corner ornaments (gold) ────────────────────────────────── */}
+      {/* ── Corner ornaments (gold — top corners only for shield) ──── */}
       {s.corners && (
         <>
           <div className="pointer-events-none absolute left-[9px] top-[9px] z-10">
@@ -447,14 +385,6 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
           <div className="pointer-events-none absolute right-[9px] top-[9px] z-10 flex flex-col items-end">
             <div style={{ width: 20, height: 1, background: s.innerColor }} />
             <div style={{ width: 1, height: 20, background: s.innerColor, marginLeft: "auto" }} />
-          </div>
-          <div className="pointer-events-none absolute bottom-[9px] left-[9px] z-10 flex flex-col justify-end">
-            <div style={{ width: 1, height: 20, background: s.innerColor }} />
-            <div style={{ width: 20, height: 1, background: s.innerColor }} />
-          </div>
-          <div className="pointer-events-none absolute bottom-[9px] right-[9px] z-10 flex flex-col items-end justify-end">
-            <div style={{ width: 1, height: 20, background: s.innerColor, marginLeft: "auto" }} />
-            <div style={{ width: 20, height: 1, background: s.innerColor }} />
           </div>
         </>
       )}
@@ -538,10 +468,10 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
             <div
               className="overflow-hidden rounded-[3px]"
               style={{
-                width: "32px",
-                height: "22px",
-                border: `1.5px solid ${s.borderColor}55`,
-                boxShadow: "0 1px 3px rgba(0,0,0,.35)",
+                width: "36px",
+                height: "24px",
+                border: `2px solid ${s.borderColor}88`,
+                boxShadow: `0 2px 6px rgba(0,0,0,.4), 0 0 0 1px ${s.borderColor}33`,
               }}
             >
               <FlagIcon code={playerData.nationalityCode} />
@@ -617,12 +547,12 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
 
         {/* Stats grid */}
         <div className="z-10 grid grid-cols-6 gap-1 px-3 pt-4">
-          {STATS.map(({ key, label, Icon }) => (
-            <div key={key} className="flex flex-col items-center gap-0.5">
+          {STATS.map(({ key, label, Icon, color }) => (
+            <div key={key} className="flex flex-col items-center gap-1">
               <Icon
-                className="h-[18px] w-[18px]"
-                style={{ color: s.tA, opacity: 0.75, filter: "drop-shadow(0 1px 1px rgba(0,0,0,.3))" }}
-                strokeWidth={2.2}
+                className="h-[20px] w-[20px]"
+                style={{ color, filter: `drop-shadow(0 1px 3px ${color}66) drop-shadow(0 1px 1px rgba(0,0,0,.4))` }}
+                strokeWidth={2.4}
               />
               <span
                 className="text-[0.5rem] font-bold uppercase tracking-wider"
@@ -631,8 +561,8 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
                 {label}
               </span>
               <span
-                className="text-xl font-black leading-none"
-                style={{ color: s.tA, textShadow: EMBOSS_LIGHT }}
+                className="text-[1.35rem] font-black leading-none"
+                style={{ color: "#fff", textShadow: `0 0 8px ${color}55, ${EMBOSS_LIGHT}` }}
               >
                 {playerData.stats[key]}
               </span>
@@ -649,14 +579,14 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
           <div className="h-px flex-1" style={{ background: `linear-gradient(90deg, ${s.div}, transparent)` }} />
         </div>
 
-        {/* Sander logo — bigger */}
-        <div className="z-10 mt-auto flex justify-center pb-3 pt-1">
+        {/* Sander logo */}
+        <div className="z-10 mt-auto flex justify-center pb-6 pt-1">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/sander-logo.png"
             alt="Sander"
             className="object-contain"
-            style={{ height: "48px", opacity: 0.6, filter: "brightness(1.5)" }}
+            style={{ height: "40px", opacity: 0.55, filter: "brightness(1.5)" }}
           />
         </div>
       </div>
