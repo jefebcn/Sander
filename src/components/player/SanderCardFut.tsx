@@ -55,48 +55,107 @@ function getRarity(glicko2: number): Rarity {
   return "bronze"
 }
 
-/** Country code → flag emoji (works on iOS/Android browsers). */
-function countryFlag(code: string): string {
-  return code
-    .toUpperCase()
-    .split("")
-    .map((c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65))
-    .join("")
+/* ──────────────────────────────────────────────────────────────────────────── */
+/*  SVG Flag component (reliable, no emoji issues)                             */
+/* ──────────────────────────────────────────────────────────────────────────── */
+
+const FLAGS: Record<string, { type: "v" | "h"; c: [string, string, string] }> = {
+  IT: { type: "v", c: ["#009246", "#fff", "#CE2B37"] },
+  FR: { type: "v", c: ["#0055A4", "#fff", "#EF4135"] },
+  DE: { type: "h", c: ["#000", "#DD0000", "#FFCE00"] },
+  ES: { type: "h", c: ["#AA151B", "#F1BF00", "#AA151B"] },
+  BR: { type: "v", c: ["#009739", "#FEDD00", "#009739"] },
+  AR: { type: "h", c: ["#74ACDF", "#fff", "#74ACDF"] },
+  NO: { type: "v", c: ["#EF2B2D", "#002868", "#EF2B2D"] },
+  PT: { type: "v", c: ["#006600", "#FF0000", "#FF0000"] },
+  RO: { type: "v", c: ["#002B7F", "#FCD116", "#CE1126"] },
+  PL: { type: "h", c: ["#fff", "#fff", "#DC143C"] },
+  GB: { type: "v", c: ["#012169", "#C8102E", "#012169"] },
+  HR: { type: "h", c: ["#FF0000", "#fff", "#171796"] },
+  RS: { type: "h", c: ["#C6363C", "#0C4076", "#fff"] },
+  AL: { type: "h", c: ["#E41E20", "#000", "#E41E20"] },
+  BE: { type: "v", c: ["#000", "#FAE042", "#ED2939"] },
+  NL: { type: "h", c: ["#AE1C28", "#fff", "#21468B"] },
+  CH: { type: "v", c: ["#FF0000", "#fff", "#FF0000"] },
+  AT: { type: "h", c: ["#ED2939", "#fff", "#ED2939"] },
+  GR: { type: "h", c: ["#0D5EAF", "#fff", "#0D5EAF"] },
+  SE: { type: "v", c: ["#006AA7", "#FECC00", "#006AA7"] },
+  US: { type: "h", c: ["#B22234", "#fff", "#3C3B6E"] },
+  TR: { type: "h", c: ["#E30A17", "#fff", "#E30A17"] },
+  UA: { type: "h", c: ["#0057B7", "#0057B7", "#FFD700"] },
+  CZ: { type: "v", c: ["#11457E", "#fff", "#D7141A"] },
+  SK: { type: "h", c: ["#fff", "#0B4EA2", "#EE1C25"] },
+  HU: { type: "h", c: ["#CE2939", "#fff", "#477050"] },
+  BG: { type: "h", c: ["#fff", "#00966E", "#D62612"] },
+  SI: { type: "h", c: ["#fff", "#003DA5", "#ED1C24"] },
+  IE: { type: "v", c: ["#169B62", "#fff", "#FF883E"] },
 }
+
+function FlagIcon({ code }: { code: string }) {
+  const f = FLAGS[code.toUpperCase()]
+  if (!f) {
+    return (
+      <svg viewBox="0 0 30 20" className="h-full w-full rounded-[2px]">
+        <rect width="30" height="20" fill="#666" rx="1" />
+        <text x="15" y="13" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="bold">
+          {code.toUpperCase().slice(0, 2)}
+        </text>
+      </svg>
+    )
+  }
+  return (
+    <svg viewBox="0 0 30 20" className="h-full w-full rounded-[2px]">
+      {f.type === "h" ? (
+        <>
+          <rect width="30" height="7" fill={f.c[0]} />
+          <rect y="7" width="30" height="6" fill={f.c[1]} />
+          <rect y="13" width="30" height="7" fill={f.c[2]} />
+        </>
+      ) : (
+        <>
+          <rect width="10" height="20" fill={f.c[0]} />
+          <rect x="10" width="10" height="20" fill={f.c[1]} />
+          <rect x="20" width="10" height="20" fill={f.c[2]} />
+        </>
+      )}
+    </svg>
+  )
+}
+
+/* ──────────────────────────────────────────────────────────────────────────── */
+/*  Embossed text shadow helpers                                               */
+/* ──────────────────────────────────────────────────────────────────────────── */
+
+const EMBOSS_LIGHT = "0 2px 4px rgba(0,0,0,.5), 0 -1px 0 rgba(255,255,255,.12), 1px 1px 2px rgba(0,0,0,.3)"
+const EMBOSS_SUBTLE = "0 1px 3px rgba(0,0,0,.4), 0 -1px 0 rgba(255,255,255,.08)"
 
 /* ──────────────────────────────────────────────────────────────────────────── */
 /*  Rarity style config                                                        */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
-interface RarityStyle {
-  /* Card zones */
+interface RS {
   headerBg: string
   bodyBg: string
   statsBg: string
-  /* Pattern overlays (chevrons, zigzag, stripes — different shades) */
   patterns: string
-  /* Border & frame */
   borderColor: string
   borderW: number
   innerFrame: boolean
   innerColor: string
   corners: boolean
-  /* Photo ring */
   ring: string
   ringW: number
   ringGlow: string
-  /* Text */
-  t1: string // primary
-  t2: string // secondary / muted
-  tA: string // accent / values
-  /* Divider line */
+  ringOuter: string
+  t1: string
+  t2: string
+  tA: string
   div: string
-  /* Hover animation class */
   fx: string
+  topStripe: string
 }
 
-const S: Record<Rarity, RarityStyle> = {
-  /* ─── Bronze ─────────────────────────────────────────────────────────── */
+const STYLES: Record<Rarity, RS> = {
   bronze: {
     headerBg: "linear-gradient(180deg, #906828 0%, #7A5820 60%, #6B4C18 100%)",
     bodyBg: "linear-gradient(180deg, #8B6520 0%, #A07838 50%, #8B6520 100%)",
@@ -115,14 +174,14 @@ const S: Record<Rarity, RarityStyle> = {
     ring: "#A07838",
     ringW: 3,
     ringGlow: "0 2px 8px rgba(0,0,0,.4)",
+    ringOuter: "",
     t1: "#F0DCC0",
-    t2: "rgba(240,220,192,.45)",
+    t2: "rgba(240,220,192,.5)",
     tA: "#E8C878",
     div: "rgba(240,220,192,.15)",
     fx: "",
+    topStripe: "rgba(180,130,60,.3)",
   },
-
-  /* ─── Bronze Rare ────────────────────────────────────────────────────── */
   bronzeRare: {
     headerBg: "linear-gradient(180deg, #B08030 0%, #9A6C28 60%, #886020 100%)",
     bodyBg: "radial-gradient(ellipse at 40% 40%,rgba(232,200,106,.2),transparent 60%),linear-gradient(180deg, #A07030 0%, #C09040 50%, #A07030 100%)",
@@ -143,14 +202,14 @@ const S: Record<Rarity, RarityStyle> = {
     ring: "#D4A843",
     ringW: 3,
     ringGlow: "0 0 14px rgba(212,168,67,.35), 0 2px 8px rgba(0,0,0,.4)",
+    ringOuter: "",
     t1: "#FFF5E0",
-    t2: "rgba(255,245,224,.5)",
+    t2: "rgba(255,245,224,.55)",
     tA: "#FFD860",
     div: "rgba(255,245,224,.18)",
     fx: "fut-shine",
+    topStripe: "rgba(212,168,67,.4)",
   },
-
-  /* ─── Silver ─────────────────────────────────────────────────────────── */
   silver: {
     headerBg: "linear-gradient(180deg, #7A848E 0%, #6E7880 60%, #626C74 100%)",
     bodyBg: "linear-gradient(180deg, #8A96A2 0%, #A0ACB6 50%, #8A96A2 100%)",
@@ -169,14 +228,14 @@ const S: Record<Rarity, RarityStyle> = {
     ring: "#A0ACB6",
     ringW: 3,
     ringGlow: "0 2px 8px rgba(0,0,0,.35)",
+    ringOuter: "0 0 0 2px rgba(200,212,224,.15)",
     t1: "#F0F4F8",
-    t2: "rgba(240,244,248,.45)",
+    t2: "rgba(240,244,248,.5)",
     tA: "#D4DCE4",
     div: "rgba(240,244,248,.12)",
     fx: "",
+    topStripe: "rgba(200,212,224,.3)",
   },
-
-  /* ─── Silver Rare ────────────────────────────────────────────────────── */
   silverRare: {
     headerBg: "linear-gradient(180deg, #98A8B8 0%, #8898A8 60%, #788898 100%)",
     bodyBg: "radial-gradient(ellipse at 35% 35%,rgba(220,235,255,.2),transparent 55%),linear-gradient(180deg, #A0B4C4 0%, #C0D0DC 50%, #A0B4C4 100%)",
@@ -188,7 +247,6 @@ const S: Record<Rarity, RarityStyle> = {
       "repeating-linear-gradient(90deg,transparent,transparent 24px,rgba(220,235,250,.07) 24px,rgba(220,235,250,.07) 25px)",
       "radial-gradient(circle at 25% 25%,rgba(200,220,255,.1),transparent 35%)",
       "radial-gradient(circle at 75% 75%,rgba(180,200,230,.08),transparent 35%)",
-      "repeating-conic-gradient(from 0deg,transparent 0deg,transparent 88deg,rgba(220,235,250,.04) 88deg,rgba(220,235,250,.04) 92deg)",
     ].join(","),
     borderColor: "#B0C0D0",
     borderW: 2,
@@ -198,14 +256,14 @@ const S: Record<Rarity, RarityStyle> = {
     ring: "#C0D0DC",
     ringW: 4,
     ringGlow: "0 0 16px rgba(180,200,220,.35), 0 2px 8px rgba(0,0,0,.35)",
+    ringOuter: "0 0 0 3px rgba(220,235,250,.12)",
     t1: "#FFFFFF",
-    t2: "rgba(255,255,255,.5)",
+    t2: "rgba(255,255,255,.55)",
     tA: "#E8F0FF",
     div: "rgba(255,255,255,.15)",
     fx: "fut-holo",
+    topStripe: "rgba(220,235,250,.35)",
   },
-
-  /* ─── Gold ───────────────────────────────────────────────────────────── */
   gold: {
     headerBg: "linear-gradient(180deg, #B89018 0%, #A07C10 60%, #907010 100%)",
     bodyBg: "radial-gradient(ellipse at 50% 40%,rgba(255,240,120,.12),transparent 55%),linear-gradient(180deg, #C8A020 0%, #E0B828 50%, #C8A020 100%)",
@@ -226,14 +284,14 @@ const S: Record<Rarity, RarityStyle> = {
     ring: "#E0B828",
     ringW: 4,
     ringGlow: "0 0 20px rgba(218,165,32,.4), 0 2px 8px rgba(0,0,0,.35)",
+    ringOuter: "0 0 0 3px rgba(255,230,120,.15)",
     t1: "#FFF8E0",
-    t2: "rgba(255,248,224,.5)",
+    t2: "rgba(255,248,224,.55)",
     tA: "#FFE060",
     div: "rgba(255,248,224,.18)",
     fx: "",
+    topStripe: "rgba(255,230,120,.35)",
   },
-
-  /* ─── Gold Rare ──────────────────────────────────────────────────────── */
   goldRare: {
     headerBg: "linear-gradient(180deg, #D4A820 0%, #C09818 60%, #B08810 100%)",
     bodyBg: "radial-gradient(ellipse at 30% 30%,rgba(255,255,180,.22),transparent 50%),radial-gradient(ellipse at 70% 70%,rgba(255,215,0,.15),transparent 50%),linear-gradient(180deg, #E0C030 0%, #FFD840 50%, #E0C030 100%)",
@@ -246,7 +304,6 @@ const S: Record<Rarity, RarityStyle> = {
       "radial-gradient(circle at 20% 20%,rgba(255,255,200,.15),transparent 30%)",
       "radial-gradient(circle at 80% 30%,rgba(255,240,120,.12),transparent 30%)",
       "radial-gradient(circle at 50% 80%,rgba(255,215,0,.1),transparent 30%)",
-      "repeating-conic-gradient(from 0deg,transparent 0deg,transparent 85deg,rgba(255,248,180,.05) 85deg,rgba(255,248,180,.05) 95deg)",
     ].join(","),
     borderColor: "#FFE060",
     borderW: 3,
@@ -256,11 +313,13 @@ const S: Record<Rarity, RarityStyle> = {
     ring: "#FFE850",
     ringW: 4,
     ringGlow: "0 0 28px rgba(255,215,0,.5), 0 0 56px rgba(255,215,0,.15), 0 2px 8px rgba(0,0,0,.3)",
+    ringOuter: "0 0 0 4px rgba(255,248,180,.18)",
     t1: "#FFFFFF",
-    t2: "rgba(255,255,255,.55)",
+    t2: "rgba(255,255,255,.6)",
     tA: "#FFF8D0",
     div: "rgba(255,255,255,.2)",
     fx: "fut-shimmer",
+    topStripe: "rgba(255,248,180,.4)",
   },
 }
 
@@ -283,9 +342,8 @@ const STATS: { key: keyof PlayerCardData["stats"]; label: string; Icon: LucideIc
 
 export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
   const rarity = getRarity(playerData.glicko2)
-  const s = S[rarity]
+  const s = STYLES[rarity]
   const glicko = Math.round(playerData.glicko2)
-  const flag = countryFlag(playerData.nationalityCode)
 
   return (
     <div
@@ -300,10 +358,16 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
         boxShadow: "0 10px 40px rgba(0,0,0,.55), 0 2px 10px rgba(0,0,0,.3)",
       }}
     >
-      {/* ── Pattern overlay (covers entire card — chevrons, zigzag, stripes) ── */}
+      {/* ── Pattern overlay (chevrons, zigzag, stripes) ────────────── */}
       <div
         className="pointer-events-none absolute inset-0 z-10"
         style={{ backgroundImage: s.patterns }}
+      />
+
+      {/* ── Top decorative stripe ──────────────────────────────────── */}
+      <div
+        className="absolute left-0 right-0 top-0 z-10 h-[3px]"
+        style={{ background: `linear-gradient(90deg, transparent, ${s.topStripe}, transparent)` }}
       />
 
       {/* ── Rare hover shine ───────────────────────────────────────── */}
@@ -330,7 +394,7 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
         </div>
       )}
 
-      {/* ── Inner decorative frame (silver+ tiers) ─────────────────── */}
+      {/* ── Inner decorative frame (silver+) ───────────────────────── */}
       {s.innerFrame && (
         <div
           className="pointer-events-none absolute z-10 rounded-xl"
@@ -338,70 +402,64 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
         />
       )}
 
-      {/* ── Corner ornaments (gold tiers) ──────────────────────────── */}
+      {/* ── Corner ornaments (gold) ────────────────────────────────── */}
       {s.corners && (
         <>
           <div className="pointer-events-none absolute left-[9px] top-[9px] z-10">
-            <div style={{ width: 18, height: 1, background: s.innerColor }} />
-            <div style={{ width: 1, height: 18, background: s.innerColor }} />
+            <div style={{ width: 20, height: 1, background: s.innerColor }} />
+            <div style={{ width: 1, height: 20, background: s.innerColor }} />
           </div>
           <div className="pointer-events-none absolute right-[9px] top-[9px] z-10 flex flex-col items-end">
-            <div style={{ width: 18, height: 1, background: s.innerColor }} />
-            <div style={{ width: 1, height: 18, background: s.innerColor, marginLeft: "auto" }} />
+            <div style={{ width: 20, height: 1, background: s.innerColor }} />
+            <div style={{ width: 1, height: 20, background: s.innerColor, marginLeft: "auto" }} />
           </div>
           <div className="pointer-events-none absolute bottom-[9px] left-[9px] z-10 flex flex-col justify-end">
-            <div style={{ width: 1, height: 18, background: s.innerColor }} />
-            <div style={{ width: 18, height: 1, background: s.innerColor }} />
+            <div style={{ width: 1, height: 20, background: s.innerColor }} />
+            <div style={{ width: 20, height: 1, background: s.innerColor }} />
           </div>
           <div className="pointer-events-none absolute bottom-[9px] right-[9px] z-10 flex flex-col items-end justify-end">
-            <div style={{ width: 1, height: 18, background: s.innerColor, marginLeft: "auto" }} />
-            <div style={{ width: 18, height: 1, background: s.innerColor }} />
+            <div style={{ width: 1, height: 20, background: s.innerColor, marginLeft: "auto" }} />
+            <div style={{ width: 20, height: 1, background: s.innerColor }} />
           </div>
         </>
       )}
 
-      {/* ════════════════════════════════════════════════════════════════
-          CARD ZONES — each zone has its own background shade
-          ════════════════════════════════════════════════════════════ */}
-
-      {/* ── HEADER ZONE (top ~55%) ─────────────────────────────────── */}
-      <div className="relative" style={{ height: "55%", background: s.headerBg }}>
-        {/* Subtle gradient transition at bottom */}
+      {/* ═══════════════════════════════════════════════════════════════
+          HEADER ZONE (~52%)
+          ═══════════════════════════════════════════════════════════ */}
+      <div className="relative" style={{ height: "52%", background: s.headerBg }}>
         <div
           className="pointer-events-none absolute inset-x-0 bottom-0 h-[30%]"
-          style={{ background: "linear-gradient(to bottom, transparent, rgba(0,0,0,.12))" }}
+          style={{ background: "linear-gradient(to bottom, transparent, rgba(0,0,0,.1))" }}
         />
 
-        <div className="relative z-10 flex h-full px-4 pt-4 pb-2">
+        <div className="relative z-10 flex h-full items-center px-4">
+
           {/* Role — vertical left */}
           <div
-            className="flex shrink-0 items-center justify-center"
-            style={{
-              writingMode: "vertical-rl",
-              transform: "rotate(180deg)",
-              width: "20px",
-            }}
+            className="flex shrink-0 items-center justify-center self-stretch"
+            style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", width: "20px" }}
           >
             <span
-              className="whitespace-nowrap text-[0.65rem] font-black uppercase tracking-[0.4em]"
-              style={{ color: s.t2, textShadow: "0 1px 2px rgba(0,0,0,.4)" }}
+              className="whitespace-nowrap text-[0.6rem] font-black uppercase tracking-[0.4em]"
+              style={{ color: s.t2, textShadow: EMBOSS_SUBTLE }}
             >
               {playerData.role}
             </span>
           </div>
 
           {/* Thin divider */}
-          <div className="mx-2 h-[65%] w-px shrink-0 self-center" style={{ background: s.div }} />
+          <div className="mx-2 h-[60%] w-px shrink-0 self-center" style={{ background: s.div }} />
 
-          {/* Photo — round, centered */}
+          {/* Photo — round with ring */}
           <div className="flex flex-1 justify-center">
             <div
               className="relative overflow-hidden rounded-full"
               style={{
-                width: "clamp(105px, 38vw, 145px)",
-                height: "clamp(105px, 38vw, 145px)",
+                width: "clamp(100px, 36vw, 140px)",
+                height: "clamp(100px, 36vw, 140px)",
                 border: `${s.ringW}px solid ${s.ring}`,
-                boxShadow: s.ringGlow,
+                boxShadow: [s.ringGlow, s.ringOuter].filter(Boolean).join(", "),
               }}
             >
               {playerData.imageUrl ? (
@@ -413,10 +471,11 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
                 />
               ) : (
                 <div
-                  className="flex h-full w-full items-center justify-center text-4xl font-black"
+                  className="flex h-full w-full items-center justify-center text-3xl font-black"
                   style={{
                     background: "linear-gradient(135deg, rgba(0,0,0,.2), rgba(0,0,0,.4))",
                     color: s.tA,
+                    textShadow: EMBOSS_LIGHT,
                   }}
                 >
                   {playerData.name.slice(0, 2).toUpperCase()}
@@ -425,69 +484,90 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
             </div>
           </div>
 
-          {/* Glicko-2 + Flag — right */}
-          <div className="flex shrink-0 flex-col items-center gap-1.5 pt-1" style={{ width: "56px" }}>
+          {/* Right column: Glicko + Flag */}
+          <div className="flex shrink-0 flex-col items-center gap-2" style={{ width: "52px" }}>
             <span
-              className="text-[1.9rem] font-black leading-none"
-              style={{ color: s.t1, textShadow: "0 2px 6px rgba(0,0,0,.45)" }}
+              className="text-[1.6rem] font-black leading-none"
+              style={{ color: s.t1, textShadow: EMBOSS_LIGHT }}
             >
               {glicko}
             </span>
-            <span className="text-xl leading-none">{flag}</span>
+            <div
+              className="overflow-hidden rounded-[2px]"
+              style={{
+                width: "30px",
+                height: "20px",
+                border: `1.5px solid ${s.borderColor}55`,
+                boxShadow: "0 1px 3px rgba(0,0,0,.35)",
+              }}
+            >
+              <FlagIcon code={playerData.nationalityCode} />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ── BODY ZONE (name + divider) ─────────────────────────────── */}
+      {/* ═══════════════════════════════════════════════════════════════
+          BODY ZONE — player name (~12%)
+          ═══════════════════════════════════════════════════════════ */}
       <div
         className="relative flex flex-col items-center justify-center"
         style={{ height: "12%", background: s.bodyBg }}
       >
-        {/* Top edge highlight */}
+        {/* Top metallic separator */}
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-px"
-          style={{ background: `linear-gradient(90deg, transparent 10%, ${s.div} 50%, transparent 90%)` }}
+          className="absolute inset-x-0 top-0 h-[2px]"
+          style={{ background: `linear-gradient(90deg, transparent 5%, ${s.div} 30%, ${s.topStripe} 50%, ${s.div} 70%, transparent 95%)` }}
         />
+
         <h3
           className="text-lg font-black uppercase tracking-wider"
-          style={{ color: s.t1, textShadow: "0 1px 3px rgba(0,0,0,.4)" }}
+          style={{ color: s.t1, textShadow: EMBOSS_LIGHT }}
         >
           {playerData.name}
         </h3>
       </div>
 
-      {/* ── STATS ZONE (bottom ~33%) ───────────────────────────────── */}
+      {/* ═══════════════════════════════════════════════════════════════
+          STATS ZONE (~36%)
+          ═══════════════════════════════════════════════════════════ */}
       <div className="relative flex flex-1 flex-col" style={{ background: s.statsBg }}>
-        {/* Top edge highlight */}
+        {/* Top metallic separator */}
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-px"
-          style={{ background: `linear-gradient(90deg, transparent 10%, ${s.div} 50%, transparent 90%)` }}
+          className="absolute inset-x-0 top-0 h-[2px]"
+          style={{ background: `linear-gradient(90deg, transparent 5%, ${s.div} 30%, ${s.topStripe} 50%, ${s.div} 70%, transparent 95%)` }}
         />
 
         {/* Stats grid */}
-        <div className="z-10 grid grid-cols-6 gap-1 px-4 pt-4">
+        <div className="z-10 grid grid-cols-6 gap-1 px-3 pt-4">
           {STATS.map(({ key, label, Icon }) => (
             <div key={key} className="flex flex-col items-center gap-0.5">
               <Icon
                 className="h-[18px] w-[18px]"
-                style={{ color: s.tA, opacity: 0.7 }}
+                style={{ color: s.tA, opacity: 0.75, filter: "drop-shadow(0 1px 1px rgba(0,0,0,.3))" }}
                 strokeWidth={2.2}
               />
               <span
-                className="text-[0.55rem] font-bold uppercase tracking-wide"
-                style={{ color: s.t2 }}
+                className="text-[0.5rem] font-bold uppercase tracking-wider"
+                style={{ color: s.t2, textShadow: EMBOSS_SUBTLE }}
               >
                 {label}
               </span>
               <span
                 className="text-xl font-black leading-none"
-                style={{ color: s.tA, textShadow: "0 1px 2px rgba(0,0,0,.3)" }}
+                style={{ color: s.tA, textShadow: EMBOSS_LIGHT }}
               >
                 {playerData.stats[key]}
               </span>
             </div>
           ))}
         </div>
+
+        {/* Bottom decorative line */}
+        <div
+          className="mx-auto mt-2 h-px w-[70%]"
+          style={{ background: `linear-gradient(90deg, transparent, ${s.div}, transparent)` }}
+        />
 
         {/* Sander logo — bigger */}
         <div className="z-10 mt-auto flex justify-center pb-3 pt-1">
@@ -496,7 +576,7 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
             src="/sander-logo.png"
             alt="Sander"
             className="object-contain"
-            style={{ height: "44px", opacity: 0.65, filter: "brightness(1.5)" }}
+            style={{ height: "48px", opacity: 0.6, filter: "brightness(1.5)" }}
           />
         </div>
       </div>
