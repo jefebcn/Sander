@@ -55,187 +55,217 @@ function getRarity(glicko2: number): Rarity {
   return "bronze"
 }
 
-/* ──────────────────────────────────────────────────────────────────────────── */
-/*  Country flag (inline SVG — no emoji)                                       */
-/* ──────────────────────────────────────────────────────────────────────────── */
-
-const FLAG_COLORS: Record<string, string[]> = {
-  IT: ["#009246", "#fff", "#CE2B37"],
-  FR: ["#0055A4", "#fff", "#EF4135"],
-  DE: ["#000", "#DD0000", "#FFCE00"],
-  ES: ["#AA151B", "#F1BF00", "#AA151B"],
-  BR: ["#009739", "#FEDD00", "#009739"],
-  AR: ["#74ACDF", "#fff", "#74ACDF"],
-  NO: ["#EF2B2D", "#002868", "#EF2B2D"],
-  PT: ["#006600", "#FF0000", "#FF0000"],
-  RO: ["#002B7F", "#FCD116", "#CE1126"],
-  PL: ["#fff", "#fff", "#DC143C"],
-  GB: ["#012169", "#C8102E", "#012169"],
-  HR: ["#FF0000", "#fff", "#171796"],
-  RS: ["#C6363C", "#0C4076", "#fff"],
-  AL: ["#E41E20", "#000", "#E41E20"],
-}
-
-function CountryFlag({ code }: { code: string }) {
-  const c = FLAG_COLORS[code.toUpperCase()]
-  if (!c) {
-    return (
-      <div className="flex h-full w-full items-center justify-center rounded-sm bg-neutral-500 text-[7px] font-black text-white leading-none">
-        {code.toUpperCase()}
-      </div>
-    )
-  }
-  const horiz = ["DE", "PL", "HR", "RS", "AL"].includes(code.toUpperCase())
-  return (
-    <svg viewBox="0 0 30 20" className="h-full w-full">
-      {horiz ? (
-        <>
-          <rect width="30" height="7" fill={c[0]} />
-          <rect y="7" width="30" height="6" fill={c[1]} />
-          <rect y="13" width="30" height="7" fill={c[2]} />
-        </>
-      ) : (
-        <>
-          <rect width="10" height="20" fill={c[0]} />
-          <rect x="10" width="10" height="20" fill={c[1]} />
-          <rect x="20" width="10" height="20" fill={c[2]} />
-        </>
-      )}
-    </svg>
-  )
+/** Country code → flag emoji (works on iOS/Android browsers). */
+function countryFlag(code: string): string {
+  return code
+    .toUpperCase()
+    .split("")
+    .map((c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65))
+    .join("")
 }
 
 /* ──────────────────────────────────────────────────────────────────────────── */
-/*  Rarity visual config                                                       */
+/*  Rarity style config                                                        */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
 interface RarityStyle {
-  /** Main background (multi-layer gradient) */
-  bg: string
-  /** Outer card border */
+  /* Card zones */
+  headerBg: string
+  bodyBg: string
+  statsBg: string
+  /* Pattern overlays (chevrons, zigzag, stripes — different shades) */
+  patterns: string
+  /* Border & frame */
   borderColor: string
-  borderWidth: string
-  /** Inner decorative frame */
+  borderW: number
   innerFrame: boolean
-  innerFrameColor: string
-  /** Corner ornaments (gold+) */
+  innerColor: string
   corners: boolean
-  /** Photo ring */
-  ringColor: string
+  /* Photo ring */
+  ring: string
+  ringW: number
   ringGlow: string
-  /** Text colors */
-  textPrimary: string
-  textSecondary: string
-  textAccent: string
-  /** Stats divider */
-  divider: string
-  /** Hover animation class */
-  hoverClass: string
-  /** Circuit pattern opacity */
-  circuitOp: number
+  /* Text */
+  t1: string // primary
+  t2: string // secondary / muted
+  tA: string // accent / values
+  /* Divider line */
+  div: string
+  /* Hover animation class */
+  fx: string
 }
 
-const R: Record<Rarity, RarityStyle> = {
+const S: Record<Rarity, RarityStyle> = {
+  /* ─── Bronze ─────────────────────────────────────────────────────────── */
   bronze: {
-    bg: "linear-gradient(160deg, #B8864A 0%, #946828 25%, #7A5520 50%, #A07838 75%, #B88850 100%)",
+    headerBg: "linear-gradient(180deg, #906828 0%, #7A5820 60%, #6B4C18 100%)",
+    bodyBg: "linear-gradient(180deg, #8B6520 0%, #A07838 50%, #8B6520 100%)",
+    statsBg: "linear-gradient(180deg, #6B4C18 0%, #5A3E12 50%, #6B4C18 100%)",
+    patterns: [
+      "repeating-linear-gradient(125deg,transparent,transparent 18px,rgba(180,130,60,.1) 18px,rgba(180,130,60,.1) 20px)",
+      "repeating-linear-gradient(55deg,transparent,transparent 18px,rgba(140,100,30,.08) 18px,rgba(140,100,30,.08) 20px)",
+      "repeating-linear-gradient(0deg,transparent,transparent 36px,rgba(200,160,80,.06) 36px,rgba(200,160,80,.06) 37px)",
+      "repeating-linear-gradient(90deg,transparent,transparent 36px,rgba(200,160,80,.04) 36px,rgba(200,160,80,.04) 37px)",
+    ].join(","),
     borderColor: "#8B6B30",
-    borderWidth: "2px",
+    borderW: 2,
     innerFrame: false,
-    innerFrameColor: "",
+    innerColor: "",
     corners: false,
-    ringColor: "#A07838",
-    ringGlow: "none",
-    textPrimary: "#F5E8D4",
-    textSecondary: "rgba(245,232,212,0.5)",
-    textAccent: "#E8C878",
-    divider: "rgba(245,232,212,0.12)",
-    hoverClass: "",
-    circuitOp: 0.06,
+    ring: "#A07838",
+    ringW: 3,
+    ringGlow: "0 2px 8px rgba(0,0,0,.4)",
+    t1: "#F0DCC0",
+    t2: "rgba(240,220,192,.45)",
+    tA: "#E8C878",
+    div: "rgba(240,220,192,.15)",
+    fx: "",
   },
+
+  /* ─── Bronze Rare ────────────────────────────────────────────────────── */
   bronzeRare: {
-    bg: "radial-gradient(ellipse at 30% 20%, rgba(232,200,106,0.25) 0%, transparent 50%), radial-gradient(ellipse at 80% 70%, rgba(205,127,50,0.2) 0%, transparent 50%), linear-gradient(160deg, #D4A843 0%, #CD7F32 25%, #B07028 50%, #D4A843 75%, #E8C06A 100%)",
+    headerBg: "linear-gradient(180deg, #B08030 0%, #9A6C28 60%, #886020 100%)",
+    bodyBg: "radial-gradient(ellipse at 40% 40%,rgba(232,200,106,.2),transparent 60%),linear-gradient(180deg, #A07030 0%, #C09040 50%, #A07030 100%)",
+    statsBg: "linear-gradient(180deg, #7A5820 0%, #6B4C18 50%, #7A5820 100%)",
+    patterns: [
+      "repeating-linear-gradient(120deg,transparent,transparent 14px,rgba(212,168,67,.14) 14px,rgba(212,168,67,.14) 16px)",
+      "repeating-linear-gradient(60deg,transparent,transparent 14px,rgba(180,120,40,.1) 14px,rgba(180,120,40,.1) 16px)",
+      "repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(232,200,100,.08) 28px,rgba(232,200,100,.08) 29px)",
+      "repeating-linear-gradient(90deg,transparent,transparent 28px,rgba(232,200,100,.06) 28px,rgba(232,200,100,.06) 29px)",
+      "radial-gradient(circle at 20% 30%,rgba(255,220,80,.08),transparent 40%)",
+      "radial-gradient(circle at 80% 70%,rgba(205,127,50,.1),transparent 40%)",
+    ].join(","),
     borderColor: "#D4A843",
-    borderWidth: "2.5px",
+    borderW: 2,
     innerFrame: false,
-    innerFrameColor: "",
+    innerColor: "",
     corners: false,
-    ringColor: "#D4A843",
-    ringGlow: "0 0 12px rgba(212,168,67,0.4)",
-    textPrimary: "#FFF5E0",
-    textSecondary: "rgba(255,245,224,0.55)",
-    textAccent: "#FFD860",
-    divider: "rgba(255,245,224,0.15)",
-    hoverClass: "fut-shine",
-    circuitOp: 0.08,
+    ring: "#D4A843",
+    ringW: 3,
+    ringGlow: "0 0 14px rgba(212,168,67,.35), 0 2px 8px rgba(0,0,0,.4)",
+    t1: "#FFF5E0",
+    t2: "rgba(255,245,224,.5)",
+    tA: "#FFD860",
+    div: "rgba(255,245,224,.18)",
+    fx: "fut-shine",
   },
+
+  /* ─── Silver ─────────────────────────────────────────────────────────── */
   silver: {
-    bg: "linear-gradient(160deg, #B0BAC4 0%, #8A96A2 25%, #748088 50%, #A0ACB6 75%, #B8C4CE 100%)",
+    headerBg: "linear-gradient(180deg, #7A848E 0%, #6E7880 60%, #626C74 100%)",
+    bodyBg: "linear-gradient(180deg, #8A96A2 0%, #A0ACB6 50%, #8A96A2 100%)",
+    statsBg: "linear-gradient(180deg, #626C74 0%, #566068 50%, #626C74 100%)",
+    patterns: [
+      "repeating-linear-gradient(125deg,transparent,transparent 16px,rgba(180,196,210,.12) 16px,rgba(180,196,210,.12) 18px)",
+      "repeating-linear-gradient(55deg,transparent,transparent 16px,rgba(140,155,170,.09) 16px,rgba(140,155,170,.09) 18px)",
+      "repeating-linear-gradient(0deg,transparent,transparent 32px,rgba(200,212,224,.07) 32px,rgba(200,212,224,.07) 33px)",
+      "repeating-linear-gradient(90deg,transparent,transparent 32px,rgba(200,212,224,.05) 32px,rgba(200,212,224,.05) 33px)",
+    ].join(","),
     borderColor: "#8A96A2",
-    borderWidth: "2px",
+    borderW: 2,
     innerFrame: true,
-    innerFrameColor: "rgba(200,212,224,0.2)",
+    innerColor: "rgba(200,212,224,.18)",
     corners: false,
-    ringColor: "#A0ACB6",
-    ringGlow: "none",
-    textPrimary: "#F0F4F8",
-    textSecondary: "rgba(240,244,248,0.5)",
-    textAccent: "#D8E0E8",
-    divider: "rgba(240,244,248,0.12)",
-    hoverClass: "",
-    circuitOp: 0.07,
+    ring: "#A0ACB6",
+    ringW: 3,
+    ringGlow: "0 2px 8px rgba(0,0,0,.35)",
+    t1: "#F0F4F8",
+    t2: "rgba(240,244,248,.45)",
+    tA: "#D4DCE4",
+    div: "rgba(240,244,248,.12)",
+    fx: "",
   },
+
+  /* ─── Silver Rare ────────────────────────────────────────────────────── */
   silverRare: {
-    bg: "radial-gradient(ellipse at 25% 15%, rgba(220,230,245,0.3) 0%, transparent 45%), radial-gradient(ellipse at 75% 80%, rgba(180,200,220,0.25) 0%, transparent 45%), linear-gradient(160deg, #C8D4E0 0%, #A8B8C8 25%, #90A0B0 50%, #C0D0DC 75%, #D0DCE8 100%)",
+    headerBg: "linear-gradient(180deg, #98A8B8 0%, #8898A8 60%, #788898 100%)",
+    bodyBg: "radial-gradient(ellipse at 35% 35%,rgba(220,235,255,.2),transparent 55%),linear-gradient(180deg, #A0B4C4 0%, #C0D0DC 50%, #A0B4C4 100%)",
+    statsBg: "linear-gradient(180deg, #6E7E8E 0%, #5E6E7E 50%, #6E7E8E 100%)",
+    patterns: [
+      "repeating-linear-gradient(120deg,transparent,transparent 12px,rgba(200,220,240,.15) 12px,rgba(200,220,240,.15) 14px)",
+      "repeating-linear-gradient(60deg,transparent,transparent 12px,rgba(170,190,210,.11) 12px,rgba(170,190,210,.11) 14px)",
+      "repeating-linear-gradient(0deg,transparent,transparent 24px,rgba(220,235,250,.09) 24px,rgba(220,235,250,.09) 25px)",
+      "repeating-linear-gradient(90deg,transparent,transparent 24px,rgba(220,235,250,.07) 24px,rgba(220,235,250,.07) 25px)",
+      "radial-gradient(circle at 25% 25%,rgba(200,220,255,.1),transparent 35%)",
+      "radial-gradient(circle at 75% 75%,rgba(180,200,230,.08),transparent 35%)",
+      "repeating-conic-gradient(from 0deg,transparent 0deg,transparent 88deg,rgba(220,235,250,.04) 88deg,rgba(220,235,250,.04) 92deg)",
+    ].join(","),
     borderColor: "#B0C0D0",
-    borderWidth: "2.5px",
+    borderW: 2,
     innerFrame: true,
-    innerFrameColor: "rgba(220,230,245,0.25)",
+    innerColor: "rgba(220,235,250,.22)",
     corners: false,
-    ringColor: "#C0D0DC",
-    ringGlow: "0 0 14px rgba(180,200,220,0.4)",
-    textPrimary: "#FFFFFF",
-    textSecondary: "rgba(255,255,255,0.55)",
-    textAccent: "#E8F0FF",
-    divider: "rgba(255,255,255,0.15)",
-    hoverClass: "fut-holo",
-    circuitOp: 0.09,
+    ring: "#C0D0DC",
+    ringW: 4,
+    ringGlow: "0 0 16px rgba(180,200,220,.35), 0 2px 8px rgba(0,0,0,.35)",
+    t1: "#FFFFFF",
+    t2: "rgba(255,255,255,.5)",
+    tA: "#E8F0FF",
+    div: "rgba(255,255,255,.15)",
+    fx: "fut-holo",
   },
+
+  /* ─── Gold ───────────────────────────────────────────────────────────── */
   gold: {
-    bg: "radial-gradient(ellipse at 35% 20%, rgba(255,240,120,0.2) 0%, transparent 50%), radial-gradient(ellipse at 70% 75%, rgba(218,165,32,0.2) 0%, transparent 50%), linear-gradient(160deg, #E8C020 0%, #D4A420 25%, #B08810 50%, #DAB820 75%, #E8C830 100%)",
+    headerBg: "linear-gradient(180deg, #B89018 0%, #A07C10 60%, #907010 100%)",
+    bodyBg: "radial-gradient(ellipse at 50% 40%,rgba(255,240,120,.12),transparent 55%),linear-gradient(180deg, #C8A020 0%, #E0B828 50%, #C8A020 100%)",
+    statsBg: "linear-gradient(180deg, #806010 0%, #705008 50%, #806010 100%)",
+    patterns: [
+      "repeating-linear-gradient(120deg,transparent,transparent 14px,rgba(255,230,80,.12) 14px,rgba(255,230,80,.12) 16px)",
+      "repeating-linear-gradient(60deg,transparent,transparent 14px,rgba(218,165,32,.1) 14px,rgba(218,165,32,.1) 16px)",
+      "repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(255,240,100,.07) 28px,rgba(255,240,100,.07) 29px)",
+      "repeating-linear-gradient(90deg,transparent,transparent 28px,rgba(255,240,100,.05) 28px,rgba(255,240,100,.05) 29px)",
+      "radial-gradient(circle at 30% 20%,rgba(255,240,120,.1),transparent 35%)",
+      "radial-gradient(circle at 70% 80%,rgba(218,165,32,.08),transparent 35%)",
+    ].join(","),
     borderColor: "#D4A820",
-    borderWidth: "2.5px",
+    borderW: 3,
     innerFrame: true,
-    innerFrameColor: "rgba(255,230,120,0.2)",
+    innerColor: "rgba(255,230,120,.2)",
     corners: true,
-    ringColor: "#E8C830",
-    ringGlow: "0 0 18px rgba(218,165,32,0.45)",
-    textPrimary: "#FFF8E0",
-    textSecondary: "rgba(255,248,224,0.55)",
-    textAccent: "#FFE060",
-    divider: "rgba(255,248,224,0.18)",
-    hoverClass: "",
-    circuitOp: 0.08,
+    ring: "#E0B828",
+    ringW: 4,
+    ringGlow: "0 0 20px rgba(218,165,32,.4), 0 2px 8px rgba(0,0,0,.35)",
+    t1: "#FFF8E0",
+    t2: "rgba(255,248,224,.5)",
+    tA: "#FFE060",
+    div: "rgba(255,248,224,.18)",
+    fx: "",
   },
+
+  /* ─── Gold Rare ──────────────────────────────────────────────────────── */
   goldRare: {
-    bg: "radial-gradient(ellipse at 30% 15%, rgba(255,255,180,0.35) 0%, transparent 45%), radial-gradient(ellipse at 75% 80%, rgba(255,215,0,0.25) 0%, transparent 45%), radial-gradient(ellipse at 50% 50%, rgba(255,240,160,0.15) 0%, transparent 60%), linear-gradient(160deg, #FFE040 0%, #F0C820 20%, #E0B010 40%, #FFD830 60%, #F0C420 80%, #FFE850 100%)",
+    headerBg: "linear-gradient(180deg, #D4A820 0%, #C09818 60%, #B08810 100%)",
+    bodyBg: "radial-gradient(ellipse at 30% 30%,rgba(255,255,180,.22),transparent 50%),radial-gradient(ellipse at 70% 70%,rgba(255,215,0,.15),transparent 50%),linear-gradient(180deg, #E0C030 0%, #FFD840 50%, #E0C030 100%)",
+    statsBg: "linear-gradient(180deg, #907010 0%, #806008 50%, #907010 100%)",
+    patterns: [
+      "repeating-linear-gradient(115deg,transparent,transparent 10px,rgba(255,248,180,.16) 10px,rgba(255,248,180,.16) 12px)",
+      "repeating-linear-gradient(65deg,transparent,transparent 10px,rgba(255,220,60,.12) 10px,rgba(255,220,60,.12) 12px)",
+      "repeating-linear-gradient(0deg,transparent,transparent 20px,rgba(255,255,200,.1) 20px,rgba(255,255,200,.1) 21px)",
+      "repeating-linear-gradient(90deg,transparent,transparent 20px,rgba(255,255,200,.08) 20px,rgba(255,255,200,.08) 21px)",
+      "radial-gradient(circle at 20% 20%,rgba(255,255,200,.15),transparent 30%)",
+      "radial-gradient(circle at 80% 30%,rgba(255,240,120,.12),transparent 30%)",
+      "radial-gradient(circle at 50% 80%,rgba(255,215,0,.1),transparent 30%)",
+      "repeating-conic-gradient(from 0deg,transparent 0deg,transparent 85deg,rgba(255,248,180,.05) 85deg,rgba(255,248,180,.05) 95deg)",
+    ].join(","),
     borderColor: "#FFE060",
-    borderWidth: "3px",
+    borderW: 3,
     innerFrame: true,
-    innerFrameColor: "rgba(255,248,180,0.3)",
+    innerColor: "rgba(255,248,180,.28)",
     corners: true,
-    ringColor: "#FFE850",
-    ringGlow: "0 0 24px rgba(255,215,0,0.5), 0 0 48px rgba(255,215,0,0.2)",
-    textPrimary: "#FFFFFF",
-    textSecondary: "rgba(255,255,255,0.6)",
-    textAccent: "#FFF8D0",
-    divider: "rgba(255,255,255,0.2)",
-    hoverClass: "fut-shimmer",
-    circuitOp: 0.1,
+    ring: "#FFE850",
+    ringW: 4,
+    ringGlow: "0 0 28px rgba(255,215,0,.5), 0 0 56px rgba(255,215,0,.15), 0 2px 8px rgba(0,0,0,.3)",
+    t1: "#FFFFFF",
+    t2: "rgba(255,255,255,.55)",
+    tA: "#FFF8D0",
+    div: "rgba(255,255,255,.2)",
+    fx: "fut-shimmer",
   },
 }
 
 /* ──────────────────────────────────────────────────────────────────────────── */
-/*  Stat definitions                                                           */
+/*  Stats                                                                      */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
 const STATS: { key: keyof PlayerCardData["stats"]; label: string; Icon: LucideIcon }[] = [
@@ -248,73 +278,52 @@ const STATS: { key: keyof PlayerCardData["stats"]; label: string; Icon: LucideIc
 ]
 
 /* ──────────────────────────────────────────────────────────────────────────── */
-/*  Circuit-board SVG pattern                                                  */
-/* ──────────────────────────────────────────────────────────────────────────── */
-
-const CIRCUIT = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cpath d='M0 40h28m8 0h44M40 0v28m0 8v44' stroke='white' stroke-width='.7' opacity='.4' fill='none'/%3E%3Ccircle cx='40' cy='40' r='2.5' stroke='white' stroke-width='.5' opacity='.35' fill='none'/%3E%3Ccircle cx='40' cy='40' r='.8' fill='white' opacity='.4'/%3E%3Cpath d='M20 0v16h-20M60 80v-16h20' stroke='white' stroke-width='.4' opacity='.2' fill='none'/%3E%3Ccircle cx='20' cy='16' r='1' fill='white' opacity='.2'/%3E%3Ccircle cx='60' cy='64' r='1' fill='white' opacity='.2'/%3E%3Cpath d='M0 60h10l3-3h5' stroke='white' stroke-width='.3' opacity='.15' fill='none'/%3E%3Cpath d='M80 20h-10l-3 3h-5' stroke='white' stroke-width='.3' opacity='.15' fill='none'/%3E%3C/svg%3E")`
-
-/* ──────────────────────────────────────────────────────────────────────────── */
 /*  Component                                                                  */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
 export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
   const rarity = getRarity(playerData.glicko2)
-  const s = R[rarity]
-  const glickoDisplay = Math.round(playerData.glicko2)
+  const s = S[rarity]
+  const glicko = Math.round(playerData.glicko2)
+  const flag = countryFlag(playerData.nationalityCode)
 
   return (
     <div
       className={cn(
         "relative mx-auto w-full max-w-[360px] overflow-hidden rounded-2xl",
-        s.hoverClass,
+        s.fx,
         className,
       )}
       style={{
         aspectRatio: "3 / 4",
-        background: s.bg,
-        border: `${s.borderWidth} solid ${s.borderColor}`,
-        boxShadow: `0 8px 32px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3)`,
+        border: `${s.borderW}px solid ${s.borderColor}`,
+        boxShadow: "0 10px 40px rgba(0,0,0,.55), 0 2px 10px rgba(0,0,0,.3)",
       }}
     >
-      {/* ── Background layers ──────────────────────────────────────── */}
-
-      {/* Circuit pattern */}
+      {/* ── Pattern overlay (covers entire card — chevrons, zigzag, stripes) ── */}
       <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage: CIRCUIT,
-          backgroundSize: "80px 80px",
-          opacity: s.circuitOp,
-        }}
+        className="pointer-events-none absolute inset-0 z-10"
+        style={{ backgroundImage: s.patterns }}
       />
 
-      {/* Brushed metal texture */}
-      <div
-        className="pointer-events-none absolute inset-0 mix-blend-soft-light"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(115deg, transparent, transparent 1px, rgba(255,255,255,0.018) 1px, rgba(255,255,255,0.018) 2.5px)",
-        }}
-      />
-
-      {/* Rare hover shine overlay */}
-      {s.hoverClass && (
-        <div className="fut-shine-overlay pointer-events-none absolute inset-0 rounded-2xl" />
+      {/* ── Rare hover shine ───────────────────────────────────────── */}
+      {s.fx && (
+        <div className="fut-shine-overlay pointer-events-none absolute inset-0 z-20 rounded-2xl" />
       )}
 
-      {/* Gold Rare sparkles */}
+      {/* ── Gold Rare sparkles ─────────────────────────────────────── */}
       {rarity === "goldRare" && (
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          {Array.from({ length: 10 }).map((_, i) => (
+        <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
+          {Array.from({ length: 12 }).map((_, i) => (
             <div
               key={i}
               className="fut-sparkle absolute rounded-full bg-white"
               style={{
-                width: i % 3 === 0 ? "3px" : "2px",
-                height: i % 3 === 0 ? "3px" : "2px",
-                top: `${8 + ((i * 31) % 78)}%`,
-                left: `${6 + ((i * 23) % 85)}%`,
-                animationDelay: `${i * 0.3}s`,
+                width: i % 4 === 0 ? "3px" : "2px",
+                height: i % 4 === 0 ? "3px" : "2px",
+                top: `${6 + ((i * 29) % 82)}%`,
+                left: `${4 + ((i * 23) % 88)}%`,
+                animationDelay: `${i * 0.25}s`,
               }}
             />
           ))}
@@ -324,81 +333,75 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
       {/* ── Inner decorative frame (silver+ tiers) ─────────────────── */}
       {s.innerFrame && (
         <div
-          className="pointer-events-none absolute rounded-xl"
-          style={{
-            inset: "8px",
-            border: `1px solid ${s.innerFrameColor}`,
-          }}
+          className="pointer-events-none absolute z-10 rounded-xl"
+          style={{ inset: "7px", border: `1px solid ${s.innerColor}` }}
         />
       )}
 
       {/* ── Corner ornaments (gold tiers) ──────────────────────────── */}
       {s.corners && (
         <>
-          {/* Top-left */}
-          <div className="pointer-events-none absolute left-[10px] top-[10px]">
-            <div style={{ width: 16, height: 1, background: s.innerFrameColor }} />
-            <div style={{ width: 1, height: 16, background: s.innerFrameColor }} />
+          <div className="pointer-events-none absolute left-[9px] top-[9px] z-10">
+            <div style={{ width: 18, height: 1, background: s.innerColor }} />
+            <div style={{ width: 1, height: 18, background: s.innerColor }} />
           </div>
-          {/* Top-right */}
-          <div className="pointer-events-none absolute right-[10px] top-[10px]">
-            <div style={{ width: 16, height: 1, background: s.innerFrameColor, marginLeft: "auto" }} />
-            <div style={{ width: 1, height: 16, background: s.innerFrameColor, marginLeft: "auto" }} />
+          <div className="pointer-events-none absolute right-[9px] top-[9px] z-10 flex flex-col items-end">
+            <div style={{ width: 18, height: 1, background: s.innerColor }} />
+            <div style={{ width: 1, height: 18, background: s.innerColor, marginLeft: "auto" }} />
           </div>
-          {/* Bottom-left */}
-          <div className="pointer-events-none absolute bottom-[10px] left-[10px] flex flex-col justify-end">
-            <div style={{ width: 1, height: 16, background: s.innerFrameColor }} />
-            <div style={{ width: 16, height: 1, background: s.innerFrameColor }} />
+          <div className="pointer-events-none absolute bottom-[9px] left-[9px] z-10 flex flex-col justify-end">
+            <div style={{ width: 1, height: 18, background: s.innerColor }} />
+            <div style={{ width: 18, height: 1, background: s.innerColor }} />
           </div>
-          {/* Bottom-right */}
-          <div className="pointer-events-none absolute bottom-[10px] right-[10px] flex flex-col items-end justify-end">
-            <div style={{ width: 1, height: 16, background: s.innerFrameColor, marginLeft: "auto" }} />
-            <div style={{ width: 16, height: 1, background: s.innerFrameColor, marginLeft: "auto" }} />
+          <div className="pointer-events-none absolute bottom-[9px] right-[9px] z-10 flex flex-col items-end justify-end">
+            <div style={{ width: 1, height: 18, background: s.innerColor, marginLeft: "auto" }} />
+            <div style={{ width: 18, height: 1, background: s.innerColor }} />
           </div>
         </>
       )}
 
-      {/* ── Card content ───────────────────────────────────────────── */}
-      <div className="relative flex h-full flex-col px-5 pb-4 pt-5">
+      {/* ════════════════════════════════════════════════════════════════
+          CARD ZONES — each zone has its own background shade
+          ════════════════════════════════════════════════════════════ */}
 
-        {/* ── UPPER: Role (vertical) + Photo (center) + Rating+Flag (right) ── */}
-        <div className="flex flex-1 items-center gap-2">
+      {/* ── HEADER ZONE (top ~55%) ─────────────────────────────────── */}
+      <div className="relative" style={{ height: "55%", background: s.headerBg }}>
+        {/* Subtle gradient transition at bottom */}
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[30%]"
+          style={{ background: "linear-gradient(to bottom, transparent, rgba(0,0,0,.12))" }}
+        />
 
+        <div className="relative z-10 flex h-full px-4 pt-4 pb-2">
           {/* Role — vertical left */}
           <div
-            className="flex shrink-0 items-center justify-center self-stretch"
+            className="flex shrink-0 items-center justify-center"
             style={{
               writingMode: "vertical-rl",
               transform: "rotate(180deg)",
-              width: "22px",
+              width: "20px",
             }}
           >
             <span
-              className="whitespace-nowrap text-xs font-black uppercase tracking-[0.35em]"
-              style={{
-                color: s.textSecondary,
-                textShadow: "0 1px 2px rgba(0,0,0,0.3)",
-              }}
+              className="whitespace-nowrap text-[0.65rem] font-black uppercase tracking-[0.4em]"
+              style={{ color: s.t2, textShadow: "0 1px 2px rgba(0,0,0,.4)" }}
             >
               {playerData.role}
             </span>
           </div>
 
-          {/* Thin vertical divider */}
-          <div
-            className="h-[70%] w-px shrink-0 self-center"
-            style={{ background: s.divider }}
-          />
+          {/* Thin divider */}
+          <div className="mx-2 h-[65%] w-px shrink-0 self-center" style={{ background: s.div }} />
 
           {/* Photo — round, centered */}
           <div className="flex flex-1 justify-center">
             <div
               className="relative overflow-hidden rounded-full"
               style={{
-                width: "clamp(110px, 40vw, 150px)",
-                height: "clamp(110px, 40vw, 150px)",
-                border: `3.5px solid ${s.ringColor}`,
-                boxShadow: `${s.ringGlow}, inset 0 2px 8px rgba(0,0,0,0.3)`,
+                width: "clamp(105px, 38vw, 145px)",
+                height: "clamp(105px, 38vw, 145px)",
+                border: `${s.ringW}px solid ${s.ring}`,
+                boxShadow: s.ringGlow,
               }}
             >
               {playerData.imageUrl ? (
@@ -412,8 +415,8 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
                 <div
                   className="flex h-full w-full items-center justify-center text-4xl font-black"
                   style={{
-                    background: `linear-gradient(135deg, rgba(0,0,0,0.25), rgba(0,0,0,0.45))`,
-                    color: s.textAccent,
+                    background: "linear-gradient(135deg, rgba(0,0,0,.2), rgba(0,0,0,.4))",
+                    color: s.tA,
                   }}
                 >
                   {playerData.name.slice(0, 2).toUpperCase()}
@@ -422,71 +425,63 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
             </div>
           </div>
 
-          {/* Glicko-2 + Flag — right column */}
-          <div className="flex shrink-0 flex-col items-center gap-2" style={{ width: "60px" }}>
+          {/* Glicko-2 + Flag — right */}
+          <div className="flex shrink-0 flex-col items-center gap-1.5 pt-1" style={{ width: "56px" }}>
             <span
-              className="text-[2rem] font-black leading-none"
-              style={{
-                color: s.textPrimary,
-                textShadow: "0 2px 6px rgba(0,0,0,0.4)",
-              }}
+              className="text-[1.9rem] font-black leading-none"
+              style={{ color: s.t1, textShadow: "0 2px 6px rgba(0,0,0,.45)" }}
             >
-              {glickoDisplay}
+              {glicko}
             </span>
-            <div
-              className="overflow-hidden rounded-[3px]"
-              style={{
-                width: "32px",
-                height: "22px",
-                border: `1.5px solid ${s.borderColor}60`,
-                boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-              }}
-            >
-              <CountryFlag code={playerData.nationalityCode} />
-            </div>
+            <span className="text-xl leading-none">{flag}</span>
           </div>
         </div>
+      </div>
 
-        {/* ── PLAYER NAME ──────────────────────────────────────────── */}
+      {/* ── BODY ZONE (name + divider) ─────────────────────────────── */}
+      <div
+        className="relative flex flex-col items-center justify-center"
+        style={{ height: "12%", background: s.bodyBg }}
+      >
+        {/* Top edge highlight */}
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-px"
+          style={{ background: `linear-gradient(90deg, transparent 10%, ${s.div} 50%, transparent 90%)` }}
+        />
         <h3
-          className="mt-2 text-center text-xl font-black uppercase tracking-wide"
-          style={{
-            color: s.textPrimary,
-            textShadow: "0 1px 4px rgba(0,0,0,0.4)",
-          }}
+          className="text-lg font-black uppercase tracking-wider"
+          style={{ color: s.t1, textShadow: "0 1px 3px rgba(0,0,0,.4)" }}
         >
           {playerData.name}
         </h3>
+      </div>
 
-        {/* ── Gradient divider ─────────────────────────────────────── */}
+      {/* ── STATS ZONE (bottom ~33%) ───────────────────────────────── */}
+      <div className="relative flex flex-1 flex-col" style={{ background: s.statsBg }}>
+        {/* Top edge highlight */}
         <div
-          className="mx-auto my-2 h-px w-[85%]"
-          style={{
-            background: `linear-gradient(90deg, transparent, ${s.divider.replace(")", "").replace("rgba(", "rgba(")} 200%), transparent)`,
-          }}
+          className="pointer-events-none absolute inset-x-0 top-0 h-px"
+          style={{ background: `linear-gradient(90deg, transparent 10%, ${s.div} 50%, transparent 90%)` }}
         />
 
-        {/* ── STATS ────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-6 gap-1">
+        {/* Stats grid */}
+        <div className="z-10 grid grid-cols-6 gap-1 px-4 pt-4">
           {STATS.map(({ key, label, Icon }) => (
             <div key={key} className="flex flex-col items-center gap-0.5">
               <Icon
                 className="h-[18px] w-[18px]"
-                style={{ color: s.textAccent, opacity: 0.75 }}
+                style={{ color: s.tA, opacity: 0.7 }}
                 strokeWidth={2.2}
               />
               <span
                 className="text-[0.55rem] font-bold uppercase tracking-wide"
-                style={{ color: s.textSecondary }}
+                style={{ color: s.t2 }}
               >
                 {label}
               </span>
               <span
-                className="text-lg font-black leading-none"
-                style={{
-                  color: s.textAccent,
-                  textShadow: "0 1px 2px rgba(0,0,0,0.3)",
-                }}
+                className="text-xl font-black leading-none"
+                style={{ color: s.tA, textShadow: "0 1px 2px rgba(0,0,0,.3)" }}
               >
                 {playerData.stats[key]}
               </span>
@@ -494,18 +489,14 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
           ))}
         </div>
 
-        {/* ── SANDER LOGO ──────────────────────────────────────────── */}
-        <div className="mt-auto flex justify-center pt-2">
+        {/* Sander logo — bigger */}
+        <div className="z-10 mt-auto flex justify-center pb-3 pt-1">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/sander-logo.png"
             alt="Sander"
             className="object-contain"
-            style={{
-              height: "32px",
-              opacity: 0.7,
-              filter: "brightness(1.4)",
-            }}
+            style={{ height: "44px", opacity: 0.65, filter: "brightness(1.5)" }}
           />
         </div>
       </div>
