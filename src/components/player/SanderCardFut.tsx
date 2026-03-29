@@ -382,8 +382,9 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
       )}
       style={{
         aspectRatio: "3 / 4",
+        background: s.statsBg,
         border: `${s.borderW}px solid ${s.borderColor}`,
-        boxShadow: "0 10px 40px rgba(0,0,0,.55), 0 2px 10px rgba(0,0,0,.3)",
+        boxShadow: `0 10px 40px rgba(0,0,0,.55), 0 2px 10px rgba(0,0,0,.3), inset 0 0 0 1px ${s.borderColor}44`,
       }}
     >
       {/* ── Pattern overlay (chevrons, zigzag, stripes) ────────────── */}
@@ -395,6 +396,12 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
       {/* ── Top decorative stripe ──────────────────────────────────── */}
       <div
         className="absolute left-0 right-0 top-0 z-10 h-[3px]"
+        style={{ background: `linear-gradient(90deg, transparent, ${s.topStripe}, transparent)` }}
+      />
+
+      {/* ── Bottom decorative stripe ─────────────────────────────── */}
+      <div
+        className="absolute bottom-0 left-0 right-0 z-10 h-[3px]"
         style={{ background: `linear-gradient(90deg, transparent, ${s.topStripe}, transparent)` }}
       />
 
@@ -559,20 +566,30 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
           BODY ZONE — player name (~12%)
           ═══════════════════════════════════════════════════════════ */}
       <div
-        className="relative flex flex-col items-center justify-center"
-        style={{ height: "12%", background: s.bodyBg }}
+        className="relative z-20 flex flex-col items-center justify-center"
+        style={{
+          height: "12%",
+          background: s.bodyBg,
+          boxShadow: `0 -4px 12px rgba(0,0,0,.25), 0 4px 12px rgba(0,0,0,.25), inset 0 1px 0 ${s.topStripe}, inset 0 -1px 0 ${s.topStripe}`,
+        }}
       >
         {/* Top metallic separator */}
         <div
           className="absolute inset-x-0 top-0 h-[2px]"
           style={{ background: `linear-gradient(90deg, transparent 5%, ${s.div} 30%, ${s.topStripe} 50%, ${s.div} 70%, transparent 95%)` }}
         />
+        {/* Bottom metallic separator */}
+        <div
+          className="absolute inset-x-0 bottom-0 h-[2px]"
+          style={{ background: `linear-gradient(90deg, transparent 5%, ${s.div} 30%, ${s.topStripe} 50%, ${s.div} 70%, transparent 95%)` }}
+        />
 
         {/* Ornamental diamonds flanking the name */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1">
-            <div className="h-px w-6" style={{ background: `linear-gradient(90deg, transparent, ${s.div})` }} />
+            <div className="h-px w-8" style={{ background: `linear-gradient(90deg, transparent, ${s.tA}44)` }} />
             <div className="h-[5px] w-[5px] rotate-45" style={{ background: s.tA, opacity: 0.5 }} />
+            <div className="h-px w-3" style={{ background: `${s.tA}44` }} />
           </div>
           <h3
             className="text-lg font-black uppercase tracking-wider"
@@ -581,8 +598,9 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
             {playerData.name}
           </h3>
           <div className="flex items-center gap-1">
+            <div className="h-px w-3" style={{ background: `${s.tA}44` }} />
             <div className="h-[5px] w-[5px] rotate-45" style={{ background: s.tA, opacity: 0.5 }} />
-            <div className="h-px w-6" style={{ background: `linear-gradient(90deg, ${s.div}, transparent)` }} />
+            <div className="h-px w-8" style={{ background: `linear-gradient(90deg, ${s.tA}44, transparent)` }} />
           </div>
         </div>
       </div>
@@ -590,7 +608,7 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
       {/* ═══════════════════════════════════════════════════════════════
           STATS ZONE (~36%)
           ═══════════════════════════════════════════════════════════ */}
-      <div className="relative flex flex-1 flex-col" style={{ background: s.statsBg }}>
+      <div className="relative flex flex-1 flex-col" style={{ height: "36%", background: s.statsBg }}>
         {/* Top metallic separator */}
         <div
           className="absolute inset-x-0 top-0 h-[2px]"
@@ -668,12 +686,56 @@ export interface PrismaPlayerLike {
   staPct: number
 }
 
+// Map Italian country names → ISO 3166-1 alpha-2 codes
+const COUNTRY_ISO: Record<string, string> = {
+  "Afghanistan":"AF","Albania":"AL","Algeria":"DZ","Andorra":"AD","Angola":"AO",
+  "Argentina":"AR","Armenia":"AM","Australia":"AU","Austria":"AT","Azerbaigian":"AZ",
+  "Bahamas":"BS","Bahrain":"BH","Bangladesh":"BD","Belgio":"BE","Belize":"BZ",
+  "Benin":"BJ","Bielorussia":"BY","Bolivia":"BO","Bosnia ed Erzegovina":"BA",
+  "Botswana":"BW","Brasile":"BR","Bulgaria":"BG","Burkina Faso":"BF","Burundi":"BI",
+  "Cambogia":"KH","Camerun":"CM","Canada":"CA","Ciad":"TD","Cile":"CL","Cina":"CN",
+  "Cipro":"CY","Colombia":"CO","Congo":"CG","Corea del Nord":"KP","Corea del Sud":"KR",
+  "Costa Rica":"CR","Croazia":"HR","Cuba":"CU","Danimarca":"DK","Ecuador":"EC",
+  "Egitto":"EG","El Salvador":"SV","Emirati Arabi Uniti":"AE","Eritrea":"ER",
+  "Estonia":"EE","Etiopia":"ET","Filippine":"PH","Finlandia":"FI","Francia":"FR",
+  "Georgia":"GE","Germania":"DE","Ghana":"GH","Giappone":"JP","Gibuti":"DJ",
+  "Giordania":"JO","Grecia":"GR","Guatemala":"GT","Guinea":"GN","Haiti":"HT",
+  "Honduras":"HN","India":"IN","Indonesia":"ID","Iran":"IR","Iraq":"IQ",
+  "Irlanda":"IE","Islanda":"IS","Israele":"IL","Italia":"IT","Kazakistan":"KZ",
+  "Kenya":"KE","Kosovo":"XK","Kuwait":"KW","Laos":"LA","Lettonia":"LV",
+  "Libano":"LB","Libia":"LY","Liechtenstein":"LI","Lituania":"LT","Lussemburgo":"LU",
+  "Macedonia":"MK","Madagascar":"MG","Malawi":"MW","Malaysia":"MY","Maldive":"MV",
+  "Mali":"ML","Malta":"MT","Marocco":"MA","Mauritania":"MR","Messico":"MX",
+  "Moldavia":"MD","Monaco":"MC","Mongolia":"MN","Montenegro":"ME","Mozambico":"MZ",
+  "Myanmar":"MM","Namibia":"NA","Nepal":"NP","Nicaragua":"NI","Niger":"NE",
+  "Nigeria":"NG","Norvegia":"NO","Nuova Zelanda":"NZ","Oman":"OM","Pakistan":"PK",
+  "Panama":"PA","Paraguay":"PY","Perù":"PE","Polonia":"PL","Portogallo":"PT",
+  "Qatar":"QA","Repubblica Ceca":"CZ","Repubblica Dominicana":"DO","Romania":"RO",
+  "Russia":"RU","Ruanda":"RW","San Marino":"SM","Senegal":"SN","Serbia":"RS",
+  "Sierra Leone":"SL","Singapore":"SG","Siria":"SY","Slovenia":"SI","Somalia":"SO",
+  "Spagna":"ES","Sri Lanka":"LK","Sudafrica":"ZA","Sudan":"SD","Svezia":"SE",
+  "Svizzera":"CH","Taiwan":"TW","Tanzania":"TZ","Thailandia":"TH","Togo":"TG",
+  "Tunisia":"TN","Turchia":"TR","Ucraina":"UA","Uganda":"UG","Ungheria":"HU",
+  "Uruguay":"UY","Uzbekistan":"UZ","Venezuela":"VE","Vietnam":"VN","Yemen":"YE",
+  "Zambia":"ZM","Zimbabwe":"ZW",
+  // Also accept direct ISO codes
+  "Arabia Saudita":"SA","Arabia saudita":"SA",
+}
+
+function resolveNationalityCode(raw: string | null | undefined): string {
+  if (!raw) return "IT"
+  // If it's already a 2-letter ISO code, use it directly
+  if (raw.length === 2 && raw === raw.toUpperCase()) return raw
+  // Try mapping from Italian name
+  return COUNTRY_ISO[raw] ?? COUNTRY_ISO[raw.charAt(0).toUpperCase() + raw.slice(1)] ?? "IT"
+}
+
 export function playerToCardData(player: PrismaPlayerLike): PlayerCardData {
   const g = player.glickoRating
   return {
     name: player.name,
     glicko2: g,
-    nationalityCode: player.nationality ?? "IT",
+    nationalityCode: resolveNationalityCode(player.nationality),
     role: player.preferredRole === "BLOCKER" ? "MURO" : "DIFENSORE",
     stats: {
       att: statValue(player.attPct, g),
