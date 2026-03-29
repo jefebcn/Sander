@@ -38,11 +38,9 @@ function getFrameTemplate(glicko2: number): string {
   return "/assets/cards/bronze.png"
 }
 
-function getTextColor(glicko2: number): string {
-  if (glicko2 >= 2000) return "#3A2800" // dark brown/gold text
-  if (glicko2 >= 1500) return "#1A2430" // dark slate for silver
-  return "#2A1800" // dark bronze for bronze
-}
+/* Text is always white/light — the metallic frame provides contrast */
+const TEXT_COLOR = "#FFFFFF"
+const TEXT_COLOR_DIM = "rgba(255,255,255,.85)"
 
 /* ──────────────────────────────────────────────────────────────────────────── */
 /*  Flag via CDN                                                               */
@@ -65,8 +63,8 @@ function FlagIcon({ code }: { code: string }) {
 /*  Text shadow for embossed look on metallic backgrounds                      */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
-const EMBOSS = "0 1px 2px rgba(0,0,0,.4), 0 -1px 0 rgba(255,255,255,.25)"
-const EMBOSS_STRONG = "0 2px 4px rgba(0,0,0,.5), 0 -1px 0 rgba(255,255,255,.3), 1px 1px 3px rgba(0,0,0,.3)"
+const EMBOSS = "0 1px 3px rgba(0,0,0,.6), 0 0 6px rgba(0,0,0,.3)"
+const EMBOSS_STRONG = "0 2px 5px rgba(0,0,0,.7), 0 0 10px rgba(0,0,0,.4), 1px 1px 4px rgba(0,0,0,.5)"
 
 /* ──────────────────────────────────────────────────────────────────────────── */
 /*  Stat keys in order                                                         */
@@ -84,23 +82,23 @@ const STAT_KEYS: (keyof PlayerCardData["stats"])[] = ["att", "dif", "ric", "mur"
 export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
   const glicko = Math.round(playerData.glicko2)
   const frame = getFrameTemplate(glicko)
-  const textColor = getTextColor(glicko)
 
   return (
     <div
       className={cn("relative mx-auto w-full max-w-[400px] select-none", className)}
-      style={{ aspectRatio: "1 / 1" }}
+      style={{ aspectRatio: "1 / 1", background: "transparent" }}
     >
       {/* ═══════════════════════════════════════════════════════════════
-          LAYER 0 — Profile photo behind the frame
+          LAYER 0 — Profile photo (z-0)
+          Positioned to fill the center square aperture
           ═══════════════════════════════════════════════════════════ */}
       <div
         className="absolute overflow-hidden"
         style={{
-          top: "14%",
-          left: "27%",
-          width: "34%",
-          height: "32%",
+          top: "13.5%",
+          left: "26%",
+          width: "35%",
+          height: "34%",
           zIndex: 0,
         }}
       >
@@ -114,7 +112,7 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
         ) : (
           <div
             className="flex h-full w-full items-center justify-center text-4xl font-black"
-            style={{ background: "rgba(0,0,0,.3)", color: "#ccc" }}
+            style={{ background: "rgba(40,40,40,.8)", color: TEXT_COLOR_DIM }}
           >
             {playerData.name.slice(0, 2).toUpperCase()}
           </div>
@@ -122,7 +120,7 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
-          LAYER 1 — PNG frame template
+          LAYER 1 — PNG frame template (z-10)
           ═══════════════════════════════════════════════════════════ */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -133,105 +131,109 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
       />
 
       {/* ═══════════════════════════════════════════════════════════════
-          LAYER 2 — Dynamic text & elements
+          LAYER 2 — Dynamic text & elements (z-20)
           ═══════════════════════════════════════════════════════════ */}
 
-      {/* Role — vertical text (left bar) */}
+      {/* Role — vertical text, centered in the left bar aperture */}
       <div
         className="absolute flex items-center justify-center"
         style={{
-          top: "15%",
-          left: "10.5%",
-          width: "6%",
-          height: "27%",
+          top: "14%",
+          left: "10%",
+          width: "7%",
+          height: "28%",
           zIndex: 20,
           writingMode: "vertical-rl",
           transform: "rotate(180deg)",
         }}
       >
         <span
-          className="whitespace-nowrap text-[0.6rem] font-black uppercase tracking-[0.35em]"
-          style={{ color: textColor, textShadow: EMBOSS }}
+          className="whitespace-nowrap text-[0.55rem] font-black uppercase tracking-[0.3em]"
+          style={{ color: TEXT_COLOR, textShadow: EMBOSS }}
         >
           {playerData.role}
         </span>
       </div>
 
-      {/* Rating — top right upper box */}
+      {/* Rating — top-right first box, shifted down/left to center */}
       <div
         className="absolute flex items-center justify-center"
         style={{
-          top: "13%",
-          left: "66%",
-          width: "16%",
-          height: "9%",
+          top: "14.5%",
+          left: "64%",
+          width: "17%",
+          height: "8.5%",
           zIndex: 20,
         }}
       >
         <span
-          className="text-[1.4rem] font-black leading-none"
-          style={{ color: textColor, textShadow: EMBOSS_STRONG }}
+          className="text-[1.3rem] font-black leading-none"
+          style={{ color: TEXT_COLOR, textShadow: EMBOSS_STRONG }}
         >
           {glicko}
         </span>
       </div>
 
-      {/* Flag — top right lower box */}
+      {/* Flag — top-right second box, centered */}
       <div
         className="absolute flex items-center justify-center"
         style={{
-          top: "25%",
-          left: "68%",
-          width: "12%",
-          height: "7%",
+          top: "25.5%",
+          left: "66%",
+          width: "13%",
+          height: "7.5%",
           zIndex: 20,
         }}
       >
-        <div className="h-full w-[80%] overflow-hidden rounded-[2px]">
+        <div
+          className="overflow-hidden rounded-[2px]"
+          style={{ width: "75%", height: "85%" }}
+        >
           <FlagIcon code={playerData.nationalityCode} />
         </div>
       </div>
 
-      {/* Name — center horizontal bar */}
+      {/* Name — center horizontal bar, perfectly centered */}
       <div
         className="absolute flex items-center justify-center"
         style={{
-          top: "51.5%",
-          left: "18%",
-          width: "64%",
-          height: "5.5%",
+          top: "51%",
+          left: "15%",
+          width: "70%",
+          height: "6%",
           zIndex: 20,
         }}
       >
         <span
-          className="text-sm font-black uppercase tracking-wider"
-          style={{ color: textColor, textShadow: EMBOSS_STRONG }}
+          className="text-sm font-black uppercase tracking-[0.15em]"
+          style={{ color: TEXT_COLOR, textShadow: EMBOSS_STRONG }}
         >
           {playerData.name}
         </span>
       </div>
 
-      {/* Stats — bottom 6 boxes (ATT, DIF, RIC, MUR, ALZ, STA) */}
-      {STAT_KEYS.map((key, i) => (
-        <div
-          key={key}
-          className="absolute flex items-center justify-center"
-          style={{
-            top: "67.5%",
-            left: `${12.5 + i * 12.5}%`,
-            width: "11%",
-            height: "7%",
-            zIndex: 20,
-          }}
-        >
-          <span
-            className="text-[1.1rem] font-black leading-none"
-            style={{ color: textColor, textShadow: EMBOSS_STRONG }}
-          >
-            {playerData.stats[key]}
-          </span>
-        </div>
-      ))}
+      {/* Stats — flex row, space-around under the 6 icon apertures */}
+      <div
+        className="absolute flex items-center justify-around"
+        style={{
+          top: "67%",
+          left: "10%",
+          width: "80%",
+          height: "7.5%",
+          zIndex: 20,
+        }}
+      >
+        {STAT_KEYS.map((key) => (
+          <div key={key} className="flex items-center justify-center" style={{ width: "14%" }}>
+            <span
+              className="text-[1.05rem] font-black leading-none"
+              style={{ color: TEXT_COLOR, textShadow: EMBOSS_STRONG }}
+            >
+              {playerData.stats[key]}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
