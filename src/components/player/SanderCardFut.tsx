@@ -89,6 +89,34 @@ const FLAGS: Record<string, { type: "v" | "h"; c: [string, string, string] }> = 
   BG: { type: "h", c: ["#fff", "#00966E", "#D62612"] },
   SI: { type: "h", c: ["#fff", "#003DA5", "#ED1C24"] },
   IE: { type: "v", c: ["#169B62", "#fff", "#FF883E"] },
+  SA: { type: "h", c: ["#006C35", "#006C35", "#006C35"] },
+  MA: { type: "h", c: ["#C1272D", "#C1272D", "#C1272D"] },
+  TN: { type: "h", c: ["#E70013", "#fff", "#E70013"] },
+  EG: { type: "h", c: ["#CE1126", "#fff", "#000"] },
+  DZ: { type: "v", c: ["#006633", "#fff", "#D21034"] },
+  JP: { type: "h", c: ["#fff", "#BC002D", "#fff"] },
+  KR: { type: "h", c: ["#fff", "#CD2E3A", "#003478"] },
+  CN: { type: "h", c: ["#DE2910", "#DE2910", "#DE2910"] },
+  IN: { type: "h", c: ["#FF9933", "#fff", "#138808"] },
+  RU: { type: "h", c: ["#fff", "#0039A6", "#D52B1E"] },
+  MX: { type: "v", c: ["#006847", "#fff", "#CE1126"] },
+  CO: { type: "h", c: ["#FCD116", "#003893", "#CE1126"] },
+  PE: { type: "v", c: ["#D91023", "#fff", "#D91023"] },
+  CL: { type: "h", c: ["#fff", "#fff", "#D52B1E"] },
+  AU: { type: "h", c: ["#00008B", "#00008B", "#00008B"] },
+  FI: { type: "h", c: ["#fff", "#003580", "#fff"] },
+  DK: { type: "h", c: ["#C8102E", "#fff", "#C8102E"] },
+  LT: { type: "h", c: ["#FFB81C", "#006A44", "#BE3A34"] },
+  LV: { type: "h", c: ["#9E3039", "#fff", "#9E3039"] },
+  EE: { type: "h", c: ["#0072CE", "#000", "#fff"] },
+  ME: { type: "h", c: ["#D4AF37", "#CC0000", "#D4AF37"] },
+  BA: { type: "v", c: ["#002395", "#FECB00", "#002395"] },
+  MK: { type: "h", c: ["#CE2028", "#FFE600", "#CE2028"] },
+  XK: { type: "h", c: ["#244AA5", "#244AA5", "#244AA5"] },
+  MT: { type: "v", c: ["#fff", "#fff", "#CF142B"] },
+  CY: { type: "h", c: ["#fff", "#D47600", "#fff"] },
+  LU: { type: "h", c: ["#ED2939", "#fff", "#00A1DE"] },
+  IS: { type: "h", c: ["#003897", "#fff", "#D72828"] },
 }
 
 function FlagIcon({ code }: { code: string }) {
@@ -159,7 +187,7 @@ const STYLES: Record<Rarity, RS> = {
   bronze: {
     headerBg: "linear-gradient(180deg, #906828 0%, #7A5820 60%, #6B4C18 100%)",
     bodyBg: "linear-gradient(180deg, #8B6520 0%, #A07838 50%, #8B6520 100%)",
-    statsBg: "linear-gradient(180deg, #6B4C18 0%, #5A3E12 50%, #6B4C18 100%)",
+    statsBg: "linear-gradient(180deg, #8B6828 0%, #7A5820 50%, #8B6828 100%)",
     patterns: [
       "repeating-linear-gradient(125deg,transparent,transparent 18px,rgba(180,130,60,.1) 18px,rgba(180,130,60,.1) 20px)",
       "repeating-linear-gradient(55deg,transparent,transparent 18px,rgba(140,100,30,.08) 18px,rgba(140,100,30,.08) 20px)",
@@ -185,7 +213,7 @@ const STYLES: Record<Rarity, RS> = {
   bronzeRare: {
     headerBg: "linear-gradient(180deg, #B08030 0%, #9A6C28 60%, #886020 100%)",
     bodyBg: "radial-gradient(ellipse at 40% 40%,rgba(232,200,106,.2),transparent 60%),linear-gradient(180deg, #A07030 0%, #C09040 50%, #A07030 100%)",
-    statsBg: "linear-gradient(180deg, #7A5820 0%, #6B4C18 50%, #7A5820 100%)",
+    statsBg: "linear-gradient(180deg, #9A7028 0%, #886020 50%, #9A7028 100%)",
     patterns: [
       "repeating-linear-gradient(120deg,transparent,transparent 14px,rgba(212,168,67,.14) 14px,rgba(212,168,67,.14) 16px)",
       "repeating-linear-gradient(60deg,transparent,transparent 14px,rgba(180,120,40,.1) 14px,rgba(180,120,40,.1) 16px)",
@@ -213,7 +241,7 @@ const STYLES: Record<Rarity, RS> = {
   silver: {
     headerBg: "linear-gradient(180deg, #7A848E 0%, #6E7880 60%, #626C74 100%)",
     bodyBg: "linear-gradient(180deg, #8A96A2 0%, #A0ACB6 50%, #8A96A2 100%)",
-    statsBg: "linear-gradient(180deg, #626C74 0%, #566068 50%, #626C74 100%)",
+    statsBg: "linear-gradient(180deg, #8490A0 0%, #788898 50%, #8490A0 100%)",
     patterns: [
       "repeating-linear-gradient(125deg,transparent,transparent 16px,rgba(180,196,210,.12) 16px,rgba(180,196,210,.12) 18px)",
       "repeating-linear-gradient(55deg,transparent,transparent 16px,rgba(140,155,170,.09) 16px,rgba(140,155,170,.09) 18px)",
@@ -239,7 +267,7 @@ const STYLES: Record<Rarity, RS> = {
   silverRare: {
     headerBg: "linear-gradient(180deg, #98A8B8 0%, #8898A8 60%, #788898 100%)",
     bodyBg: "radial-gradient(ellipse at 35% 35%,rgba(220,235,255,.2),transparent 55%),linear-gradient(180deg, #A0B4C4 0%, #C0D0DC 50%, #A0B4C4 100%)",
-    statsBg: "linear-gradient(180deg, #6E7E8E 0%, #5E6E7E 50%, #6E7E8E 100%)",
+    statsBg: "linear-gradient(180deg, #90A0B0 0%, #8494A4 50%, #90A0B0 100%)",
     patterns: [
       "repeating-linear-gradient(120deg,transparent,transparent 12px,rgba(200,220,240,.15) 12px,rgba(200,220,240,.15) 14px)",
       "repeating-linear-gradient(60deg,transparent,transparent 12px,rgba(170,190,210,.11) 12px,rgba(170,190,210,.11) 14px)",
@@ -267,7 +295,7 @@ const STYLES: Record<Rarity, RS> = {
   gold: {
     headerBg: "linear-gradient(180deg, #B89018 0%, #A07C10 60%, #907010 100%)",
     bodyBg: "radial-gradient(ellipse at 50% 40%,rgba(255,240,120,.12),transparent 55%),linear-gradient(180deg, #C8A020 0%, #E0B828 50%, #C8A020 100%)",
-    statsBg: "linear-gradient(180deg, #806010 0%, #705008 50%, #806010 100%)",
+    statsBg: "linear-gradient(180deg, #A88818 0%, #987810 50%, #A88818 100%)",
     patterns: [
       "repeating-linear-gradient(120deg,transparent,transparent 14px,rgba(255,230,80,.12) 14px,rgba(255,230,80,.12) 16px)",
       "repeating-linear-gradient(60deg,transparent,transparent 14px,rgba(218,165,32,.1) 14px,rgba(218,165,32,.1) 16px)",
@@ -295,7 +323,7 @@ const STYLES: Record<Rarity, RS> = {
   goldRare: {
     headerBg: "linear-gradient(180deg, #D4A820 0%, #C09818 60%, #B08810 100%)",
     bodyBg: "radial-gradient(ellipse at 30% 30%,rgba(255,255,180,.22),transparent 50%),radial-gradient(ellipse at 70% 70%,rgba(255,215,0,.15),transparent 50%),linear-gradient(180deg, #E0C030 0%, #FFD840 50%, #E0C030 100%)",
-    statsBg: "linear-gradient(180deg, #907010 0%, #806008 50%, #907010 100%)",
+    statsBg: "linear-gradient(180deg, #C0A020 0%, #B09018 50%, #C0A020 100%)",
     patterns: [
       "repeating-linear-gradient(115deg,transparent,transparent 10px,rgba(255,248,180,.16) 10px,rgba(255,248,180,.16) 12px)",
       "repeating-linear-gradient(65deg,transparent,transparent 10px,rgba(255,220,60,.12) 10px,rgba(255,220,60,.12) 12px)",
@@ -432,17 +460,31 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
           className="pointer-events-none absolute inset-x-0 bottom-0 h-[30%]"
           style={{ background: "linear-gradient(to bottom, transparent, rgba(0,0,0,.1))" }}
         />
+        {/* Subtle large watermark "S" */}
+        <div
+          className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center select-none"
+          style={{
+            fontSize: "clamp(120px, 40vw, 200px)",
+            fontWeight: 900,
+            color: "transparent",
+            WebkitTextStroke: `1px ${s.div}`,
+            opacity: 0.4,
+            lineHeight: 1,
+          }}
+        >
+          S
+        </div>
 
         <div className="relative z-10 flex h-full items-center px-4">
 
           {/* Role — vertical left */}
           <div
             className="flex shrink-0 items-center justify-center self-stretch"
-            style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", width: "20px" }}
+            style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", width: "26px" }}
           >
             <span
-              className="whitespace-nowrap text-[0.6rem] font-black uppercase tracking-[0.4em]"
-              style={{ color: s.t2, textShadow: EMBOSS_SUBTLE }}
+              className="whitespace-nowrap text-xs font-black uppercase tracking-[0.35em]"
+              style={{ color: s.t1, textShadow: EMBOSS_LIGHT }}
             >
               {playerData.role}
             </span>
@@ -485,24 +527,30 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
           </div>
 
           {/* Right column: Glicko + Flag */}
-          <div className="flex shrink-0 flex-col items-center gap-2" style={{ width: "52px" }}>
-            <span
-              className="text-[1.6rem] font-black leading-none"
-              style={{ color: s.t1, textShadow: EMBOSS_LIGHT }}
-            >
-              {glicko}
-            </span>
+          <div className="flex shrink-0 flex-col items-center gap-1.5" style={{ width: "52px" }}>
             <div
-              className="overflow-hidden rounded-[2px]"
+              className="overflow-hidden rounded-[3px]"
               style={{
-                width: "30px",
-                height: "20px",
+                width: "32px",
+                height: "22px",
                 border: `1.5px solid ${s.borderColor}55`,
                 boxShadow: "0 1px 3px rgba(0,0,0,.35)",
               }}
             >
               <FlagIcon code={playerData.nationalityCode} />
             </div>
+            <span
+              className="text-[1.2rem] font-black leading-none"
+              style={{ color: s.tA, textShadow: EMBOSS_LIGHT }}
+            >
+              {glicko}
+            </span>
+            <span
+              className="text-[0.45rem] font-bold uppercase tracking-widest"
+              style={{ color: s.t2, textShadow: EMBOSS_SUBTLE }}
+            >
+              GLK
+            </span>
           </div>
         </div>
       </div>
@@ -520,12 +568,23 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
           style={{ background: `linear-gradient(90deg, transparent 5%, ${s.div} 30%, ${s.topStripe} 50%, ${s.div} 70%, transparent 95%)` }}
         />
 
-        <h3
-          className="text-lg font-black uppercase tracking-wider"
-          style={{ color: s.t1, textShadow: EMBOSS_LIGHT }}
-        >
-          {playerData.name}
-        </h3>
+        {/* Ornamental diamonds flanking the name */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
+            <div className="h-px w-6" style={{ background: `linear-gradient(90deg, transparent, ${s.div})` }} />
+            <div className="h-[5px] w-[5px] rotate-45" style={{ background: s.tA, opacity: 0.5 }} />
+          </div>
+          <h3
+            className="text-lg font-black uppercase tracking-wider"
+            style={{ color: s.t1, textShadow: EMBOSS_LIGHT }}
+          >
+            {playerData.name}
+          </h3>
+          <div className="flex items-center gap-1">
+            <div className="h-[5px] w-[5px] rotate-45" style={{ background: s.tA, opacity: 0.5 }} />
+            <div className="h-px w-6" style={{ background: `linear-gradient(90deg, ${s.div}, transparent)` }} />
+          </div>
+        </div>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
@@ -563,11 +622,14 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
           ))}
         </div>
 
-        {/* Bottom decorative line */}
-        <div
-          className="mx-auto mt-2 h-px w-[70%]"
-          style={{ background: `linear-gradient(90deg, transparent, ${s.div}, transparent)` }}
-        />
+        {/* Bottom decorative line with dots */}
+        <div className="mx-auto mt-2 flex items-center justify-center gap-2 w-[70%]">
+          <div className="h-px flex-1" style={{ background: `linear-gradient(90deg, transparent, ${s.div})` }} />
+          <div className="h-1 w-1 rounded-full" style={{ background: s.tA, opacity: 0.4 }} />
+          <div className="h-1.5 w-1.5 rounded-full" style={{ background: s.tA, opacity: 0.6 }} />
+          <div className="h-1 w-1 rounded-full" style={{ background: s.tA, opacity: 0.4 }} />
+          <div className="h-px flex-1" style={{ background: `linear-gradient(90deg, ${s.div}, transparent)` }} />
+        </div>
 
         {/* Sander logo — bigger */}
         <div className="z-10 mt-auto flex justify-center pb-3 pt-1">
