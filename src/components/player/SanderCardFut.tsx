@@ -38,13 +38,7 @@ interface SanderCardFutProps {
 /*  Rarity                                                                     */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
-type Rarity =
-  | "bronze"
-  | "bronzeRare"
-  | "silver"
-  | "silverRare"
-  | "gold"
-  | "goldRare"
+type Rarity = "bronze" | "bronzeRare" | "silver" | "silverRare" | "gold" | "goldRare"
 
 function getRarity(glicko2: number): Rarity {
   if (glicko2 >= 2400) return "goldRare"
@@ -56,11 +50,7 @@ function getRarity(glicko2: number): Rarity {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────── */
-/*  SVG Flag component (reliable, no emoji issues)                             */
-/* ──────────────────────────────────────────────────────────────────────────── */
-
-/* ──────────────────────────────────────────────────────────────────────────── */
-/*  SVG Flag component — uses flagcdn.com for real flags                       */
+/*  Flag via CDN                                                               */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
 function FlagIcon({ code }: { code: string }) {
@@ -77,218 +67,113 @@ function FlagIcon({ code }: { code: string }) {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────── */
-/*  Embossed text shadow helpers                                               */
+/*  Emboss helpers                                                             */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
-const EMBOSS_LIGHT = "0 2px 4px rgba(0,0,0,.5), 0 -1px 0 rgba(255,255,255,.12), 1px 1px 2px rgba(0,0,0,.3)"
-const EMBOSS_SUBTLE = "0 1px 3px rgba(0,0,0,.4), 0 -1px 0 rgba(255,255,255,.08)"
+const EMBOSS = "1px 2px 3px rgba(0,0,0,.7), 0 -1px 0 rgba(255,255,255,.15), -1px -1px 2px rgba(0,0,0,.4)"
+const EMBOSS_DEEP = "2px 3px 5px rgba(0,0,0,.8), 0 -1px 0 rgba(255,255,255,.2), -1px -1px 3px rgba(0,0,0,.5), 0 0 12px rgba(0,0,0,.3)"
+
+/* ──────────────────────────────────────────────────────────────────────────── */
+/*  Shield clip-path (badge shape like reference)                              */
+/* ──────────────────────────────────────────────────────────────────────────── */
+
+const SHIELD = "polygon(4% 2%, 12% 0%, 88% 0%, 96% 2%, 100% 6%, 100% 78%, 88% 88%, 50% 100%, 12% 88%, 0% 78%, 0% 6%)"
+const SHIELD_INNER = "polygon(5% 3%, 13% 1%, 87% 1%, 95% 3%, 99% 7%, 99% 77%, 87% 87%, 50% 99%, 13% 87%, 1% 77%, 1% 7%)"
 
 /* ──────────────────────────────────────────────────────────────────────────── */
 /*  Rarity style config                                                        */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
 interface RS {
-  headerBg: string
-  bodyBg: string
-  statsBg: string
-  patterns: string
+  // Main colors
+  base: string        // primary metallic base
+  baseDark: string    // darker shade
+  baseLight: string   // lighter/highlight shade
+  baseMid: string     // mid tone
+  // Text
+  t1: string          // primary text
+  t2: string          // secondary text
+  tA: string          // accent text (numbers)
+  // Effects
   borderColor: string
-  borderW: number
-  innerFrame: boolean
-  innerColor: string
-  corners: boolean
-  ring: string
-  ringW: number
-  ringGlow: string
-  ringOuter: string
-  t1: string
-  t2: string
-  tA: string
-  div: string
+  innerBorder: string
   fx: string
-  topStripe: string
+  // Glow for ring
+  ringGlow: string
 }
 
 const STYLES: Record<Rarity, RS> = {
   bronze: {
-    headerBg: "linear-gradient(180deg, #906828 0%, #7A5820 60%, #6B4C18 100%)",
-    bodyBg: "linear-gradient(180deg, #8B6520 0%, #A07838 50%, #8B6520 100%)",
-    statsBg: "linear-gradient(180deg, #8B6828 0%, #7A5820 50%, #8B6828 100%)",
-    patterns: [
-      "repeating-linear-gradient(125deg,transparent,transparent 18px,rgba(180,130,60,.1) 18px,rgba(180,130,60,.1) 20px)",
-      "repeating-linear-gradient(55deg,transparent,transparent 18px,rgba(140,100,30,.08) 18px,rgba(140,100,30,.08) 20px)",
-      "repeating-linear-gradient(0deg,transparent,transparent 36px,rgba(200,160,80,.06) 36px,rgba(200,160,80,.06) 37px)",
-      "repeating-linear-gradient(90deg,transparent,transparent 36px,rgba(200,160,80,.04) 36px,rgba(200,160,80,.04) 37px)",
-    ].join(","),
-    borderColor: "#8B6B30",
-    borderW: 2,
-    innerFrame: false,
-    innerColor: "",
-    corners: false,
-    ring: "#A07838",
-    ringW: 3,
-    ringGlow: "0 2px 8px rgba(0,0,0,.4)",
-    ringOuter: "",
-    t1: "#F0DCC0",
-    t2: "rgba(240,220,192,.5)",
-    tA: "#E8C878",
-    div: "rgba(240,220,192,.15)",
-    fx: "",
-    topStripe: "rgba(180,130,60,.3)",
+    base: "#7A5820", baseDark: "#5A3E12", baseLight: "#B89050", baseMid: "#906828",
+    t1: "#E8D4B8", t2: "rgba(232,212,184,.55)", tA: "#E8C878",
+    borderColor: "#A08040", innerBorder: "rgba(200,170,100,.2)",
+    fx: "", ringGlow: "0 2px 8px rgba(0,0,0,.5)",
   },
   bronzeRare: {
-    headerBg: "linear-gradient(180deg, #B08030 0%, #9A6C28 60%, #886020 100%)",
-    bodyBg: "radial-gradient(ellipse at 40% 40%,rgba(232,200,106,.2),transparent 60%),linear-gradient(180deg, #A07030 0%, #C09040 50%, #A07030 100%)",
-    statsBg: "linear-gradient(180deg, #9A7028 0%, #886020 50%, #9A7028 100%)",
-    patterns: [
-      "repeating-linear-gradient(120deg,transparent,transparent 14px,rgba(212,168,67,.14) 14px,rgba(212,168,67,.14) 16px)",
-      "repeating-linear-gradient(60deg,transparent,transparent 14px,rgba(180,120,40,.1) 14px,rgba(180,120,40,.1) 16px)",
-      "repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(232,200,100,.08) 28px,rgba(232,200,100,.08) 29px)",
-      "repeating-linear-gradient(90deg,transparent,transparent 28px,rgba(232,200,100,.06) 28px,rgba(232,200,100,.06) 29px)",
-      "radial-gradient(circle at 20% 30%,rgba(255,220,80,.08),transparent 40%)",
-      "radial-gradient(circle at 80% 70%,rgba(205,127,50,.1),transparent 40%)",
-    ].join(","),
-    borderColor: "#D4A843",
-    borderW: 2,
-    innerFrame: false,
-    innerColor: "",
-    corners: false,
-    ring: "#D4A843",
-    ringW: 3,
-    ringGlow: "0 0 14px rgba(212,168,67,.35), 0 2px 8px rgba(0,0,0,.4)",
-    ringOuter: "",
-    t1: "#FFF5E0",
-    t2: "rgba(255,245,224,.55)",
-    tA: "#FFD860",
-    div: "rgba(255,245,224,.18)",
-    fx: "fut-shine",
-    topStripe: "rgba(212,168,67,.4)",
+    base: "#9A6C28", baseDark: "#6B4C18", baseLight: "#D4A843", baseMid: "#B08030",
+    t1: "#FFF5E0", t2: "rgba(255,245,224,.55)", tA: "#FFD860",
+    borderColor: "#D4A843", innerBorder: "rgba(212,168,67,.25)",
+    fx: "fut-shine", ringGlow: "0 0 14px rgba(212,168,67,.35), 0 2px 8px rgba(0,0,0,.5)",
   },
   silver: {
-    headerBg: "linear-gradient(180deg, #7A848E 0%, #6E7880 60%, #626C74 100%)",
-    bodyBg: "linear-gradient(180deg, #8A96A2 0%, #A0ACB6 50%, #8A96A2 100%)",
-    statsBg: "linear-gradient(180deg, #8490A0 0%, #788898 50%, #8490A0 100%)",
-    patterns: [
-      "repeating-linear-gradient(125deg,transparent,transparent 16px,rgba(180,196,210,.12) 16px,rgba(180,196,210,.12) 18px)",
-      "repeating-linear-gradient(55deg,transparent,transparent 16px,rgba(140,155,170,.09) 16px,rgba(140,155,170,.09) 18px)",
-      "repeating-linear-gradient(0deg,transparent,transparent 32px,rgba(200,212,224,.07) 32px,rgba(200,212,224,.07) 33px)",
-      "repeating-linear-gradient(90deg,transparent,transparent 32px,rgba(200,212,224,.05) 32px,rgba(200,212,224,.05) 33px)",
-    ].join(","),
-    borderColor: "#8A96A2",
-    borderW: 2,
-    innerFrame: true,
-    innerColor: "rgba(200,212,224,.18)",
-    corners: false,
-    ring: "#A0ACB6",
-    ringW: 3,
-    ringGlow: "0 2px 8px rgba(0,0,0,.35)",
-    ringOuter: "0 0 0 2px rgba(200,212,224,.15)",
-    t1: "#F0F4F8",
-    t2: "rgba(240,244,248,.5)",
-    tA: "#D4DCE4",
-    div: "rgba(240,244,248,.12)",
-    fx: "",
-    topStripe: "rgba(200,212,224,.3)",
+    base: "#6E7880", baseDark: "#525C64", baseLight: "#A0ACB6", baseMid: "#848E98",
+    t1: "#E8ECF0", t2: "rgba(232,236,240,.55)", tA: "#C8D0D8",
+    borderColor: "#8A96A2", innerBorder: "rgba(200,212,224,.2)",
+    fx: "", ringGlow: "0 2px 8px rgba(0,0,0,.5)",
   },
   silverRare: {
-    headerBg: "linear-gradient(180deg, #98A8B8 0%, #8898A8 60%, #788898 100%)",
-    bodyBg: "radial-gradient(ellipse at 35% 35%,rgba(220,235,255,.2),transparent 55%),linear-gradient(180deg, #A0B4C4 0%, #C0D0DC 50%, #A0B4C4 100%)",
-    statsBg: "linear-gradient(180deg, #90A0B0 0%, #8494A4 50%, #90A0B0 100%)",
-    patterns: [
-      "repeating-linear-gradient(120deg,transparent,transparent 12px,rgba(200,220,240,.15) 12px,rgba(200,220,240,.15) 14px)",
-      "repeating-linear-gradient(60deg,transparent,transparent 12px,rgba(170,190,210,.11) 12px,rgba(170,190,210,.11) 14px)",
-      "repeating-linear-gradient(0deg,transparent,transparent 24px,rgba(220,235,250,.09) 24px,rgba(220,235,250,.09) 25px)",
-      "repeating-linear-gradient(90deg,transparent,transparent 24px,rgba(220,235,250,.07) 24px,rgba(220,235,250,.07) 25px)",
-      "radial-gradient(circle at 25% 25%,rgba(200,220,255,.1),transparent 35%)",
-      "radial-gradient(circle at 75% 75%,rgba(180,200,230,.08),transparent 35%)",
-    ].join(","),
-    borderColor: "#B0C0D0",
-    borderW: 2,
-    innerFrame: true,
-    innerColor: "rgba(220,235,250,.22)",
-    corners: false,
-    ring: "#C0D0DC",
-    ringW: 4,
-    ringGlow: "0 0 16px rgba(180,200,220,.35), 0 2px 8px rgba(0,0,0,.35)",
-    ringOuter: "0 0 0 3px rgba(220,235,250,.12)",
-    t1: "#FFFFFF",
-    t2: "rgba(255,255,255,.55)",
-    tA: "#E8F0FF",
-    div: "rgba(255,255,255,.15)",
-    fx: "fut-holo",
-    topStripe: "rgba(220,235,250,.35)",
+    base: "#8898A8", baseDark: "#667888", baseLight: "#C0D0DC", baseMid: "#A0B0C0",
+    t1: "#FFFFFF", t2: "rgba(255,255,255,.55)", tA: "#E0ECF8",
+    borderColor: "#B0C0D0", innerBorder: "rgba(220,235,250,.25)",
+    fx: "fut-holo", ringGlow: "0 0 16px rgba(180,200,220,.35), 0 2px 8px rgba(0,0,0,.5)",
   },
   gold: {
-    headerBg: "linear-gradient(180deg, #B89018 0%, #A07C10 60%, #907010 100%)",
-    bodyBg: "radial-gradient(ellipse at 50% 40%,rgba(255,240,120,.12),transparent 55%),linear-gradient(180deg, #C8A020 0%, #E0B828 50%, #C8A020 100%)",
-    statsBg: "linear-gradient(180deg, #A88818 0%, #987810 50%, #A88818 100%)",
-    patterns: [
-      "repeating-linear-gradient(120deg,transparent,transparent 14px,rgba(255,230,80,.12) 14px,rgba(255,230,80,.12) 16px)",
-      "repeating-linear-gradient(60deg,transparent,transparent 14px,rgba(218,165,32,.1) 14px,rgba(218,165,32,.1) 16px)",
-      "repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(255,240,100,.07) 28px,rgba(255,240,100,.07) 29px)",
-      "repeating-linear-gradient(90deg,transparent,transparent 28px,rgba(255,240,100,.05) 28px,rgba(255,240,100,.05) 29px)",
-      "radial-gradient(circle at 30% 20%,rgba(255,240,120,.1),transparent 35%)",
-      "radial-gradient(circle at 70% 80%,rgba(218,165,32,.08),transparent 35%)",
-    ].join(","),
-    borderColor: "#D4A820",
-    borderW: 3,
-    innerFrame: true,
-    innerColor: "rgba(255,230,120,.2)",
-    corners: true,
-    ring: "#E0B828",
-    ringW: 4,
-    ringGlow: "0 0 20px rgba(218,165,32,.4), 0 2px 8px rgba(0,0,0,.35)",
-    ringOuter: "0 0 0 3px rgba(255,230,120,.15)",
-    t1: "#FFF8E0",
-    t2: "rgba(255,248,224,.55)",
-    tA: "#FFE060",
-    div: "rgba(255,248,224,.18)",
-    fx: "",
-    topStripe: "rgba(255,230,120,.35)",
+    base: "#A07C10", baseDark: "#705008", baseLight: "#E0B828", baseMid: "#C8A020",
+    t1: "#FFF8E0", t2: "rgba(255,248,224,.55)", tA: "#FFE060",
+    borderColor: "#D4A820", innerBorder: "rgba(255,230,120,.25)",
+    fx: "", ringGlow: "0 0 20px rgba(218,165,32,.4), 0 2px 8px rgba(0,0,0,.5)",
   },
   goldRare: {
-    headerBg: "linear-gradient(180deg, #D4A820 0%, #C09818 60%, #B08810 100%)",
-    bodyBg: "radial-gradient(ellipse at 30% 30%,rgba(255,255,180,.22),transparent 50%),radial-gradient(ellipse at 70% 70%,rgba(255,215,0,.15),transparent 50%),linear-gradient(180deg, #E0C030 0%, #FFD840 50%, #E0C030 100%)",
-    statsBg: "linear-gradient(180deg, #C0A020 0%, #B09018 50%, #C0A020 100%)",
-    patterns: [
-      "repeating-linear-gradient(115deg,transparent,transparent 10px,rgba(255,248,180,.16) 10px,rgba(255,248,180,.16) 12px)",
-      "repeating-linear-gradient(65deg,transparent,transparent 10px,rgba(255,220,60,.12) 10px,rgba(255,220,60,.12) 12px)",
-      "repeating-linear-gradient(0deg,transparent,transparent 20px,rgba(255,255,200,.1) 20px,rgba(255,255,200,.1) 21px)",
-      "repeating-linear-gradient(90deg,transparent,transparent 20px,rgba(255,255,200,.08) 20px,rgba(255,255,200,.08) 21px)",
-      "radial-gradient(circle at 20% 20%,rgba(255,255,200,.15),transparent 30%)",
-      "radial-gradient(circle at 80% 30%,rgba(255,240,120,.12),transparent 30%)",
-      "radial-gradient(circle at 50% 80%,rgba(255,215,0,.1),transparent 30%)",
-    ].join(","),
-    borderColor: "#FFE060",
-    borderW: 3,
-    innerFrame: true,
-    innerColor: "rgba(255,248,180,.28)",
-    corners: true,
-    ring: "#FFE850",
-    ringW: 4,
-    ringGlow: "0 0 28px rgba(255,215,0,.5), 0 0 56px rgba(255,215,0,.15), 0 2px 8px rgba(0,0,0,.3)",
-    ringOuter: "0 0 0 4px rgba(255,248,180,.18)",
-    t1: "#FFFFFF",
-    t2: "rgba(255,255,255,.6)",
-    tA: "#FFF8D0",
-    div: "rgba(255,255,255,.2)",
-    fx: "fut-shimmer",
-    topStripe: "rgba(255,248,180,.4)",
+    base: "#C09818", baseDark: "#906810", baseLight: "#FFD840", baseMid: "#E0C030",
+    t1: "#FFFFFF", t2: "rgba(255,255,255,.6)", tA: "#FFF0A0",
+    borderColor: "#FFE060", innerBorder: "rgba(255,248,180,.3)",
+    fx: "fut-shimmer", ringGlow: "0 0 28px rgba(255,215,0,.5), 0 0 56px rgba(255,215,0,.15)",
   },
 }
 
 /* ──────────────────────────────────────────────────────────────────────────── */
-/*  Stats                                                                      */
+/*  Stats config                                                               */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
-const STATS: { key: keyof PlayerCardData["stats"]; label: string; Icon: LucideIcon; color: string }[] = [
-  { key: "att", label: "ATT", Icon: Swords, color: "#FF6B6B" },
-  { key: "dif", label: "DIF", Icon: Shield, color: "#4ECDC4" },
-  { key: "ric", label: "RIC", Icon: Target, color: "#FFE66D" },
-  { key: "mur", label: "MUR", Icon: Hand, color: "#A78BFA" },
-  { key: "alz", label: "ALZ", Icon: ChevronsUp, color: "#6BCB77" },
-  { key: "sta", label: "STA", Icon: Zap, color: "#FFA94D" },
+const STATS: { key: keyof PlayerCardData["stats"]; label: string; Icon: LucideIcon }[] = [
+  { key: "att", label: "ATT", Icon: Swords },
+  { key: "dif", label: "DIF", Icon: Shield },
+  { key: "ric", label: "RIC", Icon: Target },
+  { key: "mur", label: "MUR", Icon: Hand },
+  { key: "alz", label: "ALZ", Icon: ChevronsUp },
+  { key: "sta", label: "STA", Icon: Zap },
 ]
+
+/* ──────────────────────────────────────────────────────────────────────────── */
+/*  Tech/circuit pattern background                                            */
+/* ──────────────────────────────────────────────────────────────────────────── */
+
+function techPatterns(c: string): string {
+  const a = `rgba(${c},.07)`
+  const b = `rgba(${c},.05)`
+  const d = `rgba(${c},.1)`
+  return [
+    // Diagonal hatch
+    `repeating-linear-gradient(45deg,transparent,transparent 8px,${a} 8px,${a} 9px)`,
+    `repeating-linear-gradient(-45deg,transparent,transparent 8px,${b} 8px,${b} 9px)`,
+    // Horizontal lines
+    `repeating-linear-gradient(0deg,transparent,transparent 16px,${a} 16px,${a} 17px)`,
+    // Vertical lines
+    `repeating-linear-gradient(90deg,transparent,transparent 16px,${b} 16px,${b} 17px)`,
+    // Subtle grid dots
+    `radial-gradient(circle at 16px 16px,${d} 1px,transparent 1px)`,
+  ].join(",")
+}
 
 /* ──────────────────────────────────────────────────────────────────────────── */
 /*  Component                                                                  */
@@ -299,146 +184,162 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
   const s = STYLES[rarity]
   const glicko = Math.round(playerData.glicko2)
 
+  // Compute brushed-metal gradient for the card body
+  const metalBg = `
+    linear-gradient(170deg,
+      ${s.baseLight} 0%,
+      ${s.baseMid} 15%,
+      ${s.base} 35%,
+      ${s.baseDark} 55%,
+      ${s.base} 70%,
+      ${s.baseMid} 85%,
+      ${s.baseLight} 100%
+    )
+  `
+  // Lighter strip for the role band
+  const bandBg = `
+    linear-gradient(180deg,
+      ${s.baseMid} 0%,
+      ${s.baseLight} 50%,
+      ${s.baseMid} 100%
+    )
+  `
+  // Slightly darker for stats zone
+  const statsBg = `
+    linear-gradient(180deg,
+      ${s.baseDark} 0%,
+      ${s.base} 40%,
+      ${s.baseDark} 100%
+    )
+  `
+
+  // Pattern color channel for tech lines
+  const patternRgb =
+    rarity.startsWith("gold") ? "255,230,100" :
+    rarity.startsWith("silver") ? "200,212,224" :
+    "200,160,80"
+
   return (
     <div
-      className={cn(
-        "relative mx-auto w-full max-w-[360px] overflow-hidden",
-        s.fx,
-        className,
-      )}
+      className={cn("relative mx-auto w-full max-w-[360px]", s.fx, className)}
       style={{
-        aspectRatio: "3 / 4.3",
-        background: s.statsBg,
-        clipPath: "polygon(0% 0%, 100% 0%, 100% 82%, 50% 100%, 0% 82%)",
-        filter: `drop-shadow(0 10px 30px rgba(0,0,0,.55)) drop-shadow(0 2px 8px rgba(0,0,0,.3))`,
+        aspectRatio: "3 / 4.2",
+        filter: "drop-shadow(0 12px 32px rgba(0,0,0,.6)) drop-shadow(0 4px 12px rgba(0,0,0,.4))",
       }}
     >
-      {/* ── Border outline via inset shape ────────────────────────── */}
+      {/* ── Outer metallic bevel ──────────────────────────────────── */}
       <div
-        className="pointer-events-none absolute inset-0 z-30"
+        className="absolute inset-0"
         style={{
-          clipPath: "polygon(0% 0%, 100% 0%, 100% 82%, 50% 100%, 0% 82%)",
-          border: `${s.borderW}px solid ${s.borderColor}`,
+          clipPath: SHIELD,
+          background: `linear-gradient(180deg, ${s.baseLight} 0%, ${s.borderColor} 30%, ${s.baseDark} 100%)`,
         }}
       />
-      {/* ── Pattern overlay (chevrons, zigzag, stripes) ────────────── */}
+
+      {/* ── Main card body ────────────────────────────────────────── */}
       <div
-        className="pointer-events-none absolute inset-0 z-10"
-        style={{ backgroundImage: s.patterns }}
-      />
-
-      {/* ── Top decorative stripe ──────────────────────────────────── */}
-      <div
-        className="absolute left-0 right-0 top-0 z-10 h-[3px]"
-        style={{ background: `linear-gradient(90deg, transparent, ${s.topStripe}, transparent)` }}
-      />
-
-      {/* ── Bottom decorative stripe ─────────────────────────────── */}
-      <div
-        className="absolute bottom-0 left-0 right-0 z-10 h-[3px]"
-        style={{ background: `linear-gradient(90deg, transparent, ${s.topStripe}, transparent)` }}
-      />
-
-      {/* ── Rare hover shine ───────────────────────────────────────── */}
-      {s.fx && (
-        <div className="fut-shine-overlay pointer-events-none absolute inset-0 z-20" />
-      )}
-
-      {/* ── Gold Rare sparkles ─────────────────────────────────────── */}
-      {rarity === "goldRare" && (
-        <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <div
-              key={i}
-              className="fut-sparkle absolute rounded-full bg-white"
-              style={{
-                width: i % 4 === 0 ? "3px" : "2px",
-                height: i % 4 === 0 ? "3px" : "2px",
-                top: `${6 + ((i * 29) % 82)}%`,
-                left: `${4 + ((i * 23) % 88)}%`,
-                animationDelay: `${i * 0.25}s`,
-              }}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* ── Inner decorative frame (silver+) ───────────────────────── */}
-      {s.innerFrame && (
+        className="absolute overflow-hidden"
+        style={{
+          inset: "4px",
+          clipPath: SHIELD_INNER,
+          background: metalBg,
+        }}
+      >
+        {/* Tech circuit pattern overlay */}
         <div
-          className="pointer-events-none absolute z-10"
+          className="pointer-events-none absolute inset-0 z-[2]"
           style={{
-            inset: "7px",
-            border: `1px solid ${s.innerColor}`,
-            clipPath: "polygon(0% 0%, 100% 0%, 100% 83%, 50% 100%, 0% 83%)",
+            backgroundImage: techPatterns(patternRgb),
+            backgroundSize: "32px 32px",
           }}
         />
-      )}
 
-      {/* ── Corner ornaments (gold — top corners only for shield) ──── */}
-      {s.corners && (
-        <>
-          <div className="pointer-events-none absolute left-[9px] top-[9px] z-10">
-            <div style={{ width: 20, height: 1, background: s.innerColor }} />
-            <div style={{ width: 1, height: 20, background: s.innerColor }} />
-          </div>
-          <div className="pointer-events-none absolute right-[9px] top-[9px] z-10 flex flex-col items-end">
-            <div style={{ width: 20, height: 1, background: s.innerColor }} />
-            <div style={{ width: 1, height: 20, background: s.innerColor, marginLeft: "auto" }} />
-          </div>
-        </>
-      )}
-
-      {/* ═══════════════════════════════════════════════════════════════
-          HEADER ZONE (~52%)
-          ═══════════════════════════════════════════════════════════ */}
-      <div className="relative" style={{ height: "52%", background: s.headerBg }}>
+        {/* Brushed metal texture overlay */}
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-[30%]"
-          style={{ background: "linear-gradient(to bottom, transparent, rgba(0,0,0,.1))" }}
-        />
-        {/* Subtle large watermark "S" */}
-        <div
-          className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center select-none"
+          className="pointer-events-none absolute inset-0 z-[1]"
           style={{
-            fontSize: "clamp(120px, 40vw, 200px)",
-            fontWeight: 900,
-            color: "transparent",
-            WebkitTextStroke: `1px ${s.div}`,
-            opacity: 0.4,
-            lineHeight: 1,
+            backgroundImage: `repeating-linear-gradient(
+              92deg,
+              rgba(255,255,255,.03) 0px,
+              transparent 1px,
+              transparent 3px,
+              rgba(255,255,255,.02) 4px
+            )`,
           }}
-        >
-          S
-        </div>
+        />
 
-        <div className="relative z-10 flex h-full items-center px-4">
+        {/* Rare hover shine */}
+        {s.fx && (
+          <div className="fut-shine-overlay pointer-events-none absolute inset-0 z-20" />
+        )}
 
-          {/* Role — vertical left */}
+        {/* Gold Rare sparkles */}
+        {rarity === "goldRare" && (
+          <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div
+                key={i}
+                className="fut-sparkle absolute rounded-full bg-white"
+                style={{
+                  width: i % 3 === 0 ? "3px" : "2px",
+                  height: i % 3 === 0 ? "3px" : "2px",
+                  top: `${8 + ((i * 31) % 78)}%`,
+                  left: `${6 + ((i * 23) % 84)}%`,
+                  animationDelay: `${i * 0.3}s`,
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Inner decorative border */}
+        <div
+          className="pointer-events-none absolute z-[3]"
+          style={{
+            inset: "6px",
+            clipPath: SHIELD_INNER,
+            border: `1px solid ${s.innerBorder}`,
+          }}
+        />
+
+        {/* ═══════════════════════════════════════════════════════════
+            HEADER — Name (vertical) + Photo + Flag/Rating
+            Height ~48%
+            ═══════════════════════════════════════════════════════ */}
+        <div className="relative z-[5] flex" style={{ height: "48%" }}>
+          {/* Left: Player name vertical */}
           <div
-            className="flex shrink-0 items-center justify-center self-stretch"
-            style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", width: "26px" }}
+            className="flex shrink-0 items-center justify-center"
+            style={{
+              writingMode: "vertical-rl",
+              transform: "rotate(180deg)",
+              width: "32px",
+              background: `linear-gradient(0deg, transparent, ${s.innerBorder}, transparent)`,
+            }}
           >
             <span
-              className="whitespace-nowrap text-xs font-black uppercase tracking-[0.35em]"
-              style={{ color: s.t1, textShadow: EMBOSS_LIGHT }}
+              className="whitespace-nowrap text-xs font-black uppercase tracking-[0.4em]"
+              style={{ color: s.t1, textShadow: EMBOSS }}
             >
-              {playerData.role}
+              {playerData.name}
             </span>
           </div>
 
-          {/* Thin divider */}
-          <div className="mx-2 h-[60%] w-px shrink-0 self-center" style={{ background: s.div }} />
+          {/* Vertical divider line */}
+          <div
+            className="my-6 w-px shrink-0"
+            style={{ background: `linear-gradient(180deg, transparent, ${s.innerBorder}, transparent)` }}
+          />
 
-          {/* Photo — round with ring */}
-          <div className="flex flex-1 justify-center">
+          {/* Center: Photo circle */}
+          <div className="flex flex-1 items-center justify-center">
             <div
               className="relative overflow-hidden rounded-full"
               style={{
-                width: "clamp(100px, 36vw, 140px)",
-                height: "clamp(100px, 36vw, 140px)",
-                border: `${s.ringW}px solid ${s.ring}`,
-                boxShadow: [s.ringGlow, s.ringOuter].filter(Boolean).join(", "),
+                width: "clamp(100px, 34vw, 130px)",
+                height: "clamp(100px, 34vw, 130px)",
+                border: `4px solid ${s.borderColor}`,
+                boxShadow: `${s.ringGlow}, inset 0 2px 8px rgba(0,0,0,.4)`,
               }}
             >
               {playerData.imageUrl ? (
@@ -452,9 +353,9 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
                 <div
                   className="flex h-full w-full items-center justify-center text-3xl font-black"
                   style={{
-                    background: "linear-gradient(135deg, rgba(0,0,0,.2), rgba(0,0,0,.4))",
+                    background: `radial-gradient(circle, ${s.baseMid}, ${s.baseDark})`,
                     color: s.tA,
-                    textShadow: EMBOSS_LIGHT,
+                    textShadow: EMBOSS_DEEP,
                   }}
                 >
                   {playerData.name.slice(0, 2).toUpperCase()}
@@ -463,131 +364,123 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
             </div>
           </div>
 
-          {/* Right column: Glicko + Flag */}
-          <div className="flex shrink-0 flex-col items-center gap-1.5" style={{ width: "52px" }}>
+          {/* Right: Flag + Rating */}
+          <div className="flex shrink-0 flex-col items-center justify-center gap-2 pr-3" style={{ width: "60px" }}>
             <div
               className="overflow-hidden rounded-[3px]"
               style={{
                 width: "36px",
                 height: "24px",
-                border: `2px solid ${s.borderColor}88`,
-                boxShadow: `0 2px 6px rgba(0,0,0,.4), 0 0 0 1px ${s.borderColor}33`,
+                border: `2px solid ${s.borderColor}`,
+                boxShadow: "0 2px 6px rgba(0,0,0,.5)",
               }}
             >
               <FlagIcon code={playerData.nationalityCode} />
             </div>
             <span
-              className="text-[1.2rem] font-black leading-none"
-              style={{ color: s.tA, textShadow: EMBOSS_LIGHT }}
+              className="text-[1.6rem] font-black leading-none"
+              style={{ color: s.t1, textShadow: EMBOSS_DEEP }}
             >
               {glicko}
             </span>
-            <span
-              className="text-[0.45rem] font-bold uppercase tracking-widest"
-              style={{ color: s.t2, textShadow: EMBOSS_SUBTLE }}
-            >
-              GLK
-            </span>
           </div>
         </div>
-      </div>
 
-      {/* ═══════════════════════════════════════════════════════════════
-          BODY ZONE — player name (~12%)
-          ═══════════════════════════════════════════════════════════ */}
-      <div
-        className="relative z-20 flex flex-col items-center justify-center"
-        style={{
-          height: "12%",
-          background: s.bodyBg,
-          boxShadow: `0 -4px 12px rgba(0,0,0,.25), 0 4px 12px rgba(0,0,0,.25), inset 0 1px 0 ${s.topStripe}, inset 0 -1px 0 ${s.topStripe}`,
-        }}
-      >
-        {/* Top metallic separator */}
+        {/* ═══════════════════════════════════════════════════════════
+            ROLE BAND — "DIFENSORE" raised strip
+            Height ~10%
+            ═══════════════════════════════════════════════════════ */}
         <div
-          className="absolute inset-x-0 top-0 h-[2px]"
-          style={{ background: `linear-gradient(90deg, transparent 5%, ${s.div} 30%, ${s.topStripe} 50%, ${s.div} 70%, transparent 95%)` }}
-        />
-        {/* Bottom metallic separator */}
-        <div
-          className="absolute inset-x-0 bottom-0 h-[2px]"
-          style={{ background: `linear-gradient(90deg, transparent 5%, ${s.div} 30%, ${s.topStripe} 50%, ${s.div} 70%, transparent 95%)` }}
-        />
-
-        {/* Ornamental diamonds flanking the name */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1">
-            <div className="h-px w-8" style={{ background: `linear-gradient(90deg, transparent, ${s.tA}44)` }} />
-            <div className="h-[5px] w-[5px] rotate-45" style={{ background: s.tA, opacity: 0.5 }} />
-            <div className="h-px w-3" style={{ background: `${s.tA}44` }} />
-          </div>
-          <h3
-            className="text-lg font-black uppercase tracking-wider"
-            style={{ color: s.t1, textShadow: EMBOSS_LIGHT }}
-          >
-            {playerData.name}
-          </h3>
-          <div className="flex items-center gap-1">
-            <div className="h-px w-3" style={{ background: `${s.tA}44` }} />
-            <div className="h-[5px] w-[5px] rotate-45" style={{ background: s.tA, opacity: 0.5 }} />
-            <div className="h-px w-8" style={{ background: `linear-gradient(90deg, ${s.tA}44, transparent)` }} />
-          </div>
-        </div>
-      </div>
-
-      {/* ═══════════════════════════════════════════════════════════════
-          STATS ZONE (~36%)
-          ═══════════════════════════════════════════════════════════ */}
-      <div className="relative flex flex-1 flex-col" style={{ height: "36%", background: s.statsBg }}>
-        {/* Top metallic separator */}
-        <div
-          className="absolute inset-x-0 top-0 h-[2px]"
-          style={{ background: `linear-gradient(90deg, transparent 5%, ${s.div} 30%, ${s.topStripe} 50%, ${s.div} 70%, transparent 95%)` }}
-        />
-
-        {/* Stats grid */}
-        <div className="z-10 grid grid-cols-6 gap-1 px-3 pt-4">
-          {STATS.map(({ key, label, Icon, color }) => (
-            <div key={key} className="flex flex-col items-center gap-1">
-              <Icon
-                className="h-[20px] w-[20px]"
-                style={{ color, filter: `drop-shadow(0 1px 3px ${color}66) drop-shadow(0 1px 1px rgba(0,0,0,.4))` }}
-                strokeWidth={2.4}
-              />
-              <span
-                className="text-[0.5rem] font-bold uppercase tracking-wider"
-                style={{ color: s.t2, textShadow: EMBOSS_SUBTLE }}
-              >
-                {label}
-              </span>
-              <span
-                className="text-[1.35rem] font-black leading-none"
-                style={{ color: "#fff", textShadow: `0 0 8px ${color}55, ${EMBOSS_LIGHT}` }}
-              >
-                {playerData.stats[key]}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        {/* Bottom decorative line with dots */}
-        <div className="mx-auto mt-2 flex items-center justify-center gap-2 w-[70%]">
-          <div className="h-px flex-1" style={{ background: `linear-gradient(90deg, transparent, ${s.div})` }} />
-          <div className="h-1 w-1 rounded-full" style={{ background: s.tA, opacity: 0.4 }} />
-          <div className="h-1.5 w-1.5 rounded-full" style={{ background: s.tA, opacity: 0.6 }} />
-          <div className="h-1 w-1 rounded-full" style={{ background: s.tA, opacity: 0.4 }} />
-          <div className="h-px flex-1" style={{ background: `linear-gradient(90deg, ${s.div}, transparent)` }} />
-        </div>
-
-        {/* Sander logo */}
-        <div className="z-10 mt-auto flex justify-center pb-6 pt-1">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/sander-logo.png"
-            alt="Sander"
-            className="object-contain"
-            style={{ height: "40px", opacity: 0.55, filter: "brightness(1.5)" }}
+          className="relative z-[6] flex items-center justify-center"
+          style={{
+            height: "10%",
+            background: bandBg,
+            boxShadow: `
+              0 -3px 8px rgba(0,0,0,.3),
+              0 3px 8px rgba(0,0,0,.3),
+              inset 0 1px 0 ${s.innerBorder},
+              inset 0 -1px 0 rgba(0,0,0,.2)
+            `,
+          }}
+        >
+          {/* Top bevel line */}
+          <div
+            className="absolute inset-x-0 top-0 h-[2px]"
+            style={{ background: `linear-gradient(90deg, transparent 5%, ${s.baseLight}88 50%, transparent 95%)` }}
           />
+          {/* Bottom bevel line */}
+          <div
+            className="absolute inset-x-0 bottom-0 h-[1px]"
+            style={{ background: `linear-gradient(90deg, transparent 5%, ${s.baseDark} 50%, transparent 95%)` }}
+          />
+          <h3
+            className="text-base font-black uppercase tracking-[0.3em]"
+            style={{ color: s.t1, textShadow: EMBOSS_DEEP }}
+          >
+            {playerData.role}
+          </h3>
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════════
+            STATS ZONE
+            Height ~42%
+            ═══════════════════════════════════════════════════════ */}
+        <div
+          className="relative z-[5] flex flex-1 flex-col items-center"
+          style={{ background: statsBg }}
+        >
+          {/* Stats grid */}
+          <div className="z-10 grid w-full grid-cols-6 gap-0.5 px-4 pt-4">
+            {STATS.map(({ key, label, Icon }) => (
+              <div key={key} className="flex flex-col items-center gap-0.5">
+                <Icon
+                  className="h-[22px] w-[22px]"
+                  style={{
+                    color: s.tA,
+                    filter: "drop-shadow(0 2px 2px rgba(0,0,0,.5))",
+                  }}
+                  strokeWidth={2.2}
+                />
+                <span
+                  className="text-[0.5rem] font-bold uppercase tracking-wider"
+                  style={{ color: s.t2, textShadow: EMBOSS }}
+                >
+                  {label}
+                </span>
+                <span
+                  className="text-[1.25rem] font-black leading-none"
+                  style={{ color: s.t1, textShadow: EMBOSS_DEEP }}
+                >
+                  {playerData.stats[key]}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Decorative wings + Sander logo */}
+          <div className="z-10 mt-auto flex items-center justify-center gap-1 pb-8 pt-2">
+            {/* Left wing */}
+            <svg viewBox="0 0 40 16" className="h-3 w-8 opacity-40" style={{ color: s.tA }}>
+              <path
+                d="M40 8 C35 8, 28 4, 20 2 C14 1, 6 0, 0 8 C6 6, 14 7, 20 8 C14 9, 6 10, 0 8 C6 16, 14 15, 20 14 C28 12, 35 8, 40 8Z"
+                fill="currentColor"
+              />
+            </svg>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/sander-logo.png"
+              alt="Sander"
+              className="object-contain"
+              style={{ height: "36px", opacity: 0.5, filter: "brightness(1.4)" }}
+            />
+            {/* Right wing */}
+            <svg viewBox="0 0 40 16" className="h-3 w-8 opacity-40" style={{ color: s.tA, transform: "scaleX(-1)" }}>
+              <path
+                d="M40 8 C35 8, 28 4, 20 2 C14 1, 6 0, 0 8 C6 6, 14 7, 20 8 C14 9, 6 10, 0 8 C6 16, 14 15, 20 14 C28 12, 35 8, 40 8Z"
+                fill="currentColor"
+              />
+            </svg>
+          </div>
         </div>
       </div>
     </div>
@@ -648,15 +541,12 @@ const COUNTRY_ISO: Record<string, string> = {
   "Tunisia":"TN","Turchia":"TR","Ucraina":"UA","Uganda":"UG","Ungheria":"HU",
   "Uruguay":"UY","Uzbekistan":"UZ","Venezuela":"VE","Vietnam":"VN","Yemen":"YE",
   "Zambia":"ZM","Zimbabwe":"ZW",
-  // Also accept direct ISO codes
   "Arabia Saudita":"SA","Arabia saudita":"SA",
 }
 
 function resolveNationalityCode(raw: string | null | undefined): string {
   if (!raw) return "IT"
-  // If it's already a 2-letter ISO code, use it directly
   if (raw.length === 2 && raw === raw.toUpperCase()) return raw
-  // Try mapping from Italian name
   return COUNTRY_ISO[raw] ?? COUNTRY_ISO[raw.charAt(0).toUpperCase() + raw.slice(1)] ?? "IT"
 }
 
