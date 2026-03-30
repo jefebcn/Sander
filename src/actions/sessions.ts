@@ -8,6 +8,7 @@ import {
   RatePlayerSchema,
   AssignTeamSchema,
 } from "@/lib/validators/session.schema"
+import { updateGlickoAfterSession } from "@/actions/rating"
 // ─── Push helpers (dynamic import — keeps web-push out of SSR bundle) ────────
 
 type PushPayload = { title: string; body: string; url: string }
@@ -254,6 +255,13 @@ export async function completeSession(
         },
       })
     }
+  }
+
+  // Update Glicko-2 ratings (dampened for friendly sessions)
+  try {
+    await updateGlickoAfterSession(sessionId)
+  } catch (e) {
+    console.error("Glicko update failed for session", sessionId, e)
   }
 
   // Update sessionsPlayed + XP for every participant

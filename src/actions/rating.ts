@@ -74,59 +74,105 @@ export async function submitPlayerRating(input: unknown) {
 }
 
 /**
- * Update a player's Glicko-2 rating after a session ends.
- * Computes results against all opponents in session matches and applies one update period.
+ * Dampening factor for friendly sessions vs tournaments.
+ * Scores are blended toward 0.5: adjustedScore = 0.5 + FRIENDLY_DAMPENING * (rawScore - 0.5)
+ * A win becomes 0.7, a loss becomes 0.3 → ~40% of a tournament's rating impact.
+ */
+const FRIENDLY_DAMPENING = 0.4
+
+/**
+ * Update Glicko-2 ratings for all participants after a session ends.
+ * Uses actual SessionSet results with dampening so friendly sessions
+ * affect ratings less than tournament matches.
  */
 export async function updateGlickoAfterSession(sessionId: string) {
-  const session = await auth()
-  if (!session?.user?.id) return { error: "Non autenticato" }
-
-  // Fetch all matches in the session that are completed
-  const dbSession = await db.session.findUnique({
+  const session = await db.session.findUnique({
     where: { id: sessionId },
     include: {
       participants: {
-        include: { player: true },
+        include: {
+          player: {
+            select: {
+              id: true,
+              glickoRating: true,
+              glickoRD: true,
+              glickoVolatility: true,
+            },
+          },
+        },
       },
+      sets: true,
     },
   })
-  if (!dbSession) return { error: "Sessione non trovata" }
+  if (!session) return
 
-  // For each participating player, collect match results and run Glicko update
-  // (simplified: uses overall win/loss across session, not individual match data)
-  const players = dbSession.participants.map((p) => p.player)
+  // Need sets to determine a winner
+  if (!session.sets || session.sets.length === 0) return
 
-  for (const player of players) {
-    const glickoPlayer = {
-      rating:     player.glickoRating,
-      rd:         player.glickoRD,
-      volatility: player.glickoVolatility,
-    }
+  // Determine winning team from set results (majority of sets won)
+  const teamAWins = session.sets.filter((s) => s.teamAScore > s.teamBScore).length
+  const teamBWins = session.sets.filter((s) => s.teamBScore > s.teamAScore).length
+  if (teamAWins === teamBWins) return // Draw — skip Glicko update
 
-    // Build results from other participants (treated as opponents)
-    const opponents = players.filter((p) => p.id !== player.id)
-    const results = opponents.map((opp) => ({
-      opponent: {
-        rating:     opp.glickoRating,
-        rd:         opp.glickoRD,
-        volatility: opp.glickoVolatility,
+  const winningTeam = teamAWins > teamBWins ? 0 : 1
+
+  // Only participants with assigned teams
+  const assigned = session.participants.filter((p) => p.team !== null)
+  if (assigned.length < 2) return
+
+  // Snapshot ratings before any updates (prevents order-dependent drift)
+  const snapshot = new Map(
+    assigned.map((p) => [
+      p.playerId,
+      {
+        rating: p.player.glickoRating,
+        rd: p.player.glickoRD,
+        volatility: p.player.glickoVolatility,
       },
-      // Use aggregated win rate as approximation until per-match data is available
-      score: player.winRatePct / 100 as number,
+    ])
+  )
+
+  const teamA = assigned.filter((p) => p.team === 0)
+  const teamB = assigned.filter((p) => p.team === 1)
+
+  // Compute new ratings for each participant
+  const updates: { id: string; rating: number; rd: number; volatility: number }[] = []
+
+  for (const participant of assigned) {
+    const playerSnap = snapshot.get(participant.playerId)!
+    const playerWon = participant.team === winningTeam
+    const rawScore = playerWon ? 1 : 0
+    const adjustedScore = 0.5 + FRIENDLY_DAMPENING * (rawScore - 0.5)
+
+    // Opponents are on the other team
+    const opponents = participant.team === 0 ? teamB : teamA
+    const results = opponents.map((opp) => ({
+      opponent: snapshot.get(opp.playerId)!,
+      score: adjustedScore,
     }))
 
-    const updated = updateRating(glickoPlayer, results)
+    if (results.length === 0) continue
 
+    const updated = updateRating(playerSnap, results)
+    updates.push({
+      id: participant.playerId,
+      rating: updated.rating,
+      rd: updated.rd,
+      volatility: updated.volatility,
+    })
+  }
+
+  // Batch write all updates
+  for (const u of updates) {
     await db.player.update({
-      where: { id: player.id },
+      where: { id: u.id },
       data: {
-        glickoRating:     updated.rating,
-        glickoRD:         updated.rd,
-        glickoVolatility: updated.volatility,
+        glickoRating: u.rating,
+        glickoRD: u.rd,
+        glickoVolatility: u.volatility,
       },
     })
   }
 
   revalidatePath("/players")
-  return { success: true }
 }
