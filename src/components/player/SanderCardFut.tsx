@@ -68,12 +68,12 @@ function FlagIcon({ code }: { code: string }) {
 /* ──────────────────────────────────────────────────────────────────────────── */
 
 const STAT_POSITIONS: { key: keyof PlayerCardData["stats"]; left: string }[] = [
-  { key: "att", left: "24%" },    // Col 4.8
-  { key: "dif", left: "34%" },    // Col 6.8
-  { key: "ric", left: "44%" },    // Col 8.8
-  { key: "mur", left: "55%" },    // Col 11.0
-  { key: "alz", left: "65%" },    // Col 13.0
-  { key: "sta", left: "76%" },    // Col 15.2
+  { key: "att", left: "26.25%" },   // Col 5.25
+  { key: "dif", left: "35%" },      // Col 7.0
+  { key: "ric", left: "45%" },      // Col 9.0
+  { key: "mur", left: "55.625%" },  // Col 11.125
+  { key: "alz", left: "66.25%" },   // Col 13.25
+  { key: "sta", left: "74.375%" },  // Col 14.875
 ]
 
 /* ──────────────────────────────────────────────────────────────────────────── */
@@ -144,7 +144,7 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
 
         {/* Glicko Rating — Row 3.5, Col 4.5 */}
         <span
-          className="absolute text-xl font-bold uppercase leading-none text-white"
+          className="absolute text-base font-bold uppercase leading-none text-white"
           style={{
             top: "17.5%",
             left: "22.5%",
@@ -169,12 +169,13 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
           <FlagIcon code={playerData.nationalityCode} />
         </div>
 
-        {/* Role — Row 7, Col 4.5, horizontal */}
+        {/* Role — Row 6.5, Col 4.5, horizontal */}
         <span
-          className="absolute text-xs font-bold uppercase text-white"
+          className="absolute font-bold uppercase text-white"
           style={{
-            top: "35%",
+            top: "32.5%",
             left: "22.5%",
+            fontSize: "10px",
             zIndex: 20,
             fontFamily: FONT,
             textShadow: SHADOW,
@@ -183,11 +184,11 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
           {roleAbbr}
         </span>
 
-        {/* Player Name — Row 10.5, centered Col 6.5–14.5 */}
+        {/* Player Name — Row 10, centered Col 6.5–14.5 */}
         <span
           className="absolute text-center text-lg font-bold uppercase tracking-wider text-white"
           style={{
-            top: "52.5%",
+            top: "50%",
             left: "32.5%",
             width: "40%",
             zIndex: 20,
@@ -198,29 +199,22 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
           {playerData.name}
         </span>
 
-        {/* Stats — Row 14, spread Col 5.5–14.5 */}
-        <div
-          className="absolute flex justify-around"
-          style={{
-            top: "70%",
-            left: "27.5%",
-            width: "45%",
-            zIndex: 20,
-          }}
-        >
-          {STAT_POSITIONS.map(({ key }) => (
-            <span
-              key={key}
-              className="text-sm font-bold leading-none text-white"
-              style={{
-                fontFamily: FONT,
-                textShadow: SHADOW,
-              }}
-            >
-              {playerData.stats[key]}
-            </span>
-          ))}
-        </div>
+        {/* Stats — Row 14, individually positioned */}
+        {STAT_POSITIONS.map(({ key, left }) => (
+          <span
+            key={key}
+            className="absolute text-sm font-bold leading-none text-white"
+            style={{
+              top: "70%",
+              left,
+              zIndex: 20,
+              fontFamily: FONT,
+              textShadow: SHADOW,
+            }}
+          >
+            {playerData.stats[key]}
+          </span>
+        ))}
 
         {/* ── Z-50 — 20×20 debug calibration grid ───────────────────── */}
         {/* TODO: Remove once positioning is finalized */}
