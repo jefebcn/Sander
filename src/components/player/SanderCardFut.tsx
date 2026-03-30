@@ -59,7 +59,7 @@ function FlagIcon({ code }: { code: string }) {
 /*  Text shadow for embossed look on metallic backgrounds                      */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
-const SHADOW = "1px 1px 2px black"
+const SHADOW = "2px 2px 3px rgba(0,0,0,0.8)"
 
 /* ──────────────────────────────────────────────────────────────────────────── */
 /*  Stat keys in order                                                         */
@@ -74,22 +74,28 @@ const STAT_KEYS: (keyof PlayerCardData["stats"])[] = ["att", "dif", "ric", "mur"
 /*  Layer 2: Data text — absolute z-20                                         */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
+const SHIELD_CLIP =
+  "polygon(50% 0%, 100% 0%, 100% 75%, 50% 100%, 0% 75%, 0% 0%)"
+
 export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
   const glicko = Math.round(playerData.glicko2)
   const frame = getFrameTemplate(glicko)
 
   return (
     <div
-      className={cn("relative mx-auto w-full max-w-[400px] select-none overflow-hidden", className)}
-      style={{ aspectRatio: "3 / 4" }}
+      className={cn(
+        "relative mx-auto w-full max-w-[400px] select-none overflow-hidden",
+        className,
+      )}
+      style={{ aspectRatio: "3.2 / 4.5", clipPath: SHIELD_CLIP }}
     >
-      {/* ── LAYER 0 — Profile photo, fills background ────────────── */}
+      {/* ── LAYER 0 — Profile photo ──────────────────────────────── */}
       {playerData.imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={playerData.imageUrl}
           alt={playerData.name}
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover object-top"
           style={{ zIndex: 0 }}
         />
       ) : (
@@ -106,94 +112,81 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
       <img
         src={frame}
         alt="Card frame"
-        className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+        className="pointer-events-none absolute inset-0 h-full w-full"
         style={{ zIndex: 10 }}
       />
 
-      {/* ── LAYER 2 — Data elements ──────────────────────────────── */}
+      {/* ── LAYER 2 — Data elements (all absolute z-20) ──────────── */}
 
       {/* Role — vertical, left side */}
-      <div
-        className="absolute"
+      <span
+        className="absolute whitespace-nowrap text-[0.6rem] font-bold uppercase tracking-[0.3em] text-white"
         style={{
-          top: "25%",
-          left: "8%",
+          top: "23%",
+          left: "7%",
           zIndex: 20,
           transform: "rotate(-90deg)",
-          transformOrigin: "center center",
+          transformOrigin: "left center",
+          textShadow: SHADOW,
         }}
       >
-        <span
-          className="whitespace-nowrap text-[0.6rem] font-bold uppercase tracking-[0.3em]"
-          style={{ color: "white", textShadow: SHADOW }}
-        >
-          {playerData.role}
-        </span>
-      </div>
+        {playerData.role}
+      </span>
 
-      {/* Rating — top right, first box */}
-      <div
-        className="absolute"
+      {/* Rating — top right */}
+      <span
+        className="absolute text-xl font-bold leading-none text-white"
         style={{
-          top: "13%",
-          right: "12%",
+          top: "11%",
+          right: "13%",
           zIndex: 20,
+          textShadow: SHADOW,
         }}
       >
-        <span
-          className="text-xl font-bold leading-none"
-          style={{ color: "white", textShadow: SHADOW }}
-        >
-          {glicko}
-        </span>
-      </div>
+        {glicko}
+      </span>
 
-      {/* Flag — top right, second box */}
+      {/* Flag — below rating */}
       <div
         className="absolute overflow-hidden rounded-[2px]"
         style={{
-          top: "26%",
-          right: "12%",
-          width: "36px",
-          height: "24px",
+          top: "25%",
+          right: "14%",
+          width: "15%",
           zIndex: 20,
         }}
       >
         <FlagIcon code={playerData.nationalityCode} />
       </div>
 
-      {/* Name — center horizontal bar */}
-      <div
-        className="absolute w-full text-center"
+      {/* Name — center horizontal */}
+      <span
+        className="absolute w-full text-center text-sm font-bold uppercase tracking-wider text-white"
         style={{
           top: "56%",
           left: 0,
           zIndex: 20,
+          textShadow: SHADOW,
         }}
       >
-        <span
-          className="text-sm font-bold uppercase tracking-wider"
-          style={{ color: "white", textShadow: SHADOW }}
-        >
-          {playerData.name}
-        </span>
-      </div>
+        {playerData.name}
+      </span>
 
-      {/* Stats — bottom row, flex space-around */}
+      {/* Stats — bottom row */}
       <div
         className="absolute flex justify-around"
         style={{
-          bottom: "18%",
-          left: "5%",
-          width: "90%",
+          bottom: "19%",
+          left: "6%",
+          width: "88%",
           zIndex: 20,
         }}
       >
         {STAT_KEYS.map((key) => (
           <span
             key={key}
-            className="text-base font-bold leading-none"
-            style={{ color: "white", textShadow: SHADOW }}
+            className="text-base font-bold leading-none text-white"
+            style={{ textShadow: SHADOW }}
           >
             {playerData.stats[key]}
           </span>
