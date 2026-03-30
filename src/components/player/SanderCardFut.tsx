@@ -192,6 +192,33 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
           </span>
         ))}
       </div>
+
+      {/* ── DEBUG GRID — 10×10 numbered overlay (Z-30) ───────────── */}
+      {/* TODO: Remove this grid once positioning is finalized */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ zIndex: 30 }}
+      >
+        {Array.from({ length: 10 }, (_, row) =>
+          Array.from({ length: 10 }, (_, col) => (
+            <div
+              key={`${row}-${col}`}
+              className="absolute flex items-center justify-center border text-[0.5rem] font-mono leading-none"
+              style={{
+                top: `${row * 10}%`,
+                left: `${col * 10}%`,
+                width: "10%",
+                height: "10%",
+                borderColor: "rgba(255,255,0,0.35)",
+                color: "rgba(255,255,0,0.7)",
+                background: "rgba(0,0,0,0.15)",
+              }}
+            >
+              {row},{col}
+            </div>
+          ))
+        )}
+      </div>
     </div>
   )
 }
