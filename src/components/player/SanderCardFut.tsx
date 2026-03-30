@@ -29,7 +29,7 @@ interface SanderCardFutProps {
 /*  Constants                                                                  */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
-const SHADOW = "1px 1px 0px rgba(0,0,0,0.8), -0.5px -0.5px 0px rgba(255,255,255,0.3)"
+const SHADOW = "1px 1.5px 0px rgba(0,0,0,0.9), -0.5px -0.5px 0.2px rgba(255,255,255,0.4)"
 const FONT = "'Chakra Petch', sans-serif"
 
 /* ──────────────────────────────────────────────────────────────────────────── */
@@ -144,12 +144,16 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
 
         {/* Glicko Rating — Row 3.5, Col 4.5 */}
         <span
-          className="absolute text-sm font-bold uppercase leading-none text-white"
+          className="absolute text-sm font-bold uppercase leading-none"
           style={{
             top: "17.5%",
             left: "22.5%",
             zIndex: 20,
             fontFamily: FONT,
+            letterSpacing: "0.08em",
+            background: "linear-gradient(180deg, #FFFFFF 0%, #E5E7EB 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
             textShadow: SHADOW,
           }}
         >
@@ -186,7 +190,7 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
 
         {/* Player Name — Row 10.25, centered Col 6.5–14.5 */}
         <span
-          className="absolute text-center text-base font-bold uppercase tracking-wider text-white"
+          className="absolute text-center text-base font-bold uppercase"
           style={{
             top: "51.25%",
             whiteSpace: "nowrap",
@@ -195,6 +199,10 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
             width: "40%",
             zIndex: 20,
             fontFamily: FONT,
+            letterSpacing: "0.08em",
+            background: "linear-gradient(180deg, #FFFFFF 0%, #E5E7EB 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
             textShadow: SHADOW,
           }}
         >
@@ -205,70 +213,22 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
         {STAT_POSITIONS.map(({ key, left }) => (
           <span
             key={key}
-            className="absolute text-sm font-bold leading-none text-white"
+            className="absolute text-sm font-bold leading-none"
             style={{
               top: "70%",
               left,
               zIndex: 20,
               fontFamily: FONT,
+              letterSpacing: "0.08em",
+              background: "linear-gradient(180deg, #FFFFFF 0%, #E5E7EB 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
               textShadow: SHADOW,
             }}
           >
             {playerData.stats[key]}
           </span>
         ))}
-
-        {/* ── Z-50 — 20×20 debug calibration grid ───────────────────── */}
-        {/* TODO: Remove once positioning is finalized */}
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{ zIndex: 50 }}
-        >
-          {/* Row labels (left edge) */}
-          {Array.from({ length: 20 }, (_, i) => (
-            <span
-              key={`rl-${i}`}
-              className="absolute text-[0.4rem] font-mono font-bold"
-              style={{
-                top: `${i * 5}%`,
-                left: 0,
-                color: "rgba(255,255,0,0.9)",
-              }}
-            >
-              {i}
-            </span>
-          ))}
-          {/* Column labels (top edge) */}
-          {Array.from({ length: 20 }, (_, i) => (
-            <span
-              key={`cl-${i}`}
-              className="absolute text-[0.4rem] font-mono font-bold"
-              style={{
-                top: 0,
-                left: `${i * 5}%`,
-                color: "rgba(255,255,0,0.9)",
-              }}
-            >
-              {i}
-            </span>
-          ))}
-          {/* Grid lines */}
-          {Array.from({ length: 20 }, (_, row) =>
-            Array.from({ length: 20 }, (_, col) => (
-              <div
-                key={`${row}-${col}`}
-                className="absolute border"
-                style={{
-                  top: `${row * 5}%`,
-                  left: `${col * 5}%`,
-                  width: "5%",
-                  height: "5%",
-                  borderColor: "rgba(255,255,0,0.25)",
-                }}
-              />
-            ))
-          )}
-        </div>
       </div>
     </>
   )
