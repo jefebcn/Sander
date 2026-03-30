@@ -38,10 +38,6 @@ function getFrameTemplate(glicko2: number): string {
   return "/assets/cards/bronze.png"
 }
 
-/* Text is always white/light — the metallic frame provides contrast */
-const TEXT_COLOR = "#FFFFFF"
-const TEXT_COLOR_DIM = "rgba(255,255,255,.85)"
-
 /* ──────────────────────────────────────────────────────────────────────────── */
 /*  Flag via CDN                                                               */
 /* ──────────────────────────────────────────────────────────────────────────── */
@@ -63,8 +59,7 @@ function FlagIcon({ code }: { code: string }) {
 /*  Text shadow for embossed look on metallic backgrounds                      */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
-const EMBOSS = "0 1px 3px rgba(0,0,0,.6), 0 0 6px rgba(0,0,0,.3)"
-const EMBOSS_STRONG = "0 2px 5px rgba(0,0,0,.7), 0 0 10px rgba(0,0,0,.4), 1px 1px 4px rgba(0,0,0,.5)"
+const SHADOW = "1px 1px 2px black"
 
 /* ──────────────────────────────────────────────────────────────────────────── */
 /*  Stat keys in order                                                         */
@@ -74,9 +69,9 @@ const STAT_KEYS: (keyof PlayerCardData["stats"])[] = ["att", "dif", "ric", "mur"
 
 /* ──────────────────────────────────────────────────────────────────────────── */
 /*  Component: 3-layer sandwich                                                */
-/*  Layer 0: Profile photo (z-0)                                               */
-/*  Layer 1: PNG frame template (z-10)                                         */
-/*  Layer 2: Dynamic text & elements (z-20)                                    */
+/*  Layer 0: Profile photo — absolute inset-0 z-0                              */
+/*  Layer 1: PNG frame — absolute inset-0 z-10                                 */
+/*  Layer 2: Data text — absolute z-20                                         */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
 export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
@@ -85,43 +80,28 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
 
   return (
     <div
-      className={cn("relative mx-auto w-full max-w-[400px] select-none", className)}
-      style={{ aspectRatio: "1 / 1", background: "transparent" }}
+      className={cn("relative mx-auto w-full max-w-[400px] select-none overflow-hidden", className)}
+      style={{ aspectRatio: "3 / 4" }}
     >
-      {/* ═══════════════════════════════════════════════════════════════
-          LAYER 0 — Profile photo (z-0)
-          Positioned to fill the center square aperture
-          ═══════════════════════════════════════════════════════════ */}
-      <div
-        className="absolute overflow-hidden"
-        style={{
-          top: "13.5%",
-          left: "26%",
-          width: "35%",
-          height: "34%",
-          zIndex: 0,
-        }}
-      >
-        {playerData.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={playerData.imageUrl}
-            alt={playerData.name}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div
-            className="flex h-full w-full items-center justify-center text-4xl font-black"
-            style={{ background: "rgba(40,40,40,.8)", color: TEXT_COLOR_DIM }}
-          >
-            {playerData.name.slice(0, 2).toUpperCase()}
-          </div>
-        )}
-      </div>
+      {/* ── LAYER 0 — Profile photo, fills background ────────────── */}
+      {playerData.imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={playerData.imageUrl}
+          alt={playerData.name}
+          className="absolute inset-0 h-full w-full object-cover"
+          style={{ zIndex: 0 }}
+        />
+      ) : (
+        <div
+          className="absolute inset-0 flex items-center justify-center text-5xl font-black"
+          style={{ zIndex: 0, background: "#222", color: "rgba(255,255,255,.5)" }}
+        >
+          {playerData.name.slice(0, 2).toUpperCase()}
+        </div>
+      )}
 
-      {/* ═══════════════════════════════════════════════════════════════
-          LAYER 1 — PNG frame template (z-10)
-          ═══════════════════════════════════════════════════════════ */}
+      {/* ── LAYER 1 — PNG frame template ─────────────────────────── */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={frame}
@@ -130,108 +110,93 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
         style={{ zIndex: 10 }}
       />
 
-      {/* ═══════════════════════════════════════════════════════════════
-          LAYER 2 — Dynamic text & elements (z-20)
-          ═══════════════════════════════════════════════════════════ */}
+      {/* ── LAYER 2 — Data elements ──────────────────────────────── */}
 
-      {/* Role — vertical text, centered in the left bar aperture */}
+      {/* Role — vertical, left side */}
       <div
-        className="absolute flex items-center justify-center"
+        className="absolute"
         style={{
-          top: "14%",
-          left: "10%",
-          width: "7%",
-          height: "28%",
+          top: "25%",
+          left: "8%",
           zIndex: 20,
-          writingMode: "vertical-rl",
-          transform: "rotate(180deg)",
+          transform: "rotate(-90deg)",
+          transformOrigin: "center center",
         }}
       >
         <span
-          className="whitespace-nowrap text-[0.55rem] font-black uppercase tracking-[0.3em]"
-          style={{ color: TEXT_COLOR, textShadow: EMBOSS }}
+          className="whitespace-nowrap text-[0.6rem] font-bold uppercase tracking-[0.3em]"
+          style={{ color: "white", textShadow: SHADOW }}
         >
           {playerData.role}
         </span>
       </div>
 
-      {/* Rating — top-right first box, shifted down/left to center */}
+      {/* Rating — top right, first box */}
       <div
-        className="absolute flex items-center justify-center"
+        className="absolute"
         style={{
-          top: "14.5%",
-          left: "64%",
-          width: "17%",
-          height: "8.5%",
+          top: "13%",
+          right: "12%",
           zIndex: 20,
         }}
       >
         <span
-          className="text-[1.3rem] font-black leading-none"
-          style={{ color: TEXT_COLOR, textShadow: EMBOSS_STRONG }}
+          className="text-xl font-bold leading-none"
+          style={{ color: "white", textShadow: SHADOW }}
         >
           {glicko}
         </span>
       </div>
 
-      {/* Flag — top-right second box, centered */}
+      {/* Flag — top right, second box */}
       <div
-        className="absolute flex items-center justify-center"
+        className="absolute overflow-hidden rounded-[2px]"
         style={{
-          top: "25.5%",
-          left: "66%",
-          width: "13%",
-          height: "7.5%",
+          top: "26%",
+          right: "12%",
+          width: "36px",
+          height: "24px",
           zIndex: 20,
         }}
       >
-        <div
-          className="overflow-hidden rounded-[2px]"
-          style={{ width: "75%", height: "85%" }}
-        >
-          <FlagIcon code={playerData.nationalityCode} />
-        </div>
+        <FlagIcon code={playerData.nationalityCode} />
       </div>
 
-      {/* Name — center horizontal bar, perfectly centered */}
+      {/* Name — center horizontal bar */}
       <div
-        className="absolute flex items-center justify-center"
+        className="absolute w-full text-center"
         style={{
-          top: "51%",
-          left: "15%",
-          width: "70%",
-          height: "6%",
+          top: "56%",
+          left: 0,
           zIndex: 20,
         }}
       >
         <span
-          className="text-sm font-black uppercase tracking-[0.15em]"
-          style={{ color: TEXT_COLOR, textShadow: EMBOSS_STRONG }}
+          className="text-sm font-bold uppercase tracking-wider"
+          style={{ color: "white", textShadow: SHADOW }}
         >
           {playerData.name}
         </span>
       </div>
 
-      {/* Stats — flex row, space-around under the 6 icon apertures */}
+      {/* Stats — bottom row, flex space-around */}
       <div
-        className="absolute flex items-center justify-around"
+        className="absolute flex justify-around"
         style={{
-          top: "67%",
-          left: "10%",
-          width: "80%",
-          height: "7.5%",
+          bottom: "18%",
+          left: "5%",
+          width: "90%",
           zIndex: 20,
         }}
       >
         {STAT_KEYS.map((key) => (
-          <div key={key} className="flex items-center justify-center" style={{ width: "14%" }}>
-            <span
-              className="text-[1.05rem] font-black leading-none"
-              style={{ color: TEXT_COLOR, textShadow: EMBOSS_STRONG }}
-            >
-              {playerData.stats[key]}
-            </span>
-          </div>
+          <span
+            key={key}
+            className="text-base font-bold leading-none"
+            style={{ color: "white", textShadow: SHADOW }}
+          >
+            {playerData.stats[key]}
+          </span>
         ))}
       </div>
     </div>
