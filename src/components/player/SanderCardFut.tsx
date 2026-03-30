@@ -86,19 +86,19 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
       )}
       style={{ aspectRatio: "1 / 1.4" }}
     >
-      {/* ── LAYER 0 — Profile photo (sized to fit PNG hole) ──────── */}
+      {/* ── LAYER 0 — Profile photo (rows 1-4, cols 3-6) ────────── */}
       {playerData.imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={playerData.imageUrl}
           alt={playerData.name}
           className="absolute object-cover object-top"
-          style={{ zIndex: 0, top: "12%", left: "33%", width: "34%", height: "38%" }}
+          style={{ zIndex: 0, top: "10%", left: "30%", width: "40%", height: "30%" }}
         />
       ) : (
         <div
           className="absolute flex items-center justify-center text-3xl font-black"
-          style={{ zIndex: 0, top: "12%", left: "33%", width: "34%", height: "38%", background: "#222", color: "rgba(255,255,255,.5)" }}
+          style={{ zIndex: 0, top: "10%", left: "30%", width: "40%", height: "30%", background: "#222", color: "rgba(255,255,255,.5)" }}
         >
           {playerData.name.slice(0, 2).toUpperCase()}
         </div>
@@ -115,12 +115,12 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
 
       {/* ── LAYER 2 — Data elements (all absolute z-20) ──────────── */}
 
-      {/* Role — vertical, left side */}
+      {/* Role — vertical, col 0, rows 1-2 */}
       <span
         className="absolute whitespace-nowrap text-xs font-bold uppercase tracking-[0.3em] text-white"
         style={{
-          top: "18%",
-          left: "8%",
+          top: "10%",
+          left: "0%",
           zIndex: 20,
           transform: "rotate(-90deg)",
           transformOrigin: "left center",
@@ -130,12 +130,12 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
         {playerData.role}
       </span>
 
-      {/* Rating — top right */}
+      {/* Rating — box 1,7 */}
       <span
-        className="absolute text-2xl font-bold leading-none text-white"
+        className="absolute text-5xl font-bold leading-none text-white"
         style={{
-          top: "14%",
-          right: "13%",
+          top: "10%",
+          left: "70%",
           zIndex: 20,
           textShadow: SHADOW,
         }}
@@ -143,12 +143,12 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
         {glicko}
       </span>
 
-      {/* Flag — below rating */}
+      {/* Flag — box 2,7 */}
       <div
         className="absolute overflow-hidden rounded-[2px]"
         style={{
-          top: "28%",
-          right: "13%",
+          top: "20%",
+          left: "70%",
           width: "12%",
           zIndex: 20,
         }}
@@ -156,11 +156,11 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
         <FlagIcon code={playerData.nationalityCode} />
       </div>
 
-      {/* Name — center horizontal */}
+      {/* Name — row 5, centered */}
       <span
-        className="absolute w-full text-center text-sm font-bold uppercase tracking-wider text-white"
+        className="absolute w-full text-center text-4xl font-bold uppercase tracking-wider text-white"
         style={{
-          top: "53%",
+          top: "50%",
           left: 0,
           zIndex: 20,
           textShadow: SHADOW,
@@ -169,25 +169,52 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
         {playerData.name}
       </span>
 
-      {/* Stats — bottom row */}
+      {/* Stats — row 7 */}
       <div
         className="absolute flex justify-around"
         style={{
-          top: "68%",
-          left: "8%",
-          width: "84%",
+          top: "70%",
+          left: "7.5%",
+          width: "85%",
           zIndex: 20,
         }}
       >
         {STAT_KEYS.map((key) => (
           <span
             key={key}
-            className="text-lg font-bold leading-none text-white"
+            className="text-3xl font-bold leading-none text-white"
             style={{ textShadow: SHADOW }}
           >
             {playerData.stats[key]}
           </span>
         ))}
+      </div>
+
+      {/* ── DEBUG GRID — 10×10 numbered overlay (Z-50) ───────────── */}
+      {/* TODO: Remove once positioning is finalized */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ zIndex: 50 }}
+      >
+        {Array.from({ length: 10 }, (_, row) =>
+          Array.from({ length: 10 }, (_, col) => (
+            <div
+              key={`${row}-${col}`}
+              className="absolute flex items-center justify-center border text-[0.5rem] font-mono leading-none"
+              style={{
+                top: `${row * 10}%`,
+                left: `${col * 10}%`,
+                width: "10%",
+                height: "10%",
+                borderColor: "rgba(255,255,0,0.35)",
+                color: "rgba(255,255,0,0.7)",
+                background: "rgba(0,0,0,0.15)",
+              }}
+            >
+              {row},{col}
+            </div>
+          ))
+        )}
       </div>
     </div>
   )
