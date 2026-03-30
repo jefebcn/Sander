@@ -71,7 +71,7 @@ const STAT_POSITIONS: { key: keyof PlayerCardData["stats"]; left: string }[] = [
   { key: "att", left: "27.5%" },     // Col 5.5
   { key: "dif", left: "35.625%" },   // Col 7.125
   { key: "ric", left: "44.375%" },   // Col 8.875
-  { key: "mur", left: "50.625%" },   // Col 10.125
+  { key: "mur", left: "51.875%" },   // Col 10.375
   { key: "alz", left: "60%" },       // Col 12.0
   { key: "sta", left: "68.75%" },    // Col 13.75
 ]
