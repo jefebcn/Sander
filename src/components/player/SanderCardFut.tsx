@@ -29,7 +29,7 @@ interface SanderCardFutProps {
 /*  Constants                                                                  */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
-const SHADOW = "2px 2px 3px rgba(0,0,0,0.9)"
+const SHADOW = "1px 1px 2px black"
 const FONT = "'Chakra Petch', sans-serif"
 
 /* ──────────────────────────────────────────────────────────────────────────── */
@@ -105,14 +105,14 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
         )}
         style={{ aspectRatio: "1 / 1" }}
       >
-        {/* ── Z-0 — Player photo (rows 3–10, cols 8–16) ─────────────── */}
+        {/* ── Z-0 — Player photo (rows 3–10, cols 7–15) ─────────────── */}
         {playerData.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={playerData.imageUrl}
             alt={playerData.name}
             className="absolute object-cover object-top"
-            style={{ zIndex: 0, top: "15%", left: "40%", width: "40%", height: "35%" }}
+            style={{ zIndex: 0, top: "15%", left: "35%", width: "40%", height: "35%" }}
           />
         ) : (
           <div
@@ -120,12 +120,11 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
             style={{
               zIndex: 0,
               top: "15%",
-              left: "40%",
+              left: "35%",
               width: "40%",
               height: "35%",
-              background: "#222",
-              color: "rgba(255,255,255,.5)",
               fontFamily: FONT,
+              color: "rgba(255,255,255,.5)",
             }}
           >
             {playerData.name.slice(0, 2).toUpperCase()}
@@ -143,12 +142,12 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
 
         {/* ── Z-20 — Data elements ───────────────────────────────────── */}
 
-        {/* Glicko Rating — Row 4.2, Col 2.5 */}
+        {/* Glicko Rating — Row 3.5, Col 4.5 */}
         <span
-          className="absolute text-4xl font-bold uppercase leading-none text-white"
+          className="absolute text-xl font-bold uppercase leading-none text-white"
           style={{
-            top: "21%",
-            left: "12.5%",
+            top: "17.5%",
+            left: "22.5%",
             zIndex: 20,
             fontFamily: FONT,
             textShadow: SHADOW,
@@ -157,25 +156,25 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
           {glicko}
         </span>
 
-        {/* Flag — Row 5.8, Col 2.5 */}
+        {/* Flag — Row 5, Col 4.5 */}
         <div
           className="absolute overflow-hidden rounded-[2px]"
           style={{
-            top: "29%",
-            left: "12.5%",
-            width: "12%",
+            top: "25%",
+            left: "22.5%",
+            width: "8%",
             zIndex: 20,
           }}
         >
           <FlagIcon code={playerData.nationalityCode} />
         </div>
 
-        {/* Role — Row 7.5, Col 2.5, horizontal */}
+        {/* Role — Row 7, Col 4.5, horizontal */}
         <span
           className="absolute text-xs font-bold uppercase text-white"
           style={{
-            top: "37.5%",
-            left: "12.5%",
+            top: "35%",
+            left: "22.5%",
             zIndex: 20,
             fontFamily: FONT,
             textShadow: SHADOW,
@@ -184,13 +183,13 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
           {roleAbbr}
         </span>
 
-        {/* Player Name — Row 12.3, centered between Col 3–17 */}
+        {/* Player Name — Row 10.5, centered Col 6.5–14.5 */}
         <span
-          className="absolute text-center text-2xl font-bold uppercase tracking-wider text-white"
+          className="absolute text-center text-lg font-bold uppercase tracking-wider text-white"
           style={{
-            top: "61.5%",
-            left: "15%",
-            width: "70%",
+            top: "52.5%",
+            left: "32.5%",
+            width: "40%",
             zIndex: 20,
             fontFamily: FONT,
             textShadow: SHADOW,
@@ -199,22 +198,29 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
           {playerData.name}
         </span>
 
-        {/* Stats — Row 15.5, individually positioned */}
-        {STAT_POSITIONS.map(({ key, left }) => (
-          <span
-            key={key}
-            className="absolute text-lg font-bold leading-none text-white"
-            style={{
-              top: "77.5%",
-              left,
-              zIndex: 20,
-              fontFamily: FONT,
-              textShadow: SHADOW,
-            }}
-          >
-            {playerData.stats[key]}
-          </span>
-        ))}
+        {/* Stats — Row 14, spread Col 5.5–14.5 */}
+        <div
+          className="absolute flex justify-around"
+          style={{
+            top: "70%",
+            left: "27.5%",
+            width: "45%",
+            zIndex: 20,
+          }}
+        >
+          {STAT_POSITIONS.map(({ key }) => (
+            <span
+              key={key}
+              className="text-sm font-bold leading-none text-white"
+              style={{
+                fontFamily: FONT,
+                textShadow: SHADOW,
+              }}
+            >
+              {playerData.stats[key]}
+            </span>
+          ))}
+        </div>
 
         {/* ── Z-50 — 20×20 debug calibration grid ───────────────────── */}
         {/* TODO: Remove once positioning is finalized */}
