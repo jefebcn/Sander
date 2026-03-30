@@ -26,6 +26,13 @@ interface SanderCardFutProps {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────── */
+/*  Constants                                                                  */
+/* ──────────────────────────────────────────────────────────────────────────── */
+
+const SHADOW = "2px 2px 3px rgba(0,0,0,0.9)"
+const FONT = "'Chakra Petch', sans-serif"
+
+/* ──────────────────────────────────────────────────────────────────────────── */
 /*  Rating → frame template mapping                                            */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
@@ -56,166 +63,211 @@ function FlagIcon({ code }: { code: string }) {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────── */
-/*  Text shadow for embossed look on metallic backgrounds                      */
+/*  Stat positioning: each stat at a fixed column (20×20 grid units)           */
+/*  ATT=6.75  DIF=8  RIC=9.75  MUR=11.75  ALZ=13  STA=14.75                  */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
-const SHADOW = "1px 1px 2px rgba(0,0,0,0.8)"
+const STAT_POSITIONS: { key: keyof PlayerCardData["stats"]; left: string }[] = [
+  { key: "att", left: "33.75%" },
+  { key: "dif", left: "40%" },
+  { key: "ric", left: "48.75%" },
+  { key: "mur", left: "58.75%" },
+  { key: "alz", left: "65%" },
+  { key: "sta", left: "73.75%" },
+]
 
 /* ──────────────────────────────────────────────────────────────────────────── */
-/*  Stat keys in order                                                         */
-/* ──────────────────────────────────────────────────────────────────────────── */
-
-const STAT_KEYS: (keyof PlayerCardData["stats"])[] = ["att", "dif", "ric", "mur", "alz", "sta"]
-
-/* ──────────────────────────────────────────────────────────────────────────── */
-/*  Component: 3-layer sandwich                                                */
-/*  Layer 0: Profile photo — absolute inset-0 z-0                              */
-/*  Layer 1: PNG frame — absolute inset-0 z-10                                 */
-/*  Layer 2: Data text — absolute z-20                                         */
+/*  Component: 3-layer sandwich (square 2000×2000 assets)                      */
+/*  Layer 0 (Z-0):  Player photo — visible through PNG aperture                */
+/*  Layer 1 (Z-10): PNG template frame — object-contain, never distorted       */
+/*  Layer 2 (Z-20): All data/text — absolute positioned per 20×20 grid         */
+/*  Debug  (Z-50):  20×20 calibration grid (temporary)                         */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
 export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
   const glicko = Math.round(playerData.glicko2)
   const frame = getFrameTemplate(glicko)
+  const roleAbbr = playerData.role === "DIFENSORE" ? "DIF" : "MUR"
 
   return (
-    <div
-      className={cn(
-        "relative mx-auto w-full max-w-[400px] select-none overflow-hidden bg-transparent",
-        className,
-      )}
-      style={{ aspectRatio: "1 / 1.4" }}
-    >
-      {/* ── LAYER 0 — Photo (20×20 rows 3–9, cols 7–13) ────────── */}
-      {playerData.imageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={playerData.imageUrl}
-          alt={playerData.name}
-          className="absolute object-cover object-top"
-          style={{ zIndex: 0, top: "15%", left: "35%", width: "30%", height: "30%" }}
-        />
-      ) : (
-        <div
-          className="absolute flex items-center justify-center text-3xl font-black"
-          style={{ zIndex: 0, top: "15%", left: "35%", width: "30%", height: "30%", background: "#222", color: "rgba(255,255,255,.5)" }}
-        >
-          {playerData.name.slice(0, 2).toUpperCase()}
-        </div>
-      )}
-
-      {/* ── LAYER 1 — PNG frame template ─────────────────────────── */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={frame}
-        alt="Card frame"
-        className="pointer-events-none absolute inset-0 h-full w-full"
-        style={{ zIndex: 10 }}
+    <>
+      {/* Google Fonts: Chakra Petch 700 */}
+      {/* eslint-disable-next-line @next/next/no-css-tags */}
+      <link
+        href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@700&display=swap"
+        rel="stylesheet"
       />
 
-      {/* ── LAYER 2 — Data elements (all absolute z-20) ──────────── */}
-
-      {/* Role — col 1.5, rows 3-5, rotated */}
-      <span
-        className="absolute whitespace-nowrap text-xs font-bold uppercase tracking-[0.3em] text-white"
-        style={{
-          top: "15%",
-          left: "7.5%",
-          zIndex: 20,
-          transform: "rotate(-90deg)",
-          transformOrigin: "left center",
-          textShadow: SHADOW,
-        }}
-      >
-        {playerData.role}
-      </span>
-
-      {/* Rating — row 3, col 15 */}
-      <span
-        className="absolute text-4xl font-bold leading-none text-white"
-        style={{
-          top: "15%",
-          left: "75%",
-          zIndex: 20,
-          textShadow: SHADOW,
-        }}
-      >
-        {glicko}
-      </span>
-
-      {/* Flag — row 5.5, col 15 */}
       <div
-        className="absolute overflow-hidden rounded-[2px]"
-        style={{
-          top: "27.5%",
-          left: "75%",
-          width: "14%",
-          zIndex: 20,
-        }}
+        className={cn(
+          "relative mx-auto w-full max-w-[400px] select-none overflow-hidden bg-transparent",
+          className,
+        )}
+        style={{ aspectRatio: "1 / 1" }}
       >
-        <FlagIcon code={playerData.nationalityCode} />
-      </div>
+        {/* ── Z-0 — Player photo (rows 4–10, cols 8–15) ─────────────── */}
+        {playerData.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={playerData.imageUrl}
+            alt={playerData.name}
+            className="absolute object-cover object-top"
+            style={{ zIndex: 0, top: "20%", left: "40%", width: "35%", height: "30%" }}
+          />
+        ) : (
+          <div
+            className="absolute flex items-center justify-center text-3xl font-black"
+            style={{
+              zIndex: 0,
+              top: "20%",
+              left: "40%",
+              width: "35%",
+              height: "30%",
+              background: "#222",
+              color: "rgba(255,255,255,.5)",
+              fontFamily: FONT,
+            }}
+          >
+            {playerData.name.slice(0, 2).toUpperCase()}
+          </div>
+        )}
 
-      {/* Name — row 11, centered */}
-      <span
-        className="absolute w-full text-center text-2xl font-bold uppercase tracking-wider text-white"
-        style={{
-          top: "55%",
-          left: 0,
-          zIndex: 20,
-          textShadow: SHADOW,
-        }}
-      >
-        {playerData.name}
-      </span>
+        {/* ── Z-10 — PNG template frame ──────────────────────────────── */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={frame}
+          alt="Card frame"
+          className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+          style={{ zIndex: 10 }}
+        />
 
-      {/* Stats — row 14.5 */}
-      <div
-        className="absolute flex justify-around"
-        style={{
-          top: "72.5%",
-          left: "5%",
-          width: "90%",
-          zIndex: 20,
-        }}
-      >
-        {STAT_KEYS.map((key) => (
+        {/* ── Z-20 — Data elements ───────────────────────────────────── */}
+
+        {/* Glicko Rating — Row 4, Col 5.5 */}
+        <span
+          className="absolute text-3xl font-bold leading-none text-white"
+          style={{
+            top: "20%",
+            left: "27.5%",
+            zIndex: 20,
+            fontFamily: FONT,
+            textShadow: SHADOW,
+          }}
+        >
+          {glicko}
+        </span>
+
+        {/* Flag — Row 5.5, Col 5.5 */}
+        <div
+          className="absolute overflow-hidden rounded-[2px]"
+          style={{
+            top: "27.5%",
+            left: "27.5%",
+            width: "10%",
+            zIndex: 20,
+          }}
+        >
+          <FlagIcon code={playerData.nationalityCode} />
+        </div>
+
+        {/* Role — Row 7, Col 5.5, horizontal */}
+        <span
+          className="absolute text-xs font-bold uppercase text-white"
+          style={{
+            top: "35%",
+            left: "27.5%",
+            zIndex: 20,
+            fontFamily: FONT,
+            textShadow: SHADOW,
+          }}
+        >
+          {roleAbbr}
+        </span>
+
+        {/* Player Name — Row 11.5, centered */}
+        <span
+          className="absolute w-full text-center text-2xl font-bold uppercase tracking-wider text-white"
+          style={{
+            top: "57.5%",
+            left: 0,
+            zIndex: 20,
+            fontFamily: FONT,
+            textShadow: SHADOW,
+          }}
+        >
+          {playerData.name}
+        </span>
+
+        {/* Stats — Row 15, individually positioned */}
+        {STAT_POSITIONS.map(({ key, left }) => (
           <span
             key={key}
-            className="text-xl font-bold leading-none text-white"
-            style={{ textShadow: SHADOW }}
+            className="absolute text-lg font-bold leading-none text-white"
+            style={{
+              top: "75%",
+              left,
+              zIndex: 20,
+              fontFamily: FONT,
+              textShadow: SHADOW,
+            }}
           >
             {playerData.stats[key]}
           </span>
         ))}
-      </div>
 
-      {/* ── DEBUG GRID — 20×20 numbered overlay (Z-50) ───────────── */}
-      {/* TODO: Remove once positioning is finalized */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ zIndex: 50 }}
-      >
-        {Array.from({ length: 20 }, (_, row) =>
-          Array.from({ length: 20 }, (_, col) => (
-            <div
-              key={`${row}-${col}`}
-              className="absolute flex items-center justify-center border text-[0.35rem] font-mono leading-none"
+        {/* ── Z-50 — 20×20 debug calibration grid ───────────────────── */}
+        {/* TODO: Remove once positioning is finalized */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{ zIndex: 50 }}
+        >
+          {/* Row labels (left edge) */}
+          {Array.from({ length: 20 }, (_, i) => (
+            <span
+              key={`rl-${i}`}
+              className="absolute text-[0.4rem] font-mono font-bold"
               style={{
-                top: `${row * 5}%`,
-                left: `${col * 5}%`,
-                width: "5%",
-                height: "5%",
-                borderColor: "rgba(255,255,0,0.3)",
-                color: "rgba(255,255,0,0.65)",
+                top: `${i * 5}%`,
+                left: 0,
+                color: "rgba(255,255,0,0.9)",
               }}
             >
-              {row},{col}
-            </div>
-          ))
-        )}
+              {i}
+            </span>
+          ))}
+          {/* Column labels (top edge) */}
+          {Array.from({ length: 20 }, (_, i) => (
+            <span
+              key={`cl-${i}`}
+              className="absolute text-[0.4rem] font-mono font-bold"
+              style={{
+                top: 0,
+                left: `${i * 5}%`,
+                color: "rgba(255,255,0,0.9)",
+              }}
+            >
+              {i}
+            </span>
+          ))}
+          {/* Grid lines */}
+          {Array.from({ length: 20 }, (_, row) =>
+            Array.from({ length: 20 }, (_, col) => (
+              <div
+                key={`${row}-${col}`}
+                className="absolute border"
+                style={{
+                  top: `${row * 5}%`,
+                  left: `${col * 5}%`,
+                  width: "5%",
+                  height: "5%",
+                  borderColor: "rgba(255,255,0,0.25)",
+                }}
+              />
+            ))
+          )}
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 
