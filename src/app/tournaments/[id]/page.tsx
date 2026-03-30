@@ -11,6 +11,7 @@ import { ConfirmActionButton } from "@/components/tournament/ConfirmActionButton
 import { ChiceceDashboard } from "@/components/tournament/ChiceceDashboard"
 import { ShareButton } from "@/components/ui/ShareButton"
 import { formatDate } from "@/lib/utils"
+import { redirect } from "next/navigation"
 
 export const dynamic = "force-dynamic"
 
@@ -93,7 +94,12 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             <form
               action={async () => {
                 "use server"
-                await startTournament(id)
+                try {
+                  await startTournament(id)
+                } catch (e) {
+                  console.error("Errore avvio torneo chicece:", e)
+                }
+                redirect(`/tournaments/${id}`)
               }}
             >
               <button
@@ -191,7 +197,12 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
           <form
             action={async () => {
               "use server"
-              await startTournament(id)
+              try {
+                await startTournament(id)
+              } catch (e) {
+                console.error("Errore avvio torneo:", e)
+              }
+              redirect(`/tournaments/${id}`)
             }}
           >
             <button
@@ -243,7 +254,12 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             <ConfirmActionButton
               action={async () => {
                 "use server"
-                await completeTournament(id)
+                try {
+                  await completeTournament(id)
+                } catch (e) {
+                  console.error("Errore conclusione torneo:", e)
+                }
+                redirect(`/tournaments/${id}`)
               }}
               label="Concludi Torneo"
               confirmLabel="Conferma — Concludi Torneo"
