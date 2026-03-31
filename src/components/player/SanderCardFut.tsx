@@ -29,8 +29,18 @@ interface SanderCardFutProps {
 /*  Constants                                                                  */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
-const SHADOW = "1px 1.5px 0px rgba(0,0,0,0.9), -0.5px -0.5px 0.2px rgba(255,255,255,0.4)"
+const SHADOW = "0.5px 0.5px 0px rgba(255,255,255,0.1), -0.5px -0.5px 0px rgba(0,0,0,0.6)"
 const FONT = "'Chakra Petch', sans-serif"
+
+/* ──────────────────────────────────────────────────────────────────────────── */
+/*  Rating → text color (dark engraved metallic per tier)                      */
+/* ──────────────────────────────────────────────────────────────────────────── */
+
+function getTextColor(glicko2: number): string {
+  if (glicko2 >= 2000) return "#5e3a00"  // Gold tiers — deep burnt gold/brass
+  if (glicko2 >= 1500) return "#2d2d2d"  // Silver tiers — dark gunmetal
+  return "#4a2c1d"                        // Bronze tiers — dark burned bronze
+}
 
 /* ──────────────────────────────────────────────────────────────────────────── */
 /*  Rating → frame template mapping                                            */
@@ -88,6 +98,7 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
   const glicko = Math.round(playerData.glicko2)
   const frame = getFrameTemplate(glicko)
   const roleAbbr = playerData.role === "DIFENSORE" ? "DIF" : "MUR"
+  const textColor = getTextColor(glicko)
 
   return (
     <>
@@ -150,10 +161,8 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
             left: "22.5%",
             zIndex: 20,
             fontFamily: FONT,
-            letterSpacing: "0.08em",
-            background: "linear-gradient(180deg, #FFFFFF 0%, #E5E7EB 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
+            letterSpacing: "0.05em",
+            color: textColor,
             textShadow: SHADOW,
           }}
         >
@@ -175,13 +184,14 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
 
         {/* Role — Row 6.5, Col 4.5, horizontal */}
         <span
-          className="absolute font-bold uppercase text-white"
+          className="absolute font-bold uppercase"
           style={{
             top: "32.5%",
             left: "22.5%",
             fontSize: "10px",
             zIndex: 20,
             fontFamily: FONT,
+            color: textColor,
             textShadow: SHADOW,
           }}
         >
@@ -199,10 +209,8 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
             width: "40%",
             zIndex: 20,
             fontFamily: FONT,
-            letterSpacing: "0.08em",
-            background: "linear-gradient(180deg, #FFFFFF 0%, #E5E7EB 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
+            letterSpacing: "0.05em",
+            color: textColor,
             textShadow: SHADOW,
           }}
         >
@@ -219,10 +227,8 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
               left,
               zIndex: 20,
               fontFamily: FONT,
-              letterSpacing: "0.08em",
-              background: "linear-gradient(180deg, #FFFFFF 0%, #E5E7EB 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
+              letterSpacing: "0.05em",
+              color: textColor,
               textShadow: SHADOW,
             }}
           >
