@@ -80,10 +80,10 @@ function FlagIcon({ code }: { code: string }) {
 const STAT_POSITIONS: { key: keyof PlayerCardData["stats"]; left: string }[] = [
   { key: "att", left: "27.5%" },     // Col 5.5
   { key: "dif", left: "35.625%" },   // Col 7.125
-  { key: "ric", left: "44.375%" },   // Col 8.875
+  { key: "ric", left: "43.75%" },    // Col 8.75
   { key: "mur", left: "51.875%" },   // Col 10.375
   { key: "alz", left: "60%" },       // Col 12.0
-  { key: "sta", left: "68.75%" },    // Col 13.75
+  { key: "sta", left: "68.125%" },   // Col 13.625
 ]
 
 /* ──────────────────────────────────────────────────────────────────────────── */
@@ -97,7 +97,7 @@ const STAT_POSITIONS: { key: keyof PlayerCardData["stats"]; left: string }[] = [
 export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
   const glicko = Math.round(playerData.glicko2)
   const frame = getFrameTemplate(glicko)
-  const roleAbbr = playerData.role === "DIFENSORE" ? "DIF" : "MUR"
+  const roleAbbr = playerData.stats.mur > playerData.stats.dif ? "MUR" : "DIF"
   const textColor = getTextColor(glicko)
 
   return (
@@ -173,7 +173,7 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
         <div
           className="absolute overflow-hidden rounded-[2px]"
           style={{
-            top: "25%",
+            top: "22.5%",
             left: "22.5%",
             width: "8%",
             zIndex: 20,
@@ -186,7 +186,7 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
         <span
           className="absolute font-bold uppercase"
           style={{
-            top: "32.5%",
+            top: "30%",
             left: "22.5%",
             fontSize: "10px",
             zIndex: 20,
@@ -205,7 +205,7 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
             top: "51.25%",
             whiteSpace: "nowrap",
             overflow: "hidden",
-            left: "32.5%",
+            left: "30%",
             width: "40%",
             zIndex: 20,
             fontFamily: FONT,
@@ -223,7 +223,7 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
             key={key}
             className="absolute text-sm font-bold leading-none"
             style={{
-              top: "70%",
+              top: "69.375%",
               left,
               zIndex: 20,
               fontFamily: FONT,
