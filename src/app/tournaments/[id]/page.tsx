@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/tournament/StatusBadge"
 import { LiveDashboard } from "@/components/tournament/LiveDashboard"
 import { ConfirmActionButton } from "@/components/tournament/ConfirmActionButton"
 import { ChiceceDashboard } from "@/components/tournament/ChiceceDashboard"
+import { TeamPairingEditor } from "@/components/tournament/TeamPairingEditor"
 import { ShareButton } from "@/components/ui/ShareButton"
 import { formatDate } from "@/lib/utils"
 import { redirect } from "next/navigation"
@@ -188,32 +189,45 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
         <ShareButton path={`/tournaments/${id}`} title={tournament.name} text={`Unisciti al torneo "${tournament.name}" su SANDER 🏐`} />
       </div>
 
-      {/* Draft — start action */}
+      {/* Draft — pairing editor + start action */}
       {tournament.status === "DRAFT" && (
-        <div className="mx-4 mb-4 rounded-2xl bg-[var(--surface-1)] p-4">
-          <p className="mb-3 text-sm text-[var(--muted-text)]">
-            Torneo in bozza con {tournament.registrations.length} giocatori registrati.
-          </p>
-          <form
-            action={async () => {
-              "use server"
-              try {
-                await startTournament(id)
-              } catch (e) {
-                console.error("Errore avvio torneo:", e)
-              }
-              redirect(`/tournaments/${id}`)
-            }}
-          >
-            <button
-              type="submit"
-              className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--live)] font-bold text-black transition-all active:scale-[0.98]"
+        <>
+          {/* Team pairing editor: only for fixed-team formats where pairing matters */}
+          {isAdmin &&
+            (tournament.type === "BRACKETS" ||
+              tournament.type === "DOUBLE_ELIMINATION" ||
+              tournament.type === "ROUND_ROBIN") && (
+              <TeamPairingEditor
+                tournamentId={id}
+                registrations={tournament.registrations}
+              />
+            )}
+
+          <div className="mx-4 mb-4 rounded-2xl bg-[var(--surface-1)] p-4">
+            <p className="mb-3 text-sm text-[var(--muted-text)]">
+              Torneo in bozza con {tournament.registrations.length} giocatori registrati.
+            </p>
+            <form
+              action={async () => {
+                "use server"
+                try {
+                  await startTournament(id)
+                } catch (e) {
+                  console.error("Errore avvio torneo:", e)
+                }
+                redirect(`/tournaments/${id}`)
+              }}
             >
-              <Play className="h-5 w-5" aria-hidden="true" />
-              Avvia Torneo
-            </button>
-          </form>
-        </div>
+              <button
+                type="submit"
+                className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--live)] font-bold text-black transition-all active:scale-[0.98]"
+              >
+                <Play className="h-5 w-5" aria-hidden="true" />
+                Avvia Torneo
+              </button>
+            </form>
+          </div>
+        </>
       )}
 
       {tournament.status === "LIVE" && (

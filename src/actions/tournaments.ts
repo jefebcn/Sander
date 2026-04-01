@@ -83,6 +83,62 @@ export async function listTournaments() {
   })
 }
 
+export async function randomizePairings(tournamentId: string) {
+  await requireAdmin()
+
+  const regs = await db.tournamentRegistration.findMany({
+    where: { tournamentId },
+    orderBy: { seedPosition: "asc" },
+    select: { playerId: true },
+  })
+
+  // Fisher-Yates shuffle
+  const ids = regs.map((r) => r.playerId)
+  for (let i = ids.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[ids[i], ids[j]] = [ids[j], ids[i]]
+  }
+
+  await db.$transaction(
+    ids.map((playerId, i) =>
+      db.tournamentRegistration.update({
+        where: { tournamentId_playerId: { tournamentId, playerId } },
+        data: { seedPosition: i + 1 },
+      }),
+    ),
+  )
+
+  revalidatePath(`/tournaments/${tournamentId}`)
+}
+
+export async function swapPlayers(tournamentId: string, playerAId: string, playerBId: string) {
+  await requireAdmin()
+
+  const [regA, regB] = await Promise.all([
+    db.tournamentRegistration.findUniqueOrThrow({
+      where: { tournamentId_playerId: { tournamentId, playerId: playerAId } },
+      select: { seedPosition: true },
+    }),
+    db.tournamentRegistration.findUniqueOrThrow({
+      where: { tournamentId_playerId: { tournamentId, playerId: playerBId } },
+      select: { seedPosition: true },
+    }),
+  ])
+
+  await db.$transaction([
+    db.tournamentRegistration.update({
+      where: { tournamentId_playerId: { tournamentId, playerId: playerAId } },
+      data: { seedPosition: regB.seedPosition },
+    }),
+    db.tournamentRegistration.update({
+      where: { tournamentId_playerId: { tournamentId, playerId: playerBId } },
+      data: { seedPosition: regA.seedPosition },
+    }),
+  ])
+
+  revalidatePath(`/tournaments/${tournamentId}`)
+}
+
 export async function startTournament(tournamentId: string) {
   await requireAdmin()
   const tournament = await db.tournament.findUniqueOrThrow({
