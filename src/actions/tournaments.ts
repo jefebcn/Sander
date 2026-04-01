@@ -123,32 +123,46 @@ async function startKOTBTournament(
   const schedule = generateKOTBSchedule(playerIds, tournament.kotbTotalRounds ?? undefined)
 
   await db.$transaction(async (tx) => {
-    // Create all matches and standings atomically
-    for (const round of schedule.rounds) {
-      for (const match of round.matches) {
-        await tx.match.create({
-          data: {
-            tournamentId: tournament.id,
-            round: round.roundNumber,
-            matchNumber: match.matchNumber,
-            courtLabel: assignCourtLabel(
-              round.roundNumber,
-              match.matchNumber,
-              schedule.totalRounds,
-              tournament.numCourts,
-            ),
-            players: {
-              create: [
-                { playerId: match.teamA[0], team: 0 },
-                { playerId: match.teamA[1], team: 0 },
-                { playerId: match.teamB[0], team: 1 },
-                { playerId: match.teamB[1], team: 1 },
-              ],
-            },
-          },
-        })
-      }
+    // Batch create all matches in one round-trip
+    const matchRows = schedule.rounds.flatMap((round) =>
+      round.matches.map((match) => ({
+        tournamentId: tournament.id,
+        round: round.roundNumber,
+        matchNumber: match.matchNumber,
+        courtLabel: assignCourtLabel(
+          round.roundNumber,
+          match.matchNumber,
+          schedule.totalRounds,
+          tournament.numCourts,
+        ),
+      })),
+    )
+
+    const createdMatches = await tx.match.createManyAndReturn({
+      data: matchRows,
+      select: { id: true, round: true, matchNumber: true },
+    })
+
+    // Build round+matchNumber → id map
+    const matchIdMap = new Map<string, string>()
+    for (const m of createdMatches) {
+      matchIdMap.set(`${m.round}-${m.matchNumber}`, m.id)
     }
+
+    // Batch create all MatchPlayer rows in one round-trip
+    await tx.matchPlayer.createMany({
+      data: schedule.rounds.flatMap((round) =>
+        round.matches.flatMap((match) => {
+          const matchId = matchIdMap.get(`${round.roundNumber}-${match.matchNumber}`)!
+          return [
+            { matchId, playerId: match.teamA[0], team: 0 },
+            { matchId, playerId: match.teamA[1], team: 0 },
+            { matchId, playerId: match.teamB[0], team: 1 },
+            { matchId, playerId: match.teamB[1], team: 1 },
+          ]
+        }),
+      ),
+    })
 
     // Create standing rows (one per player, zeroed)
     await tx.tournamentStanding.createMany({
@@ -182,31 +196,43 @@ async function startRoundRobinTournament(
   const schedule = generateRoundRobinSchedule(playerIds)
 
   await db.$transaction(async (tx) => {
-    for (const round of schedule.rounds) {
-      for (const match of round.matches) {
-        await tx.match.create({
-          data: {
-            tournamentId: tournament.id,
-            round: round.roundNumber,
-            matchNumber: match.matchNumber,
-            courtLabel: assignCourtLabel(
-              round.roundNumber,
-              match.matchNumber,
-              schedule.totalRounds,
-              tournament.numCourts,
-            ),
-            players: {
-              create: [
-                { playerId: match.teamA[0], team: 0 },
-                { playerId: match.teamA[1], team: 0 },
-                { playerId: match.teamB[0], team: 1 },
-                { playerId: match.teamB[1], team: 1 },
-              ],
-            },
-          },
-        })
-      }
+    const matchRows = schedule.rounds.flatMap((round) =>
+      round.matches.map((match) => ({
+        tournamentId: tournament.id,
+        round: round.roundNumber,
+        matchNumber: match.matchNumber,
+        courtLabel: assignCourtLabel(
+          round.roundNumber,
+          match.matchNumber,
+          schedule.totalRounds,
+          tournament.numCourts,
+        ),
+      })),
+    )
+
+    const createdMatches = await tx.match.createManyAndReturn({
+      data: matchRows,
+      select: { id: true, round: true, matchNumber: true },
+    })
+
+    const matchIdMap = new Map<string, string>()
+    for (const m of createdMatches) {
+      matchIdMap.set(`${m.round}-${m.matchNumber}`, m.id)
     }
+
+    await tx.matchPlayer.createMany({
+      data: schedule.rounds.flatMap((round) =>
+        round.matches.flatMap((match) => {
+          const matchId = matchIdMap.get(`${round.roundNumber}-${match.matchNumber}`)!
+          return [
+            { matchId, playerId: match.teamA[0], team: 0 },
+            { matchId, playerId: match.teamA[1], team: 0 },
+            { matchId, playerId: match.teamB[0], team: 1 },
+            { matchId, playerId: match.teamB[1], team: 1 },
+          ]
+        }),
+      ),
+    })
 
     await tx.tournamentStanding.createMany({
       data: playerIds.map((playerId) => ({
@@ -247,10 +273,7 @@ async function startDoubleEliminationTournament(
     0,
   )
 
-  const tempIdToDbId = new Map<string, string>()
-
   await db.$transaction(async (tx) => {
-    // Create matches ordered: WB (highest round first), LB (round asc), GF last
     const wbMatches = [...deMatches.filter((m) => m.bracketSection === "WB")].sort(
       (a, b) => b.round - a.round,
     )
@@ -260,17 +283,16 @@ async function startDoubleEliminationTournament(
     const gfMatches = deMatches.filter((m) => m.bracketSection === "GF")
     const ordered = [...wbMatches, ...lbMatches, ...gfMatches]
 
-    for (const dm of ordered) {
-      // Sequential round for court label (WB uses countdown → convert)
-      const seqRound =
-        dm.bracketSection === "WB"
-          ? wbTotalRounds - dm.round + 1
-          : dm.bracketSection === "LB"
-            ? dm.round
-            : wbTotalRounds + 99 // GF comes last, wave = PM always
-
-      const created = await tx.match.create({
-        data: {
+    // Batch create all matches (nextMatchId / loserNextMatchId fixed up below)
+    const createdMatches = await tx.match.createManyAndReturn({
+      data: ordered.map((dm) => {
+        const seqRound =
+          dm.bracketSection === "WB"
+            ? wbTotalRounds - dm.round + 1
+            : dm.bracketSection === "LB"
+              ? dm.round
+              : wbTotalRounds + 99
+        return {
           tournamentId: tournament.id,
           round: dm.round,
           matchNumber: dm.matchNumber,
@@ -280,38 +302,58 @@ async function startDoubleEliminationTournament(
             : assignCourtLabel(seqRound, dm.matchNumber, wbTotalRounds + 2, tournament.numCourts),
           isBye: dm.isBye,
           isCompleted: dm.isBye,
-          loserNextMatchId: null,   // fixed up below
           loserNextMatchSlot: dm.loserNextMatchSlot,
-          nextMatchId: null,        // fixed up below
           nextMatchSlot: dm.nextMatchSlot,
-          players:
-            dm.isBye || (!dm.teamA && !dm.teamB)
-              ? undefined
-              : {
-                  create: [
-                    ...(dm.teamA?.playerIds ?? []).map((pid) => ({ playerId: pid, team: 0 })),
-                    ...(dm.teamB?.playerIds ?? []).map((pid) => ({ playerId: pid, team: 1 })),
-                  ],
-                },
-        },
-      })
-      tempIdToDbId.set(dm.tempId, created.id)
+        }
+      }),
+      select: { id: true, round: true, matchNumber: true, bracketSection: true },
+    })
+
+    // Build tempId → dbId map via section+round+matchNumber
+    const sectionRoundMatchKey = (section: string | null, round: number, mn: number) =>
+      `${section}-${round}-${mn}`
+    const keyToId = new Map<string, string>()
+    for (const m of createdMatches) {
+      keyToId.set(sectionRoundMatchKey(m.bracketSection, m.round, m.matchNumber), m.id)
+    }
+    const tempIdToDbId = new Map<string, string>()
+    for (const dm of deMatches) {
+      tempIdToDbId.set(
+        dm.tempId,
+        keyToId.get(sectionRoundMatchKey(dm.bracketSection, dm.round, dm.matchNumber))!,
+      )
     }
 
-    // Fix up nextMatchId and loserNextMatchId cross-references
-    for (const dm of ordered) {
-      const dbId = tempIdToDbId.get(dm.tempId)!
-      const updates: { nextMatchId?: string | null; loserNextMatchId?: string | null } = {}
-      if (dm.nextMatchTempId) {
-        updates.nextMatchId = tempIdToDbId.get(dm.nextMatchTempId) ?? null
-      }
-      if (dm.loserNextMatchTempId) {
-        updates.loserNextMatchId = tempIdToDbId.get(dm.loserNextMatchTempId) ?? null
-      }
-      if (Object.keys(updates).length > 0) {
-        await tx.match.update({ where: { id: dbId }, data: updates })
-      }
-    }
+    // Batch create all MatchPlayer rows
+    await tx.matchPlayer.createMany({
+      data: ordered
+        .filter((dm) => !dm.isBye && (dm.teamA || dm.teamB))
+        .flatMap((dm) => [
+          ...(dm.teamA?.playerIds ?? []).map((pid) => ({
+            matchId: tempIdToDbId.get(dm.tempId)!,
+            playerId: pid,
+            team: 0,
+          })),
+          ...(dm.teamB?.playerIds ?? []).map((pid) => ({
+            matchId: tempIdToDbId.get(dm.tempId)!,
+            playerId: pid,
+            team: 1,
+          })),
+        ]),
+    })
+
+    // Fix cross-references in parallel
+    await Promise.all(
+      ordered
+        .filter((dm) => dm.nextMatchTempId || dm.loserNextMatchTempId)
+        .map((dm) => {
+          const updates: { nextMatchId?: string; loserNextMatchId?: string } = {}
+          if (dm.nextMatchTempId) updates.nextMatchId = tempIdToDbId.get(dm.nextMatchTempId)!
+          if (dm.loserNextMatchTempId)
+            updates.loserNextMatchId = tempIdToDbId.get(dm.loserNextMatchTempId)!
+          return tx.match.update({ where: { id: tempIdToDbId.get(dm.tempId)! }, data: updates })
+        }),
+    )
 
     await tx.tournamentStanding.createMany({
       data: playerIds.map((playerId) => ({
@@ -338,7 +380,6 @@ async function startBracketTournament(
   tournament: { id: string; numCourts: number },
   playerIds: string[],
 ) {
-  // For brackets, players are paired into teams by seed order (pair 1+2, 3+4, etc.)
   const teams = []
   for (let i = 0; i < playerIds.length; i += 2) {
     if (playerIds[i + 1]) {
@@ -347,23 +388,16 @@ async function startBracketTournament(
   }
 
   const bracketMatches = generateBracket(teams)
-
-  // Map tempId → created match ID
-  const tempIdToDbId = new Map<string, string>()
-
-  // Brackets use countdown rounds (highest = first). Compute sequential round for court labels.
   const maxRound = bracketMatches.reduce((m, bm) => Math.max(m, bm.round), 0)
   const totalBracketRounds = maxRound
+  const sorted = [...bracketMatches].sort((a, b) => b.round - a.round)
 
   await db.$transaction(async (tx) => {
-    // Create matches in round order (highest round first = first round)
-    const sorted = [...bracketMatches].sort((a, b) => b.round - a.round)
-
-    for (const bm of sorted) {
-      // Convert countdown round to sequential (1 = first played, totalBracketRounds = final)
-      const seqRound = maxRound - bm.round + 1
-      const created = await tx.match.create({
-        data: {
+    // Batch create all matches (without nextMatchId — fixed up below)
+    const createdMatches = await tx.match.createManyAndReturn({
+      data: sorted.map((bm) => {
+        const seqRound = maxRound - bm.round + 1
+        return {
           tournamentId: tournament.id,
           round: bm.round,
           matchNumber: bm.matchNumber,
@@ -372,34 +406,53 @@ async function startBracketTournament(
             : assignCourtLabel(seqRound, bm.matchNumber, totalBracketRounds, tournament.numCourts),
           isBye: bm.isBye,
           isCompleted: bm.isBye,
-          nextMatchId: bm.nextMatchTempId
-            ? tempIdToDbId.get(bm.nextMatchTempId) ?? null
-            : null,
           nextMatchSlot: bm.nextMatchSlot,
-          players: bm.isBye
-            ? undefined
-            : {
-                create: [
-                  ...(bm.teamA?.playerIds ?? []).map((pid) => ({ playerId: pid, team: 0 })),
-                  ...(bm.teamB?.playerIds ?? []).map((pid) => ({ playerId: pid, team: 1 })),
-                ],
-              },
-        },
-      })
-      tempIdToDbId.set(bm.tempId, created.id)
+        }
+      }),
+      select: { id: true, round: true, matchNumber: true },
+    })
+
+    // Build tempId → dbId map via round+matchNumber
+    const roundMatchKey = (round: number, matchNumber: number) => `${round}-${matchNumber}`
+    const roundMatchToId = new Map<string, string>()
+    for (const m of createdMatches) {
+      roundMatchToId.set(roundMatchKey(m.round, m.matchNumber), m.id)
+    }
+    const tempIdToDbId = new Map<string, string>()
+    for (const bm of bracketMatches) {
+      tempIdToDbId.set(bm.tempId, roundMatchToId.get(roundMatchKey(bm.round, bm.matchNumber))!)
     }
 
-    // Fix nextMatchId references (they were null during creation since we build bottom-up)
-    for (const bm of sorted) {
-      if (bm.nextMatchTempId) {
-        await tx.match.update({
-          where: { id: tempIdToDbId.get(bm.tempId)! },
-          data: { nextMatchId: tempIdToDbId.get(bm.nextMatchTempId) ?? null },
-        })
-      }
-    }
+    // Batch create all MatchPlayer rows
+    await tx.matchPlayer.createMany({
+      data: bracketMatches
+        .filter((bm) => !bm.isBye)
+        .flatMap((bm) => [
+          ...(bm.teamA?.playerIds ?? []).map((pid) => ({
+            matchId: tempIdToDbId.get(bm.tempId)!,
+            playerId: pid,
+            team: 0,
+          })),
+          ...(bm.teamB?.playerIds ?? []).map((pid) => ({
+            matchId: tempIdToDbId.get(bm.tempId)!,
+            playerId: pid,
+            team: 1,
+          })),
+        ]),
+    })
 
-    // Standing rows per unique player
+    // Fix nextMatchId references in parallel
+    await Promise.all(
+      bracketMatches
+        .filter((bm) => bm.nextMatchTempId)
+        .map((bm) =>
+          tx.match.update({
+            where: { id: tempIdToDbId.get(bm.tempId)! },
+            data: { nextMatchId: tempIdToDbId.get(bm.nextMatchTempId!)! },
+          }),
+        ),
+    )
+
     await tx.tournamentStanding.createMany({
       data: playerIds.map((playerId) => ({
         tournamentId: tournament.id,
@@ -457,26 +510,36 @@ async function startChiceceTournament(
   const schedule = generateChiceceGroupSchedule(playerIds, tournament.chiceceMatchCount)
 
   await db.$transaction(async (tx) => {
-    for (const round of schedule) {
-      for (const match of round.matches) {
-        await tx.match.create({
-          data: {
-            tournamentId: tournament.id,
-            round: round.roundNumber,
-            matchNumber: match.matchNumber,
-            bracketSection: "GROUP",
-            players: {
-              create: [
-                { playerId: match.teamA[0], team: 0 },
-                { playerId: match.teamA[1], team: 0 },
-                { playerId: match.teamB[0], team: 1 },
-                { playerId: match.teamB[1], team: 1 },
-              ],
-            },
-          },
-        })
-      }
+    const createdMatches = await tx.match.createManyAndReturn({
+      data: schedule.flatMap((round) =>
+        round.matches.map((match) => ({
+          tournamentId: tournament.id,
+          round: round.roundNumber,
+          matchNumber: match.matchNumber,
+          bracketSection: "GROUP",
+        })),
+      ),
+      select: { id: true, round: true, matchNumber: true },
+    })
+
+    const matchIdMap = new Map<string, string>()
+    for (const m of createdMatches) {
+      matchIdMap.set(`${m.round}-${m.matchNumber}`, m.id)
     }
+
+    await tx.matchPlayer.createMany({
+      data: schedule.flatMap((round) =>
+        round.matches.flatMap((match) => {
+          const matchId = matchIdMap.get(`${round.roundNumber}-${match.matchNumber}`)!
+          return [
+            { matchId, playerId: match.teamA[0], team: 0 },
+            { matchId, playerId: match.teamA[1], team: 0 },
+            { matchId, playerId: match.teamB[0], team: 1 },
+            { matchId, playerId: match.teamB[1], team: 1 },
+          ]
+        }),
+      ),
+    })
 
     await tx.tournament.update({
       where: { id: tournament.id },

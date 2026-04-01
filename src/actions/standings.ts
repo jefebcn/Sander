@@ -33,10 +33,13 @@ export async function getTournamentDashboard(tournamentId: string) {
     }),
   ])
 
+  const isCountdownType =
+    tournament.type === "BRACKETS" || tournament.type === "DOUBLE_ELIMINATION"
+
   const currentRound = allMatches
     .filter((m) => !m.isCompleted && !m.isBye)
     .map((m) => m.round)
-    .sort((a, b) => a - b)[0]
+    .sort((a, b) => (isCountdownType ? b - a : a - b))[0]
 
   const currentRoundMatches = allMatches.filter(
     (m) => m.round === currentRound && !m.isBye,
@@ -49,6 +52,25 @@ export async function getTournamentDashboard(tournamentId: string) {
   const completedCount = allMatches.filter((m) => m.isCompleted).length
   const totalCount = allMatches.filter((m) => !m.isBye).length
 
+  // Build rounds array for bracket-style view
+  const roundSet = new Set<number>()
+  for (const m of allMatches) {
+    if (!m.isBye) roundSet.add(m.round as number)
+  }
+  const roundNumbers = Array.from(roundSet).sort(
+    (a, b) => (isCountdownType ? b - a : a - b),
+  )
+
+  const rounds = roundNumbers.map((r) => {
+    const matches = allMatches.filter((m) => m.round === r && !m.isBye)
+    return {
+      round: r,
+      matches,
+      completedCount: matches.filter((m) => m.isCompleted).length,
+      totalCount: matches.length,
+    }
+  })
+
   return {
     tournament,
     standings,
@@ -57,5 +79,6 @@ export async function getTournamentDashboard(tournamentId: string) {
     completedCount,
     totalCount,
     currentRound,
+    rounds,
   }
 }
