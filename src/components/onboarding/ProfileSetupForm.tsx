@@ -2,7 +2,6 @@
 
 import { useState, useRef, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { signOut } from "next-auth/react"
 import { ChevronLeft, Camera, ChevronRight, X } from "lucide-react"
 import { saveProfile } from "@/actions/profile"
 import { cn } from "@/lib/utils"
@@ -179,17 +178,28 @@ function FormRow({
 
 // ─── Main form ─────────────────────────────────────────────────────────────────
 
-export function ProfileSetupForm() {
+interface InitialData {
+  firstName:   string
+  lastName:    string
+  birthDate:   string
+  gender:      string
+  nationality: string
+  avatarUrl:   string | null
+}
+
+export function ProfileSetupForm({ initialData }: { initialData?: InitialData }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(initialData?.avatarUrl ?? null)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
-  const [firstName, setFirstName] = useState("")
-  const [lastName, setLastName] = useState("")
-  const [birthDate, setBirthDate] = useState("")
-  const [gender, setGender] = useState<Gender | "">("")
-  const [nationality, setNationality] = useState("")
+  const [firstName, setFirstName] = useState(initialData?.firstName ?? "")
+  const [lastName, setLastName] = useState(initialData?.lastName ?? "")
+  const [birthDate, setBirthDate] = useState(initialData?.birthDate ?? "")
+  const [gender, setGender] = useState<Gender | "">(
+    (initialData?.gender as Gender | "") ?? ""
+  )
+  const [nationality, setNationality] = useState(initialData?.nationality ?? "")
   const [nationalitySearch, setNationalitySearch] = useState("")
   const [error, setError] = useState<string | null>(null)
 
@@ -264,10 +274,7 @@ export function ProfileSetupForm() {
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 3.5rem)" }}
       >
         <button
-          onClick={() => {
-            localStorage.removeItem("sander_onboarded")
-            signOut({ callbackUrl: "/" })
-          }}
+          onClick={() => router.back()}
           aria-label="Indietro"
           className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2a2a2a] text-white transition-colors active:bg-[#333]"
         >
