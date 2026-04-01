@@ -26,6 +26,23 @@ interface SanderCardFutProps {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────── */
+/*  Constants                                                                  */
+/* ──────────────────────────────────────────────────────────────────────────── */
+
+const SHADOW = "0.5px 0.5px 0px rgba(255,255,255,0.1), -0.5px -0.5px 0px rgba(0,0,0,0.6)"
+const FONT = "'Chakra Petch', sans-serif"
+
+/* ──────────────────────────────────────────────────────────────────────────── */
+/*  Rating → text color (dark engraved metallic per tier)                      */
+/* ──────────────────────────────────────────────────────────────────────────── */
+
+function getTextColor(glicko2: number): string {
+  if (glicko2 >= 2000) return "#5e3a00"  // Gold tiers — deep burnt gold/brass
+  if (glicko2 >= 1500) return "#2d2d2d"  // Silver tiers — dark gunmetal
+  return "#4a2c1d"                        // Bronze tiers — dark burned bronze
+}
+
+/* ──────────────────────────────────────────────────────────────────────────── */
 /*  Rating → frame template mapping                                            */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
@@ -56,170 +73,170 @@ function FlagIcon({ code }: { code: string }) {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────── */
-/*  Text shadow for embossed look on metallic backgrounds                      */
+/*  Stat positioning: each stat at a fixed column (20×20 grid units)           */
+/*  ATT=6.75  DIF=8  RIC=9.75  MUR=11.75  ALZ=13  STA=14.75                  */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
-const SHADOW = "2px 2px 3px rgba(0,0,0,0.8)"
+const STAT_POSITIONS: { key: keyof PlayerCardData["stats"]; left: string }[] = [
+  { key: "att", left: "27.5%" },     // Col 5.5
+  { key: "dif", left: "35.625%" },   // Col 7.125
+  { key: "ric", left: "43.75%" },    // Col 8.75
+  { key: "mur", left: "51.875%" },   // Col 10.375
+  { key: "alz", left: "60%" },       // Col 12.0
+  { key: "sta", left: "68.125%" },   // Col 13.625
+]
 
 /* ──────────────────────────────────────────────────────────────────────────── */
-/*  Stat keys in order                                                         */
+/*  Component: 3-layer sandwich (square 2000×2000 assets)                      */
+/*  Layer 0 (Z-0):  Player photo — visible through PNG aperture                */
+/*  Layer 1 (Z-10): PNG template frame — object-contain, never distorted       */
+/*  Layer 2 (Z-20): All data/text — absolute positioned per 20×20 grid         */
+/*  Debug  (Z-50):  20×20 calibration grid (temporary)                         */
 /* ──────────────────────────────────────────────────────────────────────────── */
-
-const STAT_KEYS: (keyof PlayerCardData["stats"])[] = ["att", "dif", "ric", "mur", "alz", "sta"]
-
-/* ──────────────────────────────────────────────────────────────────────────── */
-/*  Component: 3-layer sandwich                                                */
-/*  Layer 0: Profile photo — absolute inset-0 z-0                              */
-/*  Layer 1: PNG frame — absolute inset-0 z-10                                 */
-/*  Layer 2: Data text — absolute z-20                                         */
-/* ──────────────────────────────────────────────────────────────────────────── */
-
-const SHIELD_CLIP =
-  "polygon(50% 0%, 100% 0%, 100% 75%, 50% 100%, 0% 75%, 0% 0%)"
 
 export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
   const glicko = Math.round(playerData.glicko2)
   const frame = getFrameTemplate(glicko)
+  const roleAbbr = playerData.stats.mur > playerData.stats.dif ? "MUR" : "DIF"
+  const textColor = getTextColor(glicko)
 
   return (
-    <div
-      className={cn(
-        "relative mx-auto w-full max-w-[400px] select-none overflow-hidden",
-        className,
-      )}
-      style={{ aspectRatio: "3.2 / 4.5", clipPath: SHIELD_CLIP }}
-    >
-      {/* ── LAYER 0 — Profile photo ──────────────────────────────── */}
-      {playerData.imageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={playerData.imageUrl}
-          alt={playerData.name}
-          className="absolute inset-0 h-full w-full object-cover object-top"
-          style={{ zIndex: 0 }}
-        />
-      ) : (
-        <div
-          className="absolute inset-0 flex items-center justify-center text-5xl font-black"
-          style={{ zIndex: 0, background: "#222", color: "rgba(255,255,255,.5)" }}
-        >
-          {playerData.name.slice(0, 2).toUpperCase()}
-        </div>
-      )}
-
-      {/* ── LAYER 1 — PNG frame template ─────────────────────────── */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={frame}
-        alt="Card frame"
-        className="pointer-events-none absolute inset-0 h-full w-full"
-        style={{ zIndex: 10 }}
+    <>
+      {/* Google Fonts: Chakra Petch 700 */}
+      {/* eslint-disable-next-line @next/next/no-css-tags */}
+      <link
+        href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@700&display=swap"
+        rel="stylesheet"
       />
 
-      {/* ── LAYER 2 — Data elements (all absolute z-20) ──────────── */}
-
-      {/* Role — vertical, left side */}
-      <span
-        className="absolute whitespace-nowrap text-[0.6rem] font-bold uppercase tracking-[0.3em] text-white"
-        style={{
-          top: "23%",
-          left: "7%",
-          zIndex: 20,
-          transform: "rotate(-90deg)",
-          transformOrigin: "left center",
-          textShadow: SHADOW,
-        }}
-      >
-        {playerData.role}
-      </span>
-
-      {/* Rating — top right */}
-      <span
-        className="absolute text-xl font-bold leading-none text-white"
-        style={{
-          top: "11%",
-          right: "13%",
-          zIndex: 20,
-          textShadow: SHADOW,
-        }}
-      >
-        {glicko}
-      </span>
-
-      {/* Flag — below rating */}
       <div
-        className="absolute overflow-hidden rounded-[2px]"
-        style={{
-          top: "25%",
-          right: "14%",
-          width: "15%",
-          zIndex: 20,
-        }}
+        className={cn(
+          "relative mx-auto w-full max-w-[400px] select-none overflow-hidden bg-transparent",
+          className,
+        )}
+        style={{ aspectRatio: "1 / 1" }}
       >
-        <FlagIcon code={playerData.nationalityCode} />
-      </div>
+        {/* ── Z-0 — Player photo (rows 3–10, cols 7–15) ─────────────── */}
+        {playerData.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={playerData.imageUrl}
+            alt={playerData.name}
+            className="absolute object-cover object-center"
+            style={{ zIndex: 0, top: "15%", left: "35%", width: "40%", height: "35%" }}
+          />
+        ) : (
+          <div
+            className="absolute flex items-center justify-center text-3xl font-black"
+            style={{
+              zIndex: 0,
+              top: "15%",
+              left: "35%",
+              width: "40%",
+              height: "35%",
+              fontFamily: FONT,
+              color: "rgba(255,255,255,.5)",
+            }}
+          >
+            {playerData.name.slice(0, 2).toUpperCase()}
+          </div>
+        )}
 
-      {/* Name — center horizontal */}
-      <span
-        className="absolute w-full text-center text-sm font-bold uppercase tracking-wider text-white"
-        style={{
-          top: "56%",
-          left: 0,
-          zIndex: 20,
-          textShadow: SHADOW,
-        }}
-      >
-        {playerData.name}
-      </span>
+        {/* ── Z-10 — PNG template frame ──────────────────────────────── */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={frame}
+          alt="Card frame"
+          className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+          style={{ zIndex: 10 }}
+        />
 
-      {/* Stats — bottom row */}
-      <div
-        className="absolute flex justify-around"
-        style={{
-          bottom: "19%",
-          left: "6%",
-          width: "88%",
-          zIndex: 20,
-        }}
-      >
-        {STAT_KEYS.map((key) => (
+        {/* ── Z-20 — Data elements ───────────────────────────────────── */}
+
+        {/* Glicko Rating — Row 3.5, Col 4.5 */}
+        <span
+          className="absolute text-sm font-bold uppercase leading-none"
+          style={{
+            top: "17.5%",
+            left: "22.5%",
+            zIndex: 20,
+            fontFamily: FONT,
+            letterSpacing: "0.05em",
+            color: textColor,
+            textShadow: SHADOW,
+          }}
+        >
+          {glicko}
+        </span>
+
+        {/* Flag — Row 5, Col 4.5 */}
+        <div
+          className="absolute overflow-hidden rounded-[2px]"
+          style={{
+            top: "22.5%",
+            left: "22.5%",
+            width: "8%",
+            zIndex: 20,
+          }}
+        >
+          <FlagIcon code={playerData.nationalityCode} />
+        </div>
+
+        {/* Role — Row 6.5, Col 4.5, horizontal */}
+        <span
+          className="absolute font-bold uppercase"
+          style={{
+            top: "30%",
+            left: "22.5%",
+            fontSize: "10px",
+            zIndex: 20,
+            fontFamily: FONT,
+            color: textColor,
+            textShadow: SHADOW,
+          }}
+        >
+          {roleAbbr}
+        </span>
+
+        {/* Player Name — Row 10.25, centered Col 6.5–14.5 */}
+        <span
+          className="absolute text-center text-base font-bold uppercase"
+          style={{
+            top: "51.25%",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            left: "30%",
+            width: "40%",
+            zIndex: 20,
+            fontFamily: FONT,
+            letterSpacing: "0.05em",
+            color: textColor,
+            textShadow: SHADOW,
+          }}
+        >
+          {playerData.name}
+        </span>
+
+        {/* Stats — Row 14, individually positioned */}
+        {STAT_POSITIONS.map(({ key, left }) => (
           <span
             key={key}
-            className="text-base font-bold leading-none text-white"
-            style={{ textShadow: SHADOW }}
+            className="absolute text-sm font-bold leading-none"
+            style={{
+              top: "69.375%",
+              left,
+              zIndex: 20,
+              fontFamily: FONT,
+              letterSpacing: "0.05em",
+              color: textColor,
+              textShadow: SHADOW,
+            }}
           >
             {playerData.stats[key]}
           </span>
         ))}
       </div>
-
-      {/* ── DEBUG GRID — 10×10 numbered overlay (Z-30) ───────────── */}
-      {/* TODO: Remove this grid once positioning is finalized */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ zIndex: 30 }}
-      >
-        {Array.from({ length: 10 }, (_, row) =>
-          Array.from({ length: 10 }, (_, col) => (
-            <div
-              key={`${row}-${col}`}
-              className="absolute flex items-center justify-center border text-[0.5rem] font-mono leading-none"
-              style={{
-                top: `${row * 10}%`,
-                left: `${col * 10}%`,
-                width: "10%",
-                height: "10%",
-                borderColor: "rgba(255,255,0,0.35)",
-                color: "rgba(255,255,0,0.7)",
-                background: "rgba(0,0,0,0.15)",
-              }}
-            >
-              {row},{col}
-            </div>
-          ))
-        )}
-      </div>
-    </div>
+    </>
   )
 }
 
