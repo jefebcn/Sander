@@ -255,6 +255,36 @@ export async function applyTournamentGlicko(tournamentId: string) {
   )
 }
 
+export async function replaceMatchPlayer(
+  matchId: string,
+  oldPlayerId: string | null,
+  newPlayerId: string,
+  team: number,
+) {
+  const session = await getCurrentSession()
+  if (!session?.user?.id) throw new Error("Non autenticato")
+  const isAdmin = ADMIN_EMAIL && session.user.email === ADMIN_EMAIL
+  if (!isAdmin) throw new Error("Solo l'amministratore può modificare i giocatori")
+
+  const match = await db.match.findUniqueOrThrow({
+    where: { id: matchId },
+    select: { tournamentId: true, isCompleted: true },
+  })
+
+  if (match.isCompleted) throw new Error("Partita già completata")
+
+  await db.$transaction(async (tx) => {
+    if (oldPlayerId) {
+      await tx.matchPlayer.deleteMany({ where: { matchId, playerId: oldPlayerId } })
+    }
+    // Safety: remove new player if already in match on wrong team
+    await tx.matchPlayer.deleteMany({ where: { matchId, playerId: newPlayerId } })
+    await tx.matchPlayer.create({ data: { matchId, playerId: newPlayerId, team } })
+  })
+
+  revalidatePath(`/tournaments/${match.tournamentId}`)
+}
+
 export async function getMatchesForRound(tournamentId: string, round: number) {
   return db.match.findMany({
     where: { tournamentId, round },

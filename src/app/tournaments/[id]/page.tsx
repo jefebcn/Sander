@@ -231,7 +231,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
       )}
 
       {tournament.status === "LIVE" && (
-        <LiveDashboard tournamentId={id} initialData={data} />
+        <LiveDashboard tournamentId={id} initialData={data} isAdmin={isAdmin} />
       )}
 
       {tournament.status === "COMPLETED" && (
