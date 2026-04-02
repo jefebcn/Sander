@@ -19,10 +19,10 @@ interface MatchCardProps {
   tournamentId: string
   readOnly?: boolean
   preview?: boolean
-  isAdmin?: boolean
+  canEditPlayers?: boolean
 }
 
-export function MatchCard({ match, tournamentId, readOnly, preview, isAdmin }: MatchCardProps) {
+export function MatchCard({ match, tournamentId, readOnly, preview, canEditPlayers }: MatchCardProps) {
   const qc = useQueryClient()
   const haptic = useHaptic()
   const [isPending, startTransition] = useTransition()
@@ -39,8 +39,8 @@ export function MatchCard({ match, tournamentId, readOnly, preview, isAdmin }: M
 
   const isCompleted = match.isCompleted
   const canEdit = !readOnly && !isCompleted && !preview
-  // Admin can edit player slots before match is completed
-  const canEditPlayers = !!isAdmin && !readOnly && !isCompleted
+  // Any authenticated user can edit player slots before match is completed
+  const canEditPlayerSlots = !!canEditPlayers && !readOnly && !isCompleted
 
   function handleSubmit() {
     haptic("success")
@@ -95,7 +95,7 @@ export function MatchCard({ match, tournamentId, readOnly, preview, isAdmin }: M
           <div className="flex-1 text-right">
             {teamA.length > 0 ? (
               teamA.map((p) =>
-                canEditPlayers ? (
+                canEditPlayerSlots ? (
                   <button
                     key={p.id}
                     type="button"
@@ -128,7 +128,7 @@ export function MatchCard({ match, tournamentId, readOnly, preview, isAdmin }: M
                   </p>
                 ),
               )
-            ) : canEditPlayers ? (
+            ) : canEditPlayerSlots ? (
               <button
                 type="button"
                 onClick={() => openPicker(null, 0)}
@@ -192,7 +192,7 @@ export function MatchCard({ match, tournamentId, readOnly, preview, isAdmin }: M
           <div className="flex-1">
             {teamB.length > 0 ? (
               teamB.map((p) =>
-                canEditPlayers ? (
+                canEditPlayerSlots ? (
                   <button
                     key={p.id}
                     type="button"
@@ -225,7 +225,7 @@ export function MatchCard({ match, tournamentId, readOnly, preview, isAdmin }: M
                   </p>
                 ),
               )
-            ) : canEditPlayers ? (
+            ) : canEditPlayerSlots ? (
               <button
                 type="button"
                 onClick={() => openPicker(null, 1)}

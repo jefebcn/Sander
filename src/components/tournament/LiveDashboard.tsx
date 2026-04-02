@@ -15,10 +15,10 @@ interface LiveDashboardProps {
   tournamentId: string
   initialData: DashboardData
   readOnly?: boolean
-  isAdmin?: boolean
+  canEditPlayers?: boolean
 }
 
-export function LiveDashboard({ tournamentId, initialData, readOnly, isAdmin }: LiveDashboardProps) {
+export function LiveDashboard({ tournamentId, initialData, readOnly, canEditPlayers }: LiveDashboardProps) {
   const { data, isRefetching } = useQuery({
     queryKey: ["dashboard", tournamentId],
     queryFn: () => getTournamentDashboard(tournamentId),
@@ -143,7 +143,7 @@ export function LiveDashboard({ tournamentId, initialData, readOnly, isAdmin }: 
                 match={match}
                 tournamentId={tournamentId}
                 readOnly={readOnly}
-                isAdmin={isAdmin}
+                canEditPlayers={canEditPlayers}
               />
             ))}
           </div>

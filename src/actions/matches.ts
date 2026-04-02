@@ -263,8 +263,6 @@ export async function replaceMatchPlayer(
 ) {
   const session = await getCurrentSession()
   if (!session?.user?.id) throw new Error("Non autenticato")
-  const isAdmin = ADMIN_EMAIL && session.user.email === ADMIN_EMAIL
-  if (!isAdmin) throw new Error("Solo l'amministratore può modificare i giocatori")
 
   const match = await db.match.findUniqueOrThrow({
     where: { id: matchId },
