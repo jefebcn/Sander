@@ -19,9 +19,15 @@ import { AdminRecalcStatsButton } from "@/components/profile/AdminRecalcStatsBut
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
 
 // ── Supporters ────────────────────────────────────────────────────────
-// Add entries here when the user provides photos and links.
-const SUPPORTERS: { name: string; image: string; href: string; tagline?: string }[] = [
-  // { name: "Nome attività", image: "/sponsors/nome.jpg", href: "https://...", tagline: "Slogan opzionale" },
+// Add entries here to display a new supporter banner.
+const SUPPORTERS: { name: string; image: string; icon: string; href: string; tagline?: string }[] = [
+  {
+    name: "LilloFind",
+    image: "/sponsors/lillofind-banner.png",
+    icon: "/sponsors/lillofind.png",
+    href: "https://jefebcn.github.io/lillofind/",
+    tagline: "Streetwear & Abbigliamento",
+  },
 ]
 
 // ── helpers ──────────────────────────────────────────────────────────
@@ -361,37 +367,34 @@ export default async function ProfilePage({ searchParams }: Props) {
             </p>
           </div>
 
-          {SUPPORTERS.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 pt-10 text-center">
-              <p className="text-[var(--muted-text)] text-sm">
-                I supporter verranno aggiunti presto.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {SUPPORTERS.map((s) => (
-                <a
-                  key={s.name}
-                  href={s.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex flex-col overflow-hidden rounded-2xl bg-[var(--surface-2)] active:opacity-75"
-                >
-                  {/* Banner image */}
-                  <div className="aspect-video w-full overflow-hidden bg-[var(--surface-1)]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={s.image} alt={s.name} className="h-full w-full object-cover" />
-                  </div>
-                  <div className="p-3">
-                    <p className="font-bold text-sm text-white truncate">{s.name}</p>
+          <div className="space-y-3">
+            {SUPPORTERS.map((s) => (
+              <a
+                key={s.name}
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-20 overflow-hidden rounded-2xl bg-[var(--surface-2)] active:opacity-75 transition-opacity"
+              >
+                {/* Banner image — left portion */}
+                <div className="relative h-full w-32 shrink-0 overflow-hidden bg-[var(--surface-1)]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={s.image} alt={s.name} className="h-full w-full object-cover object-top" />
+                </div>
+                {/* Info — right portion */}
+                <div className="flex min-w-0 flex-1 items-center gap-3 px-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={s.icon} alt="" className="h-10 w-10 shrink-0 rounded-xl object-cover" />
+                  <div className="min-w-0">
+                    <p className="font-black text-base text-white truncate">{s.name}</p>
                     {s.tagline && (
                       <p className="text-xs text-[var(--muted-text)] truncate">{s.tagline}</p>
                     )}
                   </div>
-                </a>
-              ))}
-            </div>
-          )}
+                </div>
+              </a>
+            ))}
+          </div>
         </div>
       )}
 
