@@ -2,7 +2,6 @@ export const dynamic = "force-dynamic"
 
 import Image from "next/image"
 import Link from "next/link"
-import dynamic from "next/dynamic"
 import { ChevronRight, ExternalLink, Sparkles, MapPin, Trophy, Shuffle } from "lucide-react"
 import { redirect } from "next/navigation"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
@@ -10,16 +9,7 @@ import { db } from "@/lib/db"
 import { ratingToDisplayLevel } from "@/lib/tournament/glicko2"
 import { getPersonalizedRecommendations } from "@/actions/recommendations"
 import { formatDate } from "@/lib/utils"
-
-// Client-only — loaded after hydration so they never block the initial paint
-const LevelUpCelebration = dynamic(
-  () => import("@/components/home/LevelUpCelebration").then((m) => m.LevelUpCelebration),
-  { ssr: false }
-)
-const VideoCarousel = dynamic(
-  () => import("@/components/home/VideoCarousel").then((m) => m.VideoCarousel),
-  { ssr: false }
-)
+import { ClientOnlyHomeWidgets } from "@/components/home/ClientOnlyHomeWidgets"
 
 export default async function Home() {
   const session = await getCurrentSession()
@@ -323,12 +313,6 @@ export default async function Home() {
               </div>
             )}
 
-            {/* ── Level up celebration (client, checks localStorage) ── */}
-            <LevelUpCelebration
-              currentLevel={fullPlayer.level}
-              playerName={fullPlayer.name}
-            />
-
             {/* ── Torneo in arrivo: Chicece ─────────────────────── */}
             {upcomingChicece && (
               <Link
@@ -358,13 +342,11 @@ export default async function Home() {
               </Link>
             )}
 
-            {/* ── Video carousel ────────────────────────────────── */}
-            <div className="flex flex-col gap-3">
-              <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
-                Video della community
-              </p>
-              <VideoCarousel />
-            </div>
+            {/* ── Video + level-up celebration (client-only, lazy) ── */}
+            <ClientOnlyHomeWidgets
+              currentLevel={fullPlayer.level}
+              playerName={fullPlayer.name}
+            />
 
             {/* ── Social section ────────────────────────────────── */}
             <div className="mt-1">

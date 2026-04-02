@@ -1,24 +1,11 @@
 import type { Metadata, Viewport } from "next"
 import { Geist } from "next/font/google"
 import "./globals.css"
-import dynamic from "next/dynamic"
 import { Providers } from "@/lib/providers"
 import { MobileNav } from "@/components/layout/MobileNav"
 import { Toaster } from "@/components/ui/Toaster"
-
-// Client-only components — loaded after hydration, not blocking initial render
-const OnboardingGate = dynamic(
-  () => import("@/components/onboarding/OnboardingGate").then((m) => m.OnboardingGate),
-  { ssr: false }
-)
-const CookieBanner = dynamic(
-  () => import("@/components/layout/CookieBanner").then((m) => m.CookieBanner),
-  { ssr: false }
-)
-const PWAInstallBanner = dynamic(
-  () => import("@/components/layout/PWAInstallBanner").then((m) => m.PWAInstallBanner),
-  { ssr: false }
-)
+import { OnboardingGate } from "@/components/onboarding/OnboardingGate"
+import { ClientOnlyBanners } from "@/components/layout/ClientOnlyBanners"
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -79,10 +66,9 @@ export default function RootLayout({
           <OnboardingGate />
           <main className="relative z-10 flex-1 pb-20">{children}</main>
           <MobileNav />
-          {/* Banners stacked just above the navbar */}
+          {/* Banners stacked just above the navbar — client-only, lazy loaded */}
           <div className="fixed bottom-[4.5rem] left-0 right-0 z-40 flex flex-col gap-2 pointer-events-none [&>*]:pointer-events-auto">
-            <PWAInstallBanner />
-            <CookieBanner />
+            <ClientOnlyBanners />
           </div>
           <Toaster />
         </Providers>
