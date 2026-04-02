@@ -79,12 +79,12 @@ function FlagIcon({ code }: { code: string }) {
 /* ──────────────────────────────────────────────────────────────────────────── */
 
 const STAT_POSITIONS: { key: keyof PlayerCardData["stats"]; left: string }[] = [
-  { key: "att", left: "27.5%" },     // Col 5.5
-  { key: "dif", left: "35.625%" },   // Col 7.125
-  { key: "ric", left: "43.75%" },    // Col 8.75
-  { key: "mur", left: "51.875%" },   // Col 10.375
-  { key: "alz", left: "60%" },       // Col 12.0
-  { key: "sta", left: "68.125%" },   // Col 13.625
+  { key: "att", left: "28.125%" },   // Col 5.625
+  { key: "dif", left: "36.25%" },    // Col 7.25
+  { key: "ric", left: "44.375%" },   // Col 8.875
+  { key: "mur", left: "52.5%" },     // Col 10.5
+  { key: "alz", left: "60.625%" },   // Col 12.125
+  { key: "sta", left: "68.75%" },    // Col 13.75
 ]
 
 /* ──────────────────────────────────────────────────────────────────────────── */
@@ -201,11 +201,11 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
           {roleAbbr}
         </span>
 
-        {/* Player Name — Row 10.375, Col 6.0–14.0 (auto-scale to fit) */}
+        {/* Player Name — Row 10.458, Col 6.0–14.0 (auto-scale to fit) */}
         <div
           className="absolute flex items-center justify-center"
           style={{
-            top: "51.875%",
+            top: "52.29%",
             left: "30%",
             width: "40%",
             containerType: "inline-size",
