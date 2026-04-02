@@ -169,7 +169,7 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
           {glicko}
         </span>
 
-        {/* Flag — Row 5, Col 4.5 */}
+        {/* Flag — Row 4.5, Col 4.5 */}
         <div
           className="absolute overflow-hidden rounded-[2px]"
           style={{
@@ -182,7 +182,7 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
           <FlagIcon code={playerData.nationalityCode} />
         </div>
 
-        {/* Role — Row 6.5, Col 4.5, horizontal */}
+        {/* Role — Row 6.0, Col 4.5 */}
         <span
           className="absolute font-bold uppercase"
           style={{
@@ -198,32 +198,39 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
           {roleAbbr}
         </span>
 
-        {/* Player Name — Row 10.25, centered Col 6.5–14.5 */}
-        <span
-          className="absolute text-center text-base font-bold uppercase"
+        {/* Player Name — Row 10.25, Col 6.0–14.0 (auto-scale to fit) */}
+        <div
+          className="absolute flex items-center justify-center"
           style={{
             top: "51.25%",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
             left: "30%",
             width: "40%",
             zIndex: 20,
-            fontFamily: FONT,
-            letterSpacing: "0.05em",
-            color: textColor,
-            textShadow: SHADOW,
           }}
         >
-          {playerData.name}
-        </span>
+          <span
+            className="font-bold uppercase text-center"
+            style={{
+              fontFamily: FONT,
+              fontSize: `clamp(0.65rem, ${playerData.name.length > 12 ? "2vw" : "2.8vw"}, 1.1rem)`,
+              whiteSpace: "nowrap",
+              letterSpacing: "0.04em",
+              color: textColor,
+              textShadow: SHADOW,
+              maxWidth: "100%",
+            }}
+          >
+            {playerData.name}
+          </span>
+        </div>
 
-        {/* Stats — Row 14, individually positioned */}
+        {/* Stats — Row 14.0 */}
         {STAT_POSITIONS.map(({ key, left }) => (
           <span
             key={key}
             className="absolute text-sm font-bold leading-none"
             style={{
-              top: "69.375%",
+              top: "70%",
               left,
               zIndex: 20,
               fontFamily: FONT,

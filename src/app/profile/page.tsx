@@ -7,6 +7,7 @@ import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { SanderCardFut, playerToCardData } from "@/components/player/SanderCardFut"
 import { StatPercentageEditor } from "@/components/player/StatPercentageEditor"
+import { ShareCardButton } from "@/components/player/ShareCardButton"
 import { SignOutButton } from "@/components/auth/SignOutButton"
 import { InviteTab } from "@/components/profile/InviteTab"
 import { APP_VERSION_DISPLAY } from "@/lib/appVersion"
@@ -202,6 +203,7 @@ export default async function ProfilePage({ searchParams }: Props) {
       {activeTab === "profilo" && (
         <div className="px-4 space-y-3">
           <SanderCardFut playerData={playerToCardData(fullPlayer)} />
+          <ShareCardButton playerData={playerToCardData(fullPlayer)} />
           <StatPercentageEditor
             glickoRating={fullPlayer.glickoRating}
             initial={{
