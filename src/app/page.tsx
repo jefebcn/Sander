@@ -11,6 +11,15 @@ import { getPersonalizedRecommendations } from "@/actions/recommendations"
 import { formatDate } from "@/lib/utils"
 import { ClientOnlyHomeWidgets } from "@/components/home/ClientOnlyHomeWidgets"
 
+function getMilestoneTitle(level: number): string {
+  if (level >= 50) return "Sand King"
+  if (level >= 20) return "Ace"
+  if (level >= 10) return "Spiker"
+  if (level >= 5)  return "Setter"
+  if (level >= 2)  return "Sand Digger"
+  return "Drop-In"
+}
+
 export default async function Home() {
   const session = await getCurrentSession()
   const player = await getCurrentPlayer()
@@ -131,6 +140,10 @@ export default async function Home() {
                   {fullPlayer.lastName ??
                     fullPlayer.name.split(" ").slice(1).join(" ")}
                 </p>
+                <span className="mt-1 inline-block rounded-full px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-wider"
+                  style={{ background: "rgba(201,243,29,0.15)", color: "var(--accent)" }}>
+                  {getMilestoneTitle(fullPlayer.level)}
+                </span>
               </div>
               {/* Level badge — tap to see how XP works */}
               <Link
