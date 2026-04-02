@@ -68,6 +68,13 @@ export async function listPlayers() {
   })
 }
 
+export async function checkHasPlayerProfile(): Promise<boolean> {
+  const session = await getCurrentSession()
+  if (!session?.user?.id) return false
+  const count = await db.player.count({ where: { userId: session.user.id } })
+  return count > 0
+}
+
 export async function getHeadToHeadStats(playerAId: string, playerBId: string) {
   // Find all completed tournament matches where BOTH players participated
   const matches = await db.match.findMany({

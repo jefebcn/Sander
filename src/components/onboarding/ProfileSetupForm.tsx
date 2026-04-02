@@ -256,6 +256,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
           avatarUrl,
         })
         localStorage.setItem("sander_onboarded", "1")
+        localStorage.setItem("sander_has_profile", "1")
         router.refresh()
         router.push("/")
       } catch (err) {
