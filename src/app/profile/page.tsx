@@ -38,9 +38,10 @@ const SUPPORTERS: { name: string; image?: string; icon?: string; href: string; t
   },
   {
     name: "Flexeno",
+    image: "/sponsors/flexeno.png",
+    icon: "/sponsors/flexeno.png",
     href: "https://flexenofitness.com/",
     tagline: "Fitness & Performance",
-    accentColor: "#f97316",
   },
 ]
 
