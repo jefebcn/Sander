@@ -15,6 +15,7 @@ import { getStreak } from "@/lib/streak"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
 import { AdminDeleteSessionButton } from "@/components/profile/AdminDeleteSessionButton"
 import { AdminDeleteTournamentButton } from "@/components/profile/AdminDeleteTournamentButton"
+import { AdminDeletePlayerButton } from "@/components/profile/AdminDeletePlayerButton"
 import { AdminRecalcStatsButton } from "@/components/profile/AdminRecalcStatsButton"
 
 import { isAdminEmail } from "@/lib/isAdmin"
@@ -118,11 +119,13 @@ export default async function ProfilePage({ searchParams }: Props) {
   let adminSessions: any[] = []
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let adminTournaments: any[] = []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let adminPlayers: any[] = []
   let adminError: string | null = null
 
   if (isAdmin && activeTab === "admin") {
     try {
-      ;[adminSessions, adminTournaments] = await Promise.all([
+      ;[adminSessions, adminTournaments, adminPlayers] = await Promise.all([
         db.session.findMany({
           orderBy: { date: "desc" },
           include: {
@@ -133,6 +136,18 @@ export default async function ProfilePage({ searchParams }: Props) {
         db.tournament.findMany({
           orderBy: { date: "desc" },
           include: { _count: { select: { registrations: true } } },
+        }),
+        db.player.findMany({
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true,
+            level: true,
+            createdAt: true,
+            user: { select: { email: true } },
+          },
         }),
       ])
     } catch (e) {
@@ -434,7 +449,7 @@ export default async function ProfilePage({ searchParams }: Props) {
             {[
               { label: "Sessioni", value: adminSessions.length, icon: Users },
               { label: "Tornei",   value: adminTournaments.length, icon: Trophy },
-              { label: "Totale",   value: adminSessions.length + adminTournaments.length, icon: ShieldCheck },
+              { label: "Giocatori", value: adminPlayers.length, icon: ShieldCheck },
             ].map(({ label, value, icon: Icon }) => (
               <div key={label} className="flex flex-col items-center gap-1 rounded-2xl bg-[var(--surface-2)] py-4">
                 <Icon className="h-5 w-5 text-[var(--accent)]" />
@@ -511,6 +526,32 @@ export default async function ProfilePage({ searchParams }: Props) {
                     <StatusBadge status={t.status as "DRAFT" | "LIVE" | "COMPLETED"} />
                   </Link>
                   <AdminDeleteTournamentButton id={t.id} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* All players */}
+          <div>
+            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
+              Account giocatori
+            </p>
+            <div className="space-y-2">
+              {adminPlayers.map((p: { id: string; name: string; level: number; createdAt: Date; user?: { email?: string } }) => (
+                <div
+                  key={p.id}
+                  className="flex items-center gap-2 rounded-2xl bg-[var(--surface-2)] p-3"
+                >
+                  <Link
+                    href={`/players/${p.id}`}
+                    className="flex-1 min-w-0 active:opacity-80"
+                  >
+                    <p className="font-bold text-white text-sm truncate">{p.name}</p>
+                    <p className="text-xs text-[var(--muted-text)] truncate">
+                      {p.user?.email ?? "—"} · Lv.{p.level} · {formatDate(p.createdAt)}
+                    </p>
+                  </Link>
+                  <AdminDeletePlayerButton id={p.id} />
                 </div>
               ))}
             </div>

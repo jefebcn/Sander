@@ -126,11 +126,19 @@ export async function updateStatPercentages(input: UpdateStatPctInput) {
 export async function deletePlayer(id: string) {
   const session = await getCurrentSession()
   if (!session?.user?.id) throw new Error("Non autenticato")
+  if (!isAdminEmail(session.user.email)) throw new Error("Solo l'amministratore può eliminare i giocatori")
 
-  // Only admin can delete players
-  const isAdmin = isAdminEmail(session.user.email)
-  if (!isAdmin) throw new Error("Solo l'amministratore può eliminare i giocatori")
+  // Grab userId before deletion so we can remove the auth account too
+  const player = await db.player.findUnique({ where: { id }, select: { userId: true } })
 
   await db.player.delete({ where: { id } })
+
+  // Delete the linked User — cascades to Account + AuthSession rows
+  if (player?.userId) {
+    await db.user.delete({ where: { id: player.userId } })
+  }
+
   revalidatePath("/players")
+  revalidatePath("/profile")
+  revalidatePath("/")
 }
