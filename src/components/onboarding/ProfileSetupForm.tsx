@@ -255,11 +255,9 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
           nationality,
           avatarUrl,
         })
-        if (typeof window !== "undefined") {
-          localStorage.setItem("sander_onboarded", "1")
-          // Full reload so OnboardingGate re-reads localStorage and stays hidden
-          window.location.href = "/"
-        }
+        localStorage.setItem("sander_onboarded", "1")
+        router.refresh()
+        router.push("/")
       } catch (err) {
         setError(err instanceof Error ? err.message : "Errore durante il salvataggio")
       }
