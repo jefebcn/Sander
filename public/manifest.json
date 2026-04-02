@@ -1,24 +1,30 @@
 {
-  "name": "SANDER — Beach Volleyball",
-  "short_name": "SANDER",
+  "name": "Sander - Beach Volley",
+  "short_name": "Sander",
   "description": "Beach Volleyball Tournament Manager",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0a0a",
-  "theme_color": "#0a0a0a",
+  "background_color": "#07090a",
+  "theme_color": "#07090a",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/sander-logo.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/sander-logo.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

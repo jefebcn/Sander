@@ -15,23 +15,26 @@ const geist = Geist({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://sander-two.vercel.app"),
-  title: "SANDER — Beach Volleyball",
+  title: "Sander - Beach Volley",
   description: "Beach Volleyball Tournament Manager",
   manifest: "/manifest.json",
   icons: {
-    icon: [{ url: "/sander-logo.png", type: "image/png" }],
-    apple: [{ url: "/sander-logo.png", type: "image/png" }],
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   openGraph: {
-    title: "SANDER — Beach Volleyball",
+    title: "Sander - Beach Volley",
     description: "Beach Volleyball Tournament Manager",
-    images: [{ url: "/sander-logo.png", width: 512, height: 512, alt: "SANDER" }],
-    siteName: "SANDER",
+    images: [{ url: "/icon-512.png", width: 512, height: 512, alt: "Sander" }],
+    siteName: "Sander",
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "SANDER",
+    title: "Sander",
   },
 }
 
