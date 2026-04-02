@@ -41,30 +41,28 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
 export default async function TournamentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
-  // Quick type check before heavier queries
-  const base = await db.tournament.findUniqueOrThrow({
-    where: { id },
-    select: { type: true },
-  })
+  const [base, session] = await Promise.all([
+    db.tournament.findUniqueOrThrow({ where: { id }, select: { type: true } }),
+    getCurrentSession(),
+  ])
 
-  const session = await getCurrentSession()
   const isAdmin = !!ADMIN_EMAIL && session?.user?.email === ADMIN_EMAIL
 
   // ── Chicece path ────────────────────────────────────────────
   if (base.type === "CHICECE") {
-    const tournament = await db.tournament.findUniqueOrThrow({
-      where: { id },
-    })
-    const registrations = await db.tournamentRegistration.findMany({
-      where: { tournamentId: id },
-      include: { player: true },
-      orderBy: { chicecePlusMinus: "desc" },
-    })
-    const matches = await db.match.findMany({
-      where: { tournamentId: id },
-      include: { players: { include: { player: true } } },
-      orderBy: [{ round: "asc" }, { matchNumber: "asc" }],
-    })
+    const [tournament, registrations, matches] = await Promise.all([
+      db.tournament.findUniqueOrThrow({ where: { id } }),
+      db.tournamentRegistration.findMany({
+        where: { tournamentId: id },
+        include: { player: true },
+        orderBy: { chicecePlusMinus: "desc" },
+      }),
+      db.match.findMany({
+        where: { tournamentId: id },
+        include: { players: { include: { player: true } } },
+        orderBy: [{ round: "asc" }, { matchNumber: "asc" }],
+      }),
+    ])
 
     const typeLabel = "Chicece"
 

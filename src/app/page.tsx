@@ -23,20 +23,25 @@ export default async function Home() {
 
   let fullPlayer = null
   let recs = null
+  let upcomingChicece = null
   if (player) {
-    ;[fullPlayer, recs] = await Promise.all([
+    ;[fullPlayer, recs, upcomingChicece] = await Promise.all([
       db.player.findUnique({
         where: { id: player.id },
         include: { _count: { select: { organizedSessions: true } } },
       }),
       getPersonalizedRecommendations(player.id),
+      db.tournament.findFirst({
+        where: { type: "CHICECE", status: { in: ["DRAFT", "LIVE"] } },
+        orderBy: { date: "asc" },
+      }),
     ])
+  } else {
+    upcomingChicece = await db.tournament.findFirst({
+      where: { type: "CHICECE", status: { in: ["DRAFT", "LIVE"] } },
+      orderBy: { date: "asc" },
+    })
   }
-
-  const upcomingChicece = await db.tournament.findFirst({
-    where: { type: "CHICECE", status: { in: ["DRAFT", "LIVE"] } },
-    orderBy: { date: "asc" },
-  })
 
   const avgDisplay =
     fullPlayer && fullPlayer.avgRating > 0
