@@ -1,9 +1,60 @@
 import Link from "next/link"
-import { ChevronLeft, Zap, Star, Trophy, ClipboardList, ThumbsUp, Award } from "lucide-react"
+import { ChevronLeft, Zap, Star, Trophy, ClipboardList, ThumbsUp, Award, ShieldCheck, Flame, Crown, Swords } from "lucide-react"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 
 export const dynamic = "force-dynamic"
+
+const LEVEL_MILESTONES = [
+  {
+    level: 1,
+    title: "Rookie",
+    description: "Sei entrato in campo. Benvenuto nella community!",
+    icon: Star,
+    color: "#94a3b8",
+    bg: "rgba(148,163,184,0.12)",
+  },
+  {
+    level: 2,
+    title: "In Gioco",
+    description: "Hai disputato le prime partite. Il viaggio è iniziato.",
+    icon: Zap,
+    color: "var(--accent)",
+    bg: "rgba(201,243,29,0.1)",
+  },
+  {
+    level: 5,
+    title: "Presenza",
+    description: "La tua presenza si sente in campo. Profilo verificato ✓",
+    icon: ShieldCheck,
+    color: "#38bdf8",
+    bg: "rgba(56,189,248,0.1)",
+  },
+  {
+    level: 10,
+    title: "Esperto",
+    description: "Doppia cifra. Sei un punto di riferimento per la community.",
+    icon: Flame,
+    color: "#f97316",
+    bg: "rgba(249,115,22,0.1)",
+  },
+  {
+    level: 20,
+    title: "Veterano",
+    description: "Hai attraversato stagioni di gioco. Il tuo nome è rispettato.",
+    icon: Swords,
+    color: "#a855f7",
+    bg: "rgba(168,85,247,0.1)",
+  },
+  {
+    level: 50,
+    title: "Leggenda",
+    description: "Pochissimi arrivano dove sei tu. La community ti conosce.",
+    icon: Crown,
+    color: "#f59e0b",
+    bg: "rgba(245,158,11,0.1)",
+  },
+]
 
 const XP_ACTIONS = [
   {
@@ -155,8 +206,57 @@ export default async function LevelInfoPage() {
           ))}
         </div>
 
+        {/* Level milestones */}
+        <div className="space-y-2 slide-up stagger-3">
+          <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)] px-1">
+            Traguardi e titoli
+          </p>
+          {LEVEL_MILESTONES.map(({ level: lvl, title, description, icon: Icon, color, bg }) => {
+            const isReached = player ? level >= lvl : false
+            return (
+              <div
+                key={lvl}
+                className="flex items-center gap-4 rounded-2xl p-4 transition-opacity"
+                style={{
+                  background: isReached ? "var(--surface-2)" : "var(--surface-1)",
+                  opacity: isReached ? 1 : 0.5,
+                }}
+              >
+                <div
+                  className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl"
+                  style={{ background: bg }}
+                >
+                  <Icon className="h-5 w-5" style={{ color }} />
+                  <span className="text-[0.6rem] font-black mt-0.5" style={{ color }}>
+                    Lv{lvl}
+                  </span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-black text-sm text-white">{title}</p>
+                    {isReached && (
+                      <span
+                        className="rounded-full px-1.5 py-0.5 text-[0.6rem] font-black"
+                        style={{ background: "rgba(201,243,29,0.15)", color: "var(--accent)" }}
+                      >
+                        RAGGIUNTO
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-[var(--muted-text)] leading-relaxed">{description}</p>
+                </div>
+                {!isReached && player && (
+                  <span className="shrink-0 text-xs font-bold text-[var(--muted-text)]">
+                    Lv{lvl}
+                  </span>
+                )}
+              </div>
+            )
+          })}
+        </div>
+
         {/* Footer note */}
-        <p className="text-xs text-center text-[var(--muted-text)] px-4 slide-up stagger-3">
+        <p className="text-xs text-center text-[var(--muted-text)] px-4 slide-up stagger-4">
           Il livello è una misura dell&apos;attività complessiva sulla piattaforma — più giochi, più sali.
         </p>
       </div>
