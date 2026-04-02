@@ -201,13 +201,14 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
           {roleAbbr}
         </span>
 
-        {/* Player Name — Row 10.25, Col 6.0–14.0 (auto-scale to fit) */}
+        {/* Player Name — Row 10.375, Col 6.0–14.0 (auto-scale to fit) */}
         <div
           className="absolute flex items-center justify-center"
           style={{
-            top: "51.25%",
+            top: "51.875%",
             left: "30%",
             width: "40%",
+            containerType: "inline-size",
             zIndex: 20,
           }}
         >
@@ -215,12 +216,11 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
             className="font-bold uppercase text-center"
             style={{
               fontFamily: FONT,
-              fontSize: `clamp(0.65rem, ${playerData.name.length > 12 ? "2vw" : "2.8vw"}, 1.1rem)`,
+              fontSize: "clamp(0.8rem, 4cqi, 1.125rem)",
               whiteSpace: "nowrap",
               letterSpacing: "0.04em",
               color: textColor,
               textShadow: SHADOW,
-              maxWidth: "100%",
             }}
           >
             {playerData.name}
