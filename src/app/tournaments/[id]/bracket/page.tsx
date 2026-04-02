@@ -29,7 +29,7 @@ export default async function BracketPage({ params }: { params: Promise<{ id: st
 
   return (
     <div>
-      <PageHeader title="Tabellone" subtitle={tournament.name} />
+      <PageHeader title="Tabellone" subtitle={tournament.name} backHref={`/tournaments/${id}`} />
       <div className="overflow-x-auto px-4 pb-8">
         <BracketView matches={matches} />
       </div>
