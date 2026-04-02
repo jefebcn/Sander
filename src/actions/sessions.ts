@@ -293,6 +293,38 @@ export async function completeSession(
   revalidatePath("/sessions")
 }
 
+export async function addPlayerToSession(sessionId: string, playerId: string) {
+  const organizer = await getCurrentPlayer()
+  if (!organizer) throw new Error("Non autenticato")
+
+  const session = await db.session.findUniqueOrThrow({
+    where: { id: sessionId },
+    include: { _count: { select: { participants: true } } },
+  })
+
+  if (session.organizerId !== organizer.id) {
+    throw new Error("Solo l'organizzatore può aggiungere giocatori")
+  }
+  if (session.status === "COMPLETED" || session.status === "CANCELLED") {
+    throw new Error("La sessione non è più aperta")
+  }
+  if (session._count.participants >= session.maxPlayers) {
+    throw new Error("Sessione al completo")
+  }
+
+  await db.sessionParticipant.create({
+    data: { sessionId, playerId },
+  })
+
+  const newCount = session._count.participants + 1
+  if (newCount >= session.maxPlayers) {
+    await db.session.update({ where: { id: sessionId }, data: { status: "FULL" } })
+  }
+
+  revalidatePath(`/sessions/${sessionId}`)
+  revalidatePath("/sessions")
+}
+
 export async function cancelSession(sessionId: string) {
   const player = await getCurrentPlayer()
   if (!player) throw new Error("Non autenticato")

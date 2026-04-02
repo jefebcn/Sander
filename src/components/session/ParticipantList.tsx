@@ -1,11 +1,12 @@
 "use client"
 
-import { useTransition } from "react"
-import { UserPlus, UserMinus } from "lucide-react"
+import { useState, useTransition } from "react"
+import { UserPlus, UserMinus, Search } from "lucide-react"
 import { toast } from "sonner"
 import { joinSession, leaveSession, assignTeam, cancelSession } from "@/actions/sessions"
 import { cn } from "@/lib/utils"
 import { CompleteSessionForm } from "./CompleteSessionForm"
+import { AddPlayerSheet } from "./AddPlayerSheet"
 
 type Participant = {
   id: string
@@ -33,6 +34,7 @@ const FORMAT_LABEL: Record<string, string> = {
 
 export function ParticipantList({ session, participants, currentPlayerId }: ParticipantListProps) {
   const [isPending, startTransition] = useTransition()
+  const [addPlayerOpen, setAddPlayerOpen] = useState(false)
 
   const isOrganizer = currentPlayerId === session.organizerId
   const isParticipant = participants.some((p) => p.player.id === currentPlayerId)
@@ -176,6 +178,16 @@ export function ParticipantList({ session, participants, currentPlayerId }: Part
       {/* Organizer controls */}
       {isOrganizer && session.status !== "COMPLETED" && session.status !== "CANCELLED" && (
         <div className="space-y-2 border-t border-[var(--border)] pt-4">
+          {/* Add player directly */}
+          <button
+            onClick={() => setAddPlayerOpen(true)}
+            disabled={isPending}
+            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-semibold text-[var(--foreground)] transition-all hover:bg-[var(--surface-3)] active:scale-[0.98] disabled:opacity-40"
+          >
+            <Search className="h-5 w-5" aria-hidden="true" />
+            Aggiungi giocatore
+          </button>
+
           <CompleteSessionForm sessionId={session.id} participants={participants} />
           <button
             onClick={handleCancel}
@@ -185,6 +197,16 @@ export function ParticipantList({ session, participants, currentPlayerId }: Part
             Annulla sessione
           </button>
         </div>
+      )}
+
+      {/* Add player sheet */}
+      {addPlayerOpen && (
+        <AddPlayerSheet
+          sessionId={session.id}
+          existingPlayerIds={participants.map((p) => p.player.id)}
+          onClose={() => setAddPlayerOpen(false)}
+          onDone={() => setAddPlayerOpen(false)}
+        />
       )}
     </div>
   )
