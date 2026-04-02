@@ -87,20 +87,31 @@ export async function getPersonalizedRecommendations(
   // Already-joined session IDs
   const joinedSessionIds = new Set(sessionHistory.map((p) => p.sessionId))
 
-  // ── 2. Suggested sessions ─────────────────────────────────────────────────
+  // ── 2+3. Fetch sessions, registered tournament IDs, and inactive check in parallel ─
 
-  const openSessions = await db.session.findMany({
-    where: {
-      status: { in: ["OPEN", "FULL"] },
-      date: { gte: new Date() },
-      id: { notIn: [...joinedSessionIds] },
-    },
-    include: {
-      _count: { select: { participants: true } },
-    },
-    orderBy: { date: "asc" },
-    take: 20,
-  })
+  const [openSessions, registeredTournamentIds] = await Promise.all([
+    db.session.findMany({
+      where: {
+        status: { in: ["OPEN", "FULL"] },
+        date: { gte: new Date() },
+        id: { notIn: [...joinedSessionIds] },
+      },
+      select: {
+        id: true,
+        title: true,
+        location: true,
+        date: true,
+        format: true,
+        maxPlayers: true,
+        _count: { select: { participants: true } },
+      },
+      orderBy: { date: "asc" },
+      take: 20,
+    }),
+    db.tournamentRegistration
+      .findMany({ where: { playerId }, select: { tournamentId: true } })
+      .then((rows) => rows.map((r) => r.tournamentId)),
+  ])
 
   const suggestedSessions: SuggestedSession[] = openSessions
     .map((s) => {
@@ -126,17 +137,19 @@ export async function getPersonalizedRecommendations(
 
   // ── 3. Suggested tournaments ──────────────────────────────────────────────
 
-  const registeredTournamentIds = await db.tournamentRegistration
-    .findMany({ where: { playerId }, select: { tournamentId: true } })
-    .then((rows) => rows.map((r) => r.tournamentId))
-
   const openTournaments = await db.tournament.findMany({
     where: {
       status: "DRAFT",
       id: { notIn: registeredTournamentIds },
       date: { gte: new Date() },
     },
-    include: { _count: { select: { registrations: true } } },
+    select: {
+      id: true,
+      name: true,
+      date: true,
+      type: true,
+      _count: { select: { registrations: true } },
+    },
     orderBy: { date: "asc" },
     take: 5,
   })
