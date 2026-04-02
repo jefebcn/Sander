@@ -7,7 +7,7 @@ import type { SubmitScoreInput } from "@/lib/validators/match.schema"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { updateRating } from "@/lib/tournament/glicko2"
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
+import { isAdminEmail } from "@/lib/isAdmin"
 
 export async function submitScore(input: SubmitScoreInput) {
   // Must be authenticated
@@ -25,7 +25,7 @@ export async function submitScore(input: SubmitScoreInput) {
   })
 
   // Only admin can submit scores
-  const isAdmin = ADMIN_EMAIL && session.user.email === ADMIN_EMAIL
+  const isAdmin = isAdminEmail(session.user.email)
   if (!isAdmin) throw new Error("Solo l'amministratore può inserire i risultati")
 
   if (match.isCompleted) {

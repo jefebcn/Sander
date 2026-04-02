@@ -11,13 +11,12 @@ import { generateRoundRobinSchedule } from "@/lib/tournament/roundRobin"
 import { generateDoubleElimination } from "@/lib/tournament/doubleElim"
 import { assignCourtLabel } from "@/lib/tournament/courtSchedule"
 import { applyTournamentGlicko } from "@/actions/matches"
-
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
+import { isAdminEmail } from "@/lib/isAdmin"
 
 async function requireAdmin() {
   const session = await getCurrentSession()
   if (!session?.user?.id) throw new Error("Non autenticato")
-  if (!ADMIN_EMAIL || session.user.email !== ADMIN_EMAIL) throw new Error("Accesso non autorizzato")
+  if (!isAdminEmail(session.user.email)) throw new Error("Accesso non autorizzato")
 }
 
 export async function createTournament(input: CreateTournamentInput): Promise<{ ok: true; id: string } | { ok: false; error: string }> {

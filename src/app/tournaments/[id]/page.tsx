@@ -37,7 +37,7 @@ export async function generateMetadata(
   }
 }
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
+import { isAdminEmail } from "@/lib/isAdmin"
 
 export default async function TournamentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -47,7 +47,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
     getCurrentSession(),
   ])
 
-  const isAdmin = !!ADMIN_EMAIL && session?.user?.email === ADMIN_EMAIL
+  const isAdmin = isAdminEmail(session?.user?.email)
 
   // ── Chicece path ────────────────────────────────────────────
   if (base.type === "CHICECE") {

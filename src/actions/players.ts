@@ -5,8 +5,7 @@ import { db } from "@/lib/db"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { CreatePlayerSchema, UpdatePlayerSchema, UpdateStatPctSchema } from "@/lib/validators/player.schema"
 import type { CreatePlayerInput, UpdatePlayerInput, UpdateStatPctInput } from "@/lib/validators/player.schema"
-
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
+import { isAdminEmail } from "@/lib/isAdmin"
 
 export async function createPlayer(input: CreatePlayerInput) {
   // Must be authenticated to create a player profile
@@ -35,7 +34,7 @@ export async function updatePlayer(id: string, input: UpdatePlayerInput) {
   const target = await db.player.findUnique({ where: { id }, select: { userId: true } })
   if (!target) throw new Error("Giocatore non trovato")
 
-  const isAdmin = ADMIN_EMAIL && session.user.email === ADMIN_EMAIL
+  const isAdmin = isAdminEmail(session.user.email)
   if (!isAdmin && target.userId !== session.user.id) {
     throw new Error("Non autorizzato")
   }
@@ -129,7 +128,7 @@ export async function deletePlayer(id: string) {
   if (!session?.user?.id) throw new Error("Non autenticato")
 
   // Only admin can delete players
-  const isAdmin = ADMIN_EMAIL && session.user.email === ADMIN_EMAIL
+  const isAdmin = isAdminEmail(session.user.email)
   if (!isAdmin) throw new Error("Solo l'amministratore può eliminare i giocatori")
 
   await db.player.delete({ where: { id } })

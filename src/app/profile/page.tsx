@@ -17,7 +17,7 @@ import { AdminDeleteSessionButton } from "@/components/profile/AdminDeleteSessio
 import { AdminDeleteTournamentButton } from "@/components/profile/AdminDeleteTournamentButton"
 import { AdminRecalcStatsButton } from "@/components/profile/AdminRecalcStatsButton"
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
+import { isAdminEmail } from "@/lib/isAdmin"
 
 // ── Supporters ────────────────────────────────────────────────────────
 // Add entries here to display a new supporter banner.
@@ -78,7 +78,7 @@ export default async function ProfilePage({ searchParams }: Props) {
   const [player, session] = await Promise.all([getCurrentPlayer(), getCurrentSession()])
   if (!player) redirect("/auth/signin?callbackUrl=/profile")
 
-  const isAdmin = ADMIN_EMAIL && session?.user?.email === ADMIN_EMAIL
+  const isAdmin = isAdminEmail(session?.user?.email)
 
   // Always fetch core player data
   const [fullPlayer, streak] = await Promise.all([

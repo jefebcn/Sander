@@ -9,6 +9,7 @@ import {
   AssignTeamSchema,
 } from "@/lib/validators/session.schema"
 import { updateGlickoAfterSession } from "@/actions/rating"
+import { isAdminEmail } from "@/lib/isAdmin"
 // ─── Push helpers (dynamic import — keeps web-push out of SSR bundle) ────────
 
 type PushPayload = { title: string; body: string; url: string }
@@ -99,7 +100,7 @@ export async function getSessions(playerId?: string) {
 
 export async function adminDeleteSession(id: string) {
   const authSession = await getCurrentSession()
-  if (authSession?.user?.email !== process.env.ADMIN_EMAIL) throw new Error("Non autorizzato")
+  if (!isAdminEmail(authSession?.user?.email)) throw new Error("Non autorizzato")
   await db.session.delete({ where: { id } })
   revalidatePath("/sessions")
   revalidatePath("/profile")
