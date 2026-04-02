@@ -18,6 +18,7 @@ import { AdminDeleteSessionButton } from "@/components/profile/AdminDeleteSessio
 import { AdminDeleteTournamentButton } from "@/components/profile/AdminDeleteTournamentButton"
 import { AdminDeletePlayerButton } from "@/components/profile/AdminDeletePlayerButton"
 import { AdminRecalcStatsButton } from "@/components/profile/AdminRecalcStatsButton"
+import { NotifyPermission } from "@/components/push/NotifyPermission"
 
 import { isAdminEmail } from "@/lib/isAdmin"
 
@@ -230,6 +231,8 @@ export default async function ProfilePage({ searchParams }: Props) {
             <Settings className="h-4 w-4 text-[var(--muted-text)]" />
             Modifica profilo
           </Link>
+
+          <NotifyPermission />
 
           {/* Support banner */}
           <a

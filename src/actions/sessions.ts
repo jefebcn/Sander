@@ -353,7 +353,14 @@ export async function addPlayerToSession(sessionId: string, playerId: string) {
 
   const session = await db.session.findUniqueOrThrow({
     where: { id: sessionId },
-    include: { _count: { select: { participants: true } } },
+    select: {
+      organizerId: true,
+      status: true,
+      maxPlayers: true,
+      title: true,
+      location: true,
+      _count: { select: { participants: true } },
+    },
   })
 
   if (session.organizerId !== organizer.id) {
@@ -374,6 +381,13 @@ export async function addPlayerToSession(sessionId: string, playerId: string) {
   if (newCount >= session.maxPlayers) {
     await db.session.update({ where: { id: sessionId }, data: { status: "FULL" } })
   }
+
+  // Notify the added player
+  safeNotifyPlayer(playerId, {
+    title: "Sei stato aggiunto a una sessione!",
+    body: `${session.title} — ${session.location}`,
+    url: `/sessions/${sessionId}`,
+  })
 
   revalidatePath(`/sessions/${sessionId}`)
   revalidatePath("/sessions")
@@ -534,7 +548,10 @@ export async function submitSessionMatchScore(input: unknown) {
 
   const match = await db.sessionMatch.findUniqueOrThrow({
     where: { id: matchId },
-    select: { sessionId: true, session: { select: { organizerId: true } } },
+    include: {
+      session: { select: { organizerId: true, title: true } },
+      players: { select: { playerId: true, team: true } },
+    },
   })
 
   if (match.session.organizerId !== player.id) throw new Error("Solo l'organizzatore può inviare i risultati")
@@ -542,6 +559,17 @@ export async function submitSessionMatchScore(input: unknown) {
   await db.sessionMatch.update({
     where: { id: matchId },
     data: { teamAScore, teamBScore, isCompleted: true },
+  })
+
+  // Notify all players in this match
+  const winningTeam = teamAScore > teamBScore ? 0 : teamBScore > teamAScore ? 1 : null
+  const matchPlayerIds = match.players.map((p) => p.playerId)
+  safeNotifyPlayers(matchPlayerIds, {
+    title: winningTeam === null
+      ? `Pareggio! ${teamAScore} - ${teamBScore}`
+      : `Risultato: ${teamAScore} - ${teamBScore}`,
+    body: `Partita completata in ${match.session.title}`,
+    url: `/sessions/${match.sessionId}`,
   })
 
   revalidatePath(`/sessions/${match.sessionId}`)

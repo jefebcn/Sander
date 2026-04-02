@@ -6,6 +6,7 @@ import { MobileNav } from "@/components/layout/MobileNav"
 import { Toaster } from "@/components/ui/Toaster"
 import { OnboardingGate } from "@/components/onboarding/OnboardingGate"
 import { ClientOnlyBanners } from "@/components/layout/ClientOnlyBanners"
+import { SwRegistrar } from "@/components/push/SwRegistrar"
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -64,6 +65,7 @@ export default function RootLayout({
         />
         <Providers>
           <OnboardingGate />
+          <SwRegistrar />
           <main className="relative z-10 flex-1 pb-20">{children}</main>
           <MobileNav />
           {/* Banners stacked just above the navbar — client-only, lazy loaded */}
