@@ -36,6 +36,12 @@ const SUPPORTERS: { name: string; image?: string; icon?: string; href: string; t
     tagline: "Esplora il mondo",
     accentColor: "#3b82f6",
   },
+  {
+    name: "Flexeno",
+    href: "https://flexenofitness.com/",
+    tagline: "Fitness & Performance",
+    accentColor: "#f97316",
+  },
 ]
 
 // ── helpers ──────────────────────────────────────────────────────────
