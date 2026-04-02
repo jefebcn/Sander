@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import Link from "next/link"
 import { signIn } from "next-auth/react"
 import { Eye, EyeOff, LogIn } from "lucide-react"
 import { registerWithEmail } from "@/actions/auth"
@@ -136,6 +137,15 @@ export function AuthForm({ callbackUrl }: AuthFormProps) {
             <>{mode === "login" ? "Accedi" : "Registrati"}</>
           )}
         </button>
+
+        {mode === "login" && (
+          <Link
+            href="/auth/forgot-password"
+            className="block text-center text-sm text-[var(--muted-text)] underline-offset-2 hover:text-white"
+          >
+            Password dimenticata?
+          </Link>
+        )}
       </form>
 
       {/* Divider */}
