@@ -9,6 +9,22 @@ interface Props {
   playerData: PlayerCardData
 }
 
+/** Wait until every <img> inside el has finished loading (or errored). */
+function waitForImages(el: HTMLElement): Promise<void> {
+  const imgs = Array.from(el.querySelectorAll<HTMLImageElement>("img"))
+  return Promise.all(
+    imgs.map(
+      (img) =>
+        img.complete
+          ? Promise.resolve()
+          : new Promise<void>((resolve) => {
+              img.onload = () => resolve()
+              img.onerror = () => resolve() // don't block on broken images
+            }),
+    ),
+  ).then(() => undefined)
+}
+
 export function ShareCardButton({ playerData }: Props) {
   const cardRef = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(false)
@@ -17,7 +33,25 @@ export function ShareCardButton({ playerData }: Props) {
     const { toPng } = await import("html-to-image")
     const node = cardRef.current
     if (!node) throw new Error("Card element not found")
-    const dataUrl = await toPng(node, { pixelRatio: 2, cacheBust: true })
+
+    // 1. Wait for all images (frame PNG, flag CDN, avatar) to finish loading
+    await waitForImages(node)
+
+    // 2. Short buffer for fonts (Chakra Petch) and layout paint
+    await new Promise((r) => setTimeout(r, 350))
+
+    const opts = {
+      pixelRatio: 2,
+      cacheBust: true,
+      skipFonts: false,
+      fetchRequestInit: { mode: "cors" as RequestMode },
+    }
+
+    // 3. First pass warms html-to-image's internal asset cache
+    await toPng(node, opts)
+    // 4. Second pass produces the clean, fully-rendered image
+    const dataUrl = await toPng(node, opts)
+
     const res = await fetch(dataUrl)
     return res.blob()
   }
@@ -26,7 +60,8 @@ export function ShareCardButton({ playerData }: Props) {
     setLoading(true)
     try {
       const blob = await captureCard()
-      const file = new File([blob], `${playerData.name}-sander-card.png`, { type: "image/png" })
+      const safeName = playerData.name.replace(/\s+/g, "_")
+      const file = new File([blob], `SanderCard_${safeName}.png`, { type: "image/png" })
 
       if (
         typeof navigator !== "undefined" &&
@@ -38,18 +73,19 @@ export function ShareCardButton({ playerData }: Props) {
           title: `${playerData.name} — Sander Card`,
         })
       } else {
-        // Desktop fallback: trigger download
+        // Desktop / unsupported browser: download PNG
         const url = URL.createObjectURL(blob)
         const a = document.createElement("a")
         a.href = url
-        a.download = `${playerData.name}-sander-card.png`
+        a.download = `SanderCard_${safeName}.png`
+        document.body.appendChild(a)
         a.click()
+        document.body.removeChild(a)
         URL.revokeObjectURL(url)
       }
     } catch (err) {
-      // User cancelled share — not an error
       if (err instanceof Error && err.name !== "AbortError") {
-        console.error(err)
+        console.error("[ShareCard]", err)
       }
     } finally {
       setLoading(false)
@@ -58,8 +94,14 @@ export function ShareCardButton({ playerData }: Props) {
 
   return (
     <>
-      {/* Off-screen render target — 400×400, no grid overlay */}
+      {/*
+        Off-screen render target.
+        - Fixed + far off-screen so it never affects layout
+        - No debug grid rendered here (SanderCardFut never mounts the grid)
+        - Width 400px matches the card's max-w-[400px]
+      */}
       <div
+        aria-hidden
         className="pointer-events-none fixed"
         style={{ top: "-9999px", left: "-9999px", width: "400px" }}
       >
@@ -77,6 +119,7 @@ export function ShareCardButton({ playerData }: Props) {
           border: "1px solid rgba(201,243,29,0.2)",
           color: "var(--accent)",
           opacity: loading ? 0.6 : 1,
+          cursor: loading ? "wait" : "pointer",
         }}
       >
         {loading ? (

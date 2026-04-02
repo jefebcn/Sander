@@ -66,6 +66,7 @@ function FlagIcon({ code }: { code: string }) {
     <img
       src={`https://flagcdn.com/w80/${iso}.png`}
       alt={code}
+      crossOrigin="anonymous"
       className="h-full w-full object-cover"
       loading="eager"
     />
@@ -122,6 +123,7 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
           <img
             src={playerData.imageUrl}
             alt={playerData.name}
+            crossOrigin="anonymous"
             className="absolute object-cover object-center"
             style={{ zIndex: 0, top: "15%", left: "35%", width: "40%", height: "35%" }}
           />
@@ -147,6 +149,7 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
         <img
           src={frame}
           alt="Card frame"
+          crossOrigin="anonymous"
           className="pointer-events-none absolute inset-0 h-full w-full object-contain"
           style={{ zIndex: 10 }}
         />
