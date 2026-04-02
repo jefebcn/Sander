@@ -7,9 +7,12 @@ import {
   CreateSessionSchema,
   RatePlayerSchema,
   AssignTeamSchema,
+  SubmitSessionMatchScoreSchema,
 } from "@/lib/validators/session.schema"
 import { updateGlickoAfterSession } from "@/actions/rating"
 import { isAdminEmail } from "@/lib/isAdmin"
+import { generateKOTBSchedule, applyMatchResult, rankStandings } from "@/lib/tournament/kotb"
+import type { StandingEntry } from "@/lib/tournament/types"
 // ─── Push helpers (dynamic import — keeps web-push out of SSR bundle) ────────
 
 type PushPayload = { title: string; body: string; url: string }
@@ -61,6 +64,7 @@ export async function createSession(input: unknown) {
       paymentType: data.paymentType ?? "FREE",
       quotaAmount: data.paymentType === "QUOTA" ? (data.quotaAmount ?? null) : null,
       loserPays: data.paymentType === "LOSER_PAYS" ? (data.loserPays ?? null) : null,
+      matchMode: data.format === "TWO_VS_TWO" ? (data.matchMode ?? false) : false,
     },
   })
 
@@ -219,6 +223,55 @@ export async function completeSession(
   if (session.organizerId !== player.id) throw new Error("Solo l'organizzatore può completare la sessione")
 
   await db.session.update({ where: { id: sessionId }, data: { status: "COMPLETED" } })
+
+  // Multi-match mode: aggregate win/loss from SessionMatch results
+  if (session.matchMode) {
+    const completedMatches = await db.sessionMatch.findMany({
+      where: { sessionId, isCompleted: true },
+      include: { players: { select: { playerId: true, team: true } } },
+    })
+
+    if (completedMatches.length > 0) {
+      // Build initial standings for every participant
+      let standings: StandingEntry[] = session.participants.map((p) => ({
+        playerId: p.playerId,
+        points: 0, matchesWon: 0, matchesLost: 0, pointsFor: 0, pointsAgainst: 0, rank: 0,
+      }))
+
+      for (const m of completedMatches) {
+        if (m.teamAScore == null || m.teamBScore == null) continue
+        const teamAIds = m.players.filter((p) => p.team === 0).map((p) => p.playerId)
+        const teamBIds = m.players.filter((p) => p.team === 1).map((p) => p.playerId)
+        standings = applyMatchResult(standings, {
+          teamAPlayerIds: teamAIds,
+          teamBPlayerIds: teamBIds,
+          teamAScore: m.teamAScore,
+          teamBScore: m.teamBScore,
+        })
+      }
+
+      standings = rankStandings(standings)
+
+      // Update each player's aggregate stats
+      for (const s of standings) {
+        const cur = await db.player.findUniqueOrThrow({
+          where: { id: s.playerId },
+          select: { matchesWon: true, matchesLost: true },
+        })
+        const newWon = cur.matchesWon + s.matchesWon
+        const newLost = cur.matchesLost + s.matchesLost
+        const total = newWon + newLost
+        await db.player.update({
+          where: { id: s.playerId },
+          data: {
+            matchesWon: newWon,
+            matchesLost: newLost,
+            winRatePct: total > 0 ? Math.round((newWon / total) * 100) : 0,
+          },
+        })
+      }
+    }
+  }
 
   // Save sets if provided
   if (sets && sets.length > 0) {
@@ -410,3 +463,86 @@ export async function ratePlayer(input: unknown) {
   revalidatePath(`/sessions/${data.sessionId}`)
 }
 
+// ─── Multi-match mode actions ─────────────────────────────────────────────────
+
+export async function generateSessionMatches(
+  sessionId: string,
+  requestedRounds?: number,
+) {
+  const player = await getCurrentPlayer()
+  if (!player) throw new Error("Non autenticato")
+
+  const session = await db.session.findUniqueOrThrow({
+    where: { id: sessionId },
+    include: {
+      participants: { select: { playerId: true } },
+      sessionMatches: { select: { id: true, isCompleted: true } },
+    },
+  })
+
+  if (session.organizerId !== player.id) throw new Error("Solo l'organizzatore può generare le partite")
+  if (!session.matchMode) throw new Error("Modalità multi-partita non attiva")
+  if (session.status === "COMPLETED" || session.status === "CANCELLED") throw new Error("Sessione già chiusa")
+
+  const hasScores = session.sessionMatches.some((m) => m.isCompleted)
+  if (hasScores) throw new Error("Impossibile rigenerare: alcuni risultati già inseriti")
+
+  const playerIds = session.participants.map((p) => p.playerId)
+  if (playerIds.length < 4) throw new Error("Servono almeno 4 giocatori per generare le partite")
+
+  const schedule = generateKOTBSchedule(playerIds, requestedRounds)
+
+  const matchRows: { sessionId: string; round: number; matchNumber: number }[] = []
+  const playerRows: { round: number; matchNumber: number; playerId: string; team: number }[] = []
+
+  for (const round of schedule.rounds) {
+    for (const match of round.matches) {
+      matchRows.push({ sessionId, round: round.roundNumber, matchNumber: match.matchNumber })
+      for (const pid of match.teamA) playerRows.push({ round: round.roundNumber, matchNumber: match.matchNumber, playerId: pid, team: 0 })
+      for (const pid of match.teamB) playerRows.push({ round: round.roundNumber, matchNumber: match.matchNumber, playerId: pid, team: 1 })
+    }
+  }
+
+  await db.$transaction(async (tx) => {
+    await tx.sessionMatch.deleteMany({ where: { sessionId } })
+
+    const created = await Promise.all(
+      matchRows.map((r) =>
+        tx.sessionMatch.create({ data: r, select: { id: true, round: true, matchNumber: true } })
+      )
+    )
+
+    const idMap = new Map(created.map((m) => [`${m.round}:${m.matchNumber}`, m.id]))
+
+    await tx.sessionMatchPlayer.createMany({
+      data: playerRows.map((r) => ({
+        matchId: idMap.get(`${r.round}:${r.matchNumber}`)!,
+        playerId: r.playerId,
+        team: r.team,
+      })),
+    })
+  })
+
+  revalidatePath(`/sessions/${sessionId}`)
+}
+
+export async function submitSessionMatchScore(input: unknown) {
+  const player = await getCurrentPlayer()
+  if (!player) throw new Error("Non autenticato")
+
+  const { matchId, teamAScore, teamBScore } = SubmitSessionMatchScoreSchema.parse(input)
+
+  const match = await db.sessionMatch.findUniqueOrThrow({
+    where: { id: matchId },
+    select: { sessionId: true, session: { select: { organizerId: true } } },
+  })
+
+  if (match.session.organizerId !== player.id) throw new Error("Solo l'organizzatore può inviare i risultati")
+
+  await db.sessionMatch.update({
+    where: { id: matchId },
+    data: { teamAScore, teamBScore, isCompleted: true },
+  })
+
+  revalidatePath(`/sessions/${match.sessionId}`)
+}

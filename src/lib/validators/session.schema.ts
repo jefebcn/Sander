@@ -10,6 +10,13 @@ export const CreateSessionSchema = z.object({
   paymentType: z.enum(["FREE", "QUOTA", "LOSER_PAYS"]).default("FREE"),
   quotaAmount: z.number().int().min(0).optional(),
   loserPays: z.string().max(60).optional(),
+  matchMode: z.boolean().optional().default(false),
+})
+
+export const SubmitSessionMatchScoreSchema = z.object({
+  matchId:    z.string().min(1),
+  teamAScore: z.number().int().min(0),
+  teamBScore: z.number().int().min(0),
 })
 
 export const RatePlayerSchema = z.object({
@@ -27,3 +34,4 @@ export const AssignTeamSchema = z.object({
 export type CreateSessionInput = z.infer<typeof CreateSessionSchema>
 export type RatePlayerInput = z.infer<typeof RatePlayerSchema>
 export type AssignTeamInput = z.infer<typeof AssignTeamSchema>
+export type SubmitSessionMatchScoreInput = z.infer<typeof SubmitSessionMatchScoreSchema>

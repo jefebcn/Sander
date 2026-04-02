@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { MapPin, ChevronRight, Banknote, Beer, Gift } from "lucide-react"
+import { MapPin, ChevronRight, Banknote, Beer, Gift, Shuffle } from "lucide-react"
 import { createSession } from "@/actions/sessions"
 import { cn } from "@/lib/utils"
 
@@ -35,6 +35,7 @@ export function CreateSessionForm() {
   const [paymentType, setPaymentType] = useState<PaymentType>("FREE")
   const [quotaAmount, setQuotaAmount] = useState("")
   const [loserPays, setLoserPays] = useState("")
+  const [matchMode, setMatchMode] = useState(false)
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -52,6 +53,7 @@ export function CreateSessionForm() {
             ? Math.round(parseFloat(quotaAmount) * 100)
             : undefined,
           loserPays: paymentType === "LOSER_PAYS" && loserPays ? loserPays : undefined,
+          matchMode: format === "TWO_VS_TWO" ? matchMode : false,
         })
         router.push(`/sessions/${session.id}`)
       } catch (err) {
@@ -125,6 +127,43 @@ export function CreateSessionForm() {
           ))}
         </div>
       </div>
+
+      {/* Multi-match mode — only for 2v2 */}
+      {format === "TWO_VS_TWO" && (
+        <button
+          type="button"
+          onClick={() => setMatchMode((v) => !v)}
+          className={cn(
+            "flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3.5 text-left transition-colors",
+            matchMode
+              ? "border-[var(--accent)] bg-[var(--accent)]/10"
+              : "border-[var(--border)] bg-[var(--surface-2)]",
+          )}
+        >
+          <Shuffle className={cn("h-5 w-5 shrink-0", matchMode ? "text-[var(--accent)]" : "text-[var(--muted-text)]")} />
+          <div className="flex-1">
+            <p className={cn("text-sm font-bold", matchMode ? "text-[var(--accent)]" : "text-white")}>
+              Modalità multi-partita
+            </p>
+            <p className="text-xs text-[var(--muted-text)]">
+              Le coppie ruotano automaticamente tra i gironi
+            </p>
+          </div>
+          <div
+            className={cn(
+              "h-6 w-10 rounded-full transition-colors",
+              matchMode ? "bg-[var(--accent)]" : "bg-[var(--border)]",
+            )}
+          >
+            <div
+              className={cn(
+                "mt-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
+                matchMode ? "translate-x-4.5 ml-0.5" : "ml-0.5",
+              )}
+            />
+          </div>
+        </button>
+      )}
 
       {/* Payment type */}
       <div className="space-y-2">

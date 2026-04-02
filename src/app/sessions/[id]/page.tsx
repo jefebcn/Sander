@@ -11,6 +11,7 @@ import { ShareButton } from "@/components/ui/ShareButton"
 import { SessionStatusBadge } from "@/components/session/SessionStatusBadge"
 import { ParticipantList } from "@/components/session/ParticipantList"
 import { PlayerRatingForm } from "@/components/session/PlayerRatingForm"
+import { SessionMatchRounds } from "@/components/session/SessionMatchRounds"
 import { PageHeader } from "@/components/layout/PageHeader"
 
 export async function generateMetadata(
@@ -49,6 +50,15 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
     ? await db.sessionSet.findMany({ where: { sessionId: id }, orderBy: { setNumber: "asc" } }).catch(() => [])
     : []
 
+  // Multi-match mode: fetch session matches when applicable
+  const sessionMatches = session.matchMode
+    ? await db.sessionMatch.findMany({
+        where: { sessionId: id },
+        include: { players: { include: { player: { select: { id: true, name: true } } } } },
+        orderBy: [{ round: "asc" }, { matchNumber: "asc" }],
+      }).catch(() => [])
+    : []
+
   // Completed sessions are private — only participants can view them
   if (session.status === "COMPLETED") {
     const isParticipant = session.participants.some((p) => p.player.id === currentPlayer?.id)
@@ -72,6 +82,8 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
   const isParticipant = currentPlayer
     ? session.participants.some((p) => p.player.id === currentPlayer.id)
     : false
+
+  const isOrganizer = currentPlayer?.id === session.organizerId
 
   const coParticipants =
     currentPlayer && isParticipant
@@ -180,6 +192,16 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
           participants={session.participants}
           currentPlayerId={currentPlayer?.id ?? null}
         />
+
+        {/* Multi-match rounds (matchMode sessions) */}
+        {session.matchMode && (
+          <SessionMatchRounds
+            sessionId={session.id}
+            matches={sessionMatches as Parameters<typeof SessionMatchRounds>[0]["matches"]}
+            isOrganizer={isOrganizer}
+            sessionStatus={session.status}
+          />
+        )}
 
         {/* Rating form (only after session completed + is participant) */}
         {session.status === "COMPLETED" && currentPlayer && isParticipant && (

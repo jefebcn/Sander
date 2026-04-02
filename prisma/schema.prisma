@@ -170,17 +170,18 @@ model Player {
   staPct Int @default(16)
 
   // Relations
-  registrations       TournamentRegistration[]
-  matchPlayers        MatchPlayer[]
-  standings           TournamentStanding[]
-  organizedSessions   Session[]
-  sessionParticipants SessionParticipant[]
-  ratingsGiven        PlayerRating[]     @relation("Rater")
-  ratingsReceived     PlayerRating[]     @relation("Rated")
-  badgesGiven         BadgeAward[]       @relation("BadgeGiver")
-  badgesReceived      BadgeAward[]       @relation("BadgeReceiver")
-  pushSubscriptions   PushSubscription[]
-  videoSubmissions    VideoSubmission[]
+  registrations        TournamentRegistration[]
+  matchPlayers         MatchPlayer[]
+  standings            TournamentStanding[]
+  organizedSessions    Session[]
+  sessionParticipants  SessionParticipant[]
+  sessionMatchPlayers  SessionMatchPlayer[]
+  ratingsGiven         PlayerRating[]     @relation("Rater")
+  ratingsReceived      PlayerRating[]     @relation("Rated")
+  badgesGiven          BadgeAward[]       @relation("BadgeGiver")
+  badgesReceived       BadgeAward[]       @relation("BadgeReceiver")
+  pushSubscriptions    PushSubscription[]
+  videoSubmissions     VideoSubmission[]
 
   @@map("players")
 }
@@ -314,14 +315,44 @@ model Session {
   quotaAmount Int?                       // cents, per-person fixed quota
   loserPays   String?                    // e.g. "1 birra", "una cena"
 
-  status SessionStatus @default(OPEN)
+  status    SessionStatus @default(OPEN)
+  matchMode Boolean       @default(false)
 
-  participants SessionParticipant[]
-  ratings      PlayerRating[]
-  badgeAwards  BadgeAward[]
-  sets         SessionSet[]
+  participants   SessionParticipant[]
+  ratings        PlayerRating[]
+  badgeAwards    BadgeAward[]
+  sets           SessionSet[]
+  sessionMatches SessionMatch[]
 
   @@map("sessions")
+}
+
+model SessionMatch {
+  id          String  @id @default(cuid())
+  sessionId   String
+  round       Int
+  matchNumber Int
+  teamAScore  Int?
+  teamBScore  Int?
+  isCompleted Boolean @default(false)
+
+  session Session             @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  players SessionMatchPlayer[]
+
+  @@map("session_matches")
+}
+
+model SessionMatchPlayer {
+  id       String @id @default(cuid())
+  matchId  String
+  playerId String
+  team     Int    // 0 = Team A, 1 = Team B
+
+  match  SessionMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player Player       @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, playerId])
+  @@map("session_match_players")
 }
 
 model SessionSet {
