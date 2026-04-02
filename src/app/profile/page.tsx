@@ -34,6 +34,12 @@ const SUPPORTERS: { name: string; image?: string; icon?: string; href: string; t
     tagline: "Streetwear & Abbigliamento",
   },
   {
+    name: "Fisioganzerli",
+    href: "https://fisioterapiaganzerli.com/",
+    tagline: "Fisioterapia & Riabilitazione",
+    accentColor: "#22c55e",
+  },
+  {
     name: "WanderQuest",
     href: "https://wanderquest-jade.vercel.app/",
     tagline: "Esplora il mondo",
