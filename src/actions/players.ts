@@ -71,8 +71,46 @@ export async function listPlayers() {
 export async function checkHasPlayerProfile(): Promise<boolean> {
   const session = await getCurrentSession()
   if (!session?.user?.id) return false
-  const count = await db.player.count({ where: { userId: session.user.id } })
-  return count > 0
+  const player = await db.player.findUnique({
+    where: { userId: session.user.id },
+    select: { firstName: true, lastName: true },
+  })
+  // Profile must exist AND have first+last name filled in (i.e. onboarding completed)
+  return !!(player?.firstName && player?.lastName)
+}
+
+export async function listUsersWithoutProfile() {
+  const session = await getCurrentSession()
+  if (!session?.user?.id) throw new Error("Non autenticato")
+
+  return db.user.findMany({
+    where: { player: null },
+    select: { id: true, name: true, email: true },
+    orderBy: { name: "asc" },
+  })
+}
+
+export async function createMinimalPlayerForUser(userId: string) {
+  const session = await getCurrentSession()
+  if (!session?.user?.id) throw new Error("Non autenticato")
+
+  const user = await db.user.findUniqueOrThrow({
+    where: { id: userId },
+    select: { id: true, name: true, email: true, player: { select: { id: true } } },
+  })
+
+  if (user.player) return user.player
+
+  const playerName =
+    user.name?.trim() ||
+    (user.email ? user.email.split("@")[0] : "Giocatore")
+
+  const player = await db.player.create({
+    data: { name: playerName, userId: user.id },
+  })
+
+  revalidatePath("/players")
+  return player
 }
 
 export async function getHeadToHeadStats(playerAId: string, playerBId: string) {
