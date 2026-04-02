@@ -1,12 +1,24 @@
 import type { Metadata, Viewport } from "next"
 import { Geist } from "next/font/google"
 import "./globals.css"
+import dynamic from "next/dynamic"
 import { Providers } from "@/lib/providers"
 import { MobileNav } from "@/components/layout/MobileNav"
 import { Toaster } from "@/components/ui/Toaster"
-import { OnboardingGate } from "@/components/onboarding/OnboardingGate"
-import { CookieBanner } from "@/components/layout/CookieBanner"
-import { PWAInstallBanner } from "@/components/layout/PWAInstallBanner"
+
+// Client-only components — loaded after hydration, not blocking initial render
+const OnboardingGate = dynamic(
+  () => import("@/components/onboarding/OnboardingGate").then((m) => m.OnboardingGate),
+  { ssr: false }
+)
+const CookieBanner = dynamic(
+  () => import("@/components/layout/CookieBanner").then((m) => m.CookieBanner),
+  { ssr: false }
+)
+const PWAInstallBanner = dynamic(
+  () => import("@/components/layout/PWAInstallBanner").then((m) => m.PWAInstallBanner),
+  { ssr: false }
+)
 
 const geist = Geist({
   variable: "--font-geist-sans",

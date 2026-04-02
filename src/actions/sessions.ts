@@ -409,22 +409,3 @@ export async function ratePlayer(input: unknown) {
   revalidatePath(`/sessions/${data.sessionId}`)
 }
 
-export async function getSessionsForPlayer(playerId: string) {
-  return db.sessionParticipant.findMany({
-    where: { playerId },
-    include: {
-      session: {
-        select: {
-          id: true,
-          title: true,
-          date: true,
-          location: true,
-          status: true,
-          format: true,
-        },
-      },
-    },
-    orderBy: { session: { date: "desc" } },
-    take: 10,
-  })
-}

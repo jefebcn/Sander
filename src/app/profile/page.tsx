@@ -11,6 +11,7 @@ import { SignOutButton } from "@/components/auth/SignOutButton"
 import { InviteTab } from "@/components/profile/InviteTab"
 import { APP_VERSION_DISPLAY } from "@/lib/appVersion"
 import { formatDate } from "@/lib/utils"
+import { getStreak } from "@/lib/streak"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
 import { AdminDeleteSessionButton } from "@/components/profile/AdminDeleteSessionButton"
 import { AdminDeleteTournamentButton } from "@/components/profile/AdminDeleteTournamentButton"
@@ -38,14 +39,6 @@ const SUPPORTERS: { name: string; image?: string; icon?: string; href: string; t
 ]
 
 // ── helpers ──────────────────────────────────────────────────────────
-
-async function getStreak(playerId: string): Promise<number> {
-  const since = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000)
-  const count = await db.sessionParticipant.count({
-    where: { playerId, session: { status: "COMPLETED", date: { gte: since } } },
-  })
-  return Math.min(count, 10)
-}
 
 function buildPromoCode(id: string): string {
   const clean = id.replace(/[^a-z0-9]/gi, "").toUpperCase()

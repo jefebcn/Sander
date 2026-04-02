@@ -2,15 +2,24 @@ export const dynamic = "force-dynamic"
 
 import Image from "next/image"
 import Link from "next/link"
+import dynamic from "next/dynamic"
 import { ChevronRight, ExternalLink, Sparkles, MapPin, Trophy, Shuffle } from "lucide-react"
 import { redirect } from "next/navigation"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { ratingToDisplayLevel } from "@/lib/tournament/glicko2"
 import { getPersonalizedRecommendations } from "@/actions/recommendations"
-import { LevelUpCelebration } from "@/components/home/LevelUpCelebration"
 import { formatDate } from "@/lib/utils"
-import { VideoCarousel } from "@/components/home/VideoCarousel"
+
+// Client-only — loaded after hydration so they never block the initial paint
+const LevelUpCelebration = dynamic(
+  () => import("@/components/home/LevelUpCelebration").then((m) => m.LevelUpCelebration),
+  { ssr: false }
+)
+const VideoCarousel = dynamic(
+  () => import("@/components/home/VideoCarousel").then((m) => m.VideoCarousel),
+  { ssr: false }
+)
 
 export default async function Home() {
   const session = await getCurrentSession()
