@@ -20,13 +20,20 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
 
 // ── Supporters ────────────────────────────────────────────────────────
 // Add entries here to display a new supporter banner.
-const SUPPORTERS: { name: string; image: string; icon: string; href: string; tagline?: string }[] = [
+// image/icon are optional — if absent a gradient placeholder is shown.
+const SUPPORTERS: { name: string; image?: string; icon?: string; href: string; tagline?: string; accentColor?: string }[] = [
   {
     name: "LilloFind",
     image: "/sponsors/lillofind-banner.png",
     icon: "/sponsors/lillofind.png",
     href: "https://jefebcn.github.io/lillofind/",
     tagline: "Streetwear & Abbigliamento",
+  },
+  {
+    name: "WanderQuest",
+    href: "https://wanderquest-jade.vercel.app/",
+    tagline: "Esplora il mondo",
+    accentColor: "#3b82f6",
   },
 ]
 
@@ -378,13 +385,33 @@ export default async function ProfilePage({ searchParams }: Props) {
               >
                 {/* Banner image — left portion */}
                 <div className="relative h-full w-32 shrink-0 overflow-hidden bg-[var(--surface-1)]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={s.image} alt={s.name} className="h-full w-full object-cover object-top" />
+                  {s.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={s.image} alt={s.name} className="h-full w-full object-cover object-top" />
+                  ) : (
+                    <div
+                      className="h-full w-full flex items-center justify-center"
+                      style={{ background: s.accentColor ? `linear-gradient(135deg, ${s.accentColor}33, ${s.accentColor}99)` : "var(--surface-3)" }}
+                    >
+                      <span className="text-xl font-black text-white opacity-90">
+                        {s.name.slice(0, 2).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 {/* Info — right portion */}
                 <div className="flex min-w-0 flex-1 items-center gap-3 px-4">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={s.icon} alt="" className="h-10 w-10 shrink-0 rounded-xl object-cover" />
+                  {s.icon ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={s.icon} alt="" className="h-10 w-10 shrink-0 rounded-xl object-cover" />
+                  ) : (
+                    <div
+                      className="h-10 w-10 shrink-0 rounded-xl flex items-center justify-center text-sm font-black text-white"
+                      style={{ background: s.accentColor ?? "var(--surface-3)" }}
+                    >
+                      {s.name.slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
                   <div className="min-w-0">
                     <p className="font-black text-base text-white truncate">{s.name}</p>
                     {s.tagline && (
