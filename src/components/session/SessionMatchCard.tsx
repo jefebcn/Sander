@@ -88,7 +88,17 @@ export function SessionMatchCard({ match, isOrganizer }: Props) {
                 >
                   <Minus className="h-3.5 w-3.5" />
                 </button>
-                <span className="min-w-[2rem] text-center text-lg font-black text-white">{scoreA}</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={99}
+                  value={scoreA}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value, 10)
+                    if (!isNaN(v) && v >= 0) setScoreA(Math.min(99, v))
+                  }}
+                  className="w-10 rounded-lg bg-transparent text-center text-lg font-black tabular-nums text-white focus:outline-none focus:ring-1 focus:ring-[var(--accent)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
                 <button
                   type="button"
                   onClick={() => setScoreA((v) => v + 1)}
@@ -111,7 +121,17 @@ export function SessionMatchCard({ match, isOrganizer }: Props) {
                 >
                   <Minus className="h-3.5 w-3.5" />
                 </button>
-                <span className="min-w-[2rem] text-center text-lg font-black text-white">{scoreB}</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={99}
+                  value={scoreB}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value, 10)
+                    if (!isNaN(v) && v >= 0) setScoreB(Math.min(99, v))
+                  }}
+                  className="w-10 rounded-lg bg-transparent text-center text-lg font-black tabular-nums text-white focus:outline-none focus:ring-1 focus:ring-[var(--accent)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
                 <button
                   type="button"
                   onClick={() => setScoreB((v) => v + 1)}

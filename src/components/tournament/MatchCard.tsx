@@ -307,13 +307,20 @@ function ScoreInput({ value, onChange, disabled, "aria-label": ariaLabel }: Scor
       >
         <Plus className="h-5 w-5" aria-hidden="true" />
       </button>
-      <span
-        className="w-10 text-center text-2xl font-black tabular-nums transition-all"
+      <input
+        type="number"
+        min={0}
+        max={99}
+        value={value}
+        disabled={disabled}
+        aria-label={ariaLabel}
         aria-live="polite"
-        aria-atomic="true"
-      >
-        {value}
-      </span>
+        onChange={(e) => {
+          const v = parseInt(e.target.value, 10)
+          if (!isNaN(v) && v >= 0) onChange(Math.min(99, v))
+        }}
+        className="w-12 rounded-lg bg-transparent text-center text-2xl font-black tabular-nums text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+      />
       <button
         type="button"
         onClick={() => tap(Math.max(0, value - 1))}
