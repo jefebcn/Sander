@@ -142,7 +142,6 @@ export default async function ProfilePage({ searchParams }: Props) {
           select: {
             id: true,
             name: true,
-            email: true,
             avatarUrl: true,
             level: true,
             createdAt: true,
