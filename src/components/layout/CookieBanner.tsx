@@ -2,19 +2,22 @@
 
 import { useState, useEffect } from "react"
 import { X } from "lucide-react"
+import { usePathname } from "next/navigation"
 
 const STORAGE_KEY = "cookie_consent"
 
 export function CookieBanner() {
   const [visible, setVisible] = useState(false)
+  const pathname = usePathname()
 
   useEffect(() => {
+    // Never show on auth pages
+    if (pathname.startsWith("/auth/") || pathname === "/auth") return
     if (!localStorage.getItem(STORAGE_KEY)) {
-      // Small delay so it doesn't flash on initial render
       const t = setTimeout(() => setVisible(true), 800)
       return () => clearTimeout(t)
     }
-  }, [])
+  }, [pathname])
 
   function accept() {
     localStorage.setItem(STORAGE_KEY, "accepted")
@@ -29,51 +32,33 @@ export function CookieBanner() {
   if (!visible) return null
 
   return (
-    <div className="px-3 slide-up stagger-2">
+    <div className="px-3 slide-up">
       <div
-        className="rounded-2xl px-4 py-3 flex items-start gap-3"
+        className="flex items-center gap-3 rounded-2xl px-4 py-2.5"
         style={{
           background: "rgba(18,21,18,0.97)",
-          border: "1px solid rgba(255,255,255,0.1)",
+          border: "1px solid rgba(255,255,255,0.08)",
           backdropFilter: "blur(12px)",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
         }}
       >
-        {/* Text */}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-white leading-snug mb-0.5">
-            Usiamo i cookie 🍪
-          </p>
-          <p className="text-xs text-[var(--muted-text)] leading-relaxed">
-            Utilizziamo cookie tecnici per il funzionamento del sito. Accettando ci aiuti a migliorare l&apos;esperienza.
-          </p>
-        </div>
-
-        {/* Dismiss */}
-        <button
-          onClick={reject}
-          className="shrink-0 mt-0.5 text-[var(--muted-text)] hover:text-white transition-colors"
-          aria-label="Chiudi"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-
-      {/* Buttons row */}
-      <div className="mt-2 flex gap-2">
-        <button
-          onClick={reject}
-          className="flex-1 rounded-xl py-2.5 text-sm font-semibold text-[var(--muted-text)] transition-colors"
-          style={{ background: "rgba(18,21,18,0.97)", border: "1px solid rgba(255,255,255,0.1)" }}
-        >
-          Rifiuta
-        </button>
+        <span className="text-base leading-none" aria-hidden="true">🍪</span>
+        <p className="flex-1 min-w-0 text-xs text-[var(--muted-text)] leading-snug">
+          Utilizziamo cookie tecnici per il funzionamento del sito.
+        </p>
         <button
           onClick={accept}
-          className="flex-1 rounded-xl py-2.5 text-sm font-black text-black transition-opacity active:opacity-80"
+          className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-black text-black transition-opacity active:opacity-80"
           style={{ background: "var(--accent)" }}
         >
-          Accetta
+          OK
+        </button>
+        <button
+          onClick={reject}
+          aria-label="Rifiuta"
+          className="shrink-0 text-[var(--muted-text)] hover:text-white transition-colors"
+        >
+          <X className="h-3.5 w-3.5" />
         </button>
       </div>
     </div>
