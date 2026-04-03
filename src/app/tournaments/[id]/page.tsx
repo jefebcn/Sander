@@ -248,10 +248,23 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
           {(tournament.type === "BRACKETS" || tournament.type === "DOUBLE_ELIMINATION") && (
             <Link
               href={`/tournaments/${id}/bracket`}
-              className="flex min-h-[3.5rem] items-center justify-between rounded-2xl bg-[var(--surface-1)] px-4 transition-colors hover:bg-[var(--surface-2)]"
+              className="flex items-center gap-4 rounded-2xl p-4 transition-colors hover:opacity-90 active:scale-[0.98]"
+              style={{
+                background: "var(--surface-1)",
+                border: "1px solid rgba(201,243,29,0.25)",
+              }}
             >
-              <span className="font-semibold">Tabellone</span>
-              <ChevronRight className="h-5 w-5 text-[var(--muted-text)]" aria-hidden="true" />
+              <div
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                style={{ background: "rgba(201,243,29,0.1)" }}
+              >
+                <Trophy className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-black text-white">Tabellone</p>
+                <p className="text-xs text-[var(--muted-text)]">Visualizza il tabellone del torneo</p>
+              </div>
+              <ChevronRight className="h-5 w-5 shrink-0 text-[var(--accent)]" aria-hidden="true" />
             </Link>
           )}
           <Link

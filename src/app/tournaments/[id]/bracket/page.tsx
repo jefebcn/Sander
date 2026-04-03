@@ -1,9 +1,10 @@
+import Link from "next/link"
+import { ChevronLeft } from "lucide-react"
 import { db } from "@/lib/db"
-import { PageHeader } from "@/components/layout/PageHeader"
 import { BracketView } from "@/components/tournament/BracketView"
+import { TournamentBracketView } from "@/components/tournament/TournamentBracketView"
 
 export const dynamic = "force-dynamic"
-
 
 export default async function BracketPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -27,11 +28,32 @@ export default async function BracketPage({ params }: { params: Promise<{ id: st
     )
   }
 
+  const isSingleElim = tournament.type === "BRACKETS"
+
   return (
-    <div>
-      <PageHeader title="Tabellone" subtitle={tournament.name} backHref={`/tournaments/${id}`} />
-      <div className="overflow-x-auto px-4 pb-8">
-        <BracketView matches={matches} />
+    <div className="min-h-dvh" style={{ background: "var(--background)" }}>
+      {/* Compact header */}
+      <div
+        className="flex items-center gap-3 px-4 pb-3"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}
+      >
+        <Link
+          href={`/tournaments/${id}`}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-2)] text-[var(--muted-text)] transition-colors hover:text-white"
+          aria-label="Indietro"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </Link>
+        <h1 className="truncate text-base font-black text-white">{tournament.name}</h1>
+      </div>
+
+      {/* Bracket */}
+      <div className="overflow-x-auto px-4 pb-8 pt-2">
+        {isSingleElim ? (
+          <TournamentBracketView matches={matches} tournamentName={tournament.name} />
+        ) : (
+          <BracketView matches={matches} />
+        )}
       </div>
     </div>
   )
