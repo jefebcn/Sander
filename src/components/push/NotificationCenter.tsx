@@ -76,14 +76,14 @@ export function NotificationCenter({ open, onClose }: NotificationCenterProps) {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Sheet */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-50 flex max-h-[80dvh] flex-col rounded-t-3xl bg-[var(--surface-1)]"
+        className="fixed bottom-0 left-0 right-0 z-[70] flex max-h-[75dvh] flex-col rounded-t-3xl bg-[var(--surface-1)]"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)" }}
       >
         {/* Handle */}
