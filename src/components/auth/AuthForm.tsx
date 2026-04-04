@@ -9,15 +9,17 @@ import { cn } from "@/lib/utils"
 
 interface AuthFormProps {
   callbackUrl: string
+  inviteCode?: string
 }
 
 type Mode = "login" | "register"
 
-export function AuthForm({ callbackUrl }: AuthFormProps) {
+export function AuthForm({ callbackUrl, inviteCode: initialInviteCode }: AuthFormProps) {
   const [mode, setMode] = useState<Mode>("login")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirm, setConfirm] = useState("")
+  const [inviteCode, setInviteCode] = useState(initialInviteCode ?? "")
   const [showPwd, setShowPwd] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -34,7 +36,7 @@ export function AuthForm({ callbackUrl }: AuthFormProps) {
     startTransition(async () => {
       try {
         if (mode === "register") {
-          const reg = await registerWithEmail({ email, password })
+          const reg = await registerWithEmail({ email, password, inviteCode: inviteCode.trim() || undefined })
           if ("error" in reg) {
             setError(reg.error)
             return
@@ -110,14 +112,24 @@ export function AuthForm({ callbackUrl }: AuthFormProps) {
         </div>
 
         {mode === "register" && (
-          <input
-            type={showPwd ? "text" : "password"}
-            required
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            placeholder="Conferma password"
-            className="w-full rounded-2xl bg-[var(--surface-2)] px-4 py-3.5 text-base text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-          />
+          <>
+            <input
+              type={showPwd ? "text" : "password"}
+              required
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              placeholder="Conferma password"
+              className="w-full rounded-2xl bg-[var(--surface-2)] px-4 py-3.5 text-base text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            />
+            <input
+              type="text"
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+              placeholder="Codice invito (opzionale)"
+              maxLength={9}
+              className="w-full rounded-2xl bg-[var(--surface-2)] px-4 py-3.5 text-base text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] tracking-widest"
+            />
+          </>
         )}
 
         {error && (

@@ -69,6 +69,10 @@ model User {
 
   password     String?   // null for OAuth-only users
 
+  // Invite tracking
+  invitedByPlayerId String?
+  invitedByPlayer   Player?  @relation("PlayerInvites", fields: [invitedByPlayerId], references: [id])
+
   accounts    Account[]
   authSessions AuthSession[]
   player      Player?
@@ -182,6 +186,7 @@ model Player {
   badgesReceived       BadgeAward[]       @relation("BadgeReceiver")
   pushSubscriptions    PushSubscription[]
   videoSubmissions     VideoSubmission[]
+  invitedUsers         User[]             @relation("PlayerInvites")
 
   @@map("players")
 }

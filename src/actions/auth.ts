@@ -5,6 +5,7 @@ import crypto from "crypto"
 import { db } from "@/lib/db"
 import { RegisterSchema, ForgotPasswordSchema, ResetPasswordSchema } from "@/lib/validators/auth.schema"
 import { sendPasswordResetEmail } from "@/lib/email"
+import { findPlayerByInviteCode, redeemInvite } from "@/actions/invite"
 
 type ActionResult = { success: true } | { error: string }
 
@@ -12,7 +13,7 @@ type ActionResult = { success: true } | { error: string }
 
 export async function registerWithEmail(input: unknown): Promise<ActionResult> {
   try {
-    const { email, password } = RegisterSchema.parse(input)
+    const { email, password, inviteCode } = RegisterSchema.parse(input)
 
     const existing = await db.user.findUnique({ where: { email } })
     if (existing) {
@@ -20,7 +21,15 @@ export async function registerWithEmail(input: unknown): Promise<ActionResult> {
     }
 
     const hashed = await bcrypt.hash(password, 12)
-    await db.user.create({ data: { email, password: hashed } })
+    const user = await db.user.create({ data: { email, password: hashed } })
+
+    // Redeem invite code if provided
+    if (inviteCode) {
+      const inviterPlayerId = await findPlayerByInviteCode(inviteCode)
+      if (inviterPlayerId) {
+        await redeemInvite(user.id, inviterPlayerId)
+      }
+    }
 
     return { success: true }
   } catch (e) {

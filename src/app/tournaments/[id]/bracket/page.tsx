@@ -3,6 +3,7 @@ import { ChevronLeft } from "lucide-react"
 import { db } from "@/lib/db"
 import { BracketView } from "@/components/tournament/BracketView"
 import { TournamentBracketView } from "@/components/tournament/TournamentBracketView"
+import { LiveBracketRefresher } from "@/components/tournament/LiveBracketRefresher"
 
 export const dynamic = "force-dynamic"
 
@@ -10,7 +11,7 @@ export default async function BracketPage({ params }: { params: Promise<{ id: st
   const { id } = await params
 
   const [tournament, matches] = await Promise.all([
-    db.tournament.findUniqueOrThrow({ where: { id }, select: { name: true, type: true } }),
+    db.tournament.findUniqueOrThrow({ where: { id }, select: { name: true, type: true, status: true } }),
     db.match.findMany({
       where: { tournamentId: id },
       include: {
@@ -46,6 +47,8 @@ export default async function BracketPage({ params }: { params: Promise<{ id: st
         </Link>
         <h1 className="truncate text-base font-black text-white">{tournament.name}</h1>
       </div>
+
+      <LiveBracketRefresher isLive={tournament.status === "LIVE"} />
 
       {/* Bracket */}
       <div className="overflow-x-auto px-4 pb-8 pt-2">

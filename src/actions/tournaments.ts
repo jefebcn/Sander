@@ -165,7 +165,18 @@ export async function startTournament(tournamentId: string) {
     await startBracketTournament(tournament, playerIds)
   }
 
-  // push notifications removed (UI disabled)
+  // Notify all participants that the tournament has started
+  try {
+    const { notifyPlayers } = await import("@/lib/push")
+    const registeredPlayerIds = tournament.registrations.map((r) => r.playerId)
+    await notifyPlayers(registeredPlayerIds, {
+      title: `🏐 ${tournament.name} è iniziato!`,
+      body: "Il torneo è in corso. Controlla il tabellone e preparati per il tuo match.",
+      url: `/tournaments/${tournamentId}`,
+    })
+  } catch {
+    // Non-critical — don't block tournament start if push fails
+  }
 
   revalidatePath("/tournaments")
   revalidatePath(`/tournaments/${tournamentId}`)
@@ -771,6 +782,28 @@ export async function completeTournament(tournamentId: string) {
 
   // Apply per-tournament Glicko-2 update (one rating period = one tournament)
   await applyTournamentGlicko(tournamentId).catch(() => {})
+
+  // Notify all participants that the tournament is over
+  try {
+    const { notifyPlayers } = await import("@/lib/push")
+    const winner = standings[0]
+    const winnerName = winner
+      ? (await db.player.findUnique({ where: { id: winner.playerId }, select: { name: true } }))?.name
+      : null
+    const tournamentName = (await db.tournament.findUnique({ where: { id: tournamentId }, select: { name: true } }))?.name ?? "Il torneo"
+    await notifyPlayers(
+      standings.map((s) => s.playerId),
+      {
+        title: "🏆 Torneo completato!",
+        body: winnerName
+          ? `${tournamentName} — Vincitore: ${winnerName}`
+          : `${tournamentName} è terminato. Guarda i risultati finali.`,
+        url: `/tournaments/${tournamentId}`,
+      },
+    )
+  } catch {
+    // Non-critical
+  }
 
   revalidatePath("/tournaments")
   revalidatePath(`/tournaments/${tournamentId}`)

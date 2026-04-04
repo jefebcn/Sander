@@ -7,9 +7,9 @@ import { AuthForm } from "@/components/auth/AuthForm"
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ callbackUrl?: string }>
+  searchParams: Promise<{ callbackUrl?: string; invite?: string }>
 }) {
-  const { callbackUrl } = await searchParams
+  const { callbackUrl, invite } = await searchParams
   const resolvedCallback = callbackUrl ?? "/"
 
   return (
@@ -57,7 +57,7 @@ export default async function SignInPage({
         </div>
 
         {/* Form */}
-        <AuthForm callbackUrl={resolvedCallback} />
+        <AuthForm callbackUrl={resolvedCallback} inviteCode={invite} />
 
         <p className="text-center text-xs text-[var(--muted-text)]">
           Accedendo accetti i nostri Termini di Servizio

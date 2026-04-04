@@ -122,6 +122,10 @@ export default async function ProfilePage({ searchParams }: Props) {
 
   const promoCode = buildPromoCode(player.id)
 
+  const inviteCount = activeTab === "invita"
+    ? await db.user.count({ where: { invitedByPlayerId: player.id } })
+    : 0
+
   // Admin data (only fetched when admin views the admin tab)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let adminSessions: any[] = []
@@ -358,7 +362,7 @@ export default async function ProfilePage({ searchParams }: Props) {
 
       {/* ══ Invita tab ════════════════════════════════════════ */}
       {activeTab === "invita" && (
-        <InviteTab promoCode={promoCode} playerName={fullPlayer.name} />
+        <InviteTab promoCode={promoCode} playerName={fullPlayer.name} inviteCount={inviteCount} />
       )}
 
       {/* ══ App tab ═══════════════════════════════════════════ */}
