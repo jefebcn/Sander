@@ -411,7 +411,9 @@ export interface PodiumPlayer {
 export function PodiumSection({ players }: { players: PodiumPlayer[] }) {
   const [selected, setSelected] = useState<PodiumPlayer | null>(null)
 
-  if (players.length === 0) return null
+  // Build lookup by position for visual 2-1-3 arrangement
+  const byPos: Record<number, PodiumPlayer> = {}
+  for (const p of players) byPos[p.position] = p
 
   return (
     <div className="slide-up stagger-3 space-y-3">
@@ -420,17 +422,48 @@ export function PodiumSection({ players }: { players: PodiumPlayer[] }) {
         <p className="text-sm font-bold text-white/80">Podio del mese</p>
       </div>
 
-      {/* 3-column grid with minimal previews */}
-      <div className="grid grid-cols-3 gap-3">
-        {players.map((p) => (
-          <PodiumPreview
-            key={p.position}
-            playerData={p.playerData}
-            position={p.position}
-            onClick={() => setSelected(p)}
-          />
-        ))}
-      </div>
+      {players.length === 0 ? (
+        <div className="flex flex-col items-center gap-3 py-12 text-center">
+          <span className="text-4xl">🏆</span>
+          <p className="text-sm text-white/50">Nessuna partita registrata questo mese</p>
+        </div>
+      ) : (
+        /* 2-1-3 podium layout: 2nd left, 1st center (elevated), 3rd right */
+        <div className="flex items-end gap-2">
+          {/* 2nd place — left, baseline */}
+          {byPos[2] && (
+            <div className="flex-1">
+              <PodiumPreview
+                playerData={byPos[2].playerData}
+                position={2}
+                onClick={() => setSelected(byPos[2])}
+              />
+            </div>
+          )}
+
+          {/* 1st place — center, elevated + slightly larger */}
+          {byPos[1] && (
+            <div className="flex-[1.1]" style={{ transform: "translateY(-1rem)" }}>
+              <PodiumPreview
+                playerData={byPos[1].playerData}
+                position={1}
+                onClick={() => setSelected(byPos[1])}
+              />
+            </div>
+          )}
+
+          {/* 3rd place — right, baseline */}
+          {byPos[3] && (
+            <div className="flex-1">
+              <PodiumPreview
+                playerData={byPos[3].playerData}
+                position={3}
+                onClick={() => setSelected(byPos[3])}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Detail modal */}
       {selected && (
