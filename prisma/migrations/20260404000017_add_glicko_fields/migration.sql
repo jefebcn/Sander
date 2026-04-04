@@ -1,0 +1,5 @@
+-- Add Glicko-2 rating fields to players table
+ALTER TABLE "players"
+  ADD COLUMN "glickoRating" DOUBLE PRECISION NOT NULL DEFAULT 1500,
+  ADD COLUMN "glickoRD" DOUBLE PRECISION NOT NULL DEFAULT 350,
+  ADD COLUMN "glickoVolatility" DOUBLE PRECISION NOT NULL DEFAULT 0.06;
