@@ -83,11 +83,11 @@ export function NotificationCenter({ open, onClose }: NotificationCenterProps) {
 
       {/* Sheet */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-[70] flex max-h-[75dvh] flex-col rounded-t-3xl bg-[var(--surface-1)]"
+        className="fixed bottom-0 left-0 right-0 z-[70] flex max-h-[75dvh] flex-col rounded-t-3xl bg-[var(--surface-2)]"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)" }}
       >
         {/* Handle */}
-        <div className="mx-auto mt-3 mb-1 h-1 w-10 rounded-full bg-[var(--border)]" />
+        <div className="mx-auto mt-3 mb-1 h-1 w-10 rounded-full bg-white/20" />
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3">
@@ -105,7 +105,7 @@ export function NotificationCenter({ open, onClose }: NotificationCenterProps) {
               <button
                 onClick={handleMarkAllRead}
                 disabled={isPending}
-                className="flex items-center gap-1 rounded-xl bg-[var(--surface-2)] px-3 py-1.5 text-xs font-bold text-[var(--muted-text)] transition-opacity active:opacity-70"
+                className="flex items-center gap-1 rounded-xl bg-white/10 px-3 py-1.5 text-xs font-bold text-white transition-opacity active:opacity-70"
               >
                 <Check className="h-3.5 w-3.5" />
                 Tutte lette
@@ -113,7 +113,7 @@ export function NotificationCenter({ open, onClose }: NotificationCenterProps) {
             )}
             <button
               onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-2)] text-[var(--muted-text)]"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white"
               aria-label="Chiudi"
             >
               <X className="h-4 w-4" />
@@ -130,23 +130,26 @@ export function NotificationCenter({ open, onClose }: NotificationCenterProps) {
           ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-16 text-center">
               <BellOff className="h-10 w-10 opacity-20" />
-              <p className="text-sm text-[var(--muted-text)]">Nessuna notifica ancora</p>
+              <p className="text-sm text-white/50">Nessuna notifica ancora</p>
             </div>
           ) : (
             notifications.map((n) => (
               <button
                 key={n.id}
                 onClick={() => handleClickNotification(n)}
-                className="flex w-full items-start gap-3 rounded-2xl p-3 text-left transition-colors active:opacity-80"
-                style={{ background: n.readAt ? "var(--surface-2)" : "rgba(201,243,29,0.05)", border: n.readAt ? "none" : "1px solid rgba(201,243,29,0.12)" }}
+                className="flex w-full items-start gap-3 rounded-2xl p-4 text-left active:opacity-80"
+                style={{
+                  background: n.readAt ? "var(--surface-4)" : "rgba(201,243,29,0.08)",
+                  border: n.readAt ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(201,243,29,0.25)",
+                }}
               >
                 {/* Unread dot */}
-                <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full" style={{ background: n.readAt ? "transparent" : "var(--accent)" }} />
+                <div className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: n.readAt ? "transparent" : "var(--accent)" }} />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-bold text-white leading-tight">{n.title}</p>
-                  <p className="mt-0.5 text-xs text-[var(--muted-text)] leading-relaxed">{n.body}</p>
+                  <p className="mt-1 text-xs text-white/60 leading-relaxed">{n.body}</p>
                 </div>
-                <span className="shrink-0 text-[0.65rem] text-[var(--muted-text)]">
+                <span className="shrink-0 text-[0.65rem] text-white/40 mt-0.5">
                   {relativeTime(n.createdAt)}
                 </span>
               </button>
