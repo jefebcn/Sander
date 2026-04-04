@@ -222,3 +222,72 @@ export async function getPlayerAdvancedStats(playerId: string) {
 
   return { tournamentsByType, communityAvg }
 }
+
+
+export async function getMonthlyTopPlayers() {
+  const now = new Date()
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+
+  // Tournament match wins this month
+  const tourneyMatches = await db.match.findMany({
+    where: { isCompleted: true, updatedAt: { gte: startOfMonth } },
+    select: {
+      teamAScore: true,
+      teamBScore: true,
+      players: { select: { playerId: true, team: true } },
+    },
+  })
+
+  // Session match wins this month
+  const sessionMatches = await db.sessionMatch.findMany({
+    where: { isCompleted: true, session: { date: { gte: startOfMonth } } },
+    select: {
+      teamAScore: true,
+      teamBScore: true,
+      players: { select: { playerId: true, team: true } },
+    },
+  })
+
+  // Count wins per player
+  const winMap: Record<string, number> = {}
+  for (const m of [...tourneyMatches, ...sessionMatches]) {
+    if (m.teamAScore == null || m.teamBScore == null || m.teamAScore === m.teamBScore) continue
+    const winningTeam = m.teamAScore > m.teamBScore ? 0 : 1
+    for (const mp of m.players) {
+      if (mp.team === winningTeam) {
+        winMap[mp.playerId] = (winMap[mp.playerId] ?? 0) + 1
+      }
+    }
+  }
+
+  if (Object.keys(winMap).length === 0) return []
+
+  // Fetch up to top 10 candidates, then sort with glicko tiebreaker
+  const topIds = Object.entries(winMap)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([id]) => id)
+
+  const players = await db.player.findMany({
+    where: { id: { in: topIds } },
+    select: {
+      id: true,
+      name: true,
+      glickoRating: true,
+      nationality: true,
+      preferredRole: true,
+      avatarUrl: true,
+      attPct: true,
+      difPct: true,
+      ricPct: true,
+      murPct: true,
+      alzPct: true,
+      staPct: true,
+    },
+  })
+
+  return players
+    .map((p) => ({ player: p, wins: winMap[p.id] ?? 0 }))
+    .sort((a, b) => b.wins - a.wins || b.player.glickoRating - a.player.glickoRating)
+    .slice(0, 3)
+}

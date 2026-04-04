@@ -2,8 +2,12 @@ export const dynamic = "force-dynamic"
 
 import Link from "next/link"
 import { Info } from "lucide-react"
-import { listPlayers } from "@/actions/players"
+import { listPlayers, getMonthlyTopPlayers } from "@/actions/players"
 import { FilterablePlayerList } from "@/components/player/FilterablePlayerList"
+import { PodiumSection } from "@/components/home/PodiumSection"
+import type { PodiumPlayer } from "@/components/home/PodiumSection"
+import { playerToCardData } from "@/components/player/SanderCardFut"
+import type { PrismaPlayerLike } from "@/components/player/SanderCardFut"
 
 interface Props {
   searchParams: Promise<{ tab?: string }>
@@ -11,9 +15,18 @@ interface Props {
 
 export default async function PlayersPage({ searchParams }: Props) {
   const { tab } = await searchParams
-  const activeTab = tab === "lista" ? "lista" : "ranking"
+  const activeTab = tab === "lista" ? "lista" : tab === "podio" ? "podio" : "ranking"
 
   const players = await listPlayers()
+
+  let podiumPlayers: PodiumPlayer[] = []
+  if (activeTab === "podio") {
+    const top3 = await getMonthlyTopPlayers()
+    podiumPlayers = top3.map(({ player }, i) => ({
+      playerData: playerToCardData(player as PrismaPlayerLike),
+      position: i + 1,
+    }))
+  }
 
   return (
     <div className="pb-6">
@@ -55,10 +68,27 @@ export default async function PlayersPage({ searchParams }: Props) {
         >
           Tutti
         </Link>
+        <Link
+          href="/players?tab=podio"
+          className="flex-1 rounded-xl py-2.5 text-center text-sm font-bold transition-colors"
+          style={
+            activeTab === "podio"
+              ? { background: "var(--accent)", color: "#000" }
+              : { background: "var(--surface-2)", color: "var(--muted-text)" }
+          }
+        >
+          Podio
+        </Link>
       </div>
 
-      {/* ── Filterable list ───────────────────────────────────── */}
-      <FilterablePlayerList players={players} tab={activeTab} />
+      {/* ── Content ───────────────────────────────────────────── */}
+      {activeTab === "podio" ? (
+        <div className="px-4">
+          <PodiumSection players={podiumPlayers} />
+        </div>
+      ) : (
+        <FilterablePlayerList players={players} tab={activeTab as "ranking" | "lista"} />
+      )}
     </div>
   )
 }

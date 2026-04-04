@@ -10,10 +10,6 @@ import { ratingToDisplayLevel } from "@/lib/tournament/glicko2"
 import { getPersonalizedRecommendations } from "@/actions/recommendations"
 import { formatDate } from "@/lib/utils"
 import { ClientOnlyHomeWidgets } from "@/components/home/ClientOnlyHomeWidgets"
-import { PodiumSection } from "@/components/home/PodiumSection"
-import type { PodiumPlayer } from "@/components/home/PodiumSection"
-import { playerToCardData } from "@/components/player/SanderCardFut"
-import type { PrismaPlayerLike } from "@/components/player/SanderCardFut"
 import { NotificationBell } from "@/components/push/NotificationBell"
 import { getUnreadCount } from "@/actions/notifications"
 
@@ -39,9 +35,8 @@ export default async function Home() {
   let recs = null
   let upcomingChicece = null
   let unreadCount = 0
-  let podiumPlayers: PodiumPlayer[] = []
   if (player) {
-    const [fp, r, uc, uc2, top3] = await Promise.all([
+    ;[fullPlayer, recs, upcomingChicece, unreadCount] = await Promise.all([
       db.player.findUnique({
         where: { id: player.id },
         include: { _count: { select: { organizedSessions: true } } },
@@ -52,32 +47,7 @@ export default async function Home() {
         orderBy: { date: "asc" },
       }),
       getUnreadCount(),
-      db.player.findMany({
-        orderBy: { glickoRating: "desc" },
-        take: 3,
-        select: {
-          name: true,
-          glickoRating: true,
-          nationality: true,
-          preferredRole: true,
-          avatarUrl: true,
-          attPct: true,
-          difPct: true,
-          ricPct: true,
-          murPct: true,
-          alzPct: true,
-          staPct: true,
-        },
-      }),
     ])
-    fullPlayer = fp
-    recs = r
-    upcomingChicece = uc
-    unreadCount = uc2
-    podiumPlayers = top3.map((p, i) => ({
-      playerData: playerToCardData(p as PrismaPlayerLike),
-      position: i + 1,
-    }))
   } else {
     upcomingChicece = await db.tournament.findFirst({
       where: { type: "CHICECE", status: { in: ["DRAFT", "LIVE"] } },
@@ -289,11 +259,6 @@ export default async function Home() {
                 </Link>
               </div>
             </div>
-
-            {/* ── Podio del mese ────────────────────────────────── */}
-            {podiumPlayers.length > 0 && (
-              <PodiumSection players={podiumPlayers} />
-            )}
 
             {/* ── Per te (Personalised recommendations) ──────── */}
             {recs && (recs.performanceInsight || recs.suggestedSessions.length > 0 || recs.suggestedTournaments.length > 0) && (
