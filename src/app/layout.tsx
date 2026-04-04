@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next"
+import Image from "next/image"
 import { Geist } from "next/font/google"
 import "./globals.css"
 import { Providers } from "@/lib/providers"
@@ -55,11 +56,13 @@ export default function RootLayout({
     <html lang="it" className={`${geist.variable} h-full`}>
       <body className="min-h-dvh flex flex-col bg-[var(--background)] text-[var(--foreground)]">
         {/* SANDER logo watermark — fixed behind all content */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src="/sander-logo.png"
           alt=""
           aria-hidden="true"
+          width={400}
+          height={400}
+          loading="lazy"
           className="pointer-events-none fixed left-1/2 top-1/2 z-0 w-[75vw] max-w-xs -translate-x-1/2 -translate-y-1/2 select-none opacity-[0.05]"
           style={{ filter: "blur(2px)" }}
         />

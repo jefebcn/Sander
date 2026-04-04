@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
+import Image from "next/image"
 import { Trophy, TrendingUp, Users, ChevronRight } from "lucide-react"
 import { AuthForm } from "@/components/auth/AuthForm"
 import { cn } from "@/lib/utils"
@@ -65,8 +66,7 @@ export function OnboardingSlider({ callbackUrl }: OnboardingSliderProps) {
       <div className="flex flex-col gap-6 px-2 py-8">
         {/* Logo */}
         <div className="flex flex-col items-center gap-3 mb-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/sander-logo.png"
             alt="SANDER"
             width={72}

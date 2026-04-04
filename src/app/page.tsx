@@ -10,6 +10,8 @@ import { ratingToDisplayLevel } from "@/lib/tournament/glicko2"
 import { getPersonalizedRecommendations } from "@/actions/recommendations"
 import { formatDate } from "@/lib/utils"
 import { ClientOnlyHomeWidgets } from "@/components/home/ClientOnlyHomeWidgets"
+import { NotificationBell } from "@/components/push/NotificationBell"
+import { getUnreadCount } from "@/actions/notifications"
 
 function getMilestoneTitle(level: number): string {
   if (level >= 50) return "Sand King"
@@ -32,8 +34,9 @@ export default async function Home() {
   let fullPlayer = null
   let recs = null
   let upcomingChicece = null
+  let unreadCount = 0
   if (player) {
-    ;[fullPlayer, recs, upcomingChicece] = await Promise.all([
+    ;[fullPlayer, recs, upcomingChicece, unreadCount] = await Promise.all([
       db.player.findUnique({
         where: { id: player.id },
         include: { _count: { select: { organizedSessions: true } } },
@@ -43,6 +46,7 @@ export default async function Home() {
         where: { type: "CHICECE", status: { in: ["DRAFT", "LIVE"] } },
         orderBy: { date: "asc" },
       }),
+      getUnreadCount(),
     ])
   } else {
     upcomingChicece = await db.tournament.findFirst({
@@ -109,6 +113,7 @@ export default async function Home() {
           <span className="text-base font-semibold tracking-wide text-white/80">
             Get in the game.
           </span>
+          {fullPlayer && <NotificationBell unreadCount={unreadCount} />}
         </div>
 
         {fullPlayer ? (

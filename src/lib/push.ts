@@ -9,8 +9,28 @@ export interface PushPayload {
   url?: string
 }
 
-/** Send a push notification to all subscriptions of a given player. */
+/** Send a push notification to all subscriptions of a given player.
+ *  Also persists the notification to the DB for in-app history. */
 export async function notifyPlayer(playerId: string, payload: PushPayload) {
+  // Always persist to DB so in-app history works even without push subscription
+  await db.notification
+    .create({ data: { playerId, title: payload.title, body: payload.body, url: payload.url ?? null } })
+    .catch(() => {}) // non-fatal
+
+  // Trim to last 50 notifications for this player
+  const totalCount = await db.notification.count({ where: { playerId } })
+  if (totalCount > 50) {
+    const toDelete = await db.notification.findMany({
+      where: { playerId },
+      orderBy: { createdAt: "asc" },
+      take: totalCount - 50,
+      select: { id: true },
+    })
+    await db.notification
+      .deleteMany({ where: { id: { in: toDelete.map((n) => n.id) } } })
+      .catch(() => {})
+  }
+
   if (!VAPID_PUBLIC || !VAPID_PRIVATE) return
 
   // Lazy-require web-push so it's never bundled into the client/SSR graph

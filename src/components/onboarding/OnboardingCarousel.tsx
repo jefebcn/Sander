@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useCallback } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 
@@ -74,6 +75,8 @@ export function OnboardingCarousel({ onComplete }: OnboardingCarouselProps) {
           muted
           loop
           playsInline
+          preload="none"
+          poster="/sander-logo.png"
           className="absolute inset-0 h-full w-full object-cover"
           style={{ filter: "grayscale(100%) brightness(0.65)" }}
           aria-hidden="true"
@@ -118,8 +121,7 @@ export function OnboardingCarousel({ onComplete }: OnboardingCarouselProps) {
             leaving ? "opacity-0 scale-95" : "opacity-100 scale-100",
           )}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/sander-logo.png"
             alt="SANDER"
             width={260}

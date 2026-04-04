@@ -185,6 +185,7 @@ model Player {
   badgesGiven          BadgeAward[]       @relation("BadgeGiver")
   badgesReceived       BadgeAward[]       @relation("BadgeReceiver")
   pushSubscriptions    PushSubscription[]
+  notifications        Notification[]
   videoSubmissions     VideoSubmission[]
   ratingHistory        RatingHistory[]
   invitedUsers         User[]             @relation("PlayerInvites")
@@ -428,6 +429,21 @@ model PushSubscription {
   player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@map("push_subscriptions")
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  createdAt DateTime  @default(now())
+  playerId  String
+  title     String
+  body      String
+  url       String?
+  readAt    DateTime?
+
+  player    Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId, createdAt])
+  @@map("notifications")
 }
 
 model VideoSubmission {

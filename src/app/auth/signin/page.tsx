@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic"
 
+import Image from "next/image"
 import { ChevronLeft } from "lucide-react"
 import Link from "next/link"
 import { AuthForm } from "@/components/auth/AuthForm"
@@ -38,8 +39,7 @@ export default async function SignInPage({
       <div className="relative z-10 mt-4 space-y-8">
         {/* Logo centrato */}
         <div className="flex flex-col items-center gap-4">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/sander-logo.png"
             alt="SANDER"
             width={140}
