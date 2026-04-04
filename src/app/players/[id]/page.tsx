@@ -1,11 +1,12 @@
 export const dynamic = "force-dynamic"
 
-import { getPlayer, getHeadToHeadStats } from "@/actions/players"
+import { getPlayer, getHeadToHeadStats, getPlayerAdvancedStats } from "@/actions/players"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { getStreak } from "@/lib/streak"
 import { db } from "@/lib/db"
 import { SanderCardFut, playerToCardData } from "@/components/player/SanderCardFut"
 import { RatingChart } from "@/components/player/RatingChart"
+import { PlayerStats } from "@/components/player/PlayerStats"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { Users, Swords } from "lucide-react"
 
@@ -16,7 +17,7 @@ function pct(won: number, played: number) {
 
 export default async function PlayerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const [player, streak, me, ratingHistory] = await Promise.all([
+  const [player, streak, me, ratingHistory, advancedStats] = await Promise.all([
     getPlayer(id),
     getStreak(id),
     getCurrentPlayer(),
@@ -25,6 +26,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
       orderBy: { createdAt: "asc" },
       select: { createdAt: true, rating: true, source: true },
     }),
+    getPlayerAdvancedStats(id),
   ])
 
   // Only show H2H when a different logged-in player is viewing this profile
@@ -45,6 +47,13 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
             source: r.source,
           }))}
           currentRating={player.glickoRating}
+        />
+
+        {/* ── Advanced stats ──────────────────────────────────── */}
+        <PlayerStats
+          player={player}
+          communityAvg={advancedStats.communityAvg}
+          tournamentsByType={advancedStats.tournamentsByType}
         />
 
         {/* ── Head-to-head stats ──────────────────────────────── */}

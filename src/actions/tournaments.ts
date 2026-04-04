@@ -741,6 +741,99 @@ export async function submitChiceceFinalScore(
   // Apply per-tournament Glicko-2 update (final match completes the tournament)
   await applyTournamentGlicko(match.tournamentId).catch(() => {})
 
+  // ── Create TournamentStanding records + update career stats ──
+  const regs = await db.tournamentRegistration.findMany({
+    where: { tournamentId: match.tournamentId },
+    orderBy: { chicecePlusMinus: "desc" },
+  })
+
+  // Count per-player won/lost from all completed matches in this tournament
+  const allMatches = await db.match.findMany({
+    where: { tournamentId: match.tournamentId, isCompleted: true, isBye: false },
+    include: { players: { select: { playerId: true, team: true } } },
+  })
+
+  const playerWL: Record<string, { won: number; lost: number; pf: number; pa: number }> = {}
+  for (const r of regs) {
+    playerWL[r.playerId] = { won: 0, lost: 0, pf: 0, pa: 0 }
+  }
+  for (const m of allMatches) {
+    const aScore = m.teamAScore ?? 0
+    const bScore = m.teamBScore ?? 0
+    if (aScore === bScore) continue
+    const teamAWon = aScore > bScore
+    for (const mp of m.players) {
+      const wl = playerWL[mp.playerId]
+      if (!wl) continue
+      const onA = mp.team === 0
+      const won = (onA && teamAWon) || (!onA && !teamAWon)
+      if (won) wl.won++; else wl.lost++
+      wl.pf += onA ? aScore : bScore
+      wl.pa += onA ? bScore : aScore
+    }
+  }
+
+  // Create standings sorted by chicecePlusMinus
+  await db.$transaction(
+    regs.map((r, i) => {
+      const wl = playerWL[r.playerId] ?? { won: 0, lost: 0, pf: 0, pa: 0 }
+      return db.tournamentStanding.create({
+        data: {
+          tournamentId: match.tournamentId,
+          playerId: r.playerId,
+          rank: i + 1,
+          points: r.chicecePlusMinus,
+          matchesWon: wl.won,
+          matchesLost: wl.lost,
+          pointsFor: wl.pf,
+          pointsAgainst: wl.pa,
+        },
+      })
+    })
+  )
+
+  // Update career stats (same logic as completeTournament)
+  for (let i = 0; i < regs.length; i++) {
+    const wl = playerWL[regs[i].playerId] ?? { won: 0, lost: 0 }
+    await db.player.update({
+      where: { id: regs[i].playerId },
+      data: {
+        matchesWon: { increment: wl.won },
+        matchesLost: { increment: wl.lost },
+        tournamentsWon: i === 0 ? { increment: 1 } : undefined,
+      },
+    })
+    // Recalculate winRatePct
+    const player = await db.player.findUniqueOrThrow({ where: { id: regs[i].playerId } })
+    const total = player.matchesWon + player.matchesLost
+    const pct = total === 0 ? 0 : Math.round((player.matchesWon / total) * 100)
+    await db.player.update({ where: { id: regs[i].playerId }, data: { winRatePct: pct } })
+  }
+
+  // Push notification
+  try {
+    const { notifyPlayers } = await import("@/lib/push")
+    const tournament = await db.tournament.findUnique({
+      where: { id: match.tournamentId },
+      select: { name: true },
+    })
+    const winnerName = regs[0]
+      ? (await db.player.findUnique({ where: { id: regs[0].playerId }, select: { name: true } }))?.name
+      : null
+    await notifyPlayers(
+      regs.map((r) => r.playerId),
+      {
+        title: "🏆 Torneo completato!",
+        body: winnerName
+          ? `${tournament?.name ?? "Torneo"} — Vincitore: ${winnerName}`
+          : `${tournament?.name ?? "Torneo"} è terminato. Guarda i risultati finali.`,
+        url: `/tournaments/${match.tournamentId}`,
+      },
+    )
+  } catch {
+    // Non-critical
+  }
+
   revalidatePath(`/tournaments/${match.tournamentId}`)
   revalidatePath("/tournaments")
   revalidatePath("/players")

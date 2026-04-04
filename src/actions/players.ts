@@ -187,3 +187,38 @@ export async function deletePlayer(id: string) {
   revalidatePath("/profile")
   revalidatePath("/")
 }
+
+// ── Advanced stats for player profile ─────────────────────────────────────────
+
+export async function getPlayerAdvancedStats(playerId: string) {
+  // 1. Tournaments by type
+  const registrations = await db.tournamentRegistration.findMany({
+    where: { playerId },
+    include: { tournament: { select: { type: true, status: true } } },
+  })
+
+  const tournamentsByType: Record<string, number> = {}
+  for (const r of registrations) {
+    if (r.tournament.status === "COMPLETED") {
+      const t = r.tournament.type
+      tournamentsByType[t] = (tournamentsByType[t] ?? 0) + 1
+    }
+  }
+
+  // 2. Community averages for stat percentages
+  const allPlayers = await db.player.findMany({
+    select: { attPct: true, difPct: true, murPct: true, alzPct: true, ricPct: true, staPct: true },
+  })
+
+  const count = allPlayers.length || 1
+  const communityAvg = {
+    attPct: Math.round(allPlayers.reduce((s, p) => s + p.attPct, 0) / count),
+    difPct: Math.round(allPlayers.reduce((s, p) => s + p.difPct, 0) / count),
+    murPct: Math.round(allPlayers.reduce((s, p) => s + p.murPct, 0) / count),
+    alzPct: Math.round(allPlayers.reduce((s, p) => s + p.alzPct, 0) / count),
+    ricPct: Math.round(allPlayers.reduce((s, p) => s + p.ricPct, 0) / count),
+    staPct: Math.round(allPlayers.reduce((s, p) => s + p.staPct, 0) / count),
+  }
+
+  return { tournamentsByType, communityAvg }
+}
