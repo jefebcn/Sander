@@ -438,6 +438,10 @@ export function PodiumSection({ players }: { players: PodiumPlayer[] }) {
                 position={2}
                 onClick={() => setSelected(byPos[2])}
               />
+              <div className="mt-1.5 text-center">
+                <p className="text-xs font-bold text-white truncate">{byPos[2].playerData.name}</p>
+                <p className="text-[0.6rem] font-bold uppercase tracking-wider text-white/40">2° Posto</p>
+              </div>
             </div>
           )}
 
@@ -449,6 +453,10 @@ export function PodiumSection({ players }: { players: PodiumPlayer[] }) {
                 position={1}
                 onClick={() => setSelected(byPos[1])}
               />
+              <div className="mt-1.5 text-center">
+                <p className="text-xs font-bold text-white truncate">{byPos[1].playerData.name}</p>
+                <p className="text-[0.6rem] font-bold uppercase tracking-wider text-white/40">1° Posto</p>
+              </div>
             </div>
           )}
 
@@ -460,6 +468,10 @@ export function PodiumSection({ players }: { players: PodiumPlayer[] }) {
                 position={3}
                 onClick={() => setSelected(byPos[3])}
               />
+              <div className="mt-1.5 text-center">
+                <p className="text-xs font-bold text-white truncate">{byPos[3].playerData.name}</p>
+                <p className="text-[0.6rem] font-bold uppercase tracking-wider text-white/40">3° Posto</p>
+              </div>
             </div>
           )}
         </div>
