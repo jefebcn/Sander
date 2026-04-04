@@ -222,3 +222,87 @@ export async function getPlayerAdvancedStats(playerId: string) {
 
   return { tournamentsByType, communityAvg }
 }
+
+// ── Monthly podium (top 3 by wins this month) ────────────────────────────────
+
+export async function getMonthlyPodium() {
+  const now = new Date()
+  const monthStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1))
+  const monthEnd = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 1))
+
+  // Fetch completed tournament matches this month
+  const tournamentMatches = await db.match.findMany({
+    where: {
+      isCompleted: true,
+      tournament: { date: { gte: monthStart, lt: monthEnd } },
+    },
+    select: {
+      teamAScore: true,
+      teamBScore: true,
+      players: { select: { playerId: true, team: true } },
+    },
+  })
+
+  // Fetch completed session matches this month
+  const sessionMatches = await db.sessionMatch.findMany({
+    where: {
+      isCompleted: true,
+      session: { date: { gte: monthStart, lt: monthEnd } },
+    },
+    select: {
+      teamAScore: true,
+      teamBScore: true,
+      players: { select: { playerId: true, team: true } },
+    },
+  })
+
+  // Aggregate wins per player
+  const wins = new Map<string, number>()
+
+  function tallyWins(
+    matches: { teamAScore: number | null; teamBScore: number | null; players: { playerId: string; team: number }[] }[],
+  ) {
+    for (const m of matches) {
+      if (m.teamAScore == null || m.teamBScore == null) continue
+      if (m.teamAScore === m.teamBScore) continue // draw — no winner
+      const winningTeam = m.teamAScore > m.teamBScore ? 0 : 1
+      for (const p of m.players) {
+        if (p.team === winningTeam) {
+          wins.set(p.playerId, (wins.get(p.playerId) ?? 0) + 1)
+        }
+      }
+    }
+  }
+
+  tallyWins(tournamentMatches)
+  tallyWins(sessionMatches)
+
+  if (wins.size === 0) return []
+
+  // Sort player IDs by wins desc, then we'll tiebreak by glicko
+  const sorted = [...wins.entries()].sort((a, b) => b[1] - a[1])
+  const topIds = sorted.slice(0, 10).map(([id]) => id) // fetch a few extra for tiebreak
+
+  const players = await db.player.findMany({
+    where: { id: { in: topIds } },
+  })
+
+  const playerMap = new Map(players.map((p) => [p.id, p]))
+
+  // Final sort: wins desc → glickoRating desc
+  const ranked = sorted
+    .filter(([id]) => playerMap.has(id))
+    .sort((a, b) => {
+      if (b[1] !== a[1]) return b[1] - a[1]
+      const pa = playerMap.get(a[0])!
+      const pb = playerMap.get(b[0])!
+      return pb.glickoRating - pa.glickoRating
+    })
+    .slice(0, 3)
+
+  return ranked.map(([id, winCount], i) => ({
+    player: playerMap.get(id)!,
+    wins: winCount,
+    position: (i + 1) as 1 | 2 | 3,
+  }))
+}

@@ -2,8 +2,9 @@ export const dynamic = "force-dynamic"
 
 import Link from "next/link"
 import { Info } from "lucide-react"
-import { listPlayers } from "@/actions/players"
+import { listPlayers, getMonthlyPodium } from "@/actions/players"
 import { FilterablePlayerList } from "@/components/player/FilterablePlayerList"
+import { PodiumView } from "@/components/player/PodiumView"
 
 interface Props {
   searchParams: Promise<{ tab?: string }>
@@ -11,9 +12,9 @@ interface Props {
 
 export default async function PlayersPage({ searchParams }: Props) {
   const { tab } = await searchParams
-  const activeTab = tab === "lista" ? "lista" : "ranking"
+  const activeTab = tab === "lista" ? "lista" : tab === "podio" ? "podio" : "ranking"
 
-  const players = await listPlayers()
+  const [players, podium] = await Promise.all([listPlayers(), getMonthlyPodium()])
 
   return (
     <div className="pb-6">
@@ -55,10 +56,25 @@ export default async function PlayersPage({ searchParams }: Props) {
         >
           Tutti
         </Link>
+        <Link
+          href="/players?tab=podio"
+          className="flex-1 rounded-xl py-2.5 text-center text-sm font-bold transition-colors"
+          style={
+            activeTab === "podio"
+              ? { background: "var(--accent)", color: "#000" }
+              : { background: "var(--surface-2)", color: "var(--muted-text)" }
+          }
+        >
+          Podio del mese
+        </Link>
       </div>
 
-      {/* ── Filterable list ───────────────────────────────────── */}
-      <FilterablePlayerList players={players} tab={activeTab} />
+      {/* ── Content ───────────────────────────────────────────── */}
+      {activeTab === "podio" ? (
+        <PodiumView podium={podium} />
+      ) : (
+        <FilterablePlayerList players={players} tab={activeTab} />
+      )}
     </div>
   )
 }
