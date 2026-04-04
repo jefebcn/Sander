@@ -3,7 +3,9 @@ export const dynamic = "force-dynamic"
 import { getPlayer, getHeadToHeadStats } from "@/actions/players"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { getStreak } from "@/lib/streak"
+import { db } from "@/lib/db"
 import { SanderCardFut, playerToCardData } from "@/components/player/SanderCardFut"
+import { RatingChart } from "@/components/player/RatingChart"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { Users, Swords } from "lucide-react"
 
@@ -14,10 +16,15 @@ function pct(won: number, played: number) {
 
 export default async function PlayerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const [player, streak, me] = await Promise.all([
+  const [player, streak, me, ratingHistory] = await Promise.all([
     getPlayer(id),
     getStreak(id),
     getCurrentPlayer(),
+    db.ratingHistory.findMany({
+      where: { playerId: id },
+      orderBy: { createdAt: "asc" },
+      select: { createdAt: true, rating: true, source: true },
+    }),
   ])
 
   // Only show H2H when a different logged-in player is viewing this profile
@@ -29,6 +36,16 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
       <PageHeader title="SanderCard" backHref="/players" />
       <div className="px-4 pb-6 flex flex-col gap-4">
         <SanderCardFut playerData={playerToCardData(player)} />
+
+        {/* ── Rating history chart ───────────────────────────── */}
+        <RatingChart
+          history={ratingHistory.map((r) => ({
+            date: r.createdAt.toISOString(),
+            rating: r.rating,
+            source: r.source,
+          }))}
+          currentRating={player.glickoRating}
+        />
 
         {/* ── Head-to-head stats ──────────────────────────────── */}
         {h2h && (h2h.together.played > 0 || h2h.versus.played > 0) && (

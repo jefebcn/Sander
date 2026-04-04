@@ -253,6 +253,21 @@ export async function applyTournamentGlicko(tournamentId: string) {
       })
     )
   )
+
+  // Record rating history snapshot for each player
+  await Promise.all(
+    updates.map(({ id, rating, rd }) =>
+      db.ratingHistory.create({
+        data: {
+          playerId: id,
+          rating,
+          rd,
+          source: "tournament",
+          sourceId: tournamentId,
+        },
+      })
+    )
+  )
 }
 
 export async function replaceMatchPlayer(

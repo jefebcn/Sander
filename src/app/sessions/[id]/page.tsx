@@ -8,6 +8,7 @@ import { getSession } from "@/actions/sessions"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { ShareButton } from "@/components/ui/ShareButton"
+import { QRCodeButton } from "@/components/ui/QRCode"
 import { SessionStatusBadge } from "@/components/session/SessionStatusBadge"
 import { ParticipantList } from "@/components/session/ParticipantList"
 import { PlayerRatingForm } from "@/components/session/PlayerRatingForm"
@@ -159,14 +160,20 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
           })()}
         </div>
 
-        {/* Share — full-width prominent button */}
+        {/* Share + QR code */}
         {(session.status === "OPEN" || session.status === "FULL") && (
-          <ShareButton
-            path={`/sessions/${session.id}`}
-            title={session.title}
-            text={`Unisciti a "${session.title}" su SANDER 🏐`}
-            fullWidth
-          />
+          <div className="space-y-2">
+            <ShareButton
+              path={`/sessions/${session.id}`}
+              title={session.title}
+              text={`Unisciti a "${session.title}" su SANDER 🏐`}
+              fullWidth
+            />
+            <QRCodeButton
+              path={`/sessions/${session.id}`}
+              title={session.title}
+            />
+          </div>
         )}
 
         {/* CTA per utenti non autenticati */}

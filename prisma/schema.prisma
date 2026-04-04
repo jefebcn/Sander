@@ -186,6 +186,7 @@ model Player {
   badgesReceived       BadgeAward[]       @relation("BadgeReceiver")
   pushSubscriptions    PushSubscription[]
   videoSubmissions     VideoSubmission[]
+  ratingHistory        RatingHistory[]
   invitedUsers         User[]             @relation("PlayerInvites")
 
   @@map("players")
@@ -398,6 +399,21 @@ model PlayerRating {
 
   @@unique([sessionId, raterId, ratedId])
   @@map("player_ratings")
+}
+
+model RatingHistory {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  playerId String
+  player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  rating     Float
+  rd         Float
+  source     String  // "tournament" | "session"
+  sourceId   String  // tournament or session id
+
+  @@map("rating_history")
 }
 
 model PushSubscription {

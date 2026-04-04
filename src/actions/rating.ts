@@ -162,7 +162,7 @@ export async function updateGlickoAfterSession(sessionId: string) {
     })
   }
 
-  // Batch write all updates
+  // Batch write all updates + record history
   for (const u of updates) {
     await db.player.update({
       where: { id: u.id },
@@ -170,6 +170,15 @@ export async function updateGlickoAfterSession(sessionId: string) {
         glickoRating: u.rating,
         glickoRD: u.rd,
         glickoVolatility: u.volatility,
+      },
+    })
+    await db.ratingHistory.create({
+      data: {
+        playerId: u.id,
+        rating: u.rating,
+        rd: u.rd,
+        source: "session",
+        sourceId: sessionId,
       },
     })
   }
