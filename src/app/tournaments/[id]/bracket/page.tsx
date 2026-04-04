@@ -10,16 +10,30 @@ export const dynamic = "force-dynamic"
 export default async function BracketPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
-  const [tournament, matches] = await Promise.all([
+  const [tournament, matches, registrations] = await Promise.all([
     db.tournament.findUniqueOrThrow({ where: { id }, select: { name: true, type: true, status: true } }),
     db.match.findMany({
       where: { tournamentId: id },
-      include: {
-        players: { include: { player: true } },
-      },
+      include: { players: { include: { player: true } } },
       orderBy: [{ round: "desc" }, { matchNumber: "asc" }],
     }),
+    db.tournamentRegistration.findMany({
+      where: { tournamentId: id },
+      select: { playerId: true, seedPosition: true, teamName: true, teamLogoUrl: true },
+      orderBy: { seedPosition: "asc" },
+    }),
   ])
+
+  // Build playerId → { name, logoUrl } map from fixed-pair registration order
+  const teamInfoMap: Record<string, { name: string | null; logoUrl: string | null }> = {}
+  for (let i = 0; i < registrations.length; i += 2) {
+    const info = {
+      name: registrations[i].teamName ?? null,
+      logoUrl: registrations[i].teamLogoUrl ?? null,
+    }
+    teamInfoMap[registrations[i].playerId] = info
+    if (registrations[i + 1]) teamInfoMap[registrations[i + 1].playerId] = info
+  }
 
   if (tournament.type !== "BRACKETS" && tournament.type !== "DOUBLE_ELIMINATION") {
     return (
@@ -53,9 +67,9 @@ export default async function BracketPage({ params }: { params: Promise<{ id: st
       {/* Bracket */}
       <div className="overflow-x-auto px-4 pb-8 pt-2">
         {isSingleElim ? (
-          <TournamentBracketView matches={matches} tournamentName={tournament.name} />
+          <TournamentBracketView matches={matches} tournamentName={tournament.name} teamInfoMap={teamInfoMap} />
         ) : (
-          <BracketView matches={matches} />
+          <BracketView matches={matches} teamInfoMap={teamInfoMap} />
         )}
       </div>
     </div>

@@ -1057,3 +1057,31 @@ export async function adminRecalculateAllStats() {
   revalidatePath("/profile")
 }
 
+
+// ─── Team Info (name + logo per coppia) ──────────────────────────────────────
+
+export async function updateTeamInfo(
+  tournamentId: string,
+  leaderPlayerId: string,
+  teamName: string | null,
+  teamLogoUrl: string | null,
+) {
+  const session = await getCurrentSession()
+  if (!isAdminEmail(session?.user?.email)) throw new Error("Non autorizzato")
+
+  const tournament = await db.tournament.findUniqueOrThrow({
+    where: { id: tournamentId },
+    select: { status: true },
+  })
+  if (tournament.status !== "DRAFT") throw new Error("Il torneo è già iniziato")
+
+  await db.tournamentRegistration.updateMany({
+    where: { tournamentId, playerId: leaderPlayerId },
+    data: {
+      teamName: teamName?.trim() || null,
+      teamLogoUrl: teamLogoUrl?.trim() || null,
+    },
+  })
+
+  revalidatePath(`/tournaments/${tournamentId}`)
+}

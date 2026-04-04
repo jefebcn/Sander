@@ -224,6 +224,8 @@ model TournamentRegistration {
   tournamentId         String
   playerId             String
   seedPosition         Int?
+  teamName             String?
+  teamLogoUrl          String?
   chicecePlusMinus     Int @default(0)
   chiceceMatchesPlayed Int @default(0)
 

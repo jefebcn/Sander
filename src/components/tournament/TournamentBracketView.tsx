@@ -6,9 +6,19 @@ type MatchWithPlayers = Match & {
   players: (MatchPlayer & { player: Player })[]
 }
 
+type TeamInfoMap = Record<string, { name: string | null; logoUrl: string | null }>
+
 interface TournamentBracketViewProps {
   matches: MatchWithPlayers[]
   tournamentName: string
+  teamInfoMap?: TeamInfoMap
+}
+
+function getTeamDisplay(players: Player[], teamInfoMap?: TeamInfoMap) {
+  const fallback = players.map((p) => p.name).join(" & ")
+  if (!teamInfoMap || players.length === 0) return { label: fallback, logoUrl: null }
+  const info = teamInfoMap[players[0].id]
+  return { label: info?.name || fallback, logoUrl: info?.logoUrl ?? null }
 }
 
 // ─── Layout constants ─────────────────────────────────────────────────────────
@@ -23,14 +33,18 @@ const TROPHY_H = 88  // px — space above bracket for trophy + name
 function MatchCard({
   match,
   isFinal,
+  teamInfoMap,
 }: {
   match: MatchWithPlayers
   isFinal: boolean
+  teamInfoMap?: TeamInfoMap
 }) {
   const teamA = match.players.filter((p) => p.team === 0).map((p) => p.player)
   const teamB = match.players.filter((p) => p.team === 1).map((p) => p.player)
   const aWon = match.isCompleted && (match.teamAScore ?? 0) > (match.teamBScore ?? 0)
   const bWon = match.isCompleted && (match.teamBScore ?? 0) > (match.teamAScore ?? 0)
+  const dispA = getTeamDisplay(teamA, teamInfoMap)
+  const dispB = getTeamDisplay(teamB, teamInfoMap)
 
   return (
     <div>
@@ -57,15 +71,26 @@ function MatchCard({
             background: aWon ? "rgba(201,243,29,0.1)" : "var(--surface-2)",
           }}
         >
-          <span
-            className={cn(
-              "truncate text-xs font-semibold leading-tight",
-              aWon ? "text-[var(--accent)]" : teamA.length === 0 ? "italic text-[var(--muted-text)]" : "text-white",
+          <div className="flex items-center gap-1 min-w-0 flex-1">
+            {dispA.logoUrl && teamA.length > 0 && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={dispA.logoUrl}
+                alt=""
+                className="h-4 w-4 rounded-full object-cover shrink-0"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
+              />
             )}
-            style={{ maxWidth: match.isCompleted ? CARD_W - 48 : CARD_W - 24 }}
-          >
-            {teamA.length > 0 ? teamA.map((p) => p.name).join(" & ") : "TBD"}
-          </span>
+            <span
+              className={cn(
+                "truncate text-xs font-semibold leading-tight",
+                aWon ? "text-[var(--accent)]" : teamA.length === 0 ? "italic text-[var(--muted-text)]" : "text-white",
+              )}
+              style={{ maxWidth: match.isCompleted ? CARD_W - 52 : CARD_W - 28 }}
+            >
+              {teamA.length > 0 ? dispA.label : "TBD"}
+            </span>
+          </div>
           {match.isCompleted && (
             <span className={cn("shrink-0 text-sm font-black tabular-nums", aWon ? "text-[var(--accent)]" : "text-[var(--muted-text)]")}>
               {match.teamAScore}
@@ -81,15 +106,26 @@ function MatchCard({
             background: bWon ? "rgba(201,243,29,0.1)" : "var(--surface-2)",
           }}
         >
-          <span
-            className={cn(
-              "truncate text-xs font-semibold leading-tight",
-              bWon ? "text-[var(--accent)]" : teamB.length === 0 ? "italic text-[var(--muted-text)]" : "text-white",
+          <div className="flex items-center gap-1 min-w-0 flex-1">
+            {dispB.logoUrl && teamB.length > 0 && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={dispB.logoUrl}
+                alt=""
+                className="h-4 w-4 rounded-full object-cover shrink-0"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
+              />
             )}
-            style={{ maxWidth: match.isCompleted ? CARD_W - 48 : CARD_W - 24 }}
-          >
-            {teamB.length > 0 ? teamB.map((p) => p.name).join(" & ") : "TBD"}
-          </span>
+            <span
+              className={cn(
+                "truncate text-xs font-semibold leading-tight",
+                bWon ? "text-[var(--accent)]" : teamB.length === 0 ? "italic text-[var(--muted-text)]" : "text-white",
+              )}
+              style={{ maxWidth: match.isCompleted ? CARD_W - 52 : CARD_W - 28 }}
+            >
+              {teamB.length > 0 ? dispB.label : "TBD"}
+            </span>
+          </div>
           {match.isCompleted && (
             <span className={cn("shrink-0 text-sm font-black tabular-nums", bWon ? "text-[var(--accent)]" : "text-[var(--muted-text)]")}>
               {match.teamBScore}
@@ -102,7 +138,7 @@ function MatchCard({
 }
 
 // ─── Main component ────────────────────────────────────────────────────────────
-export function TournamentBracketView({ matches, tournamentName }: TournamentBracketViewProps) {
+export function TournamentBracketView({ matches, tournamentName, teamInfoMap }: TournamentBracketViewProps) {
   if (matches.length === 0) {
     return <p className="py-8 text-center text-[var(--muted-text)]">Nessun match nel tabellone</p>
   }
@@ -118,7 +154,7 @@ export function TournamentBracketView({ matches, tournamentName }: TournamentBra
       <div className="flex flex-col items-center gap-3 py-8">
         <Trophy className="h-10 w-10 text-[var(--accent)]" />
         <p className="text-center text-lg font-black text-white">{tournamentName}</p>
-        <MatchCard match={m} isFinal />
+        <MatchCard match={m} isFinal teamInfoMap={teamInfoMap} />
       </div>
     )
   }
@@ -259,8 +295,11 @@ export function TournamentBracketView({ matches, tournamentName }: TournamentBra
   if (finalMatch?.isCompleted) {
     const aWon = (finalMatch.teamAScore ?? 0) > (finalMatch.teamBScore ?? 0)
     const winTeam = aWon ? 0 : 1
-    const winners = finalMatch.players.filter((p) => p.team === winTeam).map((p) => p.player.name)
-    if (winners.length > 0) championName = winners.join(" & ")
+    const winPlayers = finalMatch.players.filter((p) => p.team === winTeam).map((p) => p.player)
+    if (winPlayers.length > 0) {
+      const disp = getTeamDisplay(winPlayers, teamInfoMap)
+      championName = disp.label
+    }
   }
 
   // ── Render ──
@@ -308,7 +347,7 @@ export function TournamentBracketView({ matches, tournamentName }: TournamentBra
                 width: CARD_W,
               }}
             >
-              <MatchCard match={m} isFinal={side === "center"} />
+              <MatchCard match={m} isFinal={side === "center"} teamInfoMap={teamInfoMap} />
             </div>
           )
         })}
