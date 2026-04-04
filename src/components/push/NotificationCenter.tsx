@@ -83,11 +83,8 @@ export function NotificationCenter({ open, onClose }: NotificationCenterProps) {
 
       {/* Sheet */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-[70] flex max-h-[75dvh] flex-col rounded-t-3xl"
-        style={{
-          background: "#1e241e",
-          paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)",
-        }}
+        className="fixed bottom-0 left-0 right-0 z-[70] flex max-h-[85dvh] flex-col rounded-t-3xl overflow-hidden"
+        style={{ background: "#1e241e" }}
       >
         {/* Handle */}
         <div className="mx-auto mt-3 mb-1 h-1 w-10 rounded-full bg-white/20" />
@@ -125,7 +122,10 @@ export function NotificationCenter({ open, onClose }: NotificationCenterProps) {
         </div>
 
         {/* List */}
-        <div className="flex-1 overflow-y-auto px-4 space-y-2 py-3">
+        <div
+          className="flex-1 overflow-y-auto px-4 space-y-2 pt-3"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1.25rem)" }}
+        >
           {loading ? (
             <div className="flex justify-center py-10">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
