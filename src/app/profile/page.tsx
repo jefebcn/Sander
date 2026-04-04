@@ -19,6 +19,7 @@ import { AdminDeleteTournamentButton } from "@/components/profile/AdminDeleteTou
 import { AdminDeletePlayerButton } from "@/components/profile/AdminDeletePlayerButton"
 import { AdminRecalcStatsButton } from "@/components/profile/AdminRecalcStatsButton"
 import { NotifyPermission } from "@/components/push/NotifyPermission"
+import { BadgeDisplay } from "@/components/player/BadgeDisplay"
 
 import { isAdminEmail } from "@/lib/isAdmin"
 
@@ -95,7 +96,7 @@ export default async function ProfilePage({ searchParams }: Props) {
       where: { id: player.id },
       include: {
         _count: { select: { organizedSessions: true, badgesReceived: true } },
-        badgesReceived: { where: { badge: "MVP_PARTITA" } },
+        badgesReceived: { orderBy: { createdAt: "desc" } },
       },
     }),
     getStreak(player.id),
@@ -226,6 +227,7 @@ export default async function ProfilePage({ searchParams }: Props) {
               staPct: fullPlayer.staPct,
             }}
           />
+          <BadgeDisplay badges={fullPlayer.badgesReceived} />
           <Link
             href="/stats-guide"
             className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-semibold text-[var(--accent)]"

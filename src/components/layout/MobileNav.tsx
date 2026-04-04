@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { Home, Users, User, Activity } from "lucide-react"
+import { Home, Users, User, Trophy } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useHaptic } from "@/lib/useHaptic"
 
@@ -33,7 +33,7 @@ function BeachNetIcon({ className }: { className?: string }) {
 const NAV_ITEMS = [
   { href: "/",        icon: Home,        label: "Home" },
   { href: "/sessions", icon: BeachNetIcon, label: "Partite" },
-  { href: "/feed",    icon: Activity,    label: "Feed" },
+  { href: "/tournaments", icon: Trophy,   label: "Tornei" },
   { href: "/players", icon: Users,       label: "Giocatori" },
   { href: "/profile", icon: User,        label: "Profilo" },
 ]

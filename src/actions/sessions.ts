@@ -120,6 +120,7 @@ export async function getSession(id: string) {
         orderBy: { team: "asc" },
       },
       ratings: { select: { raterId: true, ratedId: true, type: true } },
+      badgeAwards: { select: { giverId: true, receiverId: true, badge: true } },
     },
   })
 }
@@ -473,6 +474,22 @@ export async function ratePlayer(input: unknown) {
       level: recomputeLevel(newXp),
     },
   })
+
+  // Sync badge awards: delete existing for this (session, giver, receiver) and recreate
+  await db.badgeAward.deleteMany({
+    where: { sessionId: data.sessionId, giverId: rater.id, receiverId: data.ratedId },
+  })
+  if (data.type !== "FLOP" && data.badges && data.badges.length > 0) {
+    await db.badgeAward.createMany({
+      data: data.badges.map((badge) => ({
+        sessionId: data.sessionId,
+        giverId: rater.id,
+        receiverId: data.ratedId,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        badge: badge as any,
+      })),
+    })
+  }
 
   revalidatePath(`/sessions/${data.sessionId}`)
 }

@@ -1,10 +1,10 @@
 export const dynamic = "force-dynamic"
 
 import Link from "next/link"
-import { Plus, Volleyball, Trophy, Users, Calendar } from "lucide-react"
+import { Plus, Trophy, Users, Calendar } from "lucide-react"
 import { getSessions } from "@/actions/sessions"
 import { listTournaments } from "@/actions/tournaments"
-import { SessionCard } from "@/components/session/SessionCard"
+import { FilterableSessionList } from "@/components/session/FilterableSessionList"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { formatDate } from "@/lib/utils"
@@ -22,9 +22,6 @@ export default async function SessionsPage({ searchParams }: Props) {
     activeTab === "partite" ? getSessions(currentPlayer?.id) : Promise.resolve([]),
     activeTab === "tornei" ? listTournaments() : Promise.resolve([]),
   ])
-
-  const open = sessions.filter((s) => s.status === "OPEN" || s.status === "FULL")
-  const completed = sessions.filter((s) => s.status === "COMPLETED")
 
   return (
     <div className="flex flex-col pb-6">
@@ -65,46 +62,9 @@ export default async function SessionsPage({ searchParams }: Props) {
       {/* ── Partite content ───────────────────────────────────── */}
       {activeTab === "partite" && (
         <>
-          <div className="space-y-5 px-4 flex-1">
-            {open.length > 0 && (
-              <section aria-label="Sessioni aperte">
-                <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
-                  Aperte
-                </p>
-                <div className="space-y-2">
-                  {open.map((s) => (
-                    <SessionCard
-                      key={s.id}
-                      session={{ ...s, status: s.status as "OPEN" | "FULL" | "COMPLETED" | "CANCELLED" }}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {completed.length > 0 && (
-              <section aria-label="Sessioni completate">
-                <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
-                  Recenti
-                </p>
-                <div className="space-y-2">
-                  {completed.map((s) => (
-                    <SessionCard
-                      key={s.id}
-                      session={{ ...s, status: s.status as "OPEN" | "FULL" | "COMPLETED" | "CANCELLED" }}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {sessions.length === 0 && (
-              <div className="flex flex-col items-center gap-3 pt-16 text-center">
-                <Volleyball className="h-12 w-12 opacity-20" />
-                <p className="text-[var(--muted-text)]">Nessuna sessione ancora</p>
-              </div>
-            )}
-          </div>
+          <FilterableSessionList
+            sessions={sessions.map((s) => ({ ...s, status: s.status as "OPEN" | "FULL" | "COMPLETED" | "CANCELLED" }))}
+          />
 
           {/* ── + Crea una partita CTA ─────────────────────────── */}
           {currentPlayer && (

@@ -217,6 +217,7 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
             coParticipants={coParticipants}
             currentPlayerId={currentPlayer.id}
             existingRatings={session.ratings as { raterId: string; ratedId: string; type: "SUPER" | "TOP" | "FLOP" }[]}
+            existingBadgeAwards={session.badgeAwards as { giverId: string; receiverId: string; badge: string }[]}
           />
         )}
       </div>

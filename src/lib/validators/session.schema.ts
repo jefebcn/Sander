@@ -23,6 +23,10 @@ export const RatePlayerSchema = z.object({
   sessionId: z.string().min(1),
   ratedId: z.string().min(1),
   type: z.enum(["SUPER", "TOP", "FLOP"]),
+  badges: z.array(z.enum([
+    "MVP_PARTITA", "MURO_IMPENETRABILE", "DIFESA_ACROBATICA", "LEADER_CARISMATICO",
+    "SCHIACCIATA_POTENTE", "SERVIZIO_PRECISO", "SPIRITO_DI_SQUADRA", "FAIR_PLAY",
+  ])).max(3).optional().default([]),
 })
 
 export const AssignTeamSchema = z.object({
