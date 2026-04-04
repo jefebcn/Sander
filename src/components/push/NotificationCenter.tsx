@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useTransition } from "react"
+import { createPortal } from "react-dom"
 import { useRouter } from "next/navigation"
 import { Bell, BellOff, X, Check } from "lucide-react"
 import { getNotifications, markAllRead, markRead } from "@/actions/notifications"
@@ -72,7 +73,7 @@ export function NotificationCenter({ open, onClose }: NotificationCenterProps) {
 
   if (!open) return null
 
-  return (
+  return createPortal(
     <>
       {/* Backdrop */}
       <div
@@ -163,6 +164,7 @@ export function NotificationCenter({ open, onClose }: NotificationCenterProps) {
           )}
         </div>
       </div>
-    </>
+    </>,
+    document.body
   )
 }
