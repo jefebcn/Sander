@@ -83,14 +83,17 @@ export function NotificationCenter({ open, onClose }: NotificationCenterProps) {
 
       {/* Sheet */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-[70] flex max-h-[75dvh] flex-col rounded-t-3xl bg-[var(--surface-2)]"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)" }}
+        className="fixed bottom-0 left-0 right-0 z-[70] flex max-h-[75dvh] flex-col rounded-t-3xl"
+        style={{
+          background: "#1e241e",
+          paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)",
+        }}
       >
         {/* Handle */}
         <div className="mx-auto mt-3 mb-1 h-1 w-10 rounded-full bg-white/20" />
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-white/8">
           <div className="flex items-center gap-2">
             <Bell className="h-5 w-5 text-[var(--accent)]" />
             <h2 className="text-lg font-black text-white">Notifiche</h2>
@@ -122,7 +125,7 @@ export function NotificationCenter({ open, onClose }: NotificationCenterProps) {
         </div>
 
         {/* List */}
-        <div className="flex-1 overflow-y-auto px-4 space-y-2 pb-2">
+        <div className="flex-1 overflow-y-auto px-4 space-y-2 py-3">
           {loading ? (
             <div className="flex justify-center py-10">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
@@ -137,14 +140,17 @@ export function NotificationCenter({ open, onClose }: NotificationCenterProps) {
               <button
                 key={n.id}
                 onClick={() => handleClickNotification(n)}
-                className="flex w-full items-start gap-3 rounded-2xl p-4 text-left active:opacity-80"
+                className="flex w-full items-start gap-3 rounded-2xl p-4 text-left active:opacity-70"
                 style={{
-                  background: n.readAt ? "var(--surface-4)" : "rgba(201,243,29,0.08)",
-                  border: n.readAt ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(201,243,29,0.25)",
+                  background: n.readAt ? "rgba(255,255,255,0.05)" : "rgba(201,243,29,0.10)",
+                  border: n.readAt ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(201,243,29,0.30)",
                 }}
               >
                 {/* Unread dot */}
-                <div className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: n.readAt ? "transparent" : "var(--accent)" }} />
+                <div
+                  className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
+                  style={{ background: n.readAt ? "transparent" : "var(--accent)" }}
+                />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-bold text-white leading-tight">{n.title}</p>
                   <p className="mt-1 text-xs text-white/60 leading-relaxed">{n.body}</p>
