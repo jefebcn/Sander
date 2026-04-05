@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next"
 import Image from "next/image"
-import { Geist } from "next/font/google"
+import { Barlow } from "next/font/google"
 import "./globals.css"
 import { Providers } from "@/lib/providers"
 import { MobileNav } from "@/components/layout/MobileNav"
@@ -9,9 +9,11 @@ import { OnboardingGate } from "@/components/onboarding/OnboardingGate"
 import { ClientOnlyBanners } from "@/components/layout/ClientOnlyBanners"
 import { SwRegistrar } from "@/components/push/SwRegistrar"
 
-const geist = Geist({
-  variable: "--font-geist-sans",
+const barlow = Barlow({
+  variable: "--font-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  display: "swap",
 })
 
 export const metadata: Metadata = {
@@ -53,7 +55,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="it" className={`${geist.variable} h-full`}>
+    <html lang="it" className={`${barlow.variable} h-full`}>
       <body className="min-h-dvh flex flex-col bg-[var(--background)] text-[var(--foreground)]">
         {/* SANDER logo watermark — fixed behind all content */}
         <Image
