@@ -15,9 +15,20 @@ function pct(won: number, played: number) {
   return `${Math.round((won / played) * 100)}%`
 }
 
+const MONTH_NAMES_IT = [
+  "", "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+  "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre",
+]
+
+const AWARD_META: Record<number, { emoji: string; label: string; color: string }> = {
+  1: { emoji: "👑", label: "1° Posto", color: "#FFD700" },
+  2: { emoji: "🥈", label: "2° Posto", color: "#A8A8A8" },
+  3: { emoji: "🥉", label: "3° Posto", color: "#CD7F32" },
+}
+
 export default async function PlayerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const [player, streak, me, ratingHistory, advancedStats] = await Promise.all([
+  const [player, streak, me, ratingHistory, advancedStats, monthlyAwards] = await Promise.all([
     getPlayer(id),
     getStreak(id),
     getCurrentPlayer(),
@@ -27,6 +38,10 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
       select: { createdAt: true, rating: true, source: true },
     }),
     getPlayerAdvancedStats(id),
+    db.monthlyAward.findMany({
+      where: { playerId: id },
+      orderBy: [{ year: "desc" }, { month: "desc" }],
+    }),
   ])
 
   // Only show H2H when a different logged-in player is viewing this profile
@@ -38,6 +53,37 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
       <PageHeader title="SanderCard" backHref="/players" />
       <div className="px-4 pb-6 flex flex-col gap-4">
         <SanderCardFut playerData={playerToCardData(player)} />
+
+        {/* ── Titoli mensili ──────────────────────────────────── */}
+        {monthlyAwards.length > 0 && (
+          <div className="rounded-2xl bg-[var(--surface-2)] p-5 flex flex-col gap-3">
+            <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
+              Titoli
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {monthlyAwards.map((award) => {
+                const meta = AWARD_META[award.position]
+                return (
+                  <div
+                    key={award.id}
+                    className="flex items-center gap-2 rounded-xl px-3 py-2"
+                    style={{ background: "var(--surface-3)", border: `1px solid ${meta.color}30` }}
+                  >
+                    <span className="text-xl leading-none">{meta.emoji}</span>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-black leading-tight" style={{ color: meta.color }}>
+                        {meta.label}
+                      </span>
+                      <span className="text-[0.65rem] text-white/40 leading-tight">
+                        {MONTH_NAMES_IT[award.month]} {award.year}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ── Rating history chart ───────────────────────────── */}
         <RatingChart

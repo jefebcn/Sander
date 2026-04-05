@@ -186,6 +186,7 @@ model Player {
   badgesReceived       BadgeAward[]       @relation("BadgeReceiver")
   pushSubscriptions    PushSubscription[]
   notifications        Notification[]
+  monthlyAwards        MonthlyAward[]
   videoSubmissions     VideoSubmission[]
   ratingHistory        RatingHistory[]
   invitedUsers         User[]             @relation("PlayerInvites")
@@ -478,4 +479,20 @@ model BadgeAward {
 
   @@unique([sessionId, giverId, receiverId, badge])
   @@map("badge_awards")
+}
+
+// ─── Monthly Podium Awards ────────────────────────────────────────────────────
+
+model MonthlyAward {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  playerId  String
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  position  Int      // 1, 2, o 3
+  month     Int      // 1–12
+  year      Int      // es. 2026
+
+  @@unique([playerId, month, year])
+  @@unique([position, month, year])
+  @@map("monthly_awards")
 }

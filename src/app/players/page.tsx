@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic"
 
 import Link from "next/link"
 import { Info } from "lucide-react"
-import { listPlayers, getMonthlyTopPlayers } from "@/actions/players"
+import { listPlayers, getMonthlyTopPlayers, awardMonthlyPodium } from "@/actions/players"
 import { FilterablePlayerList } from "@/components/player/FilterablePlayerList"
 import { PodiumSection } from "@/components/home/PodiumSection"
 import type { PodiumPlayer } from "@/components/home/PodiumSection"
@@ -21,7 +21,10 @@ export default async function PlayersPage({ searchParams }: Props) {
 
   let podiumPlayers: PodiumPlayer[] = []
   if (activeTab === "podio") {
-    const top3 = await getMonthlyTopPlayers()
+    const [top3] = await Promise.all([
+      getMonthlyTopPlayers(),
+      awardMonthlyPodium(),
+    ])
     podiumPlayers = top3.map(({ player }, i) => ({
       playerData: playerToCardData(player as PrismaPlayerLike),
       position: i + 1,

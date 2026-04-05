@@ -291,3 +291,63 @@ export async function getMonthlyTopPlayers() {
     .sort((a, b) => b.wins - a.wins || b.player.glickoRating - a.player.glickoRating)
     .slice(0, 3)
 }
+
+// ─── Monthly Awards ───────────────────────────────────────────────────────────
+
+/** Same win-counting logic as getMonthlyTopPlayers but for the previous month */
+async function getLastMonthTopPlayers() {
+  const now = new Date()
+  const year = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear()
+  const month = now.getMonth() === 0 ? 12 : now.getMonth() // 1-based
+  const startOfLastMonth = new Date(year, month - 1, 1)
+  const endOfLastMonth = new Date(year, month, 1)
+
+  const tourneyMatches = await db.match.findMany({
+    where: { isCompleted: true, updatedAt: { gte: startOfLastMonth, lt: endOfLastMonth } },
+    select: { teamAScore: true, teamBScore: true, players: { select: { playerId: true, team: true } } },
+  })
+  const sessionMatches = await db.sessionMatch.findMany({
+    where: { isCompleted: true, session: { date: { gte: startOfLastMonth, lt: endOfLastMonth } } },
+    select: { teamAScore: true, teamBScore: true, players: { select: { playerId: true, team: true } } },
+  })
+
+  const winMap: Record<string, number> = {}
+  for (const m of [...tourneyMatches, ...sessionMatches]) {
+    if (m.teamAScore == null || m.teamBScore == null || m.teamAScore === m.teamBScore) continue
+    const winningTeam = m.teamAScore > m.teamBScore ? 0 : 1
+    for (const mp of m.players) {
+      if (mp.team === winningTeam) winMap[mp.playerId] = (winMap[mp.playerId] ?? 0) + 1
+    }
+  }
+
+  if (Object.keys(winMap).length === 0) return { top3: [], month, year }
+
+  const topIds = Object.entries(winMap).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([id]) => id)
+  const players = await db.player.findMany({
+    where: { id: { in: topIds } },
+    select: { id: true, glickoRating: true },
+  })
+
+  const top3 = players
+    .map((p) => ({ id: p.id, wins: winMap[p.id] ?? 0, glicko: p.glickoRating }))
+    .sort((a, b) => b.wins - a.wins || b.glicko - a.glicko)
+    .slice(0, 3)
+
+  return { top3, month, year }
+}
+
+/** Awards MonthlyAward records for the previous month's top 3. Idempotent. */
+export async function awardMonthlyPodium() {
+  const { top3, month, year } = await getLastMonthTopPlayers()
+  if (top3.length === 0) return
+
+  await Promise.all(
+    top3.map((p, i) =>
+      db.monthlyAward.upsert({
+        where: { position_month_year: { position: i + 1, month, year } },
+        create: { playerId: p.id, position: i + 1, month, year },
+        update: {},
+      }),
+    ),
+  )
+}
