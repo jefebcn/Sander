@@ -331,6 +331,33 @@ export default async function Home() {
               </div>
             )}
 
+            {/* ── Podio del mese banner ────────────────────────── */}
+            <Link
+              href="/players?tab=podio"
+              className="slide-up flex items-center gap-3 rounded-2xl p-4 active:opacity-80"
+              style={{
+                background: "linear-gradient(135deg, rgba(255,215,0,0.08) 0%, rgba(201,243,29,0.05) 100%)",
+                border: "1px solid rgba(255,215,0,0.25)",
+              }}
+            >
+              <div
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xl"
+                style={{ background: "rgba(255,215,0,0.12)" }}
+              >
+                🏆
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "#FFD700" }}>
+                  Podio del mese
+                </p>
+                <p className="font-bold text-white text-sm">
+                  I migliori giocatori di {new Date().toLocaleDateString("it-IT", { month: "long" })}
+                </p>
+                <p className="text-xs text-white/40">Scopri chi è in vetta questo mese</p>
+              </div>
+              <ChevronRight className="h-4 w-4 shrink-0" style={{ color: "#FFD700" }} />
+            </Link>
+
             {/* ── Torneo in arrivo: Chicece ─────────────────────── */}
             {upcomingChicece && (
               <Link

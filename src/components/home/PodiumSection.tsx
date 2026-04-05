@@ -440,7 +440,9 @@ export function PodiumSection({ players }: { players: PodiumPlayer[] }) {
               />
               <div className="mt-1.5 text-center">
                 <p className="text-xs font-bold text-white truncate">{byPos[2].playerData.name}</p>
-                <p className="text-[0.6rem] font-bold uppercase tracking-wider text-white/40">2° Posto</p>
+                <p className="text-[0.6rem] font-bold uppercase tracking-wider" style={{ color: "#A8A8A8" }}>
+                  🥈 2° Posto
+                </p>
               </div>
             </div>
           )}
@@ -455,7 +457,9 @@ export function PodiumSection({ players }: { players: PodiumPlayer[] }) {
               />
               <div className="mt-1.5 text-center">
                 <p className="text-xs font-bold text-white truncate">{byPos[1].playerData.name}</p>
-                <p className="text-[0.6rem] font-bold uppercase tracking-wider text-white/40">1° Posto</p>
+                <p className="text-[0.6rem] font-bold uppercase tracking-wider" style={{ color: "#FFD700" }}>
+                  🏆 1° Posto
+                </p>
               </div>
             </div>
           )}
@@ -470,7 +474,9 @@ export function PodiumSection({ players }: { players: PodiumPlayer[] }) {
               />
               <div className="mt-1.5 text-center">
                 <p className="text-xs font-bold text-white truncate">{byPos[3].playerData.name}</p>
-                <p className="text-[0.6rem] font-bold uppercase tracking-wider text-white/40">3° Posto</p>
+                <p className="text-[0.6rem] font-bold uppercase tracking-wider" style={{ color: "#CD7F32" }}>
+                  🥉 3° Posto
+                </p>
               </div>
             </div>
           )}
