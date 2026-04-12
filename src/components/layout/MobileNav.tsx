@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useTransition, useEffect } from "react"
-import { useRouter, usePathname } from "next/navigation"
+import { useState, useEffect } from "react"
+import { usePathname } from "next/navigation"
+import Link from "next/link"
 import { Home, Users, User, Trophy } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useHaptic } from "@/lib/useHaptic"
@@ -31,18 +32,16 @@ function BeachNetIcon({ className }: { className?: string }) {
 }
 
 const NAV_ITEMS = [
-  { href: "/",        icon: Home,        label: "Home" },
-  { href: "/sessions", icon: BeachNetIcon, label: "Partite" },
-  { href: "/tournaments", icon: Trophy,   label: "Tornei" },
-  { href: "/players", icon: Users,       label: "Giocatori" },
-  { href: "/profile", icon: User,        label: "Profilo" },
+  { href: "/",            icon: Home,         label: "Home" },
+  { href: "/sessions",    icon: BeachNetIcon,  label: "Partite" },
+  { href: "/tournaments", icon: Trophy,        label: "Tornei" },
+  { href: "/players",     icon: Users,         label: "Giocatori" },
+  { href: "/profile",     icon: User,          label: "Profilo" },
 ]
 
 export function MobileNav() {
-  const router = useRouter()
   const pathname = usePathname()
   const haptic = useHaptic()
-  const [, startTransition] = useTransition()
   // Optimistic path — updates immediately on tap for instant active-state feedback
   const [optimisticPath, setOptimisticPath] = useState<string | null>(null)
 
@@ -52,13 +51,6 @@ export function MobileNav() {
   if (pathname.startsWith("/auth/") || pathname.startsWith("/onboarding/")) return null
 
   const displayPath = optimisticPath ?? pathname
-
-  function navigate(href: string) {
-    if (displayPath === href || (href !== "/" && displayPath.startsWith(href))) return
-    haptic("light")
-    setOptimisticPath(href)           // instant visual switch
-    startTransition(() => router.push(href))
-  }
 
   return (
     <nav
@@ -72,9 +64,15 @@ export function MobileNav() {
         {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
           const active = displayPath === href || (href !== "/" && displayPath.startsWith(href))
           return (
-            <button
+            <Link
               key={href}
-              onClick={() => navigate(href)}
+              href={href}
+              prefetch={true}
+              onClick={(e) => {
+                if (active) { e.preventDefault(); return }
+                haptic("light")
+                setOptimisticPath(href)
+              }}
               aria-label={label}
               aria-current={active ? "page" : undefined}
               className={cn(
@@ -92,7 +90,7 @@ export function MobileNav() {
               {active && (
                 <span className="absolute top-0 left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-[var(--accent)]" />
               )}
-            </button>
+            </Link>
           )
         })}
       </div>

@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/Toaster"
 import { OnboardingGate } from "@/components/onboarding/OnboardingGate"
 import { ClientOnlyBanners } from "@/components/layout/ClientOnlyBanners"
 import { SwRegistrar } from "@/components/push/SwRegistrar"
+import { PageWrapper } from "@/components/layout/PageWrapper"
 
 const barlow = Barlow({
   variable: "--font-sans",
@@ -71,7 +72,9 @@ export default function RootLayout({
         <Providers>
           <OnboardingGate />
           <SwRegistrar />
-          <main className="relative z-10 flex-1 pb-20">{children}</main>
+          <main className="relative z-10 flex-1 pb-20">
+            <PageWrapper>{children}</PageWrapper>
+          </main>
           <MobileNav />
           {/* Banners stacked just above the navbar — client-only, lazy loaded */}
           <div className="fixed bottom-[4.5rem] left-0 right-0 z-40 flex flex-col gap-2 pointer-events-none [&>*]:pointer-events-auto">
