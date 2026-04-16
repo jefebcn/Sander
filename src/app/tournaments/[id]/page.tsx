@@ -127,6 +127,8 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 amountPaidCents: r.amountPaidCents,
               }))}
               priceCents={tournament.priceCents!}
+              isAdmin={isAdmin}
+              tournamentId={id}
             />
           </div>
         )}
@@ -290,6 +292,8 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               amountPaidCents: r.amountPaidCents,
             }))}
             priceCents={tournament.priceCents!}
+            isAdmin={isAdmin}
+            tournamentId={id}
           />
         </div>
       )}

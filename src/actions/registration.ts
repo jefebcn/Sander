@@ -252,6 +252,38 @@ export async function adminRejectManualPayment(input: unknown) {
   revalidatePath(`/tournaments/${reg.tournamentId}`)
 }
 
+// ──────────────────────────── adminSetPaymentStatus ──────────────────────────
+
+export async function adminSetPaymentStatus(registrationId: string, paid: boolean) {
+  await requireAdmin()
+
+  const reg = await db.tournamentRegistration.findUnique({
+    where: { id: registrationId },
+    select: { tournamentId: true, paymentStatus: true, tournament: { select: { priceCents: true } } },
+  })
+  if (!reg) throw new Error("Iscrizione non trovata")
+
+  if (paid) {
+    await db.tournamentRegistration.update({
+      where: { id: registrationId },
+      data: {
+        paymentStatus: "PAID",
+        paymentMethod: "CASH",
+        paidAt: new Date(),
+        amountPaidCents: reg.tournament.priceCents ?? 0,
+      },
+    })
+  } else {
+    await db.tournamentRegistration.update({
+      where: { id: registrationId },
+      data: { paymentStatus: "PENDING", paymentMethod: "CASH", paidAt: null, amountPaidCents: null },
+    })
+  }
+
+  revalidatePath(`/tournaments/${reg.tournamentId}`)
+  revalidatePath("/admin/payments")
+}
+
 // ──────────────────────────── cancelRegistration ─────────────────────────────
 
 export async function cancelRegistration(input: unknown) {

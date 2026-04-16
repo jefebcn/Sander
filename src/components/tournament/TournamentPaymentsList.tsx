@@ -1,3 +1,5 @@
+import { Check, X } from "lucide-react"
+import { adminSetPaymentStatus } from "@/actions/registration"
 import { formatPrice } from "@/lib/utils"
 
 interface Registration {
@@ -12,6 +14,8 @@ interface Registration {
 interface TournamentPaymentsListProps {
   registrations: Registration[]
   priceCents: number
+  isAdmin?: boolean
+  tournamentId: string
 }
 
 function statusDot(status: string) {
@@ -33,15 +37,21 @@ function methodLabel(method: string | null, status: string) {
   return "—"
 }
 
-export function TournamentPaymentsList({ registrations, priceCents }: TournamentPaymentsListProps) {
+export function TournamentPaymentsList({
+  registrations,
+  priceCents,
+  isAdmin,
+  tournamentId,
+}: TournamentPaymentsListProps) {
   const paid = registrations.filter((r) => r.paymentStatus === "PAID" || r.paymentStatus === "FREE")
   const total = registrations.length
+  const allPaid = paid.length === total && total > 0
 
   return (
     <div className="rounded-2xl bg-[var(--surface-1)] overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
         <p className="text-sm font-bold text-white">Pagamenti</p>
-        <span className="text-xs font-bold" style={{ color: paid.length === total && total > 0 ? "var(--live)" : "#f97316" }}>
+        <span className="text-xs font-bold" style={{ color: allPaid ? "var(--live)" : "#f97316" }}>
           {paid.length} / {total} pagati
         </span>
       </div>
@@ -50,25 +60,67 @@ export function TournamentPaymentsList({ registrations, priceCents }: Tournament
         <p className="px-4 py-4 text-sm text-[var(--muted-text)]">Nessuna iscrizione ancora.</p>
       ) : (
         <ul className="divide-y divide-[var(--border)]">
-          {registrations.map((r) => (
-            <li key={r.id} className="flex items-center gap-3 px-4 py-3">
-              {statusDot(r.paymentStatus)}
-              <span className="flex-1 truncate text-sm font-semibold text-white">{r.player.name}</span>
-              <span className="shrink-0 text-xs text-[var(--muted-text)]">
-                {methodLabel(r.paymentMethod, r.paymentStatus)}
-              </span>
-              {r.amountPaidCents != null && r.paymentStatus === "PAID" && (
-                <span className="shrink-0 text-xs font-bold" style={{ color: "var(--live)" }}>
-                  {formatPrice(r.amountPaidCents)}
+          {registrations.map((r) => {
+            const isPaid = r.paymentStatus === "PAID" || r.paymentStatus === "FREE"
+            const isFree = r.paymentStatus === "FREE" || r.paymentMethod === "FREE"
+
+            return (
+              <li key={r.id} className="flex items-center gap-3 px-4 py-3">
+                {statusDot(r.paymentStatus)}
+                <span className="flex-1 truncate text-sm font-semibold text-white">{r.player.name}</span>
+                <span className="shrink-0 text-xs text-[var(--muted-text)]">
+                  {methodLabel(r.paymentMethod, r.paymentStatus)}
                 </span>
-              )}
-              {r.paymentStatus === "PENDING" && (
-                <span className="shrink-0 text-xs font-bold" style={{ color: "#f97316" }}>
-                  {formatPrice(priceCents)} da pagare
-                </span>
-              )}
-            </li>
-          ))}
+                {r.amountPaidCents != null && isPaid && !isFree && (
+                  <span className="shrink-0 text-xs font-bold" style={{ color: "var(--live)" }}>
+                    {formatPrice(r.amountPaidCents)}
+                  </span>
+                )}
+                {r.paymentStatus === "PENDING" && !isAdmin && (
+                  <span className="shrink-0 text-xs font-bold" style={{ color: "#f97316" }}>
+                    {formatPrice(priceCents)} da pagare
+                  </span>
+                )}
+
+                {/* Pulsanti toggle solo per admin, solo se non gratis */}
+                {isAdmin && !isFree && (
+                  isPaid ? (
+                    <form
+                      action={async () => {
+                        "use server"
+                        await adminSetPaymentStatus(r.id, false)
+                      }}
+                    >
+                      <button
+                        type="submit"
+                        title="Segna come non pagato"
+                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors active:opacity-70"
+                        style={{ background: "rgba(249,115,22,0.15)", color: "#f97316" }}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </form>
+                  ) : (
+                    <form
+                      action={async () => {
+                        "use server"
+                        await adminSetPaymentStatus(r.id, true)
+                      }}
+                    >
+                      <button
+                        type="submit"
+                        title="Segna come pagato"
+                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors active:opacity-70"
+                        style={{ background: "rgba(34,197,94,0.15)", color: "var(--live)" }}
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                      </button>
+                    </form>
+                  )
+                )}
+              </li>
+            )
+          })}
         </ul>
       )}
     </div>
