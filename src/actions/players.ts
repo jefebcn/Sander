@@ -238,7 +238,7 @@ export async function getMonthlyTopPlayers() {
     },
   })
 
-  // Session match wins this month (filter by when the match was last updated, not session date)
+  // MatchMode session: individual match wins (SessionMatchPlayer exists)
   const sessionMatches = await db.sessionMatch.findMany({
     where: { isCompleted: true, updatedAt: { gte: startOfMonth } },
     select: {
@@ -248,8 +248,20 @@ export async function getMonthlyTopPlayers() {
     },
   })
 
+  // Regular (non-matchMode) sessions completed this month: 1 win per session for winning team
+  // Glicko updates from SessionSet, so we must use the same data source here
+  const completedSessions = await db.session.findMany({
+    where: { matchMode: false, status: "COMPLETED", updatedAt: { gte: startOfMonth }, sets: { some: {} } },
+    select: {
+      sets: { select: { teamAScore: true, teamBScore: true } },
+      participants: { select: { playerId: true, team: true } },
+    },
+  })
+
   // Count wins per player
   const winMap: Record<string, number> = {}
+
+  // Tournament + matchMode session matches
   for (const m of [...tourneyMatches, ...sessionMatches]) {
     if (m.teamAScore == null || m.teamBScore == null || m.teamAScore === m.teamBScore) continue
     const winningTeam = m.teamAScore > m.teamBScore ? 0 : 1
@@ -257,6 +269,18 @@ export async function getMonthlyTopPlayers() {
       if (mp.team === winningTeam) {
         winMap[mp.playerId] = (winMap[mp.playerId] ?? 0) + 1
       }
+    }
+  }
+
+  // Regular sessions (majority of sets)
+  for (const s of completedSessions) {
+    const teamASetWins = s.sets.filter((set) => set.teamAScore > set.teamBScore).length
+    const teamBSetWins = s.sets.filter((set) => set.teamBScore > set.teamAScore).length
+    if (teamASetWins === teamBSetWins) continue
+    const winningTeam = teamASetWins > teamBSetWins ? 0 : 1
+    for (const p of s.participants) {
+      if (p.team !== winningTeam) continue
+      winMap[p.playerId] = (winMap[p.playerId] ?? 0) + 1
     }
   }
 
@@ -310,6 +334,13 @@ async function getLastMonthTopPlayers() {
     where: { isCompleted: true, updatedAt: { gte: startOfLastMonth, lt: endOfLastMonth } },
     select: { teamAScore: true, teamBScore: true, players: { select: { playerId: true, team: true } } },
   })
+  const completedSessions = await db.session.findMany({
+    where: { matchMode: false, status: "COMPLETED", updatedAt: { gte: startOfLastMonth, lt: endOfLastMonth }, sets: { some: {} } },
+    select: {
+      sets: { select: { teamAScore: true, teamBScore: true } },
+      participants: { select: { playerId: true, team: true } },
+    },
+  })
 
   const winMap: Record<string, number> = {}
   for (const m of [...tourneyMatches, ...sessionMatches]) {
@@ -317,6 +348,16 @@ async function getLastMonthTopPlayers() {
     const winningTeam = m.teamAScore > m.teamBScore ? 0 : 1
     for (const mp of m.players) {
       if (mp.team === winningTeam) winMap[mp.playerId] = (winMap[mp.playerId] ?? 0) + 1
+    }
+  }
+  for (const s of completedSessions) {
+    const teamASetWins = s.sets.filter((set) => set.teamAScore > set.teamBScore).length
+    const teamBSetWins = s.sets.filter((set) => set.teamBScore > set.teamAScore).length
+    if (teamASetWins === teamBSetWins) continue
+    const winningTeam = teamASetWins > teamBSetWins ? 0 : 1
+    for (const p of s.participants) {
+      if (p.team !== winningTeam) continue
+      winMap[p.playerId] = (winMap[p.playerId] ?? 0) + 1
     }
   }
 
