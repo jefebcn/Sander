@@ -7,11 +7,11 @@ interface ShareButtonProps {
   path: string
   title: string
   text?: string
-  /** When true renders as a full-width block button (sessions lobby) */
   fullWidth?: boolean
+  label?: string
 }
 
-export function ShareButton({ path, title, text, fullWidth }: ShareButtonProps) {
+export function ShareButton({ path, title, text, fullWidth, label }: ShareButtonProps) {
   const [copied, setCopied] = useState(false)
 
   async function handleShare() {
@@ -41,7 +41,7 @@ export function ShareButton({ path, title, text, fullWidth }: ShareButtonProps) 
         }}
       >
         {copied ? <Check className="h-5 w-5" /> : <Share2 className="h-5 w-5" />}
-        {copied ? "Link copiato!" : "Invita un amico"}
+        {copied ? "Link copiato!" : (label ?? "Invita un amico")}
       </button>
     )
   }

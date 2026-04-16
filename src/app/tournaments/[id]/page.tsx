@@ -15,7 +15,7 @@ import { ShareButton, WhatsAppShareButton } from "@/components/ui/ShareButton"
 import { TournamentPriceBadge } from "@/components/tournament/TournamentPriceBadge"
 import { TournamentPaymentsList } from "@/components/tournament/TournamentPaymentsList"
 import { PaymentCtaButton } from "@/components/tournament/PaymentCtaButton"
-import { formatDate } from "@/lib/utils"
+import { formatDate, formatPrice } from "@/lib/utils"
 import { redirect } from "next/navigation"
 
 export const dynamic = "force-dynamic"
@@ -108,16 +108,31 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
         {/* Open for self-registration */}
         {tournament.status === "DRAFT" && tournament.isOpenForRegistration && (
           <div className="mx-4 mb-4 space-y-2">
-            <div className="flex items-center justify-between gap-3 rounded-2xl bg-[var(--surface-1)] p-4">
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold uppercase tracking-wide text-[var(--accent)]">
-                  Iscrizioni aperte
-                </p>
-                <p className="mt-1 text-sm text-[var(--muted-text)]">
-                  Iscriviti e paga direttamente in app
-                </p>
-              </div>
-              <TournamentPriceBadge priceCents={tournament.priceCents} currency={tournament.priceCurrency} />
+            {/* Participants list */}
+            <div className="overflow-hidden rounded-2xl bg-[var(--surface-1)]">
+              <p className="px-4 pt-3 pb-2 text-xs font-bold uppercase tracking-wide text-[var(--muted-text)]">
+                Iscritti · {registrations.length}
+                {(tournament.priceCents ?? 0) > 0 && (
+                  <span className="ml-2 font-normal normal-case text-[var(--accent)]">
+                    {formatPrice(tournament.priceCents, tournament.priceCurrency)}
+                  </span>
+                )}
+              </p>
+              {registrations.length === 0 ? (
+                <p className="px-4 pb-3 text-sm text-[var(--muted-text)]">Nessun iscritto ancora. Sii il primo!</p>
+              ) : (
+                <div className="pb-1">
+                  {registrations.map((r) => (
+                    <div key={r.id} className="flex items-center gap-3 px-4 py-2">
+                      <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${
+                        r.paymentStatus === "PAID" || r.paymentStatus === "FREE"
+                          ? "bg-[var(--live)]" : "bg-orange-500"
+                      }`} />
+                      <span className="text-sm font-medium">{r.player.name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <PaymentCtaButton
               tournamentId={id}
@@ -126,15 +141,12 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               isAuthed={!!currentPlayer}
               inline
             />
-            <WhatsAppShareButton
-              path={`/tournaments/${id}/register`}
-              text={`Iscriviti al torneo "${tournament.name}" su SANDER 🏐`}
-            />
             <ShareButton
-              path={`/tournaments/${id}/register`}
+              path={`/tournaments/${id}`}
               title={tournament.name}
-              text={`Iscriviti al torneo "${tournament.name}" su SANDER 🏐`}
+              text={`Unisciti al torneo "${tournament.name}" su SANDER 🏐`}
               fullWidth
+              label="Condividi torneo"
             />
           </div>
         )}
@@ -283,16 +295,31 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
       {/* Open for self-registration — visible to everyone */}
       {tournament.status === "DRAFT" && tournament.isOpenForRegistration && (
         <div className="mx-4 mb-4 space-y-2">
-          <div className="flex items-center justify-between gap-3 rounded-2xl bg-[var(--surface-1)] p-4">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold uppercase tracking-wide text-[var(--accent)]">
-                Iscrizioni aperte
-              </p>
-              <p className="mt-1 text-sm text-[var(--muted-text)]">
-                Iscriviti e paga direttamente in app
-              </p>
-            </div>
-            <TournamentPriceBadge priceCents={tournament.priceCents} currency={tournament.priceCurrency} />
+          {/* Participants list */}
+          <div className="overflow-hidden rounded-2xl bg-[var(--surface-1)]">
+            <p className="px-4 pt-3 pb-2 text-xs font-bold uppercase tracking-wide text-[var(--muted-text)]">
+              Iscritti · {tournament.registrations.length}
+              {(tournament.priceCents ?? 0) > 0 && (
+                <span className="ml-2 font-normal normal-case text-[var(--accent)]">
+                  {formatPrice(tournament.priceCents, tournament.priceCurrency)}
+                </span>
+              )}
+            </p>
+            {tournament.registrations.length === 0 ? (
+              <p className="px-4 pb-3 text-sm text-[var(--muted-text)]">Nessun iscritto ancora. Sii il primo!</p>
+            ) : (
+              <div className="pb-1">
+                {tournament.registrations.map((r) => (
+                  <div key={r.id} className="flex items-center gap-3 px-4 py-2">
+                    <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${
+                      r.paymentStatus === "PAID" || r.paymentStatus === "FREE"
+                        ? "bg-[var(--live)]" : "bg-orange-500"
+                    }`} />
+                    <span className="text-sm font-medium">{r.player.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <PaymentCtaButton
             tournamentId={id}
@@ -301,15 +328,12 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             isAuthed={!!currentPlayer}
             inline
           />
-          <WhatsAppShareButton
-            path={`/tournaments/${id}/register`}
-            text={`Iscriviti al torneo "${tournament.name}" su SANDER 🏐`}
-          />
           <ShareButton
-            path={`/tournaments/${id}/register`}
+            path={`/tournaments/${id}`}
             title={tournament.name}
-            text={`Iscriviti al torneo "${tournament.name}" su SANDER 🏐`}
+            text={`Unisciti al torneo "${tournament.name}" su SANDER 🏐`}
             fullWidth
+            label="Condividi torneo"
           />
         </div>
       )}
