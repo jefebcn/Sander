@@ -85,8 +85,11 @@ export async function startCheckout(input: unknown): Promise<
         // Expired or missing: delete stale row, create fresh
         await db.tournamentRegistration.delete({ where: { id: existing.id } }).catch(() => {})
       } else if (existing.paymentStatus === "PENDING") {
-        // Manual-cash pending: don't let the user start an online checkout on top of it
-        return { ok: false, error: "Hai già una richiesta di pagamento in contanti in attesa" }
+        if (existing.paymentMethod === "CASH") {
+          return { ok: false, error: "Hai già scelto il pagamento in contanti" }
+        }
+        // PENDING+null (registered, no method yet): delete to allow Stripe flow
+        await db.tournamentRegistration.delete({ where: { id: existing.id } }).catch(() => {})
       }
     }
 
@@ -180,6 +183,13 @@ export async function createManualPaymentRegistration(input: unknown): Promise<
         return { ok: false, error: "Sei già iscritto a questo torneo" }
       }
       if (existing.paymentStatus === "PENDING") {
+        if (existing.paymentMethod !== "CASH") {
+          await db.tournamentRegistration.update({
+            where: { id: existing.id },
+            data: { paymentMethod: "CASH" },
+          })
+          revalidatePath(`/tournaments/${tournamentId}`)
+        }
         return { ok: true, registrationId: existing.id }
       }
     }
@@ -201,6 +211,49 @@ export async function createManualPaymentRegistration(input: unknown): Promise<
     revalidatePath("/tournaments")
     revalidatePath(`/tournaments/${tournamentId}`)
     return { ok: true, registrationId: registration.id }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+  }
+}
+
+// ────────────────────────── registerForTournament ────────────────────────────
+// Step-1 of the two-step flow: add player to the list, payment comes later.
+
+export async function registerForTournament(input: unknown): Promise<
+  { ok: true } | { ok: false; error: string }
+> {
+  try {
+    const { tournamentId } = StartCheckoutSchema.parse(input)
+    const player = await requireCurrentPlayer()
+    const tournament = await assertRegistrable(tournamentId)
+
+    const existing = await db.tournamentRegistration.findUnique({
+      where: { tournamentId_playerId: { tournamentId, playerId: player.id } },
+    })
+    if (existing) {
+      if (existing.paymentStatus === "PAID" || existing.paymentStatus === "FREE") {
+        return { ok: false, error: "Sei già iscritto a questo torneo" }
+      }
+      // Already registered (PENDING) — just confirm
+      return { ok: true }
+    }
+
+    const isFree = tournament.priceCents == null || tournament.priceCents === 0
+
+    await db.tournamentRegistration.create({
+      data: {
+        tournamentId,
+        playerId: player.id,
+        paymentStatus: isFree ? "PAID" : "PENDING",
+        paymentMethod: isFree ? "FREE" : null,
+        paidAt: isFree ? new Date() : null,
+        amountPaidCents: isFree ? 0 : null,
+      },
+    })
+
+    revalidatePath("/tournaments")
+    revalidatePath(`/tournaments/${tournamentId}`)
+    return { ok: true }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) }
   }

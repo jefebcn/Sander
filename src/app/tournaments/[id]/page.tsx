@@ -85,6 +85,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
       : csReg.paymentStatus === "PAID" || csReg.paymentStatus === "FREE" ? "PAID" as const
       : csReg.paymentStatus === "PENDING" && csReg.paymentMethod === "STRIPE" ? "PENDING_STRIPE" as const
       : csReg.paymentStatus === "PENDING" && csReg.paymentMethod === "CASH" ? "PENDING_CASH" as const
+      : csReg.paymentStatus === "PENDING" && !csReg.paymentMethod ? "REGISTERED_UNPAID" as const
       : "NOT_REGISTERED" as const
 
     return (
@@ -249,6 +250,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
     if (paymentStatus === "PAID" || paymentStatus === "FREE") return "PAID" as const
     if (paymentStatus === "PENDING" && paymentMethod === "STRIPE") return "PENDING_STRIPE" as const
     if (paymentStatus === "PENDING" && paymentMethod === "CASH") return "PENDING_CASH" as const
+    if (paymentStatus === "PENDING" && !paymentMethod) return "REGISTERED_UNPAID" as const
     return "NOT_REGISTERED" as const
   }
   const regStatus = getRegStatus()

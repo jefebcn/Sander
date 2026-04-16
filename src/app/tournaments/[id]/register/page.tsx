@@ -7,7 +7,7 @@ import { getTournamentForRegistration } from "@/actions/registration"
 import { TournamentRegistrationRecap } from "@/components/tournament/TournamentRegistrationRecap"
 import { PaymentCtaButton } from "@/components/tournament/PaymentCtaButton"
 
-type Status = "NOT_REGISTERED" | "PAID" | "PENDING_STRIPE" | "PENDING_CASH" | "CLOSED"
+type Status = "NOT_REGISTERED" | "PAID" | "PENDING_STRIPE" | "PENDING_CASH" | "REGISTERED_UNPAID" | "CLOSED"
 
 export default async function RegisterPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -36,6 +36,8 @@ export default async function RegisterPage({ params }: { params: Promise<{ id: s
       status = "PENDING_CASH"
     } else if (myRegistration.paymentStatus === "PENDING" && myRegistration.paymentMethod === "STRIPE") {
       status = "PENDING_STRIPE"
+    } else if (myRegistration.paymentStatus === "PENDING" && !myRegistration.paymentMethod) {
+      status = "REGISTERED_UNPAID"
     }
   }
 

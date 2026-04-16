@@ -4,10 +4,10 @@ import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { startCheckout } from "@/actions/registration"
+import { startCheckout, registerForTournament } from "@/actions/registration"
 import { PaymentMethodSheet } from "./PaymentMethodSheet"
 
-type Status = "NOT_REGISTERED" | "PAID" | "PENDING_STRIPE" | "PENDING_CASH" | "CLOSED"
+type Status = "NOT_REGISTERED" | "PAID" | "PENDING_STRIPE" | "PENDING_CASH" | "REGISTERED_UNPAID" | "CLOSED"
 
 export function PaymentCtaButton({
   tournamentId,
@@ -20,7 +20,6 @@ export function PaymentCtaButton({
   isFree: boolean
   status: Status
   isAuthed: boolean
-  /** When true renders as a rounded inline button instead of fixed bottom bar */
   inline?: boolean
 }) {
   const router = useRouter()
@@ -28,89 +27,117 @@ export function PaymentCtaButton({
   const [sheetOpen, setSheetOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  function handleFreeRegistration() {
-    setError(null)
-    startTransition(async () => {
-      const result = await startCheckout({ tournamentId })
-      if (!result.ok) {
-        setError(result.error)
-        return
-      }
-      router.push(result.redirectUrl)
-    })
+  function redirectToAuth() {
+    router.push(`/auth/signin?callbackUrl=/tournaments/${tournamentId}/register`)
   }
 
+  // Used by /register fixed-bar: single-step pay
   function handleClick() {
-    if (!isAuthed) {
-      router.push(`/auth/signin?callbackUrl=/tournaments/${tournamentId}/register`)
-      return
-    }
+    if (!isAuthed) { redirectToAuth(); return }
     if (isFree) {
-      handleFreeRegistration()
+      setError(null)
+      startTransition(async () => {
+        const result = await startCheckout({ tournamentId })
+        if (!result.ok) { setError(result.error); return }
+        router.push(result.redirectUrl)
+      })
       return
     }
     setSheetOpen(true)
   }
 
-  const statusLabel = isFree ? "Iscriviti gratis" : "Paga ora iscrizione"
+  // Inline step-1: register without payment
+  function handleRegister() {
+    if (!isAuthed) { redirectToAuth(); return }
+    setError(null)
+    startTransition(async () => {
+      const result = await registerForTournament({ tournamentId })
+      if (!result.ok) { setError(result.error); return }
+      router.refresh()
+    })
+  }
 
-  // ── Inline variant (used on tournament detail page) ──────────────
+  // Inline: resume existing Stripe session
+  function handleCompleteStripe() {
+    setError(null)
+    startTransition(async () => {
+      const result = await startCheckout({ tournamentId })
+      if (!result.ok) { setError(result.error); return }
+      if (result.redirectUrl.startsWith("http")) {
+        window.location.href = result.redirectUrl
+      } else {
+        router.push(result.redirectUrl)
+      }
+    })
+  }
+
+  // ── Inline variant (tournament detail page) ──────────────────
   if (inline) {
-    const inlineDisabledLabel =
-      status === "PAID" ? "Sei già iscritto ✓"
-      : status === "PENDING_CASH" ? "In attesa di conferma contanti"
-      : status === "CLOSED" ? "Iscrizioni chiuse"
-      : null
+    if (status === "PAID") return <InlineDisabled label="Sei già iscritto ✓" />
+    if (status === "PENDING_CASH") return <InlineDisabled label="In attesa di conferma contanti" />
+    if (status === "CLOSED") return <InlineDisabled label="Iscrizioni chiuse" />
 
-    if (inlineDisabledLabel) {
+    if (status === "REGISTERED_UNPAID") {
       return (
-        <div className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl bg-[var(--surface-2)] text-sm font-bold text-[var(--muted-text)]">
-          {inlineDisabledLabel}
-        </div>
+        <>
+          {error && <InlineError error={error} />}
+          <button
+            type="button"
+            onClick={() => setSheetOpen(true)}
+            disabled={isPending}
+            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-black text-base text-black transition-all active:brightness-90 disabled:opacity-60"
+          >
+            Paga ora iscrizione
+          </button>
+          <PaymentMethodSheet
+            open={sheetOpen}
+            onClose={() => setSheetOpen(false)}
+            tournamentId={tournamentId}
+            isFree={false}
+          />
+        </>
       )
     }
 
-    const inlineLabel =
-      status === "PENDING_STRIPE" ? "Completa pagamento" : statusLabel
+    if (status === "PENDING_STRIPE") {
+      return (
+        <>
+          {error && <InlineError error={error} />}
+          <button
+            type="button"
+            onClick={handleCompleteStripe}
+            disabled={isPending}
+            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-black text-base text-black transition-all active:brightness-90 disabled:opacity-60"
+          >
+            {isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : "Completa pagamento"}
+          </button>
+        </>
+      )
+    }
 
+    // NOT_REGISTERED: step-1 register
     return (
       <>
-        {error && (
-          <p className="rounded-xl bg-[var(--danger)]/15 px-4 py-3 text-sm text-[var(--danger)]">
-            {error}
-          </p>
-        )}
+        {error && <InlineError error={error} />}
         <button
           type="button"
-          onClick={handleClick}
+          onClick={handleRegister}
           disabled={isPending}
           className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-black text-base text-black transition-all active:brightness-90 disabled:opacity-60"
         >
-          {isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : inlineLabel}
+          {isPending ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : isFree ? "Iscriviti gratis" : "Iscriviti"}
         </button>
-        <PaymentMethodSheet
-          open={sheetOpen}
-          onClose={() => setSheetOpen(false)}
-          tournamentId={tournamentId}
-          isFree={isFree}
-        />
       </>
     )
   }
 
-  // ── Fixed bottom bar (default, used on /register page) ───────────
-  if (status === "PAID") {
-    return <BottomBanner label="Sei già iscritto" variant="disabled" />
-  }
-  if (status === "PENDING_STRIPE") {
-    return <BottomBanner label="Completa pagamento" variant="accent" onClick={handleClick} />
-  }
-  if (status === "PENDING_CASH") {
-    return <BottomBanner label="In attesa di conferma contanti" variant="disabled" />
-  }
-  if (status === "CLOSED") {
-    return <BottomBanner label="Iscrizioni chiuse" variant="disabled" />
-  }
+  // ── Fixed bottom bar (/register page) ───────────────────────
+  if (status === "PAID") return <BottomBanner label="Sei già iscritto" variant="disabled" />
+  if (status === "PENDING_STRIPE") return <BottomBanner label="Completa pagamento" variant="accent" onClick={handleCompleteStripe} />
+  if (status === "PENDING_CASH" || status === "REGISTERED_UNPAID") return <BottomBanner label="In attesa di conferma" variant="disabled" />
+  if (status === "CLOSED") return <BottomBanner label="Iscrizioni chiuse" variant="disabled" />
 
   return (
     <>
@@ -135,7 +162,7 @@ export function PaymentCtaButton({
         >
           {isPending ? (
             <Loader2 className="h-5 w-5 animate-spin" />
-          ) : statusLabel}
+          ) : isFree ? "Iscriviti gratis" : "Paga ora iscrizione"}
         </button>
       </div>
 
@@ -146,6 +173,22 @@ export function PaymentCtaButton({
         isFree={isFree}
       />
     </>
+  )
+}
+
+function InlineDisabled({ label }: { label: string }) {
+  return (
+    <div className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl bg-[var(--surface-2)] text-sm font-bold text-[var(--muted-text)]">
+      {label}
+    </div>
+  )
+}
+
+function InlineError({ error }: { error: string }) {
+  return (
+    <p className="rounded-xl bg-[var(--danger)]/15 px-4 py-3 text-sm text-[var(--danger)]">
+      {error}
+    </p>
   )
 }
 
