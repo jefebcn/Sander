@@ -45,10 +45,9 @@ export function AuthForm({ callbackUrl, inviteCode: initialInviteCode }: AuthFor
         const result = await signIn("credentials", {
           email,
           password,
-          callbackUrl,
           redirect: false,
         })
-        if (result?.error) {
+        if (!result?.ok) {
           setError("Email o password non corretti")
           return
         }
