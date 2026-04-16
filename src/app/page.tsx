@@ -26,13 +26,8 @@ export default async function Home() {
   const session = await getCurrentSession()
   const player = await getCurrentPlayer()
 
-  // Not authenticated → signin
-  if (!session?.user) {
-    redirect("/auth/signin")
-  }
-
   // Logged in but no player profile yet → complete profile setup
-  if (!player) {
+  if (session?.user && !player) {
     redirect("/onboarding/profile")
   }
 
