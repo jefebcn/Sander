@@ -11,7 +11,7 @@ import { LiveDashboard } from "@/components/tournament/LiveDashboard"
 import { ConfirmActionButton } from "@/components/tournament/ConfirmActionButton"
 import { ChiceceDashboard } from "@/components/tournament/ChiceceDashboard"
 import { TeamPairingEditor } from "@/components/tournament/TeamPairingEditor"
-import { ShareButton } from "@/components/ui/ShareButton"
+import { ShareButton, WhatsAppShareButton } from "@/components/ui/ShareButton"
 import { TournamentPriceBadge } from "@/components/tournament/TournamentPriceBadge"
 import { TournamentPaymentsList } from "@/components/tournament/TournamentPaymentsList"
 import { PaymentCtaButton } from "@/components/tournament/PaymentCtaButton"
@@ -51,6 +51,10 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
 
   const isAdmin = await canManageTournament(session?.user?.email, id)
 
+  const currentPlayer = session?.user?.id
+    ? await db.player.findUnique({ where: { userId: session.user.id }, select: { id: true } })
+    : null
+
   // ── Chicece path ────────────────────────────────────────────
   if (base.type === "CHICECE") {
     const [tournament, registrations, matches] = await Promise.all([
@@ -69,6 +73,20 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
 
     const typeLabel = "Chicece"
 
+    const myChiceceReg = currentPlayer && tournament.isOpenForRegistration
+      ? await db.tournamentRegistration.findUnique({
+          where: { tournamentId_playerId: { tournamentId: id, playerId: currentPlayer.id } },
+          select: { paymentStatus: true, paymentMethod: true },
+        })
+      : null
+    const csReg = myChiceceReg
+    const chiceceRegStatus =
+      !csReg ? "NOT_REGISTERED" as const
+      : csReg.paymentStatus === "PAID" || csReg.paymentStatus === "FREE" ? "PAID" as const
+      : csReg.paymentStatus === "PENDING" && csReg.paymentMethod === "STRIPE" ? "PENDING_STRIPE" as const
+      : csReg.paymentStatus === "PENDING" && csReg.paymentMethod === "CASH" ? "PENDING_CASH" as const
+      : "NOT_REGISTERED" as const
+
     return (
       <div className="pb-6">
         {/* Header */}
@@ -85,6 +103,40 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
           </div>
           <ShareButton path={`/tournaments/${id}`} title={tournament.name} text={`Unisciti al torneo "${tournament.name}" su SANDER 🏐`} />
         </div>
+
+        {/* Open for self-registration */}
+        {tournament.status === "DRAFT" && tournament.isOpenForRegistration && (
+          <div className="mx-4 mb-4 space-y-2">
+            <div className="flex items-center justify-between gap-3 rounded-2xl bg-[var(--surface-1)] p-4">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold uppercase tracking-wide text-[var(--accent)]">
+                  Iscrizioni aperte
+                </p>
+                <p className="mt-1 text-sm text-[var(--muted-text)]">
+                  Iscriviti e paga direttamente in app
+                </p>
+              </div>
+              <TournamentPriceBadge priceCents={tournament.priceCents} currency={tournament.priceCurrency} />
+            </div>
+            <PaymentCtaButton
+              tournamentId={id}
+              isFree={!tournament.priceCents || tournament.priceCents === 0}
+              status={chiceceRegStatus}
+              isAuthed={!!currentPlayer}
+              inline
+            />
+            <WhatsAppShareButton
+              path={`/tournaments/${id}/register`}
+              text={`Iscriviti al torneo "${tournament.name}" su SANDER 🏐`}
+            />
+            <ShareButton
+              path={`/tournaments/${id}/register`}
+              title={tournament.name}
+              text={`Iscriviti al torneo "${tournament.name}" su SANDER 🏐`}
+              fullWidth
+            />
+          </div>
+        )}
 
         {/* Draft — start */}
         {tournament.status === "DRAFT" && isAdmin && (
@@ -183,10 +235,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   const data = await getTournamentDashboard(id)
   const { tournament } = data
 
-  // Fetch current player's registration (for inline self-registration CTA)
-  const currentPlayer = session?.user?.id
-    ? await db.player.findUnique({ where: { userId: session.user.id }, select: { id: true } })
-    : null
+  // currentPlayer already fetched above
   const myRegistration = currentPlayer && tournament.isOpenForRegistration
     ? await db.tournamentRegistration.findUnique({
         where: { tournamentId_playerId: { tournamentId: id, playerId: currentPlayer.id } },
@@ -243,7 +292,6 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             </div>
             <TournamentPriceBadge priceCents={tournament.priceCents} currency={tournament.priceCurrency} />
           </div>
-          {/* Pulsante iscrizione inline — evita redirect a /register */}
           <PaymentCtaButton
             tournamentId={id}
             isFree={!tournament.priceCents || tournament.priceCents === 0}
@@ -251,7 +299,10 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             isAuthed={!!currentPlayer}
             inline
           />
-          {/* Link invito — chiunque può copiarlo e condividerlo */}
+          <WhatsAppShareButton
+            path={`/tournaments/${id}/register`}
+            text={`Iscriviti al torneo "${tournament.name}" su SANDER 🏐`}
+          />
           <ShareButton
             path={`/tournaments/${id}/register`}
             title={tournament.name}

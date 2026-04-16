@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Share2, Check } from "lucide-react"
+import { Share2, Check, MessageCircle } from "lucide-react"
 
 interface ShareButtonProps {
   path: string
@@ -54,6 +54,26 @@ export function ShareButton({ path, title, text, fullWidth }: ShareButtonProps) 
     >
       {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
       {copied ? "Copiato!" : "Condividi"}
+    </button>
+  )
+}
+
+export function WhatsAppShareButton({ path, text }: { path: string; text: string }) {
+  function handleClick() {
+    const url = window.location.origin + path
+    const encoded = encodeURIComponent(`${text}\n${url}`)
+    window.open(`https://wa.me/?text=${encoded}`, "_blank", "noopener,noreferrer")
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-bold text-base text-white transition-opacity active:opacity-80"
+      style={{ background: "#25D366" }}
+    >
+      <MessageCircle className="h-5 w-5" />
+      Condividi su WhatsApp
     </button>
   )
 }
