@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { signIn } from "next-auth/react"
 import { Eye, EyeOff, LogIn } from "lucide-react"
@@ -23,6 +24,7 @@ export function AuthForm({ callbackUrl, inviteCode: initialInviteCode }: AuthFor
   const [showPwd, setShowPwd] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const router = useRouter()
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -51,7 +53,8 @@ export function AuthForm({ callbackUrl, inviteCode: initialInviteCode }: AuthFor
           setError("Email o password non corretti")
           return
         }
-        window.location.href = callbackUrl
+        router.push(callbackUrl)
+        router.refresh()
       } catch (err) {
         setError(err instanceof Error ? err.message : "Errore imprevisto")
       }
