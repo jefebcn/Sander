@@ -12,3 +12,14 @@ export function formatDate(date: Date | string): string {
     year: "numeric",
   })
 }
+
+export function formatPrice(
+  cents: number | null | undefined,
+  currency = "EUR",
+): string {
+  if (cents == null) return "Gratis"
+  return new Intl.NumberFormat("it-IT", {
+    style: "currency",
+    currency,
+  }).format(cents / 100)
+}

@@ -31,10 +31,24 @@ export async function createTournament(input: CreateTournamentInput): Promise<{ 
         status: "DRAFT",
         numCourts: data.numCourts ?? 2,
         chiceceMatchCount: data.chiceceMatchCount ?? 4,
+
+        location:              data.location ?? null,
+        description:           data.description ?? null,
+        registrationDeadline:  data.registrationDeadline ?? null,
+        prizePool:             data.prizePool ?? null,
+        priceCents:            data.priceCents ?? null,
+        priceCurrency:         data.priceCurrency,
+        isOpenForRegistration: data.isOpenForRegistration,
+
         registrations: {
           create: data.playerIds.map((playerId, i) => ({
             playerId,
             seedPosition: i + 1,
+            // Admin-created registrations are considered pre-paid / free
+            paymentStatus: (data.priceCents ?? 0) > 0 ? "PAID" : "FREE",
+            paymentMethod: (data.priceCents ?? 0) > 0 ? "CASH" : "FREE",
+            paidAt: (data.priceCents ?? 0) > 0 ? new Date() : null,
+            amountPaidCents: data.priceCents ?? null,
           })),
         },
       },

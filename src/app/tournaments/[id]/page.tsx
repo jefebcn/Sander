@@ -11,6 +11,7 @@ import { ConfirmActionButton } from "@/components/tournament/ConfirmActionButton
 import { ChiceceDashboard } from "@/components/tournament/ChiceceDashboard"
 import { TeamPairingEditor } from "@/components/tournament/TeamPairingEditor"
 import { ShareButton } from "@/components/ui/ShareButton"
+import { TournamentPriceBadge } from "@/components/tournament/TournamentPriceBadge"
 import { formatDate } from "@/lib/utils"
 import { redirect } from "next/navigation"
 
@@ -187,19 +188,40 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
         <ShareButton path={`/tournaments/${id}`} title={tournament.name} text={`Unisciti al torneo "${tournament.name}" su SANDER 🏐`} />
       </div>
 
-      {/* Draft — pairing editor + start action */}
-      {tournament.status === "DRAFT" && (
+      {/* Open for self-registration — visible to everyone */}
+      {tournament.status === "DRAFT" && tournament.isOpenForRegistration && (
+        <div className="mx-4 mb-4 flex items-center justify-between gap-3 rounded-2xl bg-[var(--surface-1)] p-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold uppercase tracking-wide text-[var(--accent)]">
+              Iscrizioni aperte
+            </p>
+            <p className="mt-1 text-sm text-[var(--muted-text)]">
+              Iscriviti e paga direttamente in app
+            </p>
+          </div>
+          <TournamentPriceBadge priceCents={tournament.priceCents} currency={tournament.priceCurrency} />
+          <Link
+            href={`/tournaments/${id}/register`}
+            className="flex min-h-[3rem] items-center gap-1 rounded-xl bg-[var(--accent)] px-4 text-sm font-bold text-black active:brightness-90"
+          >
+            Iscriviti
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </div>
+      )}
+
+      {/* Draft — admin pairing editor + start action */}
+      {tournament.status === "DRAFT" && isAdmin && (
         <>
           {/* Team pairing editor: only for fixed-team formats where pairing matters */}
-          {isAdmin &&
-            (tournament.type === "BRACKETS" ||
-              tournament.type === "DOUBLE_ELIMINATION" ||
-              tournament.type === "ROUND_ROBIN") && (
-              <TeamPairingEditor
-                tournamentId={id}
-                registrations={tournament.registrations}
-              />
-            )}
+          {(tournament.type === "BRACKETS" ||
+            tournament.type === "DOUBLE_ELIMINATION" ||
+            tournament.type === "ROUND_ROBIN") && (
+            <TeamPairingEditor
+              tournamentId={id}
+              registrations={tournament.registrations}
+            />
+          )}
 
           <div className="mx-4 mb-4 rounded-2xl bg-[var(--surface-1)] p-4">
             <p className="mb-3 text-sm text-[var(--muted-text)]">

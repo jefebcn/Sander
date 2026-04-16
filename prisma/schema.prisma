@@ -58,6 +58,15 @@ enum BadgeType {
   FAIR_PLAY
 }
 
+enum PaymentStatus {
+  FREE
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
 // ─── Auth Models (NextAuth v5) ────────────────────────────────────────────────
 
 model User {
@@ -211,6 +220,15 @@ model Tournament {
   chiceceMatchCount Int @default(4)
   chicecePhase      String @default("GROUP")
 
+  // Registration & payments
+  location              String?
+  description           String?
+  registrationDeadline  DateTime?
+  prizePool             String?
+  priceCents            Int?          // null = free
+  priceCurrency         String        @default("EUR")
+  isOpenForRegistration Boolean       @default(false)
+
   registrations TournamentRegistration[]
   matches       Match[]
   standings     TournamentStanding[]
@@ -230,11 +248,30 @@ model TournamentRegistration {
   chicecePlusMinus     Int @default(0)
   chiceceMatchesPlayed Int @default(0)
 
+  // Payment tracking
+  paymentStatus         PaymentStatus @default(FREE)
+  paymentMethod         String?       // "STRIPE" | "CASH" | "FREE"
+  paidAt                DateTime?
+  amountPaidCents       Int?
+  stripeSessionId       String?       @unique
+  stripePaymentIntentId String?       @unique
+  adminNotes            String?
+
   tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   player     Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@unique([tournamentId, playerId])
+  @@index([tournamentId, paymentStatus])
   @@map("tournament_registrations")
+}
+
+model StripeWebhookEvent {
+  id         String   @id                // Stripe event.id
+  type       String
+  receivedAt DateTime @default(now())
+  payload    Json
+
+  @@map("stripe_webhook_events")
 }
 
 model Match {

@@ -3,6 +3,7 @@ import { Plus, Trophy, Users, Calendar } from "lucide-react"
 import { listTournaments } from "@/actions/tournaments"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
+import { TournamentPriceBadge } from "@/components/tournament/TournamentPriceBadge"
 import { formatDate } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
@@ -70,6 +71,17 @@ export default async function TournamentsPage() {
                       {t.type === "KING_OF_THE_BEACH" ? "King of the Beach" : "Brackets"}
                     </span>
                   </div>
+                  {t.isOpenForRegistration && t.status === "DRAFT" && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <TournamentPriceBadge
+                        priceCents={t.priceCents}
+                        currency={t.priceCurrency}
+                      />
+                      <span className="text-xs font-bold uppercase tracking-wide text-[var(--accent)]">
+                        Iscrizioni aperte
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <Trophy
                   className="mt-0.5 h-5 w-5 shrink-0 text-[var(--accent)]"
