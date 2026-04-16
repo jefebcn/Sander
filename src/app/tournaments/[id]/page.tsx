@@ -5,6 +5,7 @@ import { getTournamentDashboard } from "@/actions/standings"
 import { startTournament, completeTournament } from "@/actions/tournaments"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
+import { canManageTournament } from "@/lib/isAdmin"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
 import { LiveDashboard } from "@/components/tournament/LiveDashboard"
 import { ConfirmActionButton } from "@/components/tournament/ConfirmActionButton"
@@ -13,6 +14,7 @@ import { TeamPairingEditor } from "@/components/tournament/TeamPairingEditor"
 import { ShareButton } from "@/components/ui/ShareButton"
 import { TournamentPriceBadge } from "@/components/tournament/TournamentPriceBadge"
 import { TournamentPaymentsList } from "@/components/tournament/TournamentPaymentsList"
+import { PaymentCtaButton } from "@/components/tournament/PaymentCtaButton"
 import { formatDate } from "@/lib/utils"
 import { redirect } from "next/navigation"
 
@@ -39,8 +41,6 @@ export async function generateMetadata(
   }
 }
 
-import { isAdminEmail } from "@/lib/isAdmin"
-
 export default async function TournamentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
@@ -49,7 +49,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
     getCurrentSession(),
   ])
 
-  const isAdmin = isAdminEmail(session?.user?.email)
+  const isAdmin = await canManageTournament(session?.user?.email, id)
 
   // ── Chicece path ────────────────────────────────────────────
   if (base.type === "CHICECE") {
@@ -183,6 +183,27 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   const data = await getTournamentDashboard(id)
   const { tournament } = data
 
+  // Fetch current player's registration (for inline self-registration CTA)
+  const currentPlayer = session?.user?.id
+    ? await db.player.findUnique({ where: { userId: session.user.id }, select: { id: true } })
+    : null
+  const myRegistration = currentPlayer && tournament.isOpenForRegistration
+    ? await db.tournamentRegistration.findUnique({
+        where: { tournamentId_playerId: { tournamentId: id, playerId: currentPlayer.id } },
+        select: { paymentStatus: true, paymentMethod: true },
+      })
+    : null
+
+  function getRegStatus() {
+    if (!myRegistration) return "NOT_REGISTERED" as const
+    const { paymentStatus, paymentMethod } = myRegistration
+    if (paymentStatus === "PAID" || paymentStatus === "FREE") return "PAID" as const
+    if (paymentStatus === "PENDING" && paymentMethod === "STRIPE") return "PENDING_STRIPE" as const
+    if (paymentStatus === "PENDING" && paymentMethod === "CASH") return "PENDING_CASH" as const
+    return "NOT_REGISTERED" as const
+  }
+  const regStatus = getRegStatus()
+
   return (
     <div className="pb-6">
       {/* Header */}
@@ -221,14 +242,15 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               </p>
             </div>
             <TournamentPriceBadge priceCents={tournament.priceCents} currency={tournament.priceCurrency} />
-            <Link
-              href={`/tournaments/${id}/register`}
-              className="flex min-h-[3rem] items-center gap-1 rounded-xl bg-[var(--accent)] px-4 text-sm font-bold text-black active:brightness-90"
-            >
-              Iscriviti
-              <ChevronRight className="h-4 w-4" />
-            </Link>
           </div>
+          {/* Pulsante iscrizione inline — evita redirect a /register */}
+          <PaymentCtaButton
+            tournamentId={id}
+            isFree={!tournament.priceCents || tournament.priceCents === 0}
+            status={regStatus}
+            isAuthed={!!currentPlayer}
+            inline
+          />
           {/* Link invito — chiunque può copiarlo e condividerlo */}
           <ShareButton
             path={`/tournaments/${id}/register`}

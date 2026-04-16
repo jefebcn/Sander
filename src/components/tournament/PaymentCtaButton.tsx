@@ -14,11 +14,14 @@ export function PaymentCtaButton({
   isFree,
   status,
   isAuthed,
+  inline = false,
 }: {
   tournamentId: string
   isFree: boolean
   status: Status
   isAuthed: boolean
+  /** When true renders as a rounded inline button instead of fixed bottom bar */
+  inline?: boolean
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -49,26 +52,64 @@ export function PaymentCtaButton({
     setSheetOpen(true)
   }
 
-  // Already registered / closed — render a disabled banner
-  if (status === "PAID") {
+  const statusLabel = isFree ? "Iscriviti gratis" : "Paga ora iscrizione"
+
+  // ── Inline variant (used on tournament detail page) ──────────────
+  if (inline) {
+    const inlineDisabledLabel =
+      status === "PAID" ? "Sei già iscritto ✓"
+      : status === "PENDING_CASH" ? "In attesa di conferma contanti"
+      : status === "CLOSED" ? "Iscrizioni chiuse"
+      : null
+
+    if (inlineDisabledLabel) {
+      return (
+        <div className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl bg-[var(--surface-2)] text-sm font-bold text-[var(--muted-text)]">
+          {inlineDisabledLabel}
+        </div>
+      )
+    }
+
+    const inlineLabel =
+      status === "PENDING_STRIPE" ? "Completa pagamento" : statusLabel
+
     return (
-      <BottomBanner label="Sei già iscritto" variant="disabled" />
+      <>
+        {error && (
+          <p className="rounded-xl bg-[var(--danger)]/15 px-4 py-3 text-sm text-[var(--danger)]">
+            {error}
+          </p>
+        )}
+        <button
+          type="button"
+          onClick={handleClick}
+          disabled={isPending}
+          className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-black text-base text-black transition-all active:brightness-90 disabled:opacity-60"
+        >
+          {isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : inlineLabel}
+        </button>
+        <PaymentMethodSheet
+          open={sheetOpen}
+          onClose={() => setSheetOpen(false)}
+          tournamentId={tournamentId}
+          isFree={isFree}
+        />
+      </>
     )
+  }
+
+  // ── Fixed bottom bar (default, used on /register page) ───────────
+  if (status === "PAID") {
+    return <BottomBanner label="Sei già iscritto" variant="disabled" />
   }
   if (status === "PENDING_STRIPE") {
-    return (
-      <BottomBanner label="Completa pagamento" variant="accent" onClick={handleClick} />
-    )
+    return <BottomBanner label="Completa pagamento" variant="accent" onClick={handleClick} />
   }
   if (status === "PENDING_CASH") {
-    return (
-      <BottomBanner label="In attesa di conferma contanti" variant="disabled" />
-    )
+    return <BottomBanner label="In attesa di conferma contanti" variant="disabled" />
   }
   if (status === "CLOSED") {
-    return (
-      <BottomBanner label="Iscrizioni chiuse" variant="disabled" />
-    )
+    return <BottomBanner label="Iscrizioni chiuse" variant="disabled" />
   }
 
   return (
@@ -94,11 +135,7 @@ export function PaymentCtaButton({
         >
           {isPending ? (
             <Loader2 className="h-5 w-5 animate-spin" />
-          ) : isFree ? (
-            "Iscriviti gratis"
-          ) : (
-            "Paga ora iscrizione"
-          )}
+          ) : statusLabel}
         </button>
       </div>
 

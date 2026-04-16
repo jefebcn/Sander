@@ -23,6 +23,11 @@ export async function createTournament(input: CreateTournamentInput): Promise<{ 
   try {
     const data = CreateTournamentSchema.parse(input)
 
+    const session = await getCurrentSession()
+    const creatorPlayer = session?.user?.id
+      ? await db.player.findUnique({ where: { userId: session.user.id }, select: { id: true } })
+      : null
+
     const tournament = await db.tournament.create({
       data: {
         name: data.name,
@@ -39,6 +44,7 @@ export async function createTournament(input: CreateTournamentInput): Promise<{ 
         priceCents:            data.priceCents ?? null,
         priceCurrency:         data.priceCurrency,
         isOpenForRegistration: data.isOpenForRegistration,
+        createdByPlayerId:     creatorPlayer?.id ?? null,
 
         registrations: {
           create: data.playerIds.map((playerId, i) => ({

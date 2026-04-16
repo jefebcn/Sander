@@ -189,6 +189,7 @@ model Player {
   organizedSessions    Session[]
   sessionParticipants  SessionParticipant[]
   sessionMatchPlayers  SessionMatchPlayer[]
+  tournamentsCreated   Tournament[]             @relation("TournamentCreator")
   ratingsGiven         PlayerRating[]     @relation("Rater")
   ratingsReceived      PlayerRating[]     @relation("Rated")
   badgesGiven          BadgeAward[]       @relation("BadgeGiver")
@@ -228,6 +229,10 @@ model Tournament {
   priceCents            Int?          // null = free
   priceCurrency         String        @default("EUR")
   isOpenForRegistration Boolean       @default(false)
+
+  // Creator — nullable for backwards compat with existing tournaments
+  createdByPlayerId String?
+  createdByPlayer   Player?  @relation("TournamentCreator", fields: [createdByPlayerId], references: [id], onDelete: SetNull)
 
   registrations TournamentRegistration[]
   matches       Match[]
