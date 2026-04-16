@@ -12,6 +12,7 @@ import { ChiceceDashboard } from "@/components/tournament/ChiceceDashboard"
 import { TeamPairingEditor } from "@/components/tournament/TeamPairingEditor"
 import { ShareButton } from "@/components/ui/ShareButton"
 import { TournamentPriceBadge } from "@/components/tournament/TournamentPriceBadge"
+import { TournamentPaymentsList } from "@/components/tournament/TournamentPaymentsList"
 import { formatDate } from "@/lib/utils"
 import { redirect } from "next/navigation"
 
@@ -113,6 +114,23 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
           </div>
         )}
 
+        {/* Bollini pagamento — solo per tornei a pagamento, solo admin */}
+        {isAdmin && (tournament.priceCents ?? 0) > 0 && (
+          <div className="mx-4 mb-4">
+            <TournamentPaymentsList
+              registrations={registrations.map((r) => ({
+                id: r.id,
+                player: { name: r.player.name },
+                paymentStatus: r.paymentStatus,
+                paymentMethod: r.paymentMethod,
+                paidAt: r.paidAt,
+                amountPaidCents: r.amountPaidCents,
+              }))}
+              priceCents={tournament.priceCents!}
+            />
+          </div>
+        )}
+
         {tournament.status !== "DRAFT" && (
           <ChiceceDashboard
             tournament={{
@@ -190,23 +208,32 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
 
       {/* Open for self-registration — visible to everyone */}
       {tournament.status === "DRAFT" && tournament.isOpenForRegistration && (
-        <div className="mx-4 mb-4 flex items-center justify-between gap-3 rounded-2xl bg-[var(--surface-1)] p-4">
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold uppercase tracking-wide text-[var(--accent)]">
-              Iscrizioni aperte
-            </p>
-            <p className="mt-1 text-sm text-[var(--muted-text)]">
-              Iscriviti e paga direttamente in app
-            </p>
+        <div className="mx-4 mb-4 space-y-2">
+          <div className="flex items-center justify-between gap-3 rounded-2xl bg-[var(--surface-1)] p-4">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold uppercase tracking-wide text-[var(--accent)]">
+                Iscrizioni aperte
+              </p>
+              <p className="mt-1 text-sm text-[var(--muted-text)]">
+                Iscriviti e paga direttamente in app
+              </p>
+            </div>
+            <TournamentPriceBadge priceCents={tournament.priceCents} currency={tournament.priceCurrency} />
+            <Link
+              href={`/tournaments/${id}/register`}
+              className="flex min-h-[3rem] items-center gap-1 rounded-xl bg-[var(--accent)] px-4 text-sm font-bold text-black active:brightness-90"
+            >
+              Iscriviti
+              <ChevronRight className="h-4 w-4" />
+            </Link>
           </div>
-          <TournamentPriceBadge priceCents={tournament.priceCents} currency={tournament.priceCurrency} />
-          <Link
-            href={`/tournaments/${id}/register`}
-            className="flex min-h-[3rem] items-center gap-1 rounded-xl bg-[var(--accent)] px-4 text-sm font-bold text-black active:brightness-90"
-          >
-            Iscriviti
-            <ChevronRight className="h-4 w-4" />
-          </Link>
+          {/* Link invito — chiunque può copiarlo e condividerlo */}
+          <ShareButton
+            path={`/tournaments/${id}/register`}
+            title={tournament.name}
+            text={`Iscriviti al torneo "${tournament.name}" su SANDER 🏐`}
+            fullWidth
+          />
         </div>
       )}
 
@@ -248,6 +275,23 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             </form>
           </div>
         </>
+      )}
+
+      {/* Bollini pagamento — solo per tornei a pagamento, solo admin */}
+      {isAdmin && (tournament.priceCents ?? 0) > 0 && (
+        <div className="mx-4 mb-4">
+          <TournamentPaymentsList
+            registrations={tournament.registrations.map((r) => ({
+              id: r.id,
+              player: { name: r.player.name },
+              paymentStatus: r.paymentStatus,
+              paymentMethod: r.paymentMethod,
+              paidAt: r.paidAt,
+              amountPaidCents: r.amountPaidCents,
+            }))}
+            priceCents={tournament.priceCents!}
+          />
+        </div>
       )}
 
       {tournament.status === "LIVE" && (
