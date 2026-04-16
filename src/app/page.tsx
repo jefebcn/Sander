@@ -334,10 +334,11 @@ export default async function Home() {
             {/* ── Podio del mese banner ────────────────────────── */}
             <Link
               href="/players?tab=podio"
-              className="slide-up flex items-center gap-3 rounded-2xl p-4 active:opacity-80"
+              className="flex min-h-[3.5rem] items-center gap-3 rounded-2xl p-4 active:opacity-80"
               style={{
                 background: "linear-gradient(135deg, rgba(255,215,0,0.08) 0%, rgba(201,243,29,0.05) 100%)",
                 border: "1px solid rgba(255,215,0,0.25)",
+                touchAction: "manipulation",
               }}
             >
               <div
