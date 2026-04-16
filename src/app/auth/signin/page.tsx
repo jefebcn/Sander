@@ -1,9 +1,8 @@
 export const dynamic = "force-dynamic"
 
 import Image from "next/image"
-import { ChevronLeft } from "lucide-react"
-import Link from "next/link"
 import { AuthForm } from "@/components/auth/AuthForm"
+import { BackButton } from "@/components/auth/BackButton"
 
 export default async function SignInPage({
   searchParams,
@@ -27,13 +26,7 @@ export default async function SignInPage({
 
       {/* Back */}
       <div className="relative z-10 flex items-center pt-14">
-        <Link
-          href="/"
-          aria-label="Indietro"
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--muted-text)] transition-colors active:bg-[var(--surface-3)]"
-        >
-          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-        </Link>
+        <BackButton />
       </div>
 
       <div className="relative z-10 mt-4 space-y-8">
