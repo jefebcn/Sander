@@ -47,5 +47,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token.id) session.user.id = token.id as string
       return session
     },
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) return `${baseUrl}${url}`
+      try {
+        if (new URL(url).origin === baseUrl) return url
+      } catch {}
+      return baseUrl
+    },
   },
 })
