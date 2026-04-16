@@ -37,5 +37,5 @@ export default async function ProfilePage() {
       }
     : undefined
 
-  return <ProfileSetupForm initialData={initialData} showBack={!!existing} />
+  return <ProfileSetupForm initialData={initialData} />
 }
