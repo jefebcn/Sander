@@ -47,7 +47,7 @@ export function AuthForm({ callbackUrl, inviteCode: initialInviteCode }: AuthFor
           password,
           redirect: false,
         })
-        if (!result?.ok) {
+        if (!result || result.error) {
           setError("Email o password non corretti")
           return
         }
