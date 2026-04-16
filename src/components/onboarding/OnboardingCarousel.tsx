@@ -75,8 +75,7 @@ export function OnboardingCarousel({ onComplete }: OnboardingCarouselProps) {
           muted
           loop
           playsInline
-          preload="none"
-          poster="/sander-logo.png"
+          preload="auto"
           className="absolute inset-0 h-full w-full object-cover"
           style={{ filter: "grayscale(100%) brightness(0.65)" }}
           aria-hidden="true"
