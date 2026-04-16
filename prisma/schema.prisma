@@ -380,13 +380,14 @@ model Session {
 }
 
 model SessionMatch {
-  id          String  @id @default(cuid())
+  id          String   @id @default(cuid())
   sessionId   String
   round       Int
   matchNumber Int
   teamAScore  Int?
   teamBScore  Int?
-  isCompleted Boolean @default(false)
+  isCompleted Boolean  @default(false)
+  updatedAt   DateTime @updatedAt
 
   session Session             @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   players SessionMatchPlayer[]

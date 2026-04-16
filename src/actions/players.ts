@@ -238,9 +238,9 @@ export async function getMonthlyTopPlayers() {
     },
   })
 
-  // Session match wins this month
+  // Session match wins this month (filter by when the match was last updated, not session date)
   const sessionMatches = await db.sessionMatch.findMany({
-    where: { isCompleted: true, session: { date: { gte: startOfMonth } } },
+    where: { isCompleted: true, updatedAt: { gte: startOfMonth } },
     select: {
       teamAScore: true,
       teamBScore: true,
@@ -307,7 +307,7 @@ async function getLastMonthTopPlayers() {
     select: { teamAScore: true, teamBScore: true, players: { select: { playerId: true, team: true } } },
   })
   const sessionMatches = await db.sessionMatch.findMany({
-    where: { isCompleted: true, session: { date: { gte: startOfLastMonth, lt: endOfLastMonth } } },
+    where: { isCompleted: true, updatedAt: { gte: startOfLastMonth, lt: endOfLastMonth } },
     select: { teamAScore: true, teamBScore: true, players: { select: { playerId: true, team: true } } },
   })
 
