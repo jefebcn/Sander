@@ -187,7 +187,7 @@ interface InitialData {
   avatarUrl:   string | null
 }
 
-export function ProfileSetupForm({ initialData }: { initialData?: InitialData }) {
+export function ProfileSetupForm({ initialData, showBack = false }: { initialData?: InitialData; showBack?: boolean }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -272,13 +272,15 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
         className="flex items-center px-4 pt-14 pb-2"
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 3.5rem)" }}
       >
-        <button
-          onClick={() => router.back()}
-          aria-label="Indietro"
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2a2a2a] text-white transition-colors active:bg-[#333]"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
+        {showBack && (
+          <button
+            onClick={() => router.back()}
+            aria-label="Indietro"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2a2a2a] text-white transition-colors active:bg-[#333]"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
       {/* Avatar */}
