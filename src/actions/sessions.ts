@@ -5,7 +5,6 @@ import { db } from "@/lib/db"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import {
   CreateSessionSchema,
-  RatePlayerSchema,
   AssignTeamSchema,
   SubmitSessionMatchScoreSchema,
 } from "@/lib/validators/session.schema"
@@ -31,11 +30,6 @@ const FORMAT_MAX: Record<string, number> = {
   TWO_VS_TWO: 4,
   THREE_VS_THREE: 6,
   FOUR_VS_FOUR: 8,
-}
-
-function recomputeAvg(superVotes: number, topVotes: number, flopVotes: number) {
-  const total = superVotes + topVotes + flopVotes
-  return total === 0 ? 0 : Math.round((superVotes * 50 + topVotes * 30) / total)
 }
 
 function recomputeLevel(xp: number) {
@@ -119,8 +113,6 @@ export async function getSession(id: string) {
         include: { player: { select: { id: true, name: true, preferredRole: true, level: true } } },
         orderBy: { team: "asc" },
       },
-      ratings: { select: { raterId: true, ratedId: true, type: true } },
-      badgeAwards: { select: { giverId: true, receiverId: true, badge: true } },
     },
   })
 }
@@ -336,14 +328,6 @@ export async function completeSession(
     })
   }
 
-  // Notify all participants to rate each other (fire-and-forget)
-  const playerIds = session.participants.map((p) => p.playerId)
-  safeNotifyPlayers(playerIds, {
-    title: "Partita finita! Vota i giocatori ⭐",
-    body: `Come è andata in ${session.title}? Dai un voto ai tuoi compagni!`,
-    url: `/sessions/${sessionId}`,
-  })
-
   revalidatePath(`/sessions/${sessionId}`)
   revalidatePath("/sessions")
 }
@@ -408,90 +392,6 @@ export async function cancelSession(sessionId: string) {
 
   revalidatePath(`/sessions/${sessionId}`)
   revalidatePath("/sessions")
-}
-
-export async function ratePlayer(input: unknown) {
-  const rater = await getCurrentPlayer()
-  if (!rater) throw new Error("Non autenticato")
-
-  const data = RatePlayerSchema.parse(input)
-  if (data.ratedId === rater.id) throw new Error("Non puoi votare te stesso")
-
-  // Verify both players participated in this session
-  const [raterPart, ratedPart] = await Promise.all([
-    db.sessionParticipant.findUnique({
-      where: { sessionId_playerId: { sessionId: data.sessionId, playerId: rater.id } },
-    }),
-    db.sessionParticipant.findUnique({
-      where: { sessionId_playerId: { sessionId: data.sessionId, playerId: data.ratedId } },
-    }),
-  ])
-  if (!raterPart || !ratedPart) throw new Error("Partecipazione non trovata")
-
-  // Upsert rating
-  const existing = await db.playerRating.findUnique({
-    where: { sessionId_raterId_ratedId: { sessionId: data.sessionId, raterId: rater.id, ratedId: data.ratedId } },
-  })
-
-  if (existing) {
-    await db.playerRating.update({
-      where: { id: existing.id },
-      data: { type: data.type },
-    })
-  } else {
-    await db.playerRating.create({
-      data: { sessionId: data.sessionId, raterId: rater.id, ratedId: data.ratedId, type: data.type },
-    })
-  }
-
-  // Recompute rated player's vote counts, avgRating, XP, level
-  const allRatings = await db.playerRating.groupBy({
-    by: ["type"],
-    where: { ratedId: data.ratedId },
-    _count: { type: true },
-  })
-
-  const counts = { SUPER: 0, TOP: 0, FLOP: 0 }
-  for (const r of allRatings) counts[r.type] = r._count.type
-
-  const ratedPlayer = await db.player.findUniqueOrThrow({
-    where: { id: data.ratedId },
-    select: { xp: true, superVotes: true },
-  })
-
-  // XP bonus only for new SUPER votes (not re-votes)
-  const superDelta = counts.SUPER - ratedPlayer.superVotes
-  const newXp = ratedPlayer.xp + (superDelta > 0 ? superDelta * 5 : 0)
-
-  await db.player.update({
-    where: { id: data.ratedId },
-    data: {
-      superVotes: counts.SUPER,
-      topVotes: counts.TOP,
-      flopVotes: counts.FLOP,
-      avgRating: recomputeAvg(counts.SUPER, counts.TOP, counts.FLOP),
-      xp: newXp,
-      level: recomputeLevel(newXp),
-    },
-  })
-
-  // Sync badge awards: delete existing for this (session, giver, receiver) and recreate
-  await db.badgeAward.deleteMany({
-    where: { sessionId: data.sessionId, giverId: rater.id, receiverId: data.ratedId },
-  })
-  if (data.type !== "FLOP" && data.badges && data.badges.length > 0) {
-    await db.badgeAward.createMany({
-      data: data.badges.map((badge) => ({
-        sessionId: data.sessionId,
-        giverId: rater.id,
-        receiverId: data.ratedId,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        badge: badge as any,
-      })),
-    })
-  }
-
-  revalidatePath(`/sessions/${data.sessionId}`)
 }
 
 // ─── Multi-match mode actions ─────────────────────────────────────────────────

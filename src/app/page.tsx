@@ -55,10 +55,6 @@ export default async function Home() {
     })
   }
 
-  const avgDisplay =
-    fullPlayer && fullPlayer.avgRating > 0
-      ? (fullPlayer.avgRating / 10).toFixed(2)
-      : "0.00"
   const xpCurrent = fullPlayer ? fullPlayer.xp % 100 : 0
   const xpToNext = 100 - xpCurrent
   const xpPct = fullPlayer ? Math.round((xpCurrent / 100) * 100) : 0
@@ -198,13 +194,11 @@ export default async function Home() {
             {/* ── Stats Card ────────────────────────────────────── */}
             <div className="slide-up stagger-3 overflow-hidden rounded-2xl bg-[var(--surface-2)]">
               {/* Top stats row */}
-              <div className="grid grid-cols-5 divide-x divide-[var(--border)] pb-3 pt-5">
+              <div className="grid grid-cols-3 divide-x divide-[var(--border)] pb-3 pt-5">
                 {[
-                  { label: "MV",  value: avgDisplay },
                   { label: "GLK", value: glickoDisplay },
                   { label: "PLA", value: fullPlayer.sessionsPlayed },
                   { label: "ORG", value: fullPlayer._count.organizedSessions },
-                  { label: "PEN", value: fullPlayer.flopVotes },
                 ].map(({ label, value }) => (
                   <div key={label} className="flex flex-col items-center gap-1 py-1">
                     <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--muted-text)]">

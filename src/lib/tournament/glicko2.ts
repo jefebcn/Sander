@@ -144,25 +144,4 @@ export function ratingToDisplayLevel(rating: number): string {
   return Math.max(2, Math.min(8, level)).toFixed(1)
 }
 
-/** Badge types — matches the Prisma BadgeType enum */
-export const BADGE_LABELS: Record<string, string> = {
-  MURO_IMPENETRABILE:  "Muro impenetrabile",
-  DIFESA_ACROBATICA:   "Difesa acrobatica",
-  LEADER_CARISMATICO:  "Leader carismatico",
-  SCHIACCIATA_POTENTE: "Schiacciata potente",
-  SERVIZIO_PRECISO:    "Servizio preciso",
-  SPIRITO_DI_SQUADRA:  "Spirito di squadra",
-  MVP_PARTITA:         "MVP della partita",
-  FAIR_PLAY:           "Fair play",
-}
 
-export const BADGE_EMOJIS: Record<string, string> = {
-  MURO_IMPENETRABILE:  "🧱",
-  DIFESA_ACROBATICA:   "🤸",
-  LEADER_CARISMATICO:  "⚡",
-  SCHIACCIATA_POTENTE: "💥",
-  SERVIZIO_PRECISO:    "🎯",
-  SPIRITO_DI_SQUADRA:  "🤝",
-  MVP_PARTITA:         "🏆",
-  FAIR_PLAY:           "🫱",
-}

@@ -41,23 +41,6 @@ enum SessionFormat {
   FOUR_VS_FOUR
 }
 
-enum RatingType {
-  SUPER
-  TOP
-  FLOP
-}
-
-enum BadgeType {
-  MURO_IMPENETRABILE
-  DIFESA_ACROBATICA
-  LEADER_CARISMATICO
-  SCHIACCIATA_POTENTE
-  SERVIZIO_PRECISO
-  SPIRITO_DI_SQUADRA
-  MVP_PARTITA
-  FAIR_PLAY
-}
-
 enum PaymentStatus {
   FREE
   PENDING
@@ -164,13 +147,6 @@ model Player {
   glickoRD         Float @default(350)
   glickoVolatility Float @default(0.06)
 
-  // Social rating (raw vote counts; avgRating derived)
-  superVotes Int @default(0)
-  topVotes   Int @default(0)
-  flopVotes  Int @default(0)
-  // Stored 0–50: (super*50 + top*30) / max(1, total) → display as (v/10).toFixed(1)
-  avgRating  Int @default(0)
-
   // Session stats
   sessionsPlayed Int @default(0)
 
@@ -190,10 +166,6 @@ model Player {
   sessionParticipants  SessionParticipant[]
   sessionMatchPlayers  SessionMatchPlayer[]
   tournamentsCreated   Tournament[]             @relation("TournamentCreator")
-  ratingsGiven         PlayerRating[]     @relation("Rater")
-  ratingsReceived      PlayerRating[]     @relation("Rated")
-  badgesGiven          BadgeAward[]       @relation("BadgeGiver")
-  badgesReceived       BadgeAward[]       @relation("BadgeReceiver")
   pushSubscriptions    PushSubscription[]
   notifications        Notification[]
   monthlyAwards        MonthlyAward[]
@@ -371,8 +343,6 @@ model Session {
   matchMode Boolean       @default(false)
 
   participants   SessionParticipant[]
-  ratings        PlayerRating[]
-  badgeAwards    BadgeAward[]
   sets           SessionSet[]
   sessionMatches SessionMatch[]
 
@@ -430,22 +400,6 @@ model SessionParticipant {
 
   @@unique([sessionId, playerId])
   @@map("session_participants")
-}
-
-model PlayerRating {
-  id        String     @id @default(cuid())
-  createdAt DateTime   @default(now())
-  sessionId String
-  raterId   String
-  ratedId   String
-  type      RatingType
-
-  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  rater   Player  @relation("Rater", fields: [raterId], references: [id], onDelete: Cascade)
-  rated   Player  @relation("Rated", fields: [ratedId], references: [id], onDelete: Cascade)
-
-  @@unique([sessionId, raterId, ratedId])
-  @@map("player_ratings")
 }
 
 model RatingHistory {
@@ -506,22 +460,6 @@ model VideoSubmission {
   reviewedAt DateTime?
 
   @@map("video_submissions")
-}
-
-model BadgeAward {
-  id         String    @id @default(cuid())
-  createdAt  DateTime  @default(now())
-  sessionId  String
-  giverId    String
-  receiverId String
-  badge      BadgeType
-
-  session  Session @relation(fields: [sessionId],  references: [id], onDelete: Cascade)
-  giver    Player  @relation("BadgeGiver",    fields: [giverId],    references: [id], onDelete: Cascade)
-  receiver Player  @relation("BadgeReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
-
-  @@unique([sessionId, giverId, receiverId, badge])
-  @@map("badge_awards")
 }
 
 // ─── Monthly Podium Awards ────────────────────────────────────────────────────

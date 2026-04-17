@@ -107,7 +107,7 @@ export default function RankingInfoPage() {
             <div>
               <p className="font-bold text-white text-sm mb-1">Solo partite di torneo</p>
               <p className="text-xs text-[var(--muted-text)] leading-relaxed">
-                Il ranking Glicko-2 si aggiorna solo al termine delle partite dei <strong className="text-white">tornei ufficiali</strong>. Le sessioni libere non influenzano il punteggio, ma contribuiscono alla media voti (MV) e all&apos;XP.
+                Il ranking Glicko-2 si aggiorna solo al termine delle partite dei <strong className="text-white">tornei ufficiali</strong>. Le sessioni libere non influenzano il punteggio, ma contribuiscono all&apos;XP.
               </p>
             </div>
           </div>

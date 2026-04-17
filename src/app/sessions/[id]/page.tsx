@@ -11,7 +11,6 @@ import { ShareButton } from "@/components/ui/ShareButton"
 import { QRCodeButton } from "@/components/ui/QRCode"
 import { SessionStatusBadge } from "@/components/session/SessionStatusBadge"
 import { ParticipantList } from "@/components/session/ParticipantList"
-import { PlayerRatingForm } from "@/components/session/PlayerRatingForm"
 import { SessionMatchRounds } from "@/components/session/SessionMatchRounds"
 import { PageHeader } from "@/components/layout/PageHeader"
 
@@ -85,13 +84,6 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
     : false
 
   const isOrganizer = currentPlayer?.id === session.organizerId
-
-  const coParticipants =
-    currentPlayer && isParticipant
-      ? session.participants
-          .filter((p) => p.player.id !== currentPlayer.id)
-          .map((p) => ({ id: p.player.id, name: p.player.name }))
-      : []
 
   return (
     <div className="pb-6">
@@ -210,16 +202,7 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
           />
         )}
 
-        {/* Rating form (only after session completed + is participant) */}
-        {session.status === "COMPLETED" && currentPlayer && isParticipant && (
-          <PlayerRatingForm
-            sessionId={session.id}
-            coParticipants={coParticipants}
-            currentPlayerId={currentPlayer.id}
-            existingRatings={session.ratings as { raterId: string; ratedId: string; type: "SUPER" | "TOP" | "FLOP" }[]}
-            existingBadgeAwards={session.badgeAwards as { giverId: string; receiverId: string; badge: string }[]}
-          />
-        )}
+
       </div>
     </div>
   )
