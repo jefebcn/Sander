@@ -19,7 +19,6 @@ import { AdminDeleteTournamentButton } from "@/components/profile/AdminDeleteTou
 import { AdminDeletePlayerButton } from "@/components/profile/AdminDeletePlayerButton"
 import { AdminRecalcStatsButton } from "@/components/profile/AdminRecalcStatsButton"
 import { NotifyPermission } from "@/components/push/NotifyPermission"
-import { BadgeDisplay } from "@/components/player/BadgeDisplay"
 
 import { isAdminEmail } from "@/lib/isAdmin"
 
@@ -106,8 +105,7 @@ export default async function ProfilePage({ searchParams }: Props) {
     db.player.findUniqueOrThrow({
       where: { id: player.id },
       include: {
-        _count: { select: { organizedSessions: true, badgesReceived: true } },
-        badgesReceived: { orderBy: { createdAt: "desc" } },
+        _count: { select: { organizedSessions: true } },
       },
     }),
     getStreak(player.id),
@@ -271,7 +269,6 @@ export default async function ProfilePage({ searchParams }: Props) {
               </div>
             </div>
           )}
-          <BadgeDisplay badges={fullPlayer.badgesReceived} />
           <Link
             href="/stats-guide"
             className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-semibold text-[var(--accent)]"

@@ -57,7 +57,6 @@ export async function getPlayer(id: string) {
         take: 5,
       },
       _count: { select: { organizedSessions: true } },
-      badgesReceived: { where: { badge: "MVP_PARTITA" } },
     },
   })
 }
