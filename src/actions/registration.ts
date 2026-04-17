@@ -165,6 +165,56 @@ export async function startCheckout(input: unknown): Promise<
   }
 }
 
+// ─────────────────────── createPaypalRegistration ────────────────────────────
+
+export async function createPaypalRegistration(input: unknown): Promise<
+  { ok: true; registrationId: string } | { ok: false; error: string }
+> {
+  try {
+    const { tournamentId } = CreateManualPaymentSchema.parse(input)
+    const player = await requireCurrentPlayer()
+    const tournament = await assertRegistrable(tournamentId)
+
+    const existing = await db.tournamentRegistration.findUnique({
+      where: { tournamentId_playerId: { tournamentId, playerId: player.id } },
+    })
+    if (existing) {
+      if (existing.paymentStatus === "PAID" || existing.paymentStatus === "FREE") {
+        return { ok: false, error: "Sei già iscritto a questo torneo" }
+      }
+      if (existing.paymentStatus === "PENDING") {
+        if (existing.paymentMethod !== "PAYPAL") {
+          await db.tournamentRegistration.update({
+            where: { id: existing.id },
+            data: { paymentMethod: "PAYPAL" },
+          })
+          revalidatePath(`/tournaments/${tournamentId}`)
+        }
+        return { ok: true, registrationId: existing.id }
+      }
+    }
+
+    const isFree = tournament.priceCents == null || tournament.priceCents === 0
+
+    const registration = await db.tournamentRegistration.create({
+      data: {
+        tournamentId,
+        playerId: player.id,
+        paymentStatus: isFree ? "PAID" : "PENDING",
+        paymentMethod: isFree ? "FREE" : "PAYPAL",
+        paidAt: isFree ? new Date() : null,
+        amountPaidCents: isFree ? 0 : null,
+      },
+    })
+
+    revalidatePath("/tournaments")
+    revalidatePath(`/tournaments/${tournamentId}`)
+    return { ok: true, registrationId: registration.id }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+  }
+}
+
 // ─────────────────────── createManualPaymentRegistration ─────────────────────
 
 export async function createManualPaymentRegistration(input: unknown): Promise<
@@ -270,7 +320,7 @@ export async function adminConfirmManualPayment(input: unknown) {
     include: { tournament: { select: { id: true, priceCents: true } } },
   })
   if (!reg) throw new Error("Iscrizione non trovata")
-  if (reg.paymentStatus !== "PENDING" || reg.paymentMethod !== "CASH") {
+  if (reg.paymentStatus !== "PENDING" || (reg.paymentMethod !== "CASH" && reg.paymentMethod !== "PAYPAL")) {
     throw new Error("Iscrizione non in attesa di conferma")
   }
 
@@ -406,10 +456,10 @@ export async function getTournamentForRegistration(input: unknown) {
   return { tournament, myRegistration, isAuthed: Boolean(playerId) }
 }
 
-export async function listPendingCashRegistrations() {
+export async function listPendingManualRegistrations() {
   await requireAdmin()
   return db.tournamentRegistration.findMany({
-    where: { paymentStatus: "PENDING", paymentMethod: "CASH" },
+    where: { paymentStatus: "PENDING", paymentMethod: { in: ["CASH", "PAYPAL"] } },
     orderBy: { createdAt: "asc" },
     include: {
       player: { select: { id: true, name: true, avatarUrl: true } },

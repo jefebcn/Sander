@@ -13,9 +13,10 @@ export default async function SuccessPage({ params }: { params: Promise<{ id: st
   })
 
   const currentStatus = myRegistration?.paymentStatus ?? "UNKNOWN"
+  const paymentMethod = myRegistration?.paymentMethod ?? null
   const initialStatus = (() => {
     if (currentStatus === "PAID" || currentStatus === "FREE") return currentStatus
-    if (currentStatus === "PENDING" && myRegistration?.paymentMethod === "CASH") return "PENDING"
+    if (currentStatus === "PENDING" && (paymentMethod === "CASH" || paymentMethod === "PAYPAL")) return "PENDING"
     return "UNKNOWN"
   })() as "PAID" | "FREE" | "PENDING" | "UNKNOWN"
 
@@ -38,7 +39,7 @@ export default async function SuccessPage({ params }: { params: Promise<{ id: st
       </div>
 
       <div className="mt-6">
-        <RegistrationStatusPoller tournamentId={id} initialStatus={initialStatus} />
+        <RegistrationStatusPoller tournamentId={id} initialStatus={initialStatus} paymentMethod={paymentMethod} />
       </div>
 
       <div className="mt-6 flex flex-col gap-3 px-4">

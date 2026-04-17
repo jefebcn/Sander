@@ -1,16 +1,16 @@
-import { Check, X, Banknote } from "lucide-react"
-import { listPendingCashRegistrations, adminConfirmManualPayment, adminRejectManualPayment } from "@/actions/registration"
+import { Check, X, Banknote, Wallet } from "lucide-react"
+import { listPendingManualRegistrations, adminConfirmManualPayment, adminRejectManualPayment } from "@/actions/registration"
 import { formatDate, formatPrice } from "@/lib/utils"
 
 export async function AdminPendingPaymentsList() {
-  const pending = await listPendingCashRegistrations()
+  const pending = await listPendingManualRegistrations()
 
   if (pending.length === 0) {
     return (
       <div className="mx-4 rounded-2xl bg-[var(--surface-1)] p-6 text-center">
         <Banknote className="mx-auto h-8 w-8 text-[var(--muted-text)]" />
         <p className="mt-3 text-base text-[var(--muted-text)]">
-          Nessun pagamento in contanti in attesa.
+          Nessun pagamento manuale in attesa.
         </p>
       </div>
     )
@@ -34,7 +34,18 @@ export async function AdminPendingPaymentsList() {
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-base font-bold text-white">{reg.player.name}</p>
+            <div className="flex items-center gap-2">
+              <p className="truncate text-base font-bold text-white">{reg.player.name}</p>
+              {reg.paymentMethod === "PAYPAL" ? (
+                <span className="shrink-0 flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold" style={{ background: "#003087", color: "#fff" }}>
+                  <Wallet className="h-3 w-3" /> PayPal
+                </span>
+              ) : (
+                <span className="shrink-0 flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold bg-[var(--surface-3)] text-[var(--muted-text)]">
+                  <Banknote className="h-3 w-3" /> Contanti
+                </span>
+              )}
+            </div>
             <p className="truncate text-sm text-[var(--muted-text)]">
               {reg.tournament.name} · {formatDate(reg.tournament.date)}
             </p>

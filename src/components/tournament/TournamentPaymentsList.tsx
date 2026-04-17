@@ -32,6 +32,7 @@ function methodLabel(method: string | null, status: string) {
   if (status === "FREE" || method === "FREE") return "Gratis"
   if (method === "STRIPE") return "Carta"
   if (method === "CASH") return "Contanti"
+  if (method === "PAYPAL") return "PayPal"
   if (status === "CANCELLED") return "Annullato"
   if (status === "REFUNDED") return "Rimborsato"
   return "—"

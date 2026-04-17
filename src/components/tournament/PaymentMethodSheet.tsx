@@ -2,9 +2,9 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { CreditCard, Banknote, X, Loader2 } from "lucide-react"
+import { CreditCard, Banknote, Wallet, X, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { startCheckout, createManualPaymentRegistration } from "@/actions/registration"
+import { startCheckout, createManualPaymentRegistration, createPaypalRegistration } from "@/actions/registration"
 
 export function PaymentMethodSheet({
   open,
@@ -41,6 +41,18 @@ export function PaymentMethodSheet({
     setError(null)
     startTransition(async () => {
       const result = await createManualPaymentRegistration({ tournamentId })
+      if (!result.ok) {
+        setError(result.error)
+        return
+      }
+      router.push(`/tournaments/${tournamentId}/register/success`)
+    })
+  }
+
+  function handlePaypal() {
+    setError(null)
+    startTransition(async () => {
+      const result = await createPaypalRegistration({ tournamentId })
       if (!result.ok) {
         setError(result.error)
         return
@@ -100,7 +112,7 @@ export function PaymentMethodSheet({
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-base font-bold text-white">
-                Carta, PayPal, Apple/Google Pay
+                Carta, Apple/Google Pay
               </p>
               <p className="text-sm text-[var(--muted-text)]">
                 Pagamento sicuro via Stripe
@@ -122,6 +134,24 @@ export function PaymentMethodSheet({
               <p className="text-base font-bold text-white">Paga in contanti</p>
               <p className="text-sm text-[var(--muted-text)]">
                 Pagamento all'organizzatore, iscrizione in attesa di conferma
+              </p>
+            </div>
+            {isPending && <Loader2 className="h-5 w-5 animate-spin text-[var(--accent)]" />}
+          </button>
+
+          <button
+            type="button"
+            onClick={handlePaypal}
+            disabled={isPending}
+            className="flex min-h-[3.5rem] items-center gap-3 rounded-2xl bg-[var(--surface-2)] px-4 py-3 text-left active:bg-white/10 disabled:opacity-60"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#003087]/20 text-[#009cde]">
+              <Wallet className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-base font-bold text-white">PayPal</p>
+              <p className="text-sm text-[var(--muted-text)]">
+                Invia il pagamento a paypal.me/lilconti
               </p>
             </div>
             {isPending && <Loader2 className="h-5 w-5 animate-spin text-[var(--accent)]" />}

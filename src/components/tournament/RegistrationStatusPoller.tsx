@@ -2,17 +2,21 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, CheckCircle2, Clock } from "lucide-react"
+import { Loader2, CheckCircle2, Clock, ExternalLink } from "lucide-react"
 import { getTournamentForRegistration } from "@/actions/registration"
 
 type Status = "PAID" | "FREE" | "PENDING" | "UNKNOWN"
 
+const PAYPAL_URL = "https://paypal.me/lilconti"
+
 export function RegistrationStatusPoller({
   tournamentId,
   initialStatus,
+  paymentMethod,
 }: {
   tournamentId: string
   initialStatus: Status
+  paymentMethod?: string | null
 }) {
   const router = useRouter()
   const [status, setStatus] = useState<Status>(initialStatus)
@@ -67,6 +71,32 @@ export function RegistrationStatusPoller({
   }
 
   if (status === "PENDING") {
+    if (paymentMethod === "PAYPAL") {
+      return (
+        <div className="mx-4 flex flex-col gap-3 rounded-2xl bg-[var(--surface-1)] p-5">
+          <div className="flex items-center gap-3">
+            <Clock className="h-8 w-8 shrink-0 text-[#009cde]" />
+            <div className="min-w-0 flex-1">
+              <p className="text-lg font-bold text-white">Paga via PayPal</p>
+              <p className="text-sm text-[var(--muted-text)]">
+                Invia il pagamento e l'organizzatore confermerà l'iscrizione.
+              </p>
+            </div>
+          </div>
+          <a
+            href={PAYPAL_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl font-bold text-white"
+            style={{ background: "#003087" }}
+          >
+            <ExternalLink className="h-4 w-4" />
+            Apri paypal.me/lilconti
+          </a>
+        </div>
+      )
+    }
+
     return (
       <div className="mx-4 flex items-center gap-3 rounded-2xl bg-[var(--surface-1)] p-5">
         <Clock className="h-8 w-8 shrink-0 text-[var(--accent)]" />
