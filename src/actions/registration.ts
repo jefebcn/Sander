@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
+import { canManageTournament } from "@/lib/isAdmin"
 import { stripe, getAppUrl } from "@/lib/stripe"
 import {
   StartCheckoutSchema,
@@ -409,7 +410,6 @@ export async function adminSetPaymentStatus(registrationId: string, paid: boolea
 // ──────────────────────── adminSetRegistrationSkillLevel ─────────────────────
 
 export async function adminSetRegistrationSkillLevel(input: unknown) {
-  await requireAdmin()
   const { registrationId, skillLevel } = AdminSetSkillLevelSchema.parse(input)
 
   const reg = await db.tournamentRegistration.findUnique({
@@ -417,6 +417,11 @@ export async function adminSetRegistrationSkillLevel(input: unknown) {
     select: { tournamentId: true },
   })
   if (!reg) throw new Error("Iscrizione non trovata")
+
+  const session = await getCurrentSession()
+  if (!session?.user?.id) throw new Error("Non autenticato")
+  const allowed = await canManageTournament(session.user.email, reg.tournamentId)
+  if (!allowed) throw new Error("Accesso non autorizzato")
 
   await db.tournamentRegistration.update({
     where: { id: registrationId },
