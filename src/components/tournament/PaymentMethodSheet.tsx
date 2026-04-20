@@ -150,7 +150,7 @@ export function PaymentMethodSheet({
           </button>
         </div>
 
-        <div className="flex flex-col gap-3 px-5 pb-8">
+        <div className="flex flex-col gap-3 px-5" style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 5rem)" }}>
           {/* Skill level selector (always required) */}
           <div className="flex flex-col gap-2">
             <p className="text-sm font-semibold text-white">Livello di abilità</p>
