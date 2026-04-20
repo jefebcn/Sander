@@ -28,6 +28,10 @@ export function LiveDashboard({ tournamentId, initialData, readOnly, canEditPlay
 
   const { rounds, standings, completedCount, totalCount, currentRound, tournament } = data
 
+  const skillLevelMap = Object.fromEntries(
+    tournament.registrations.map((r) => [r.playerId, r.skillLevel]),
+  ) as Record<string, number | null>
+
   // null = auto-follow currentRound; number = user-selected round
   const [manualRound, setManualRound] = useState<number | null>(null)
   const activeRound = manualRound ?? currentRound ?? rounds[0]?.round ?? null
@@ -144,6 +148,7 @@ export function LiveDashboard({ tournamentId, initialData, readOnly, canEditPlay
                 tournamentId={tournamentId}
                 readOnly={readOnly}
                 canEditPlayers={canEditPlayers}
+                skillLevelMap={skillLevelMap}
               />
             ))}
           </div>

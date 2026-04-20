@@ -11,6 +11,7 @@ import {
   AdminRejectManualPaymentSchema,
   CancelRegistrationSchema,
   GetTournamentForRegistrationSchema,
+  AdminSetSkillLevelSchema,
 } from "@/lib/validators/registration.schema"
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
@@ -59,7 +60,7 @@ export async function startCheckout(input: unknown): Promise<
   { ok: true; redirectUrl: string } | { ok: false; error: string }
 > {
   try {
-    const { tournamentId } = StartCheckoutSchema.parse(input)
+    const { tournamentId, skillLevel } = StartCheckoutSchema.parse(input)
     const player = await requireCurrentPlayer()
     const tournament = await assertRegistrable(tournamentId)
 
@@ -103,6 +104,7 @@ export async function startCheckout(input: unknown): Promise<
           paymentMethod: "FREE",
           paidAt: new Date(),
           amountPaidCents: 0,
+          skillLevel: skillLevel ?? null,
         },
       })
       revalidatePath("/tournaments")
@@ -117,6 +119,7 @@ export async function startCheckout(input: unknown): Promise<
         playerId: player.id,
         paymentStatus: "PENDING",
         paymentMethod: "STRIPE",
+        skillLevel: skillLevel ?? null,
       },
     })
 
@@ -171,7 +174,7 @@ export async function createPaypalRegistration(input: unknown): Promise<
   { ok: true; registrationId: string } | { ok: false; error: string }
 > {
   try {
-    const { tournamentId } = CreateManualPaymentSchema.parse(input)
+    const { tournamentId, skillLevel } = CreateManualPaymentSchema.parse(input)
     const player = await requireCurrentPlayer()
     const tournament = await assertRegistrable(tournamentId)
 
@@ -183,10 +186,13 @@ export async function createPaypalRegistration(input: unknown): Promise<
         return { ok: false, error: "Sei già iscritto a questo torneo" }
       }
       if (existing.paymentStatus === "PENDING") {
-        if (existing.paymentMethod !== "PAYPAL") {
+        const updates: { paymentMethod?: string; skillLevel?: number } = {}
+        if (existing.paymentMethod !== "PAYPAL") updates.paymentMethod = "PAYPAL"
+        if (skillLevel != null && existing.skillLevel !== skillLevel) updates.skillLevel = skillLevel
+        if (Object.keys(updates).length > 0) {
           await db.tournamentRegistration.update({
             where: { id: existing.id },
-            data: { paymentMethod: "PAYPAL" },
+            data: updates,
           })
           revalidatePath(`/tournaments/${tournamentId}`)
         }
@@ -204,6 +210,7 @@ export async function createPaypalRegistration(input: unknown): Promise<
         paymentMethod: isFree ? "FREE" : "PAYPAL",
         paidAt: isFree ? new Date() : null,
         amountPaidCents: isFree ? 0 : null,
+        skillLevel: skillLevel ?? null,
       },
     })
 
@@ -221,7 +228,7 @@ export async function createManualPaymentRegistration(input: unknown): Promise<
   { ok: true; registrationId: string } | { ok: false; error: string }
 > {
   try {
-    const { tournamentId } = CreateManualPaymentSchema.parse(input)
+    const { tournamentId, skillLevel } = CreateManualPaymentSchema.parse(input)
     const player = await requireCurrentPlayer()
     const tournament = await assertRegistrable(tournamentId)
 
@@ -233,10 +240,13 @@ export async function createManualPaymentRegistration(input: unknown): Promise<
         return { ok: false, error: "Sei già iscritto a questo torneo" }
       }
       if (existing.paymentStatus === "PENDING") {
-        if (existing.paymentMethod !== "CASH") {
+        const updates: { paymentMethod?: string; skillLevel?: number } = {}
+        if (existing.paymentMethod !== "CASH") updates.paymentMethod = "CASH"
+        if (skillLevel != null && existing.skillLevel !== skillLevel) updates.skillLevel = skillLevel
+        if (Object.keys(updates).length > 0) {
           await db.tournamentRegistration.update({
             where: { id: existing.id },
-            data: { paymentMethod: "CASH" },
+            data: updates,
           })
           revalidatePath(`/tournaments/${tournamentId}`)
         }
@@ -255,6 +265,7 @@ export async function createManualPaymentRegistration(input: unknown): Promise<
         paymentMethod: isFree ? "FREE" : "CASH",
         paidAt: isFree ? new Date() : null,
         amountPaidCents: isFree ? 0 : null,
+        skillLevel: skillLevel ?? null,
       },
     })
 
@@ -273,7 +284,7 @@ export async function registerForTournament(input: unknown): Promise<
   { ok: true } | { ok: false; error: string }
 > {
   try {
-    const { tournamentId } = StartCheckoutSchema.parse(input)
+    const { tournamentId, skillLevel } = StartCheckoutSchema.parse(input)
     const player = await requireCurrentPlayer()
     const tournament = await assertRegistrable(tournamentId)
 
@@ -284,7 +295,14 @@ export async function registerForTournament(input: unknown): Promise<
       if (existing.paymentStatus === "PAID" || existing.paymentStatus === "FREE") {
         return { ok: false, error: "Sei già iscritto a questo torneo" }
       }
-      // Already registered (PENDING) — just confirm
+      // Already registered (PENDING) — update skill level if provided and changed
+      if (skillLevel != null && existing.skillLevel !== skillLevel) {
+        await db.tournamentRegistration.update({
+          where: { id: existing.id },
+          data: { skillLevel },
+        })
+        revalidatePath(`/tournaments/${tournamentId}`)
+      }
       return { ok: true }
     }
 
@@ -298,6 +316,7 @@ export async function registerForTournament(input: unknown): Promise<
         paymentMethod: isFree ? "FREE" : null,
         paidAt: isFree ? new Date() : null,
         amountPaidCents: isFree ? 0 : null,
+        skillLevel: skillLevel ?? null,
       },
     })
 
@@ -382,6 +401,27 @@ export async function adminSetPaymentStatus(registrationId: string, paid: boolea
       data: { paymentStatus: "PENDING", paymentMethod: "CASH", paidAt: null, amountPaidCents: null },
     })
   }
+
+  revalidatePath(`/tournaments/${reg.tournamentId}`)
+  revalidatePath("/admin/payments")
+}
+
+// ──────────────────────── adminSetRegistrationSkillLevel ─────────────────────
+
+export async function adminSetRegistrationSkillLevel(input: unknown) {
+  await requireAdmin()
+  const { registrationId, skillLevel } = AdminSetSkillLevelSchema.parse(input)
+
+  const reg = await db.tournamentRegistration.findUnique({
+    where: { id: registrationId },
+    select: { tournamentId: true },
+  })
+  if (!reg) throw new Error("Iscrizione non trovata")
+
+  await db.tournamentRegistration.update({
+    where: { id: registrationId },
+    data: { skillLevel },
+  })
 
   revalidatePath(`/tournaments/${reg.tournamentId}`)
   revalidatePath("/admin/payments")

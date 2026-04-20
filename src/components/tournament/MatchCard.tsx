@@ -8,11 +8,14 @@ import { submitScore } from "@/actions/matches"
 import { cn } from "@/lib/utils"
 import { useHaptic } from "@/lib/useHaptic"
 import { PlayerPickerSheet } from "./PlayerPickerSheet"
+import { SkillBadge } from "./SkillBadge"
 import type { Match, MatchPlayer, Player } from "@/generated/prisma/client"
 
 type MatchWithPlayers = Match & {
   players: (MatchPlayer & { player: Player })[]
 }
+
+export type SkillLevelMap = Record<string, number | null>
 
 interface MatchCardProps {
   match: MatchWithPlayers
@@ -20,9 +23,10 @@ interface MatchCardProps {
   readOnly?: boolean
   preview?: boolean
   canEditPlayers?: boolean
+  skillLevelMap?: SkillLevelMap
 }
 
-export function MatchCard({ match, tournamentId, readOnly, preview, canEditPlayers }: MatchCardProps) {
+export function MatchCard({ match, tournamentId, readOnly, preview, canEditPlayers, skillLevelMap }: MatchCardProps) {
   const qc = useQueryClient()
   const haptic = useHaptic()
   const [isPending, startTransition] = useTransition()
@@ -113,18 +117,20 @@ export function MatchCard({ match, tournamentId, readOnly, preview, canEditPlaye
                     >
                       {p.name}
                     </span>
+                    <SkillBadge level={skillLevelMap?.[p.id] ?? null} />
                   </button>
                 ) : (
                   <p
                     key={p.id}
                     className={cn(
-                      "font-bold leading-tight",
+                      "flex items-center justify-end gap-1 font-bold leading-tight",
                       isCompleted && (match.teamAScore ?? 0) > (match.teamBScore ?? 0)
                         ? "text-[var(--accent)]"
                         : "text-[var(--foreground)]",
                     )}
                   >
-                    {p.name}
+                    <span>{p.name}</span>
+                    <SkillBadge level={skillLevelMap?.[p.id] ?? null} />
                   </p>
                 ),
               )
@@ -199,6 +205,7 @@ export function MatchCard({ match, tournamentId, readOnly, preview, canEditPlaye
                     onClick={() => openPicker(p.id, 1)}
                     className="flex w-full items-center gap-1 rounded-lg px-1 py-0.5 transition-colors hover:bg-[var(--surface-3)] active:scale-95"
                   >
+                    <SkillBadge level={skillLevelMap?.[p.id] ?? null} />
                     <span
                       className={cn(
                         "font-bold leading-tight",
@@ -215,13 +222,14 @@ export function MatchCard({ match, tournamentId, readOnly, preview, canEditPlaye
                   <p
                     key={p.id}
                     className={cn(
-                      "font-bold leading-tight",
+                      "flex items-center gap-1 font-bold leading-tight",
                       isCompleted && (match.teamBScore ?? 0) > (match.teamAScore ?? 0)
                         ? "text-[var(--accent)]"
                         : "text-[var(--foreground)]",
                     )}
                   >
-                    {p.name}
+                    <SkillBadge level={skillLevelMap?.[p.id] ?? null} />
+                    <span>{p.name}</span>
                   </p>
                 ),
               )

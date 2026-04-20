@@ -1,7 +1,16 @@
 import type { KOTBMatch, KOTBRound, KOTBSchedule, ScoreUpdate, StandingEntry } from "./types"
+import { pairTeamsIntoMatches, type Team } from "./balancing"
 
 const BYE_PREFIX = "__BYE_"
 const isBye = (id: string) => id.startsWith(BYE_PREFIX)
+
+const DEFAULT_LEVEL = 2
+
+function levelFor(id: string, skillLevels?: Map<string, number | null>): number {
+  const lvl = skillLevels?.get(id)
+  if (lvl === 1 || lvl === 2 || lvl === 3) return lvl
+  return DEFAULT_LEVEL
+}
 
 // ─── Schedule Generation ──────────────────────────────────────────────────────
 
@@ -24,6 +33,7 @@ const isBye = (id: string) => id.startsWith(BYE_PREFIX)
 export function generateKOTBSchedule(
   playerIds: string[],
   requestedRounds?: number,
+  skillLevels?: Map<string, number | null>,
 ): KOTBSchedule {
   if (playerIds.length < 4) {
     throw new Error("KOTB requires at least 4 players")
@@ -69,14 +79,30 @@ export function generateKOTBSchedule(
       // both BYE — skip silently
     }
 
-    // Form 2v2 matches: every two consecutive real-player pairs
+    // Form 2v2 matches. If skill levels are provided, reorder pairs so that
+    // opposite teams within each match have the closest possible skill sums.
     const matches: KOTBMatch[] = []
-    for (let m = 0; m + 1 < realPairs.length; m += 2) {
-      matches.push({
-        matchNumber: matches.length + 1,
-        teamA: [realPairs[m][0], realPairs[m][1]],
-        teamB: [realPairs[m + 1][0], realPairs[m + 1][1]],
-      })
+    if (skillLevels && realPairs.length >= 2 && realPairs.length % 2 === 0) {
+      const teams: Team[] = realPairs.map(([x, y]) => ({
+        playerIds: [x, y],
+        sum: levelFor(x, skillLevels) + levelFor(y, skillLevels),
+      }))
+      const balanced = pairTeamsIntoMatches(teams)
+      for (const bm of balanced) {
+        matches.push({
+          matchNumber: matches.length + 1,
+          teamA: [bm.teamA.playerIds[0], bm.teamA.playerIds[1]],
+          teamB: [bm.teamB.playerIds[0], bm.teamB.playerIds[1]],
+        })
+      }
+    } else {
+      for (let m = 0; m + 1 < realPairs.length; m += 2) {
+        matches.push({
+          matchNumber: matches.length + 1,
+          teamA: [realPairs[m][0], realPairs[m][1]],
+          teamB: [realPairs[m + 1][0], realPairs[m + 1][1]],
+        })
+      }
     }
 
     rounds.push({ roundNumber: r + 1, matches, byes })

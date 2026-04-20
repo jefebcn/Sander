@@ -1,6 +1,8 @@
 import { Check, X } from "lucide-react"
 import { adminSetPaymentStatus } from "@/actions/registration"
 import { formatPrice } from "@/lib/utils"
+import { SkillBadge } from "./SkillBadge"
+import { AdminSkillLevelSelect } from "./AdminSkillLevelSelect"
 
 interface Registration {
   id: string
@@ -9,6 +11,7 @@ interface Registration {
   paymentMethod: string | null
   paidAt: Date | null
   amountPaidCents: number | null
+  skillLevel: number | null
 }
 
 interface TournamentPaymentsListProps {
@@ -42,7 +45,7 @@ export function TournamentPaymentsList({
   registrations,
   priceCents,
   isAdmin,
-  tournamentId,
+  tournamentId: _tournamentId,
 }: TournamentPaymentsListProps) {
   const paid = registrations.filter((r) => r.paymentStatus === "PAID" || r.paymentStatus === "FREE")
   const total = registrations.length
@@ -66,9 +69,20 @@ export function TournamentPaymentsList({
             const isFree = r.paymentStatus === "FREE" || r.paymentMethod === "FREE"
 
             return (
-              <li key={r.id} className="flex items-center gap-3 px-4 py-3">
+              <li key={r.id} className="flex items-center gap-2 px-4 py-3">
                 {statusDot(r.paymentStatus)}
-                <span className="flex-1 truncate text-sm font-semibold text-white">{r.player.name}</span>
+                <span className="min-w-0 flex-1 truncate text-sm font-semibold text-white">{r.player.name}</span>
+
+                {isAdmin ? (
+                  <AdminSkillLevelSelect
+                    registrationId={r.id}
+                    current={r.skillLevel}
+                    playerName={r.player.name}
+                  />
+                ) : (
+                  <SkillBadge level={r.skillLevel} />
+                )}
+
                 <span className="shrink-0 text-xs text-[var(--muted-text)]">
                   {methodLabel(r.paymentMethod, r.paymentStatus)}
                 </span>

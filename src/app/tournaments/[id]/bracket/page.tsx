@@ -19,7 +19,7 @@ export default async function BracketPage({ params }: { params: Promise<{ id: st
     }),
     db.tournamentRegistration.findMany({
       where: { tournamentId: id },
-      select: { playerId: true, seedPosition: true, teamName: true, teamLogoUrl: true },
+      select: { playerId: true, seedPosition: true, teamName: true, teamLogoUrl: true, skillLevel: true },
       orderBy: { seedPosition: "asc" },
     }),
   ])
@@ -33,6 +33,11 @@ export default async function BracketPage({ params }: { params: Promise<{ id: st
     }
     teamInfoMap[registrations[i].playerId] = info
     if (registrations[i + 1]) teamInfoMap[registrations[i + 1].playerId] = info
+  }
+
+  const skillLevelMap: Record<string, number | null> = {}
+  for (const r of registrations) {
+    skillLevelMap[r.playerId] = r.skillLevel
   }
 
   if (tournament.type !== "BRACKETS" && tournament.type !== "DOUBLE_ELIMINATION") {
@@ -67,9 +72,9 @@ export default async function BracketPage({ params }: { params: Promise<{ id: st
       {/* Bracket */}
       <div className="overflow-x-auto px-4 pb-8 pt-2">
         {isSingleElim ? (
-          <TournamentBracketView matches={matches} tournamentName={tournament.name} teamInfoMap={teamInfoMap} />
+          <TournamentBracketView matches={matches} tournamentName={tournament.name} teamInfoMap={teamInfoMap} skillLevelMap={skillLevelMap} />
         ) : (
-          <BracketView matches={matches} teamInfoMap={teamInfoMap} />
+          <BracketView matches={matches} teamInfoMap={teamInfoMap} skillLevelMap={skillLevelMap} />
         )}
       </div>
     </div>

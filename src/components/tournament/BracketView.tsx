@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils"
+import { SkillBadge } from "./SkillBadge"
 import type { Match, MatchPlayer, Player } from "@/generated/prisma/client"
 
 type MatchWithPlayers = Match & {
@@ -6,10 +7,12 @@ type MatchWithPlayers = Match & {
 }
 
 type TeamInfoMap = Record<string, { name: string | null; logoUrl: string | null }>
+type SkillLevelMap = Record<string, number | null>
 
 interface BracketViewProps {
   matches: MatchWithPlayers[]
   teamInfoMap?: TeamInfoMap
+  skillLevelMap?: SkillLevelMap
 }
 
 // ─── Helper: resolve display name + logo for a team ──────────────────────────
@@ -29,6 +32,7 @@ function getTeamDisplay(players: Player[], teamInfoMap?: TeamInfoMap) {
 function TeamRow({
   players,
   teamInfoMap,
+  skillLevelMap,
   won,
   score,
   isCompleted,
@@ -36,6 +40,7 @@ function TeamRow({
 }: {
   players: Player[]
   teamInfoMap?: TeamInfoMap
+  skillLevelMap?: SkillLevelMap
   won: boolean
   score: number | null
   isCompleted: boolean
@@ -43,6 +48,8 @@ function TeamRow({
 }) {
   const { label, logoUrl } = getTeamDisplay(players, teamInfoMap)
   const isEmpty = players.length === 0
+  const hasCustomTeamName =
+    !!teamInfoMap && !isEmpty && Boolean(teamInfoMap[players[0].id]?.name)
 
   return (
     <div
@@ -62,15 +69,32 @@ function TeamRow({
             onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
           />
         )}
-        <span
-          className={cn(
-            "text-sm font-semibold leading-tight truncate",
-            won ? "text-[var(--accent)]" : "text-[var(--foreground)]",
-            isEmpty && "text-[var(--muted-text)] italic",
-          )}
-        >
-          {isEmpty ? "TBD" : label}
-        </span>
+        {hasCustomTeamName || isEmpty ? (
+          <span
+            className={cn(
+              "text-sm font-semibold leading-tight truncate",
+              won ? "text-[var(--accent)]" : "text-[var(--foreground)]",
+              isEmpty && "text-[var(--muted-text)] italic",
+            )}
+          >
+            {isEmpty ? "TBD" : label}
+          </span>
+        ) : (
+          <span
+            className={cn(
+              "flex items-center gap-1 text-sm font-semibold leading-tight min-w-0",
+              won ? "text-[var(--accent)]" : "text-[var(--foreground)]",
+            )}
+          >
+            {players.map((pl, idx) => (
+              <span key={pl.id} className="flex items-center gap-1 min-w-0">
+                {idx > 0 && <span className="text-[var(--muted-text)] shrink-0">&</span>}
+                <span className="truncate">{pl.name}</span>
+                <SkillBadge level={skillLevelMap?.[pl.id] ?? null} />
+              </span>
+            ))}
+          </span>
+        )}
       </div>
       {isCompleted && (
         <span className={cn("text-sm font-black tabular-nums shrink-0", won ? "text-[var(--accent)]" : "text-[var(--muted-text)]")}>
@@ -83,7 +107,15 @@ function TeamRow({
 
 // ─── Single bracket column renderer ──────────────────────────────────────────
 
-function MatchCell({ match, teamInfoMap }: { match: MatchWithPlayers; teamInfoMap?: TeamInfoMap }) {
+function MatchCell({
+  match,
+  teamInfoMap,
+  skillLevelMap,
+}: {
+  match: MatchWithPlayers
+  teamInfoMap?: TeamInfoMap
+  skillLevelMap?: SkillLevelMap
+}) {
   const teamA = match.players.filter((p) => p.team === 0).map((p) => p.player)
   const teamB = match.players.filter((p) => p.team === 1).map((p) => p.player)
   const aWon = match.isCompleted && (match.teamAScore ?? 0) > (match.teamBScore ?? 0)
@@ -94,6 +126,7 @@ function MatchCell({ match, teamInfoMap }: { match: MatchWithPlayers; teamInfoMa
       <TeamRow
         players={teamA}
         teamInfoMap={teamInfoMap}
+        skillLevelMap={skillLevelMap}
         won={aWon}
         score={match.teamAScore ?? null}
         isCompleted={match.isCompleted}
@@ -102,6 +135,7 @@ function MatchCell({ match, teamInfoMap }: { match: MatchWithPlayers; teamInfoMa
       <TeamRow
         players={teamB}
         teamInfoMap={teamInfoMap}
+        skillLevelMap={skillLevelMap}
         won={bWon}
         score={match.teamBScore ?? null}
         isCompleted={match.isCompleted}
@@ -116,11 +150,13 @@ function BracketSection({
   title,
   roundLabel,
   teamInfoMap,
+  skillLevelMap,
 }: {
   matches: MatchWithPlayers[]
   title: string
   roundLabel: (round: number, totalRounds: number) => string
   teamInfoMap?: TeamInfoMap
+  skillLevelMap?: SkillLevelMap
 }) {
   const nonBye = matches.filter((m) => !m.isBye)
   if (nonBye.length === 0) return null
@@ -142,7 +178,12 @@ function BracketSection({
               </p>
               <div className="flex flex-col justify-around gap-4">
                 {roundMatches.map((match) => (
-                  <MatchCell key={match.id} match={match} teamInfoMap={teamInfoMap} />
+                  <MatchCell
+                    key={match.id}
+                    match={match}
+                    teamInfoMap={teamInfoMap}
+                    skillLevelMap={skillLevelMap}
+                  />
                 ))}
               </div>
             </div>
@@ -155,7 +196,7 @@ function BracketSection({
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
-export function BracketView({ matches, teamInfoMap }: BracketViewProps) {
+export function BracketView({ matches, teamInfoMap, skillLevelMap }: BracketViewProps) {
   if (matches.length === 0) {
     return (
       <p className="py-8 text-center text-[var(--muted-text)]">
@@ -182,14 +223,14 @@ export function BracketView({ matches, teamInfoMap }: BracketViewProps) {
     return (
       <div className="space-y-8">
         <div className="overflow-x-auto">
-          <BracketSection matches={wbMatches} title="Winners Bracket" roundLabel={(r) => wbRoundLabels[r] ?? `WB R${r}`} teamInfoMap={teamInfoMap} />
+          <BracketSection matches={wbMatches} title="Winners Bracket" roundLabel={(r) => wbRoundLabels[r] ?? `WB R${r}`} teamInfoMap={teamInfoMap} skillLevelMap={skillLevelMap} />
         </div>
         <div className="overflow-x-auto">
-          <BracketSection matches={lbMatches} title="Losers Bracket" roundLabel={(r) => lbRoundLabels[r] ?? `LB R${r}`} teamInfoMap={teamInfoMap} />
+          <BracketSection matches={lbMatches} title="Losers Bracket" roundLabel={(r) => lbRoundLabels[r] ?? `LB R${r}`} teamInfoMap={teamInfoMap} skillLevelMap={skillLevelMap} />
         </div>
         {gfMatches.some((m) => !m.isBye) && (
           <div className="overflow-x-auto">
-            <BracketSection matches={gfMatches} title="Grand Final" roundLabel={() => "Grand Final"} teamInfoMap={teamInfoMap} />
+            <BracketSection matches={gfMatches} title="Grand Final" roundLabel={() => "Grand Final"} teamInfoMap={teamInfoMap} skillLevelMap={skillLevelMap} />
           </div>
         )}
       </div>
@@ -210,7 +251,12 @@ export function BracketView({ matches, teamInfoMap }: BracketViewProps) {
             </p>
             <div className="flex flex-col justify-around gap-4">
               {roundMatches.map((match) => (
-                <MatchCell key={match.id} match={match} teamInfoMap={teamInfoMap} />
+                <MatchCell
+                  key={match.id}
+                  match={match}
+                  teamInfoMap={teamInfoMap}
+                  skillLevelMap={skillLevelMap}
+                />
               ))}
             </div>
           </div>

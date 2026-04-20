@@ -1,5 +1,6 @@
 import { Trophy } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { SkillBadge } from "./SkillBadge"
 import type { Match, MatchPlayer, Player } from "@/generated/prisma/client"
 
 type MatchWithPlayers = Match & {
@@ -7,11 +8,25 @@ type MatchWithPlayers = Match & {
 }
 
 type TeamInfoMap = Record<string, { name: string | null; logoUrl: string | null }>
+type SkillLevelMap = Record<string, number | null>
 
 interface TournamentBracketViewProps {
   matches: MatchWithPlayers[]
   tournamentName: string
   teamInfoMap?: TeamInfoMap
+  skillLevelMap?: SkillLevelMap
+}
+
+function teamMaxLevel(players: Player[], skillLevelMap?: SkillLevelMap): number | null {
+  if (!skillLevelMap || players.length === 0) return null
+  let max: number | null = null
+  for (const p of players) {
+    const lvl = skillLevelMap[p.id]
+    if (lvl === 1 || lvl === 2 || lvl === 3) {
+      if (max === null || lvl > max) max = lvl
+    }
+  }
+  return max
 }
 
 function getTeamDisplay(players: Player[], teamInfoMap?: TeamInfoMap) {
@@ -34,10 +49,12 @@ function MatchCard({
   match,
   isFinal,
   teamInfoMap,
+  skillLevelMap,
 }: {
   match: MatchWithPlayers
   isFinal: boolean
   teamInfoMap?: TeamInfoMap
+  skillLevelMap?: SkillLevelMap
 }) {
   const teamA = match.players.filter((p) => p.team === 0).map((p) => p.player)
   const teamB = match.players.filter((p) => p.team === 1).map((p) => p.player)
@@ -45,6 +62,8 @@ function MatchCard({
   const bWon = match.isCompleted && (match.teamBScore ?? 0) > (match.teamAScore ?? 0)
   const dispA = getTeamDisplay(teamA, teamInfoMap)
   const dispB = getTeamDisplay(teamB, teamInfoMap)
+  const levelA = teamMaxLevel(teamA, skillLevelMap)
+  const levelB = teamMaxLevel(teamB, skillLevelMap)
 
   return (
     <div>
@@ -86,10 +105,11 @@ function MatchCard({
                 "truncate text-xs font-semibold leading-tight",
                 aWon ? "text-[var(--accent)]" : teamA.length === 0 ? "italic text-[var(--muted-text)]" : "text-white",
               )}
-              style={{ maxWidth: match.isCompleted ? CARD_W - 52 : CARD_W - 28 }}
+              style={{ maxWidth: match.isCompleted ? CARD_W - 72 : CARD_W - 48 }}
             >
               {teamA.length > 0 ? dispA.label : "TBD"}
             </span>
+            {levelA !== null && <SkillBadge level={levelA} />}
           </div>
           {match.isCompleted && (
             <span className={cn("shrink-0 text-sm font-black tabular-nums", aWon ? "text-[var(--accent)]" : "text-[var(--muted-text)]")}>
@@ -121,10 +141,11 @@ function MatchCard({
                 "truncate text-xs font-semibold leading-tight",
                 bWon ? "text-[var(--accent)]" : teamB.length === 0 ? "italic text-[var(--muted-text)]" : "text-white",
               )}
-              style={{ maxWidth: match.isCompleted ? CARD_W - 52 : CARD_W - 28 }}
+              style={{ maxWidth: match.isCompleted ? CARD_W - 72 : CARD_W - 48 }}
             >
               {teamB.length > 0 ? dispB.label : "TBD"}
             </span>
+            {levelB !== null && <SkillBadge level={levelB} />}
           </div>
           {match.isCompleted && (
             <span className={cn("shrink-0 text-sm font-black tabular-nums", bWon ? "text-[var(--accent)]" : "text-[var(--muted-text)]")}>

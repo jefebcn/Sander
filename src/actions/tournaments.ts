@@ -6,6 +6,7 @@ import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { CreateTournamentSchema } from "@/lib/validators/tournament.schema"
 import type { CreateTournamentInput } from "@/lib/validators/tournament.schema"
 import { generateKOTBSchedule } from "@/lib/tournament/kotb"
+import { balanceTeams } from "@/lib/tournament/balancing"
 import { generateBracket } from "@/lib/tournament/bracket"
 import { generateRoundRobinSchedule } from "@/lib/tournament/roundRobin"
 import { generateDoubleElimination } from "@/lib/tournament/doubleElim"
@@ -172,15 +173,18 @@ export async function startTournament(tournamentId: string) {
   }
 
   const playerIds = tournament.registrations.map((r) => r.playerId)
+  const skillLevels = new Map<string, number | null>(
+    tournament.registrations.map((r) => [r.playerId, r.skillLevel]),
+  )
 
   if (tournament.type === "KING_OF_THE_BEACH") {
-    await startKOTBTournament(tournament, playerIds)
+    await startKOTBTournament(tournament, playerIds, skillLevels)
   } else if (tournament.type === "ROUND_ROBIN") {
     await startRoundRobinTournament(tournament, playerIds)
   } else if (tournament.type === "DOUBLE_ELIMINATION") {
     await startDoubleEliminationTournament(tournament, playerIds)
   } else if (tournament.type === "CHICECE") {
-    await startChiceceTournament(tournament, playerIds)
+    await startChiceceTournament(tournament, playerIds, skillLevels)
   } else {
     await startBracketTournament(tournament, playerIds)
   }
@@ -205,8 +209,13 @@ export async function startTournament(tournamentId: string) {
 async function startKOTBTournament(
   tournament: { id: string; kotbTotalRounds?: number | null; numCourts: number },
   playerIds: string[],
+  skillLevels?: Map<string, number | null>,
 ) {
-  const schedule = generateKOTBSchedule(playerIds, tournament.kotbTotalRounds ?? undefined)
+  const schedule = generateKOTBSchedule(
+    playerIds,
+    tournament.kotbTotalRounds ?? undefined,
+    skillLevels,
+  )
 
   await db.$transaction(async (tx) => {
     // Batch create all matches in one round-trip
@@ -560,6 +569,7 @@ async function startBracketTournament(
 function generateChiceceGroupSchedule(
   playerIds: string[],
   numRounds: number,
+  skillLevels?: Map<string, number | null>,
 ): Array<{ roundNumber: number; matches: Array<{ teamA: [string, string]; teamB: [string, string]; matchNumber: number }> }> {
   const n = playerIds.length
   if (n % 4 !== 0) throw new Error("Chicece richiede un numero di giocatori multiplo di 4")
@@ -569,14 +579,32 @@ function generateChiceceGroupSchedule(
   const rounds = []
 
   for (let round = 0; round < numRounds; round++) {
-    const matches: Array<{ teamA: [string, string]; teamB: [string, string]; matchNumber: number }> = []
-    for (let i = 0; i < quarter; i++) {
-      matches.push({
-        teamA: [ring[i], ring[quarter + i]],
-        teamB: [ring[2 * quarter + i], ring[3 * quarter + i]],
+    let matches: Array<{ teamA: [string, string]; teamB: [string, string]; matchNumber: number }>
+
+    if (skillLevels) {
+      // Balanced matchmaking: form teams + match pairs minimizing sum delta.
+      // We still use the rotating ring to produce a different round ordering,
+      // then apply balancing within that round's slice.
+      // Use ring (rotated) as the player pool for this round.
+      const poolForRound = [...ring].map((id) => ({ id, skillLevel: skillLevels.get(id) ?? null }))
+      // Import lazily-resolved helpers: done via top-level import below.
+      const balanced = balanceTeams(poolForRound)
+      matches = balanced.map((bm, i) => ({
+        teamA: [bm.teamA.playerIds[0], bm.teamA.playerIds[1]],
+        teamB: [bm.teamB.playerIds[0], bm.teamB.playerIds[1]],
         matchNumber: round * quarter + i + 1,
-      })
+      }))
+    } else {
+      matches = []
+      for (let i = 0; i < quarter; i++) {
+        matches.push({
+          teamA: [ring[i], ring[quarter + i]],
+          teamB: [ring[2 * quarter + i], ring[3 * quarter + i]],
+          matchNumber: round * quarter + i + 1,
+        })
+      }
     }
+
     rounds.push({ roundNumber: round + 1, matches })
     // Circle-method rotation: keep ring[0] fixed, move last element to position 1
     const last = ring.splice(n - 1, 1)[0]
@@ -588,12 +616,17 @@ function generateChiceceGroupSchedule(
 async function startChiceceTournament(
   tournament: { id: string; numCourts: number; chiceceMatchCount: number },
   playerIds: string[],
+  skillLevels?: Map<string, number | null>,
 ) {
   if (playerIds.length % 4 !== 0 || playerIds.length < 4) {
     throw new Error("Chicece richiede almeno 4 giocatori, multiplo di 4")
   }
 
-  const schedule = generateChiceceGroupSchedule(playerIds, tournament.chiceceMatchCount)
+  const schedule = generateChiceceGroupSchedule(
+    playerIds,
+    tournament.chiceceMatchCount,
+    skillLevels,
+  )
 
   await db.$transaction(async (tx) => {
     const createdMatches = await tx.match.createManyAndReturn({

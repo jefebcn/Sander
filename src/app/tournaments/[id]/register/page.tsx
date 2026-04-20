@@ -67,6 +67,7 @@ export default async function RegisterPage({ params }: { params: Promise<{ id: s
         isFree={isFree}
         status={status}
         isAuthed={isAuthed}
+        currentSkillLevel={myRegistration?.skillLevel ?? null}
       />
     </div>
   )

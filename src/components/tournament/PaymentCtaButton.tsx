@@ -4,10 +4,11 @@ import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { startCheckout, registerForTournament } from "@/actions/registration"
+import { startCheckout } from "@/actions/registration"
 import { PaymentMethodSheet } from "./PaymentMethodSheet"
 
 type Status = "NOT_REGISTERED" | "PAID" | "PENDING_STRIPE" | "PENDING_CASH" | "REGISTERED_UNPAID" | "CLOSED"
+type SheetMode = "pay" | "register"
 
 export function PaymentCtaButton({
   tournamentId,
@@ -15,46 +16,37 @@ export function PaymentCtaButton({
   status,
   isAuthed,
   inline = false,
+  currentSkillLevel = null,
 }: {
   tournamentId: string
   isFree: boolean
   status: Status
   isAuthed: boolean
   inline?: boolean
+  currentSkillLevel?: number | null
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [sheetMode, setSheetMode] = useState<SheetMode>("pay")
   const [error, setError] = useState<string | null>(null)
 
   function redirectToAuth() {
     router.push(`/auth/signin?callbackUrl=/tournaments/${tournamentId}/register`)
   }
 
-  // Used by /register fixed-bar: single-step pay
+  // Used by /register fixed-bar: open sheet so user can pick skill level and (if paid) method
   function handleClick() {
     if (!isAuthed) { redirectToAuth(); return }
-    if (isFree) {
-      setError(null)
-      startTransition(async () => {
-        const result = await startCheckout({ tournamentId })
-        if (!result.ok) { setError(result.error); return }
-        router.push(result.redirectUrl)
-      })
-      return
-    }
+    setSheetMode("pay")
     setSheetOpen(true)
   }
 
-  // Inline step-1: register without payment
+  // Inline step-1: open sheet to pick skill level and register (no payment yet)
   function handleRegister() {
     if (!isAuthed) { redirectToAuth(); return }
-    setError(null)
-    startTransition(async () => {
-      const result = await registerForTournament({ tournamentId })
-      if (!result.ok) { setError(result.error); return }
-      router.refresh()
-    })
+    setSheetMode("register")
+    setSheetOpen(true)
   }
 
   // Inline: resume existing Stripe session
@@ -83,7 +75,7 @@ export function PaymentCtaButton({
           {error && <InlineError error={error} />}
           <button
             type="button"
-            onClick={() => setSheetOpen(true)}
+            onClick={() => { setSheetMode("pay"); setSheetOpen(true) }}
             disabled={isPending}
             className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-black text-base text-black transition-all active:brightness-90 disabled:opacity-60"
           >
@@ -94,6 +86,8 @@ export function PaymentCtaButton({
             onClose={() => setSheetOpen(false)}
             tournamentId={tournamentId}
             isFree={false}
+            mode="pay"
+            initialSkillLevel={currentSkillLevel}
           />
         </>
       )
@@ -115,7 +109,7 @@ export function PaymentCtaButton({
       )
     }
 
-    // NOT_REGISTERED: step-1 register
+    // NOT_REGISTERED: step-1 register (or free-flow)
     return (
       <>
         {error && <InlineError error={error} />}
@@ -129,6 +123,14 @@ export function PaymentCtaButton({
             <Loader2 className="h-5 w-5 animate-spin" />
           ) : isFree ? "Iscriviti gratis" : "Iscriviti"}
         </button>
+        <PaymentMethodSheet
+          open={sheetOpen}
+          onClose={() => setSheetOpen(false)}
+          tournamentId={tournamentId}
+          isFree={isFree}
+          mode="register"
+          initialSkillLevel={currentSkillLevel}
+        />
       </>
     )
   }
@@ -171,6 +173,8 @@ export function PaymentCtaButton({
         onClose={() => setSheetOpen(false)}
         tournamentId={tournamentId}
         isFree={isFree}
+        mode={sheetMode}
+        initialSkillLevel={currentSkillLevel}
       />
     </>
   )

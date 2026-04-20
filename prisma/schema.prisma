@@ -225,6 +225,9 @@ model TournamentRegistration {
   chicecePlusMinus     Int @default(0)
   chiceceMatchesPlayed Int @default(0)
 
+  // Skill level (1=Dilettante, 2=Intermedio, 3=Avanzato). Nullable per retro-compatibilità.
+  skillLevel Int?
+
   // Payment tracking
   paymentStatus         PaymentStatus @default(FREE)
   paymentMethod         String?       // "STRIPE" | "CASH" | "FREE"

@@ -76,7 +76,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
     const myChiceceReg = currentPlayer && tournament.isOpenForRegistration
       ? await db.tournamentRegistration.findUnique({
           where: { tournamentId_playerId: { tournamentId: id, playerId: currentPlayer.id } },
-          select: { paymentStatus: true, paymentMethod: true },
+          select: { paymentStatus: true, paymentMethod: true, skillLevel: true },
         })
       : null
     const csReg = myChiceceReg
@@ -140,6 +140,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               status={chiceceRegStatus}
               isAuthed={!!currentPlayer}
               inline
+              currentSkillLevel={myChiceceReg?.skillLevel ?? null}
             />
             <ShareButton
               path={`/tournaments/${id}`}
@@ -190,6 +191,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 paymentMethod: r.paymentMethod,
                 paidAt: r.paidAt,
                 amountPaidCents: r.amountPaidCents,
+                skillLevel: r.skillLevel,
               }))}
               priceCents={tournament.priceCents!}
               isAdmin={isAdmin}
@@ -252,7 +254,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   const myRegistration = currentPlayer && tournament.isOpenForRegistration
     ? await db.tournamentRegistration.findUnique({
         where: { tournamentId_playerId: { tournamentId: id, playerId: currentPlayer.id } },
-        select: { paymentStatus: true, paymentMethod: true },
+        select: { paymentStatus: true, paymentMethod: true, skillLevel: true },
       })
     : null
 
@@ -327,6 +329,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             status={regStatus}
             isAuthed={!!currentPlayer}
             inline
+            currentSkillLevel={myRegistration?.skillLevel ?? null}
           />
           <ShareButton
             path={`/tournaments/${id}`}
@@ -389,6 +392,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               paymentMethod: r.paymentMethod,
               paidAt: r.paidAt,
               amountPaidCents: r.amountPaidCents,
+              skillLevel: r.skillLevel,
             }))}
             priceCents={tournament.priceCents!}
             isAdmin={isAdmin}
