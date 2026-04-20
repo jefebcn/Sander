@@ -438,17 +438,40 @@ export async function cancelRegistration(input: unknown) {
   const player = await requireCurrentPlayer()
   const { registrationId } = CancelRegistrationSchema.parse(input)
 
-  const reg = await db.tournamentRegistration.findUnique({ where: { id: registrationId } })
+  const reg = await db.tournamentRegistration.findUnique({
+    where: { id: registrationId },
+    select: { playerId: true, tournamentId: true, paymentStatus: true },
+  })
   if (!reg) throw new Error("Iscrizione non trovata")
   if (reg.playerId !== player.id) throw new Error("Non autorizzato")
-
   if (reg.paymentStatus === "PAID") {
     throw new Error("Iscrizione già pagata: contatta l'organizzatore per un rimborso")
   }
-  if (reg.paymentStatus !== "PENDING") return
 
   await db.tournamentRegistration.delete({ where: { id: registrationId } })
   revalidatePath(`/tournaments/${reg.tournamentId}`)
+}
+
+// ─────────────────────────── adminRemoveRegistration ─────────────────────────
+
+export async function adminRemoveRegistration(input: unknown) {
+  const { registrationId } = CancelRegistrationSchema.parse(input)
+
+  const reg = await db.tournamentRegistration.findUnique({
+    where: { id: registrationId },
+    select: { tournamentId: true, tournament: { select: { status: true } } },
+  })
+  if (!reg) throw new Error("Iscrizione non trovata")
+  if (reg.tournament.status !== "DRAFT") throw new Error("Puoi rimuovere iscritti solo da tornei in bozza")
+
+  const session = await getCurrentSession()
+  if (!session?.user?.id) throw new Error("Non autenticato")
+  const allowed = await canManageTournament(session.user.email, reg.tournamentId)
+  if (!allowed) throw new Error("Accesso non autorizzato")
+
+  await db.tournamentRegistration.delete({ where: { id: registrationId } })
+  revalidatePath(`/tournaments/${reg.tournamentId}`)
+  revalidatePath("/admin/payments")
 }
 
 // ──────────────────────── list / read helpers ────────────────────────────────

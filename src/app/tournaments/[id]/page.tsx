@@ -1,8 +1,9 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ChevronRight, Play, Trophy, Shuffle } from "lucide-react"
+import { ChevronRight, Play, Trophy, Shuffle, Trash2, LogOut } from "lucide-react"
 import { getTournamentDashboard } from "@/actions/standings"
 import { startTournament, completeTournament } from "@/actions/tournaments"
+import { cancelRegistration, adminRemoveRegistration } from "@/actions/registration"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { canManageTournament } from "@/lib/isAdmin"
@@ -122,15 +123,39 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 <p className="px-4 pb-3 text-sm text-[var(--muted-text)]">Nessun iscritto ancora. Sii il primo!</p>
               ) : (
                 <div className="pb-1">
-                  {registrations.map((r) => (
-                    <div key={r.id} className="flex items-center gap-3 px-4 py-2">
-                      <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${
-                        r.paymentStatus === "PAID" || r.paymentStatus === "FREE"
-                          ? "bg-[var(--live)]" : "bg-orange-500"
-                      }`} />
-                      <span className="text-sm font-medium">{r.player.name}</span>
-                    </div>
-                  ))}
+                  {registrations.map((r) => {
+                    const isMe = currentPlayer?.id === r.player.id
+                    const canCancel = isMe && r.paymentStatus !== "PAID"
+                    return (
+                      <div key={r.id} className="flex items-center gap-3 px-4 py-2">
+                        <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${
+                          r.paymentStatus === "PAID" || r.paymentStatus === "FREE"
+                            ? "bg-[var(--live)]" : "bg-orange-500"
+                        }`} />
+                        <span className="flex-1 truncate text-sm font-medium">{r.player.name}</span>
+                        {canCancel && (
+                          <form action={async () => {
+                            "use server"
+                            await cancelRegistration({ registrationId: r.id })
+                          }}>
+                            <button type="submit" title="Disiscriviti" className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--muted-text)] transition-colors hover:bg-red-500/15 hover:text-red-400">
+                              <LogOut className="h-3.5 w-3.5" />
+                            </button>
+                          </form>
+                        )}
+                        {isAdmin && !isMe && (
+                          <form action={async () => {
+                            "use server"
+                            await adminRemoveRegistration({ registrationId: r.id })
+                          }}>
+                            <button type="submit" title="Rimuovi partecipante" className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--muted-text)] transition-colors hover:bg-red-500/15 hover:text-red-400">
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </form>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -196,6 +221,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               priceCents={tournament.priceCents!}
               isAdmin={isAdmin}
               tournamentId={id}
+              tournamentStatus={tournament.status}
             />
           </div>
         )}
@@ -311,15 +337,39 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               <p className="px-4 pb-3 text-sm text-[var(--muted-text)]">Nessun iscritto ancora. Sii il primo!</p>
             ) : (
               <div className="pb-1">
-                {tournament.registrations.map((r) => (
-                  <div key={r.id} className="flex items-center gap-3 px-4 py-2">
-                    <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${
-                      r.paymentStatus === "PAID" || r.paymentStatus === "FREE"
-                        ? "bg-[var(--live)]" : "bg-orange-500"
-                    }`} />
-                    <span className="text-sm font-medium">{r.player.name}</span>
-                  </div>
-                ))}
+                {tournament.registrations.map((r) => {
+                  const isMe = currentPlayer?.id === r.player.id
+                  const canCancel = isMe && r.paymentStatus !== "PAID"
+                  return (
+                    <div key={r.id} className="flex items-center gap-3 px-4 py-2">
+                      <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${
+                        r.paymentStatus === "PAID" || r.paymentStatus === "FREE"
+                          ? "bg-[var(--live)]" : "bg-orange-500"
+                      }`} />
+                      <span className="flex-1 truncate text-sm font-medium">{r.player.name}</span>
+                      {canCancel && (
+                        <form action={async () => {
+                          "use server"
+                          await cancelRegistration({ registrationId: r.id })
+                        }}>
+                          <button type="submit" title="Disiscriviti" className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--muted-text)] transition-colors hover:bg-red-500/15 hover:text-red-400">
+                            <LogOut className="h-3.5 w-3.5" />
+                          </button>
+                        </form>
+                      )}
+                      {isAdmin && !isMe && (
+                        <form action={async () => {
+                          "use server"
+                          await adminRemoveRegistration({ registrationId: r.id })
+                        }}>
+                          <button type="submit" title="Rimuovi partecipante" className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--muted-text)] transition-colors hover:bg-red-500/15 hover:text-red-400">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </form>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
@@ -397,6 +447,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             priceCents={tournament.priceCents!}
             isAdmin={isAdmin}
             tournamentId={id}
+            tournamentStatus={tournament.status}
           />
         </div>
       )}

@@ -1,5 +1,5 @@
-import { Check, X } from "lucide-react"
-import { adminSetPaymentStatus } from "@/actions/registration"
+import { Check, X, Trash2 } from "lucide-react"
+import { adminSetPaymentStatus, adminRemoveRegistration } from "@/actions/registration"
 import { formatPrice } from "@/lib/utils"
 import { SkillBadge } from "./SkillBadge"
 import { AdminSkillLevelSelect } from "./AdminSkillLevelSelect"
@@ -19,6 +19,7 @@ interface TournamentPaymentsListProps {
   priceCents: number
   isAdmin?: boolean
   tournamentId: string
+  tournamentStatus?: string
 }
 
 function statusDot(status: string) {
@@ -46,10 +47,12 @@ export function TournamentPaymentsList({
   priceCents,
   isAdmin,
   tournamentId: _tournamentId,
+  tournamentStatus,
 }: TournamentPaymentsListProps) {
   const paid = registrations.filter((r) => r.paymentStatus === "PAID" || r.paymentStatus === "FREE")
   const total = registrations.length
   const allPaid = paid.length === total && total > 0
+  const isDraft = tournamentStatus === "DRAFT"
 
   return (
     <div className="rounded-2xl bg-[var(--surface-1)] overflow-hidden">
@@ -97,15 +100,13 @@ export function TournamentPaymentsList({
                   </span>
                 )}
 
-                {/* Pulsanti toggle solo per admin, solo se non gratis */}
+                {/* Toggle pagato/non pagato (solo admin, non gratis) */}
                 {isAdmin && !isFree && (
                   isPaid ? (
-                    <form
-                      action={async () => {
-                        "use server"
-                        await adminSetPaymentStatus(r.id, false)
-                      }}
-                    >
+                    <form action={async () => {
+                      "use server"
+                      await adminSetPaymentStatus(r.id, false)
+                    }}>
                       <button
                         type="submit"
                         title="Segna come non pagato"
@@ -116,12 +117,10 @@ export function TournamentPaymentsList({
                       </button>
                     </form>
                   ) : (
-                    <form
-                      action={async () => {
-                        "use server"
-                        await adminSetPaymentStatus(r.id, true)
-                      }}
-                    >
+                    <form action={async () => {
+                      "use server"
+                      await adminSetPaymentStatus(r.id, true)
+                    }}>
                       <button
                         type="submit"
                         title="Segna come pagato"
@@ -132,6 +131,22 @@ export function TournamentPaymentsList({
                       </button>
                     </form>
                   )
+                )}
+
+                {/* Rimuovi partecipante (solo admin, solo torneo DRAFT) */}
+                {isAdmin && isDraft && (
+                  <form action={async () => {
+                    "use server"
+                    await adminRemoveRegistration({ registrationId: r.id })
+                  }}>
+                    <button
+                      type="submit"
+                      title="Rimuovi partecipante"
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[var(--muted-text)] transition-colors hover:bg-red-500/15 hover:text-red-400 active:opacity-70"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </form>
                 )}
               </li>
             )
