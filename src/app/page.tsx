@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic"
 
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronRight, ExternalLink, Sparkles, MapPin, Trophy, Shuffle } from "lucide-react"
+import { ChevronRight, ExternalLink, Sparkles, MapPin, Trophy, Shuffle, Glasses } from "lucide-react"
 import { redirect } from "next/navigation"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
@@ -426,6 +426,47 @@ export default async function Home() {
                   <span className="text-base font-bold text-white">
                     Entra nella community su Instagram
                   </span>
+                </div>
+              </a>
+            </div>
+
+            {/* ── Sponsor section ───────────────────────────────── */}
+            <div className="mt-1 pb-6">
+              <p className="mb-3 text-base text-white/70">
+                Sponsor
+              </p>
+              <a
+                href="https://www.pepitoseyewear.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative flex h-44 items-end overflow-hidden rounded-2xl"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #0a0a0a 0%, #1c1c1c 40%, #2a1500 100%)",
+                }}
+              >
+                {/* Decorative glasses icon watermark */}
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-8">
+                  <Glasses className="h-40 w-40 text-white/20" />
+                </div>
+                {/* Amber glow accent */}
+                <div
+                  className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full opacity-20"
+                  style={{ background: "radial-gradient(circle, var(--accent) 0%, transparent 70%)" }}
+                />
+                <div className="relative z-10 flex w-full items-center justify-between gap-3 p-4">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--accent)]/20"
+                    >
+                      <Glasses className="h-5 w-5 text-[var(--accent)]" />
+                    </div>
+                    <div>
+                      <p className="text-base font-black text-white">Pepitos Eyewear</p>
+                      <p className="text-xs text-white/50">pepitoseyewear.com</p>
+                    </div>
+                  </div>
+                  <ExternalLink className="h-4 w-4 flex-shrink-0 text-white/40" />
                 </div>
               </a>
             </div>
