@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic"
 
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronRight, ExternalLink, Sparkles, MapPin, Trophy, Shuffle, Glasses } from "lucide-react"
+import { ChevronRight, ExternalLink, Sparkles, MapPin, Trophy, Shuffle } from "lucide-react"
 import { redirect } from "next/navigation"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
@@ -445,9 +445,15 @@ export default async function Home() {
                     "linear-gradient(135deg, #0a0a0a 0%, #1c1c1c 40%, #2a1500 100%)",
                 }}
               >
-                {/* Decorative glasses icon watermark */}
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-8">
-                  <Glasses className="h-40 w-40 text-white/20" />
+                {/* Pepitos logo watermark */}
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <Image
+                    src="/sponsors/pepitos-logo.png"
+                    alt=""
+                    width={280}
+                    height={100}
+                    className="object-contain opacity-15"
+                  />
                 </div>
                 {/* Amber glow accent */}
                 <div
