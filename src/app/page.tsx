@@ -465,7 +465,7 @@ export default async function Home() {
                     <div
                       className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--accent)]/20"
                     >
-                      <Glasses className="h-5 w-5 text-[var(--accent)]" />
+                      <ExternalLink className="h-5 w-5 text-[var(--accent)]" />
                     </div>
                     <div>
                       <p className="text-base font-black text-white">Pepitos Eyewear</p>
