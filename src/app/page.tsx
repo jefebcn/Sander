@@ -120,7 +120,7 @@ export default async function Home() {
               url="https://chat.whatsapp.com/LnZvWR2ffXgIfzPCUFE7jL?mode=gi_t"
               location="Bagnino 29 · Rimini"
               title="Ritrovo Torneo — Ore 13"
-              cta="Entra nel gruppo WhatsApp"
+              cta="Doppio tap · Entra nel gruppo WhatsApp"
             />
 
             {/* ── Profile Card ──────────────────────────────────── */}
