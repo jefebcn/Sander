@@ -332,7 +332,6 @@ export async function registerForTournament(input: unknown): Promise<
 // ──────────────────────── adminConfirmManualPayment ──────────────────────────
 
 export async function adminConfirmManualPayment(input: unknown) {
-  await requireAdmin()
   const { registrationId, notes } = AdminConfirmManualPaymentSchema.parse(input)
 
   const reg = await db.tournamentRegistration.findUnique({
@@ -340,6 +339,12 @@ export async function adminConfirmManualPayment(input: unknown) {
     include: { tournament: { select: { id: true, priceCents: true } } },
   })
   if (!reg) throw new Error("Iscrizione non trovata")
+
+  const session = await getCurrentSession()
+  if (!session?.user?.id) throw new Error("Non autenticato")
+  const allowed = await canManageTournament(session.user.email, reg.tournamentId)
+  if (!allowed) throw new Error("Accesso non autorizzato")
+
   if (reg.paymentStatus !== "PENDING" || (reg.paymentMethod !== "CASH" && reg.paymentMethod !== "PAYPAL")) {
     throw new Error("Iscrizione non in attesa di conferma")
   }
@@ -359,11 +364,16 @@ export async function adminConfirmManualPayment(input: unknown) {
 }
 
 export async function adminRejectManualPayment(input: unknown) {
-  await requireAdmin()
   const { registrationId } = AdminRejectManualPaymentSchema.parse(input)
 
   const reg = await db.tournamentRegistration.findUnique({ where: { id: registrationId } })
   if (!reg) throw new Error("Iscrizione non trovata")
+
+  const session = await getCurrentSession()
+  if (!session?.user?.id) throw new Error("Non autenticato")
+  const allowed = await canManageTournament(session.user.email, reg.tournamentId)
+  if (!allowed) throw new Error("Accesso non autorizzato")
+
   if (reg.paymentStatus !== "PENDING") throw new Error("Iscrizione non in attesa")
 
   await db.tournamentRegistration.update({
@@ -378,13 +388,16 @@ export async function adminRejectManualPayment(input: unknown) {
 // ──────────────────────────── adminSetPaymentStatus ──────────────────────────
 
 export async function adminSetPaymentStatus(registrationId: string, paid: boolean) {
-  await requireAdmin()
-
   const reg = await db.tournamentRegistration.findUnique({
     where: { id: registrationId },
     select: { tournamentId: true, paymentStatus: true, tournament: { select: { priceCents: true } } },
   })
   if (!reg) throw new Error("Iscrizione non trovata")
+
+  const session = await getCurrentSession()
+  if (!session?.user?.id) throw new Error("Non autenticato")
+  const allowed = await canManageTournament(session.user.email, reg.tournamentId)
+  if (!allowed) throw new Error("Accesso non autorizzato")
 
   if (paid) {
     await db.tournamentRegistration.update({
