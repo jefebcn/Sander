@@ -725,13 +725,18 @@ export async function submitChiceceGroupMatchScore(
   revalidatePath(`/tournaments/${match.tournamentId}`)
 }
 
-export async function advanceChiceceToFinals(tournamentId: string) {
-  await requireAdmin()
+export async function advanceChiceceToFinals(
+  tournamentId: string,
+  draft: { p1Partner: string; p2Partner: string; p3Partner: string; p4Partner: string },
+) {
+  const session = await getCurrentSession()
+  const ok = await canManageTournament(session?.user?.email, tournamentId)
+  if (!ok) throw new Error("Non autorizzato")
+
   const tournament = await db.tournament.findUniqueOrThrow({
     where: { id: tournamentId },
     include: {
       registrations: {
-        include: { player: true },
         orderBy: { chicecePlusMinus: "desc" },
       },
     },
@@ -742,23 +747,49 @@ export async function advanceChiceceToFinals(tournamentId: string) {
   const top4 = tournament.registrations.slice(0, 4)
   if (top4.length < 4) throw new Error("Servono almeno 4 giocatori per la finale")
 
-  // Snake draft: Pair A = (1st + 4th), Pair B = (2nd + 3rd)
-  const pairA = [top4[0].playerId, top4[3].playerId]
-  const pairB = [top4[1].playerId, top4[2].playerId]
+  const [p1, p2, p3, p4] = top4.map((r) => r.playerId)
+  const { p1Partner, p2Partner, p3Partner, p4Partner } = draft
+
+  // Validate partners are distinct and not among the top 4
+  const top4Ids = new Set([p1, p2, p3, p4])
+  const partnerIds = [p1Partner, p2Partner, p3Partner, p4Partner]
+  for (const pid of partnerIds) {
+    if (top4Ids.has(pid)) throw new Error("Un partner non può essere tra i top 4")
+  }
+  if (new Set(partnerIds).size !== 4) throw new Error("Ogni finalista deve avere un partner diverso")
 
   await db.$transaction(async (tx) => {
+    // Semifinal: 3° + partner vs 4° + partner
     await tx.match.create({
       data: {
         tournamentId,
         round: 1,
         matchNumber: 1,
+        bracketSection: "SEMI",
+        players: {
+          create: [
+            { playerId: p3, team: 0 },
+            { playerId: p3Partner, team: 0 },
+            { playerId: p4, team: 1 },
+            { playerId: p4Partner, team: 1 },
+          ],
+        },
+      },
+    })
+
+    // Final: 1° + partner vs 2° + partner
+    await tx.match.create({
+      data: {
+        tournamentId,
+        round: 2,
+        matchNumber: 2,
         bracketSection: "FINAL",
         players: {
           create: [
-            { playerId: pairA[0], team: 0 },
-            { playerId: pairA[1], team: 0 },
-            { playerId: pairB[0], team: 1 },
-            { playerId: pairB[1], team: 1 },
+            { playerId: p1, team: 0 },
+            { playerId: p1Partner, team: 0 },
+            { playerId: p2, team: 1 },
+            { playerId: p2Partner, team: 1 },
           ],
         },
       },
@@ -778,7 +809,7 @@ export async function submitChiceceFinalScore(
   teamAScore: number,
   teamBScore: number,
 ) {
-  await requireAdmin()
+  const session = await getCurrentSession()
   if (teamAScore === teamBScore) throw new Error("Il risultato non può essere in parità")
 
   const match = await db.match.findUniqueOrThrow({
@@ -786,18 +817,32 @@ export async function submitChiceceFinalScore(
     include: { players: true },
   })
 
-  if (match.isCompleted) throw new Error("Finale già completata")
-  if (match.bracketSection !== "FINAL") throw new Error("Non è la partita finale")
+  const ok = await canManageTournament(session?.user?.email, match.tournamentId)
+  if (!ok) throw new Error("Non autorizzato")
+
+  if (match.isCompleted) throw new Error("Partita già completata")
+  if (match.bracketSection !== "FINAL" && match.bracketSection !== "SEMI") {
+    throw new Error("Non è una partita finale")
+  }
 
   await db.match.update({
     where: { id: matchId },
     data: { teamAScore, teamBScore, isCompleted: true },
   })
 
-  await db.tournament.update({
-    where: { id: match.tournamentId },
-    data: { status: "COMPLETED" },
-  })
+  // Only complete the tournament when the FINAL (not the semi) is done
+  if (match.bracketSection === "FINAL") {
+    await db.tournament.update({
+      where: { id: match.tournamentId },
+      data: { status: "COMPLETED" },
+    })
+  }
+
+  // Standings, career stats and Glicko only run after the FINAL (not semi)
+  if (match.bracketSection !== "FINAL") {
+    revalidatePath(`/tournaments/${match.tournamentId}`)
+    return
+  }
 
   // Apply per-tournament Glicko-2 update (final match completes the tournament)
   await applyTournamentGlicko(match.tournamentId).catch(() => {})

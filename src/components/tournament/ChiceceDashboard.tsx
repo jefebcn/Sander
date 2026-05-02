@@ -125,21 +125,35 @@ export function ChiceceDashboard({
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
-  const groupMatches = matches.filter((m) => m.bracketSection === "GROUP")
-  const finalMatches = matches.filter((m) => m.bracketSection === "FINAL")
+  // Draft state: finalist playerId → chosen partner playerId
+  const [draft, setDraft] = useState<Record<string, string>>({})
 
-  // Sort registrations by chicecePlusMinus desc
+  const groupMatches = matches.filter((m) => m.bracketSection === "GROUP")
+  const semiMatch = matches.find((m) => m.bracketSection === "SEMI")
+  const finalMatch = matches.find((m) => m.bracketSection === "FINAL")
+
   const sortedRegs = [...registrations].sort(
     (a, b) => b.chicecePlusMinus - a.chicecePlusMinus,
   )
 
   const allGroupDone =
     groupMatches.length > 0 && groupMatches.every((m) => m.isCompleted)
-  const canAdvance =
-    isAdmin &&
-    tournament.chicecePhase === "GROUP" &&
-    tournament.status === "LIVE" &&
-    allGroupDone
+
+  const top4 = sortedRegs.slice(0, 4)
+  const restPlayers = sortedRegs.slice(4)
+
+  // Partners already chosen by other finalists (excluding own selection)
+  function availablePartners(forFinalistId: string) {
+    const taken = new Set(
+      Object.entries(draft)
+        .filter(([fid]) => fid !== forFinalistId)
+        .map(([, pid]) => pid),
+    )
+    return restPlayers.filter((r) => !taken.has(r.playerId))
+  }
+
+  const draftComplete =
+    top4.length === 4 && top4.every((r) => draft[r.playerId])
 
   // Group matches by round
   const matchesByRound = groupMatches.reduce<Record<number, Match[]>>((acc, m) => {
@@ -170,10 +184,16 @@ export function ChiceceDashboard({
   }
 
   function handleAdvance() {
+    if (!draftComplete) return
     setError(null)
     startTransition(async () => {
       try {
-        await advanceChiceceToFinals(tournament.id)
+        await advanceChiceceToFinals(tournament.id, {
+          p1Partner: draft[top4[0].playerId],
+          p2Partner: draft[top4[1].playerId],
+          p3Partner: draft[top4[2].playerId],
+          p4Partner: draft[top4[3].playerId],
+        })
       } catch (err) {
         setError(err instanceof Error ? err.message : "Errore")
       }
@@ -324,28 +344,61 @@ export function ChiceceDashboard({
         </button>
       )}
 
-      {/* ── Advance to finals button ───────────────────────────── */}
-      {canAdvance && (
-        <button
-          onClick={handleAdvance}
-          disabled={isPending}
-          className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-bold text-black disabled:opacity-40"
-        >
-          <Trophy className="h-5 w-5" />
-          Avanza alla Finale
-        </button>
+      {/* ── Partner draft → advance to finals ─────────────────── */}
+      {isAdmin && allGroupDone && tournament.chicecePhase === "GROUP" && (
+        <div>
+          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
+            Scegli i partner per la finale
+          </p>
+          <div className="space-y-2 rounded-2xl bg-[var(--surface-2)] p-3">
+            {top4.map((finalist, i) => {
+              const available = availablePartners(finalist.playerId)
+              const label = `${i + 1}°`
+              return (
+                <div key={finalist.playerId} className="flex items-center gap-3">
+                  <span className="w-6 shrink-0 text-xs font-black text-[var(--accent)]">{label}</span>
+                  <span className="flex-1 truncate text-sm font-semibold text-white">
+                    <PlayerDisplayName player={finalist.player} />
+                  </span>
+                  <span className="text-xs text-[var(--muted-text)]">+</span>
+                  <select
+                    value={draft[finalist.playerId] ?? ""}
+                    onChange={(e) =>
+                      setDraft((prev) => ({ ...prev, [finalist.playerId]: e.target.value }))
+                    }
+                    className="rounded-lg bg-[var(--surface-3)] px-2 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                  >
+                    <option value="" disabled>Scegli partner</option>
+                    {available.map((r) => (
+                      <option key={r.playerId} value={r.playerId}>
+                        {r.player.firstName && r.player.lastName
+                          ? `${r.player.firstName} ${r.player.lastName}`
+                          : r.player.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )
+            })}
+          </div>
+          <button
+            onClick={handleAdvance}
+            disabled={isPending || !draftComplete}
+            className="mt-3 flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-bold text-black disabled:opacity-40"
+          >
+            <Trophy className="h-5 w-5" />
+            Avanza alla Finale
+          </button>
+        </div>
       )}
 
       {/* ── Finals ────────────────────────────────────────────── */}
       {tournament.chicecePhase === "FINAL" && (
-        <div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
-            Finale
+        <div className="space-y-4">
+          <p className="text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
+            Top 4 qualificati
           </p>
-
-          {/* Finalists */}
-          <div className="mb-3 rounded-2xl bg-[var(--surface-2)] p-3 space-y-2">
-            <p className="text-xs font-semibold text-[var(--muted-text)]">Top 4 qualificati</p>
+          <div className="rounded-2xl bg-[var(--surface-2)] p-3 space-y-2">
             {sortedRegs.slice(0, 4).map((reg, i) => (
               <div key={reg.id} className="flex items-center gap-2">
                 <span className="text-xs font-black text-[var(--accent)] w-4">{i + 1}°</span>
@@ -366,74 +419,107 @@ export function ChiceceDashboard({
             ))}
           </div>
 
-          {/* Final matches */}
-          {finalMatches.map((m) => {
-            const teamA = m.players.filter((p) => p.team === 0)
-            const teamB = m.players.filter((p) => p.team === 1)
-            const teamAWon = m.isCompleted && m.teamAScore! > m.teamBScore!
+          {/* Semifinal */}
+          {semiMatch && (() => {
+            const teamA = semiMatch.players.filter((p) => p.team === 0)
+            const teamB = semiMatch.players.filter((p) => p.team === 1)
+            const teamAWon = semiMatch.isCompleted && semiMatch.teamAScore! > semiMatch.teamBScore!
             return (
-              <div key={m.id} className="rounded-2xl bg-[var(--surface-2)] p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 min-w-0 space-y-2">
-                    <div
-                      className={cn(
-                        "rounded-xl px-3 py-2",
-                        teamAWon ? "bg-[var(--accent)]/10" : "bg-[var(--surface-3)]",
-                      )}
-                    >
-                      <p className="text-sm font-bold text-white">
-                        {teamA.map((p, i) => (
-                          <span key={p.playerId}>
-                            {i > 0 && " + "}
-                            <PlayerDisplayName player={p.player} />
-                          </span>
-                        ))}
-                      </p>
+              <div>
+                <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
+                  Semifinale — 3° vs 4°
+                </p>
+                <div className="rounded-2xl bg-[var(--surface-2)] p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div className={cn("rounded-xl px-3 py-2", teamAWon ? "bg-[var(--accent)]/10" : "bg-[var(--surface-3)]")}>
+                        <p className="text-sm font-bold text-white">
+                          {teamA.map((p, i) => (
+                            <span key={p.playerId}>{i > 0 && " + "}<PlayerDisplayName player={p.player} /></span>
+                          ))}
+                        </p>
+                      </div>
+                      <div className={cn("rounded-xl px-3 py-2", !teamAWon && semiMatch.isCompleted ? "bg-[var(--accent)]/10" : "bg-[var(--surface-3)]")}>
+                        <p className="text-sm font-bold text-white">
+                          {teamB.map((p, i) => (
+                            <span key={p.playerId}>{i > 0 && " + "}<PlayerDisplayName player={p.player} /></span>
+                          ))}
+                        </p>
+                      </div>
                     </div>
-                    <div
-                      className={cn(
-                        "rounded-xl px-3 py-2",
-                        !teamAWon && m.isCompleted ? "bg-[var(--accent)]/10" : "bg-[var(--surface-3)]",
-                      )}
-                    >
-                      <p className="text-sm font-bold text-white">
-                        {teamB.map((p, i) => (
-                          <span key={p.playerId}>
-                            {i > 0 && " + "}
-                            <PlayerDisplayName player={p.player} />
-                          </span>
-                        ))}
-                      </p>
-                    </div>
+                    {semiMatch.isCompleted && (
+                      <div className="shrink-0 text-center">
+                        <p className="text-2xl font-black text-white">{semiMatch.teamAScore}</p>
+                        <p className="text-xs text-[var(--muted-text)]">–</p>
+                        <p className="text-2xl font-black text-white">{semiMatch.teamBScore}</p>
+                      </div>
+                    )}
                   </div>
-                  {m.isCompleted && (
-                    <div className="shrink-0 text-center">
-                      <p className="text-2xl font-black text-white">{m.teamAScore}</p>
-                      <p className="text-xs text-[var(--muted-text)]">–</p>
-                      <p className="text-2xl font-black text-white">{m.teamBScore}</p>
+                  {isAdmin && !semiMatch.isCompleted && (
+                    <ScoreForm matchId={semiMatch.id} onSubmit={handleFinalScore} />
+                  )}
+                </div>
+              </div>
+            )
+          })()}
+
+          {/* Final */}
+          {finalMatch && (() => {
+            const teamA = finalMatch.players.filter((p) => p.team === 0)
+            const teamB = finalMatch.players.filter((p) => p.team === 1)
+            const teamAWon = finalMatch.isCompleted && finalMatch.teamAScore! > finalMatch.teamBScore!
+            return (
+              <div>
+                <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
+                  Finale — 1° vs 2°
+                </p>
+                <div className="rounded-2xl bg-[var(--surface-2)] p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div className={cn("rounded-xl px-3 py-2", teamAWon ? "bg-[var(--accent)]/10" : "bg-[var(--surface-3)]")}>
+                        <p className="text-sm font-bold text-white">
+                          {teamA.map((p, i) => (
+                            <span key={p.playerId}>{i > 0 && " + "}<PlayerDisplayName player={p.player} /></span>
+                          ))}
+                        </p>
+                      </div>
+                      <div className={cn("rounded-xl px-3 py-2", !teamAWon && finalMatch.isCompleted ? "bg-[var(--accent)]/10" : "bg-[var(--surface-3)]")}>
+                        <p className="text-sm font-bold text-white">
+                          {teamB.map((p, i) => (
+                            <span key={p.playerId}>{i > 0 && " + "}<PlayerDisplayName player={p.player} /></span>
+                          ))}
+                        </p>
+                      </div>
+                    </div>
+                    {finalMatch.isCompleted && (
+                      <div className="shrink-0 text-center">
+                        <p className="text-2xl font-black text-white">{finalMatch.teamAScore}</p>
+                        <p className="text-xs text-[var(--muted-text)]">–</p>
+                        <p className="text-2xl font-black text-white">{finalMatch.teamBScore}</p>
+                      </div>
+                    )}
+                  </div>
+                  {isAdmin && !finalMatch.isCompleted && (
+                    <ScoreForm matchId={finalMatch.id} onSubmit={handleFinalScore} />
+                  )}
+                  {finalMatch.isCompleted && (
+                    <div className="mt-3 flex items-center gap-2 rounded-xl bg-[var(--accent)]/10 px-3 py-2">
+                      <Trophy className="h-4 w-4 text-[var(--accent)]" />
+                      <p className="text-sm font-bold text-[var(--accent)]">
+                        Campioni:{" "}
+                        {(teamAWon ? teamA : teamB).map((p, i) => (
+                          <span key={p.playerId}>
+                            {i > 0 && " & "}
+                            <PlayerDisplayName player={p.player} />
+                          </span>
+                        ))}
+                      </p>
                     </div>
                   )}
                 </div>
-                {isAdmin && !m.isCompleted && (
-                  <ScoreForm matchId={m.id} onSubmit={handleFinalScore} />
-                )}
-                {m.isCompleted && (
-                  <div className="mt-3 flex items-center gap-2 rounded-xl bg-[var(--accent)]/10 px-3 py-2">
-                    <Trophy className="h-4 w-4 text-[var(--accent)]" />
-                    <p className="text-sm font-bold text-[var(--accent)]">
-                      Campioni:{" "}
-                      {(teamAWon ? teamA : teamB).map((p, i) => (
-                        <span key={p.playerId}>
-                          {i > 0 && " & "}
-                          <PlayerDisplayName player={p.player} />
-                        </span>
-                      ))}
-                    </p>
-                  </div>
-                )}
               </div>
             )
-          })}
+          })()}
         </div>
       )}
     </div>
