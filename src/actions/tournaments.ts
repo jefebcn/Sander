@@ -6,7 +6,6 @@ import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { CreateTournamentSchema } from "@/lib/validators/tournament.schema"
 import type { CreateTournamentInput } from "@/lib/validators/tournament.schema"
 import { generateKOTBSchedule } from "@/lib/tournament/kotb"
-import { balanceTeams } from "@/lib/tournament/balancing"
 import { generateBracket } from "@/lib/tournament/bracket"
 import { generateRoundRobinSchedule } from "@/lib/tournament/roundRobin"
 import { generateDoubleElimination } from "@/lib/tournament/doubleElim"
@@ -574,41 +573,50 @@ function generateChiceceGroupSchedule(
   const n = playerIds.length
   if (n % 4 !== 0) throw new Error("Chicece richiede un numero di giocatori multiplo di 4")
 
-  const ring = [...playerIds]
-  const quarter = n / 4
+  const numMatchesPerRound = n / 4
+  // 1-factorization: n-1 rounds with fully unique partnerships.
+  // Fix playerIds[n-1]. In round k, pair it with playerIds[k % (n-1)].
+  // Remaining n/2-1 pairs: (k-i mod (n-1), k+i mod (n-1)) for i=1..(n/2-1).
+  const others = n - 1 // indices 0..n-2 rotate; index n-1 is fixed
+  const maxUniqueRounds = others
+
   const rounds = []
 
   for (let round = 0; round < numRounds; round++) {
-    let matches: Array<{ teamA: [string, string]; teamB: [string, string]; matchNumber: number }>
+    const k = round % maxUniqueRounds
 
+    // Build n/2 unique partner pairs via 1-factorization
+    const pairs: [string, string][] = []
+    pairs.push([playerIds[n - 1], playerIds[k]])
+    for (let i = 1; i <= Math.floor((others - 1) / 2); i++) {
+      const a = (k - i + others) % others
+      const b = (k + i) % others
+      pairs.push([playerIds[a], playerIds[b]])
+    }
+    // pairs.length === n/2
+
+    // If skillLevels provided: sort pairs by team skill sum so that
+    // adjacent pairs (→ same match) have similar strength levels.
+    // Partnership uniqueness is still guaranteed by the 1-factorization above.
     if (skillLevels) {
-      // Balanced matchmaking: form teams + match pairs minimizing sum delta.
-      // We still use the rotating ring to produce a different round ordering,
-      // then apply balancing within that round's slice.
-      // Use ring (rotated) as the player pool for this round.
-      const poolForRound = [...ring].map((id) => ({ id, skillLevel: skillLevels.get(id) ?? null }))
-      // Import lazily-resolved helpers: done via top-level import below.
-      const balanced = balanceTeams(poolForRound)
-      matches = balanced.map((bm, i) => ({
-        teamA: [bm.teamA.playerIds[0], bm.teamA.playerIds[1]],
-        teamB: [bm.teamB.playerIds[0], bm.teamB.playerIds[1]],
-        matchNumber: round * quarter + i + 1,
-      }))
-    } else {
-      matches = []
-      for (let i = 0; i < quarter; i++) {
-        matches.push({
-          teamA: [ring[i], ring[quarter + i]],
-          teamB: [ring[2 * quarter + i], ring[3 * quarter + i]],
-          matchNumber: round * quarter + i + 1,
-        })
-      }
+      pairs.sort((a, b) => {
+        const sumA = (skillLevels.get(a[0]) ?? 2) + (skillLevels.get(a[1]) ?? 2)
+        const sumB = (skillLevels.get(b[0]) ?? 2) + (skillLevels.get(b[1]) ?? 2)
+        return sumA - sumB
+      })
+    }
+
+    // Group pairs into matches: pair[0] vs pair[1], pair[2] vs pair[3], etc.
+    const matches = []
+    for (let i = 0; i < numMatchesPerRound; i++) {
+      matches.push({
+        teamA: pairs[2 * i] as [string, string],
+        teamB: pairs[2 * i + 1] as [string, string],
+        matchNumber: round * numMatchesPerRound + i + 1,
+      })
     }
 
     rounds.push({ roundNumber: round + 1, matches })
-    // Circle-method rotation: keep ring[0] fixed, move last element to position 1
-    const last = ring.splice(n - 1, 1)[0]
-    ring.splice(1, 0, last)
   }
   return rounds
 }
