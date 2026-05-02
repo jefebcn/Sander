@@ -804,6 +804,41 @@ export async function advanceChiceceToFinals(
   revalidatePath(`/tournaments/${tournamentId}`)
 }
 
+export async function adminResetChiceceToGroupPhase(tournamentId: string) {
+  const session = await getCurrentSession()
+  const ok = await canManageTournament(session?.user?.email, tournamentId)
+  if (!ok) throw new Error("Non autorizzato")
+
+  const tournament = await db.tournament.findUniqueOrThrow({
+    where: { id: tournamentId },
+    select: { chicecePhase: true, type: true },
+  })
+  if (tournament.type !== "CHICECE") throw new Error("Non è un torneo Chicece")
+  if (tournament.chicecePhase !== "FINAL") throw new Error("Il torneo non è in fase finale")
+
+  // Only delete non-completed FINAL/SEMI matches — don't touch completed ones
+  const toDelete = await db.match.findMany({
+    where: {
+      tournamentId,
+      bracketSection: { in: ["FINAL", "SEMI"] },
+      isCompleted: false,
+    },
+    select: { id: true },
+  })
+
+  await db.$transaction(async (tx) => {
+    if (toDelete.length > 0) {
+      await tx.match.deleteMany({ where: { id: { in: toDelete.map((m) => m.id) } } })
+    }
+    await tx.tournament.update({
+      where: { id: tournamentId },
+      data: { chicecePhase: "GROUP" },
+    })
+  })
+
+  revalidatePath(`/tournaments/${tournamentId}`)
+}
+
 export async function submitChiceceFinalScore(
   matchId: string,
   teamAScore: number,

@@ -7,6 +7,7 @@ import {
   advanceChiceceToFinals,
   submitChiceceFinalScore,
   adminRegenerateChiceceRounds,
+  adminResetChiceceToGroupPhase,
 } from "@/actions/tournaments"
 import { cn } from "@/lib/utils"
 
@@ -194,6 +195,19 @@ export function ChiceceDashboard({
           p3Partner: draft[top4[2].playerId],
           p4Partner: draft[top4[3].playerId],
         })
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Errore")
+      }
+    })
+  }
+
+  function handleResetToGroup() {
+    if (!confirm("Annulla la finale corrente e torna al draft partner? I gironi restano invariati.")) return
+    setError(null)
+    startTransition(async () => {
+      try {
+        await adminResetChiceceToGroupPhase(tournament.id)
+        setDraft({})
       } catch (err) {
         setError(err instanceof Error ? err.message : "Errore")
       }
@@ -395,6 +409,16 @@ export function ChiceceDashboard({
       {/* ── Finals ────────────────────────────────────────────── */}
       {tournament.chicecePhase === "FINAL" && (
         <div className="space-y-4">
+          {isAdmin && !semiMatch?.isCompleted && !finalMatch?.isCompleted && (
+            <button
+              onClick={handleResetToGroup}
+              disabled={isPending}
+              className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] font-bold text-white disabled:opacity-40"
+            >
+              <RefreshCw className="h-5 w-5" />
+              Rifai il draft partner
+            </button>
+          )}
           <p className="text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
             Top 4 qualificati
           </p>
