@@ -11,7 +11,7 @@ import { generateRoundRobinSchedule } from "@/lib/tournament/roundRobin"
 import { generateDoubleElimination } from "@/lib/tournament/doubleElim"
 import { assignCourtLabel } from "@/lib/tournament/courtSchedule"
 import { applyTournamentGlicko } from "@/actions/matches"
-import { isAdminEmail } from "@/lib/isAdmin"
+import { isAdminEmail, canManageTournament } from "@/lib/isAdmin"
 
 async function requireAdmin() {
   const session = await getCurrentSession()
@@ -1118,6 +1118,134 @@ export async function adminRecalculateAllStats() {
   revalidatePath("/profile")
 }
 
+
+// ─── Admin: rigenera i round Chicece non ancora completati ───────────────────
+
+export async function adminRegenerateChiceceRounds(tournamentId: string) {
+  const session = await getCurrentSession()
+  const ok = await canManageTournament(session?.user?.email, tournamentId)
+  if (!ok) throw new Error("Non autorizzato")
+
+  const tournament = await db.tournament.findUniqueOrThrow({
+    where: { id: tournamentId },
+    select: { numCourts: true, chiceceMatchCount: true, status: true, type: true },
+  })
+  if (tournament.type !== "CHICECE") throw new Error("Non è un torneo Chicece")
+  if (tournament.status !== "LIVE") throw new Error("Il torneo non è LIVE")
+
+  const allMatches = await db.match.findMany({
+    where: { tournamentId, bracketSection: "GROUP" },
+    include: { players: true },
+    orderBy: [{ round: "asc" }, { matchNumber: "asc" }],
+  })
+
+  const completedMatches = allMatches.filter((m) => m.isCompleted)
+  const pendingMatchIds = allMatches.filter((m) => !m.isCompleted).map((m) => m.id)
+
+  // Extract already-used partnerships from completed matches
+  const usedPartnerships = new Set<string>()
+  for (const m of completedMatches) {
+    const teamA = m.players.filter((p) => p.team === 0).map((p) => p.playerId)
+    const teamB = m.players.filter((p) => p.team === 1).map((p) => p.playerId)
+    if (teamA.length === 2) usedPartnerships.add([teamA[0], teamA[1]].sort().join("|"))
+    if (teamB.length === 2) usedPartnerships.add([teamB[0], teamB[1]].sort().join("|"))
+  }
+
+  const completedRoundNums = new Set(completedMatches.map((m) => m.round))
+  const completedRoundCount = completedRoundNums.size
+  const roundsRemaining = tournament.chiceceMatchCount - completedRoundCount
+  if (roundsRemaining <= 0) throw new Error("Tutti i round sono già stati completati")
+
+  // Fetch player IDs ordered by registration date
+  const registrations = await db.tournamentRegistration.findMany({
+    where: { tournamentId },
+    orderBy: { createdAt: "asc" },
+    select: { playerId: true },
+  })
+  const playerIds = registrations.map((r) => r.playerId)
+  const n = playerIds.length
+  if (n % 4 !== 0) throw new Error(`Numero di giocatori non valido (${n})`)
+
+  const others = n - 1
+  const numMatchesPerRound = n / 4
+
+  function kPairs(k: number): [string, string][] {
+    const pairs: [string, string][] = []
+    pairs.push([playerIds[n - 1], playerIds[k]])
+    for (let i = 1; i <= Math.floor((others - 1) / 2); i++) {
+      const a = (k - i + others) % others
+      const b = (k + i) % others
+      pairs.push([playerIds[a], playerIds[b]])
+    }
+    return pairs
+  }
+
+  // Pick k-values that produce no already-used partnerships
+  const validKs: number[] = []
+  for (let k = 0; k < others && validKs.length < roundsRemaining; k++) {
+    const conflicting = kPairs(k).some(([a, b]) => usedPartnerships.has([a, b].sort().join("|")))
+    if (!conflicting) validKs.push(k)
+  }
+  if (validKs.length < roundsRemaining) {
+    throw new Error(`Solo ${validKs.length} combinazioni valide trovate, servono ${roundsRemaining}`)
+  }
+
+  const completedMatchCount = completedMatches.length
+  const totalRounds = tournament.chiceceMatchCount
+
+  const newRounds = validKs.slice(0, roundsRemaining).map((k, ri) => {
+    const roundNumber = completedRoundCount + ri + 1
+    const pairs = kPairs(k)
+    const matches = Array.from({ length: numMatchesPerRound }, (_, mi) => {
+      const matchNumber = completedMatchCount + ri * numMatchesPerRound + mi + 1
+      return {
+        teamA: pairs[2 * mi] as [string, string],
+        teamB: pairs[2 * mi + 1] as [string, string],
+        matchNumber,
+        roundNumber,
+        courtLabel: assignCourtLabel(roundNumber, matchNumber, totalRounds, tournament.numCourts),
+      }
+    })
+    return { roundNumber, matches }
+  })
+
+  await db.$transaction(async (tx) => {
+    if (pendingMatchIds.length > 0) {
+      await tx.match.deleteMany({ where: { id: { in: pendingMatchIds } } })
+    }
+
+    const created = await tx.match.createManyAndReturn({
+      data: newRounds.flatMap((round) =>
+        round.matches.map((m) => ({
+          tournamentId,
+          round: m.roundNumber,
+          matchNumber: m.matchNumber,
+          bracketSection: "GROUP",
+          courtLabel: m.courtLabel,
+        })),
+      ),
+      select: { id: true, round: true, matchNumber: true },
+    })
+
+    const matchIdMap = new Map(created.map((m) => [`${m.round}-${m.matchNumber}`, m.id]))
+
+    await tx.matchPlayer.createMany({
+      data: newRounds.flatMap((round) =>
+        round.matches.flatMap((match) => {
+          const matchId = matchIdMap.get(`${match.roundNumber}-${match.matchNumber}`)!
+          return [
+            { matchId, playerId: match.teamA[0], team: 0 },
+            { matchId, playerId: match.teamA[1], team: 0 },
+            { matchId, playerId: match.teamB[0], team: 1 },
+            { matchId, playerId: match.teamB[1], team: 1 },
+          ]
+        }),
+      ),
+    })
+  })
+
+  revalidatePath(`/tournaments/${tournamentId}`)
+}
 
 // ─── Team Info (name + logo per coppia) ──────────────────────────────────────
 

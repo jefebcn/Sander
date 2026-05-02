@@ -1,11 +1,12 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { Trophy, ChevronUp, ChevronDown, Minus } from "lucide-react"
+import { Trophy, ChevronUp, ChevronDown, Minus, RefreshCw } from "lucide-react"
 import {
   submitChiceceGroupMatchScore,
   advanceChiceceToFinals,
   submitChiceceFinalScore,
+  adminRegenerateChiceceRounds,
 } from "@/actions/tournaments"
 import { cn } from "@/lib/utils"
 
@@ -179,6 +180,18 @@ export function ChiceceDashboard({
     })
   }
 
+  function handleRegenerate() {
+    if (!confirm("Rigenera i round non ancora giocati con nuove coppie uniche? I round completati restano invariati.")) return
+    setError(null)
+    startTransition(async () => {
+      try {
+        await adminRegenerateChiceceRounds(tournament.id)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Errore")
+      }
+    })
+  }
+
   return (
     <div className="space-y-5 px-4">
       {error && (
@@ -297,6 +310,18 @@ export function ChiceceDashboard({
               ))}
           </div>
         </div>
+      )}
+
+      {/* ── Admin: rigenera round ─────────────────────────────── */}
+      {isAdmin && tournament.chicecePhase === "GROUP" && tournament.status === "LIVE" && !allGroupDone && (
+        <button
+          onClick={handleRegenerate}
+          disabled={isPending}
+          className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] font-bold text-white disabled:opacity-40"
+        >
+          <RefreshCw className="h-5 w-5" />
+          Rigenera Round (fix coppie)
+        </button>
       )}
 
       {/* ── Advance to finals button ───────────────────────────── */}
