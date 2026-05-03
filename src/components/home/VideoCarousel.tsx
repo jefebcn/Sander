@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from "react"
 import { Play, Pause, ChevronLeft, ChevronRight } from "lucide-react"
 
-const VIDEOS = ["/videos/clip1.mp4", "/videos/clip2.mp4"]
+const VIDEOS = ["/videos/clip1.mp4", "/videos/clip2.mp4", "/videos/clip3.mp4"]
 
 function VideoThumb({ src }: { src: string }) {
   const ref = useRef<HTMLVideoElement>(null)
