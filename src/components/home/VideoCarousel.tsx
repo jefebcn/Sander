@@ -44,7 +44,7 @@ function VideoThumb({ src }: { src: string }) {
         autoPlay
         muted
         loop
-        preload="auto"
+        preload="metadata"
       />
       {paused && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/30">
@@ -70,11 +70,11 @@ export function VideoCarousel() {
 
   return (
     <div className="space-y-2">
+      {/* Only render videos for the current page — others don't load at all */}
       <div className="flex gap-3">
         {visible.map((src) => (
           <VideoThumb key={src} src={src} />
         ))}
-        {/* Placeholder to keep layout when odd video is alone */}
         {visible.length === 1 && <div className="flex-1" style={{ aspectRatio: "9/16" }} />}
       </div>
 
