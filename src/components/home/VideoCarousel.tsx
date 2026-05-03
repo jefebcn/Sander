@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useState, useEffect } from "react"
-import { Play, Pause } from "lucide-react"
+import { Play, Pause, ChevronLeft, ChevronRight } from "lucide-react"
 
 const VIDEOS = ["/videos/clip1.mp4", "/videos/clip2.mp4"]
 
@@ -9,7 +9,6 @@ function VideoThumb({ src }: { src: string }) {
   const ref = useRef<HTMLVideoElement>(null)
   const [paused, setPaused] = useState(false)
 
-  // Sync paused state with actual video state
   useEffect(() => {
     const v = ref.current
     if (!v) return
@@ -32,7 +31,7 @@ function VideoThumb({ src }: { src: string }) {
 
   return (
     <div
-      className="relative overflow-hidden rounded-2xl bg-black cursor-pointer active:opacity-90"
+      className="relative flex-1 overflow-hidden rounded-2xl bg-black cursor-pointer active:opacity-90"
       style={{ aspectRatio: "9/16" }}
       onClick={handleClick}
     >
@@ -46,7 +45,6 @@ function VideoThumb({ src }: { src: string }) {
         loop
         preload="auto"
       />
-      {/* Play/pause overlay — only shown when paused */}
       {paused && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/30">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
@@ -54,7 +52,6 @@ function VideoThumb({ src }: { src: string }) {
           </div>
         </div>
       )}
-      {/* Pause hint — fades in on tap, shows briefly */}
       {!paused && (
         <div className="absolute bottom-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/40">
           <Pause className="h-3.5 w-3.5 text-white/80" />
@@ -65,11 +62,55 @@ function VideoThumb({ src }: { src: string }) {
 }
 
 export function VideoCarousel() {
+  const [page, setPage] = useState(0)
+  const totalPages = Math.ceil(VIDEOS.length / 2)
+  const start = page * 2
+  const visible = VIDEOS.slice(start, start + 2)
+
   return (
-    <div className="grid grid-cols-2 gap-3">
-      {VIDEOS.map((src) => (
-        <VideoThumb key={src} src={src} />
-      ))}
+    <div className="space-y-2">
+      <div className="flex gap-3">
+        {visible.map((src) => (
+          <VideoThumb key={src} src={src} />
+        ))}
+        {/* Placeholder to keep layout when odd video is alone */}
+        {visible.length === 1 && <div className="flex-1" style={{ aspectRatio: "9/16" }} />}
+      </div>
+
+      {/* Navigation dots + arrows — only if more than one page */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-2)] disabled:opacity-30"
+          >
+            <ChevronLeft className="h-4 w-4 text-white" />
+          </button>
+
+          <div className="flex gap-1.5">
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => setPage(i)}
+                className="h-1.5 rounded-full transition-all"
+                style={{
+                  width: i === page ? "1.5rem" : "0.375rem",
+                  background: i === page ? "var(--accent)" : "rgba(255,255,255,0.25)",
+                }}
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+            disabled={page === totalPages - 1}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-2)] disabled:opacity-30"
+          >
+            <ChevronRight className="h-4 w-4 text-white" />
+          </button>
+        </div>
+      )}
     </div>
   )
 }
