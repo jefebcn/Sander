@@ -7,7 +7,7 @@ export function WhatsAppAnnouncementBanner({
   cta,
 }: {
   url: string
-  location: string
+  location?: string
   title: string
   cta: string
 }) {
@@ -29,7 +29,9 @@ export function WhatsAppAnnouncementBanner({
         </svg>
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-bold uppercase tracking-widest text-white/70">📍 {location}</p>
+        {location && (
+          <p className="text-xs font-bold uppercase tracking-widest text-white/70">📍 {location}</p>
+        )}
         <p className="font-black text-white leading-tight">{title}</p>
         <p className="mt-0.5 text-xs font-semibold text-white/80">{cta} →</p>
       </div>

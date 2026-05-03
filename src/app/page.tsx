@@ -36,8 +36,9 @@ export default async function Home() {
   let recs = null
   let upcomingChicece = null
   let unreadCount = 0
+  let recentTournament = null
   if (player) {
-    ;[fullPlayer, recs, upcomingChicece, unreadCount] = await Promise.all([
+    ;[fullPlayer, recs, upcomingChicece, unreadCount, recentTournament] = await Promise.all([
       db.player.findUnique({
         where: { id: player.id },
         include: { _count: { select: { organizedSessions: true } } },
@@ -48,6 +49,22 @@ export default async function Home() {
         orderBy: { date: "asc" },
       }),
       getUnreadCount(),
+      db.tournament.findFirst({
+        where: { status: "COMPLETED" },
+        orderBy: { updatedAt: "desc" },
+        select: {
+          id: true,
+          name: true,
+          standings: {
+            orderBy: { rank: "asc" },
+            take: 3,
+            select: {
+              rank: true,
+              player: { select: { name: true, firstName: true, lastName: true } },
+            },
+          },
+        },
+      }),
     ])
   } else {
     upcomingChicece = await db.tournament.findFirst({
@@ -118,9 +135,8 @@ export default async function Home() {
             {/* ── Annuncio evento ───────────────────────────────── */}
             <WhatsAppAnnouncementBanner
               url="https://chat.whatsapp.com/LnZvWR2ffXgIfzPCUFE7jL?mode=gi_t"
-              location="Bagnino 29 · Rimini"
-              title="Ritrovo Torneo — Ore 13"
-              cta="Doppio tap · Entra nel gruppo WhatsApp"
+              title="Gruppo WhatsApp Sander"
+              cta="Entra nel gruppo"
             />
 
             {/* ── Profile Card ──────────────────────────────────── */}
@@ -270,6 +286,34 @@ export default async function Home() {
                   <Sparkles className="h-4 w-4 text-[var(--accent)]" />
                   <p className="text-sm font-bold text-white/80">Per te</p>
                 </div>
+
+                {/* Recent tournament winners */}
+                {recentTournament && recentTournament.standings.length > 0 && (
+                  <Link
+                    href={`/tournaments/${recentTournament.id}`}
+                    className="flex items-center gap-3 rounded-2xl bg-[var(--surface-2)] p-4"
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-3)]">
+                      <Trophy className="h-4 w-4 text-[var(--accent)]" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
+                        Torneo completato
+                      </p>
+                      <p className="truncate text-sm font-bold text-white">{recentTournament.name}</p>
+                      <p className="text-xs text-[var(--muted-text)]">
+                        {recentTournament.standings.map((s, i) => {
+                          const name = s.player.firstName && s.player.lastName
+                            ? `${s.player.firstName} ${s.player.lastName}`
+                            : s.player.name
+                          const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"
+                          return `${medal} ${name}`
+                        }).join("  ")}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-[var(--accent)]" />
+                  </Link>
+                )}
 
                 {/* Performance insight */}
                 {recs.performanceInsight && (
