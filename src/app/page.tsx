@@ -55,6 +55,22 @@ export default async function Home() {
         select: {
           id: true,
           name: true,
+          // FINAL match → use for Chicece (true winner = team that won the final)
+          matches: {
+            where: { bracketSection: "FINAL", isCompleted: true },
+            take: 1,
+            select: {
+              teamAScore: true,
+              teamBScore: true,
+              players: {
+                select: {
+                  team: true,
+                  player: { select: { name: true, firstName: true, lastName: true } },
+                },
+              },
+            },
+          },
+          // Fallback for non-Chicece tournaments that use standings
           standings: {
             orderBy: { rank: "asc" },
             take: 3,
@@ -288,32 +304,53 @@ export default async function Home() {
                 </div>
 
                 {/* Recent tournament winners */}
-                {recentTournament && recentTournament.standings.length > 0 && (
-                  <Link
-                    href={`/tournaments/${recentTournament.id}`}
-                    className="flex items-center gap-3 rounded-2xl bg-[var(--surface-2)] p-4"
-                  >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-3)]">
-                      <Trophy className="h-4 w-4 text-[var(--accent)]" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
-                        Torneo completato
-                      </p>
-                      <p className="truncate text-sm font-bold text-white">{recentTournament.name}</p>
-                      <p className="text-xs text-[var(--muted-text)]">
-                        {recentTournament.standings.map((s, i) => {
-                          const name = s.player.firstName && s.player.lastName
+                {recentTournament && (() => {
+                  const finalMatch = recentTournament.matches[0]
+                  let winnersLine: string | null = null
+
+                  if (finalMatch) {
+                    // Chicece: derive true winner from the final match result
+                    const teamAWon = (finalMatch.teamAScore ?? 0) > (finalMatch.teamBScore ?? 0)
+                    const winTeam = finalMatch.players
+                      .filter((p) => p.team === (teamAWon ? 0 : 1))
+                      .map((p) =>
+                        p.player.firstName && p.player.lastName
+                          ? `${p.player.firstName} ${p.player.lastName}`
+                          : p.player.name,
+                      )
+                    if (winTeam.length > 0) winnersLine = `🏆 ${winTeam.join(" & ")}`
+                  } else if (recentTournament.standings.length > 0) {
+                    winnersLine = recentTournament.standings
+                      .map((s, i) => {
+                        const name =
+                          s.player.firstName && s.player.lastName
                             ? `${s.player.firstName} ${s.player.lastName}`
                             : s.player.name
-                          const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"
-                          return `${medal} ${name}`
-                        }).join("  ")}
-                      </p>
-                    </div>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-[var(--accent)]" />
-                  </Link>
-                )}
+                        return `${i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"} ${name}`
+                      })
+                      .join("  ")
+                  }
+
+                  if (!winnersLine) return null
+                  return (
+                    <Link
+                      href={`/tournaments/${recentTournament.id}`}
+                      className="flex items-center gap-3 rounded-2xl bg-[var(--surface-2)] p-4"
+                    >
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-3)]">
+                        <Trophy className="h-4 w-4 text-[var(--accent)]" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
+                          Torneo completato
+                        </p>
+                        <p className="truncate text-sm font-bold text-white">{recentTournament.name}</p>
+                        <p className="text-xs text-[var(--muted-text)]">{winnersLine}</p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-[var(--accent)]" />
+                    </Link>
+                  )
+                })()}
 
                 {/* Performance insight */}
                 {recs.performanceInsight && (
