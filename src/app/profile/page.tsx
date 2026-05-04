@@ -63,6 +63,14 @@ const SUPPORTERS: { name: string; image?: string; icon?: string; href: string; t
     href: "https://flexenofitness.com/",
     tagline: "Fitness & Performance",
   },
+  {
+    name: "Pepitos Eyewear",
+    image: "/sponsors/pepitos-logo.png",
+    icon: "/sponsors/pepitos-logo.png",
+    href: "https://www.pepitoseyewear.com/",
+    tagline: "Occhiali da sole",
+    accentColor: "#f59e0b",
+  },
 ]
 
 // ── helpers ──────────────────────────────────────────────────────────
