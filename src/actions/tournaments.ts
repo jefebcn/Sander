@@ -933,15 +933,22 @@ export async function submitChiceceFinalScore(
     })
   )
 
+  // Determine true winners from the FINAL match result
+  const teamAWon = (teamAScore) > (teamBScore)
+  const winnerPlayerIds = new Set(
+    match.players.filter((p) => p.team === (teamAWon ? 0 : 1)).map((p) => p.playerId),
+  )
+
   // Update career stats (same logic as completeTournament)
   for (let i = 0; i < regs.length; i++) {
     const wl = playerWL[regs[i].playerId] ?? { won: 0, lost: 0 }
+    const isWinner = winnerPlayerIds.has(regs[i].playerId)
     await db.player.update({
       where: { id: regs[i].playerId },
       data: {
         matchesWon: { increment: wl.won },
         matchesLost: { increment: wl.lost },
-        tournamentsWon: i === 0 ? { increment: 1 } : undefined,
+        tournamentsWon: isWinner ? { increment: 1 } : undefined,
       },
     })
     // Recalculate winRatePct
@@ -1198,6 +1205,54 @@ export async function adminRecalculateAllStats() {
   revalidatePath("/profile")
 }
 
+
+// ─── Admin: corregge tournamentsWon per un torneo Chicece già completato ─────
+
+export async function adminFixChiceceTournamentWinners(tournamentId: string) {
+  const session = await getCurrentSession()
+  const ok = await canManageTournament(session?.user?.email, tournamentId)
+  if (!ok) throw new Error("Non autorizzato")
+
+  const finalMatch = await db.match.findFirst({
+    where: { tournamentId, bracketSection: "FINAL", isCompleted: true },
+    include: { players: true },
+  })
+  if (!finalMatch) throw new Error("Nessuna finale completata trovata")
+
+  const teamAWon = (finalMatch.teamAScore ?? 0) > (finalMatch.teamBScore ?? 0)
+  const winnerIds = finalMatch.players
+    .filter((p) => p.team === (teamAWon ? 0 : 1))
+    .map((p) => p.playerId)
+
+  // Who got the trophy incorrectly (first by chicecePlusMinus)
+  const regs = await db.tournamentRegistration.findMany({
+    where: { tournamentId },
+    orderBy: { chicecePlusMinus: "desc" },
+  })
+  const wrongId = regs[0]?.playerId
+
+  await db.$transaction(async (tx) => {
+    // Remove trophy from wrong player if they're not a true winner
+    if (wrongId && !winnerIds.includes(wrongId)) {
+      await tx.player.update({
+        where: { id: wrongId },
+        data: { tournamentsWon: { decrement: 1 } },
+      })
+    }
+    // Grant trophy to true winners who don't already have it from this fix
+    for (const pid of winnerIds) {
+      if (pid !== wrongId) {
+        await tx.player.update({
+          where: { id: pid },
+          data: { tournamentsWon: { increment: 1 } },
+        })
+      }
+    }
+  })
+
+  revalidatePath(`/tournaments/${tournamentId}`)
+  revalidatePath("/players")
+}
 
 // ─── Admin: rigenera i round Chicece non ancora completati ───────────────────
 
