@@ -66,7 +66,7 @@ export function SessionsInfoSheet() {
             className="w-full rounded-t-3xl bg-[var(--surface-1)] p-5 space-y-3 overflow-y-auto"
             style={{
               maxHeight: "80vh",
-              paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 2.5rem)",
+              paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 5.5rem)",
             }}
             onClick={(e) => e.stopPropagation()}
           >

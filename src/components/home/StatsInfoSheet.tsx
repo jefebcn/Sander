@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { Info, X } from "lucide-react"
 
 const ITEMS = [
@@ -31,6 +32,47 @@ const ITEMS = [
 
 export function StatsInfoSheet() {
   const [open, setOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
+
+  const sheet = open ? (
+    <div
+      className="fixed inset-0 z-[999] flex items-end"
+      style={{ background: "rgba(0,0,0,0.7)" }}
+      onClick={() => setOpen(false)}
+    >
+      <div
+        className="w-full rounded-t-3xl bg-[var(--surface-1)] p-5 space-y-4 overflow-y-auto"
+        style={{
+          maxHeight: "80vh",
+          paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 5.5rem)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mx-auto mb-1 h-1 w-10 rounded-full bg-white/20" />
+        <div className="flex items-center justify-between">
+          <p className="text-base font-black text-white">Cosa significano i dati?</p>
+          <button
+            onClick={() => setOpen(false)}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-2)]"
+          >
+            <X className="h-4 w-4 text-white" />
+          </button>
+        </div>
+        <div className="space-y-3">
+          {ITEMS.map((item) => (
+            <div key={item.label} className="rounded-2xl bg-[var(--surface-2)] px-4 py-3">
+              <p className="text-xs font-black uppercase tracking-wider text-[var(--accent)]">
+                {item.label}
+              </p>
+              <p className="mt-1 text-sm text-white/80">{item.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  ) : null
 
   return (
     <>
@@ -43,45 +85,8 @@ export function StatsInfoSheet() {
         <Info className="h-4 w-4" />
       </button>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-[200] flex items-end"
-          style={{ background: "rgba(0,0,0,0.6)" }}
-          onClick={() => setOpen(false)}
-        >
-          <div
-            className="w-full rounded-t-3xl bg-[var(--surface-1)] p-5 space-y-4 overflow-y-auto"
-            style={{
-              maxHeight: "80vh",
-              paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 2.5rem)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <p className="text-base font-black text-white">Cosa significano i dati?</p>
-              <button
-                onClick={() => setOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-2)]"
-              >
-                <X className="h-4 w-4 text-white" />
-              </button>
-            </div>
-
-            {/* Items */}
-            <div className="space-y-3">
-              {ITEMS.map((item) => (
-                <div key={item.label} className="rounded-2xl bg-[var(--surface-2)] px-4 py-3">
-                  <p className="text-xs font-black uppercase tracking-wider text-[var(--accent)]">
-                    {item.label}
-                  </p>
-                  <p className="mt-1 text-sm text-white/80">{item.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      {mounted && createPortal(sheet, document.body)}
     </>
   )
 }
+
