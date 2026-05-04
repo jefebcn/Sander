@@ -321,6 +321,17 @@ export async function registerForTournament(input: unknown): Promise<
       },
     })
 
+    // Notify player of successful registration
+    import("@/lib/push").then(({ notifyPlayer }) =>
+      notifyPlayer(player.id, {
+        title: `🏐 Iscrizione confermata!`,
+        body: isFree
+          ? `Sei nella lista per ${tournament.name}. Ti avviseremo quando inizia.`
+          : `Sei in lista per ${tournament.name}. Completa il pagamento per confermare il posto.`,
+        url: `/tournaments/${tournamentId}`,
+      }),
+    ).catch(() => {})
+
     revalidatePath("/tournaments")
     revalidatePath(`/tournaments/${tournamentId}`)
     return { ok: true }

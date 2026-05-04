@@ -62,6 +62,18 @@ export async function createTournament(input: CreateTournamentInput): Promise<{ 
     })
 
     revalidatePath("/tournaments")
+
+    // Notify registered players of their tournament registration
+    if (data.playerIds.length > 0) {
+      import("@/lib/push").then(({ notifyPlayers }) =>
+        notifyPlayers(data.playerIds, {
+          title: `🏐 Sei iscritto a ${data.name}!`,
+          body: `Hai un posto nel torneo. Ti avviseremo quando inizia.`,
+          url: `/tournaments/${tournament.id}`,
+        }),
+      ).catch(() => {})
+    }
+
     return { ok: true, id: tournament.id }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) }
@@ -190,13 +202,31 @@ export async function startTournament(tournamentId: string) {
 
   // Notify all participants that the tournament has started
   try {
-    const { notifyPlayers } = await import("@/lib/push")
+    const { notifyPlayers, notifyPlayer } = await import("@/lib/push")
     const registeredPlayerIds = tournament.registrations.map((r) => r.playerId)
     await notifyPlayers(registeredPlayerIds, {
       title: `🏐 ${tournament.name} è iniziato!`,
       body: "Il torneo è in corso. Controlla il tabellone e preparati per il tuo match.",
       url: `/tournaments/${tournamentId}`,
     })
+
+    // For Chicece: send each player their first-round court assignment
+    if (tournament.type === "CHICECE") {
+      const round1Matches = await db.match.findMany({
+        where: { tournamentId, round: 1, bracketSection: "GROUP" },
+        include: { players: { select: { playerId: true } } },
+      })
+      for (const m of round1Matches) {
+        const court = m.courtLabel ? ` al ${m.courtLabel}` : ""
+        for (const mp of m.players) {
+          await notifyPlayer(mp.playerId, {
+            title: `📍 Primo match${court}!`,
+            body: `Round 1 — ${tournament.name}. Vai in campo!`,
+            url: `/tournaments/${tournamentId}`,
+          })
+        }
+      }
+    }
   } catch {
     // Non-critical — don't block tournament start if push fails
   }
@@ -644,6 +674,7 @@ async function startChiceceTournament(
           round: round.roundNumber,
           matchNumber: match.matchNumber,
           bracketSection: "GROUP",
+          courtLabel: assignCourtLabel(round.roundNumber, match.matchNumber, tournament.chiceceMatchCount, tournament.numCourts),
         })),
       ),
       select: { id: true, round: true, matchNumber: true },
@@ -721,6 +752,31 @@ export async function submitChiceceGroupMatchScore(
       })
     }
   })
+
+  // Notify each player about their next pending match
+  const allPlayerIds = [...teamAPlayerIds, ...teamBPlayerIds]
+  import("@/lib/push").then(async ({ notifyPlayer }) => {
+    for (const playerId of allPlayerIds) {
+      const nextMatch = await db.match.findFirst({
+        where: {
+          tournamentId: match.tournamentId,
+          bracketSection: "GROUP",
+          isCompleted: false,
+          players: { some: { playerId } },
+        },
+        orderBy: [{ round: "asc" }, { matchNumber: "asc" }],
+        include: { tournament: { select: { name: true } } },
+      })
+      if (nextMatch) {
+        const court = nextMatch.courtLabel ? ` al ${nextMatch.courtLabel}` : ""
+        await notifyPlayer(playerId, {
+          title: `⏭️ Prossimo match pronto${court}!`,
+          body: `Round ${nextMatch.round} — ${nextMatch.tournament.name}`,
+          url: `/tournaments/${match.tournamentId}`,
+        })
+      }
+    }
+  }).catch(() => {})
 
   revalidatePath(`/tournaments/${match.tournamentId}`)
 }
