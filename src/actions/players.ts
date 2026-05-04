@@ -376,6 +376,62 @@ async function getLastMonthTopPlayers() {
   return { top3, month, year }
 }
 
+export interface TournamentWin {
+  tournamentId: string
+  tournamentName: string
+  date: Date
+}
+
+/**
+ * Returns all tournaments that the given player won.
+ * For non-Chicece: rank=1 in TournamentStanding.
+ * For Chicece: player was on the winning team of the FINAL match.
+ */
+export async function getTournamentWins(playerId: string): Promise<TournamentWin[]> {
+  const [standingWins, chiceceMatches] = await Promise.all([
+    db.tournamentStanding.findMany({
+      where: {
+        playerId,
+        rank: 1,
+        tournament: { type: { not: "CHICECE" }, status: "COMPLETED" },
+      },
+      include: { tournament: { select: { id: true, name: true, date: true } } },
+    }),
+    db.match.findMany({
+      where: {
+        bracketSection: "FINAL",
+        isCompleted: true,
+        tournament: { type: "CHICECE", status: "COMPLETED" },
+        players: { some: { playerId } },
+      },
+      include: {
+        tournament: { select: { id: true, name: true, date: true } },
+        players: { select: { playerId: true, team: true } },
+      },
+    }),
+  ])
+
+  const wins: TournamentWin[] = standingWins.map((s) => ({
+    tournamentId: s.tournamentId,
+    tournamentName: s.tournament.name,
+    date: s.tournament.date,
+  }))
+
+  for (const m of chiceceMatches) {
+    const teamAWon = (m.teamAScore ?? 0) > (m.teamBScore ?? 0)
+    const winnerTeam = teamAWon ? 0 : 1
+    if (m.players.some((p) => p.playerId === playerId && p.team === winnerTeam)) {
+      wins.push({
+        tournamentId: m.tournament.id,
+        tournamentName: m.tournament.name,
+        date: m.tournament.date,
+      })
+    }
+  }
+
+  return wins.sort((a, b) => b.date.getTime() - a.date.getTime())
+}
+
 /** Awards MonthlyAward records for the previous month's top 3. Idempotent. */
 export async function awardMonthlyPodium() {
   const { top3, month, year } = await getLastMonthTopPlayers()

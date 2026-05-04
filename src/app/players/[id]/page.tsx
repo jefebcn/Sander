@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic"
 
-import { getPlayer, getHeadToHeadStats, getPlayerAdvancedStats } from "@/actions/players"
+import { getPlayer, getHeadToHeadStats, getPlayerAdvancedStats, getTournamentWins } from "@/actions/players"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { getStreak } from "@/lib/streak"
 import { db } from "@/lib/db"
@@ -28,7 +28,7 @@ const AWARD_META: Record<number, { emoji: string; label: string; color: string }
 
 export default async function PlayerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const [player, streak, me, ratingHistory, advancedStats, monthlyAwards] = await Promise.all([
+  const [player, streak, me, ratingHistory, advancedStats, monthlyAwards, tournamentWins] = await Promise.all([
     getPlayer(id),
     getStreak(id),
     getCurrentPlayer(),
@@ -42,6 +42,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
       where: { playerId: id },
       orderBy: [{ year: "desc" }, { month: "desc" }],
     }),
+    getTournamentWins(id),
   ])
 
   // Only show H2H when a different logged-in player is viewing this profile
@@ -54,13 +55,33 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
       <div className="px-4 pb-6 flex flex-col gap-4">
         <SanderCardFut playerData={playerToCardData(player)} />
 
-        {/* ── Titoli mensili ──────────────────────────────────── */}
-        {monthlyAwards.length > 0 && (
+        {/* ── Titoli ──────────────────────────────────────────── */}
+        {(tournamentWins.length > 0 || monthlyAwards.length > 0) && (
           <div className="rounded-2xl bg-[var(--surface-2)] p-5 flex flex-col gap-3">
             <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
               Titoli
             </p>
             <div className="flex flex-wrap gap-2">
+              {tournamentWins.map((win) => {
+                const d = new Date(win.date)
+                return (
+                  <div
+                    key={win.tournamentId}
+                    className="flex items-center gap-2 rounded-xl px-3 py-2"
+                    style={{ background: "var(--surface-3)", border: "1px solid #FFD70030" }}
+                  >
+                    <span className="text-xl leading-none">🏆</span>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-black leading-tight" style={{ color: "#FFD700" }}>
+                        {win.tournamentName}
+                      </span>
+                      <span className="text-[0.65rem] text-white/40 leading-tight">
+                        {MONTH_NAMES_IT[d.getMonth() + 1]} {d.getFullYear()}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
               {monthlyAwards.map((award) => {
                 const meta = AWARD_META[award.position]
                 return (

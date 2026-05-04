@@ -21,6 +21,7 @@ import { AdminRecalcStatsButton } from "@/components/profile/AdminRecalcStatsBut
 import { NotifyPermission } from "@/components/push/NotifyPermission"
 
 import { isAdminEmail } from "@/lib/isAdmin"
+import { getTournamentWins } from "@/actions/players"
 
 const MONTH_NAMES_IT = [
   "", "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
@@ -109,7 +110,7 @@ export default async function ProfilePage({ searchParams }: Props) {
   const isAdmin = isAdminEmail(session?.user?.email)
 
   // Always fetch core player data
-  const [fullPlayer, streak, monthlyAwards] = await Promise.all([
+  const [fullPlayer, streak, monthlyAwards, tournamentWins] = await Promise.all([
     db.player.findUniqueOrThrow({
       where: { id: player.id },
       include: {
@@ -121,6 +122,7 @@ export default async function ProfilePage({ searchParams }: Props) {
       where: { playerId: player.id },
       orderBy: [{ year: "desc" }, { month: "desc" }],
     }),
+    getTournamentWins(player.id),
   ])
 
   // Tab-specific data
@@ -248,12 +250,32 @@ export default async function ProfilePage({ searchParams }: Props) {
               staPct: fullPlayer.staPct,
             }}
           />
-          {monthlyAwards.length > 0 && (
+          {(tournamentWins.length > 0 || monthlyAwards.length > 0) && (
             <div className="rounded-2xl bg-[var(--surface-2)] p-5 flex flex-col gap-3">
               <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
                 Titoli
               </p>
               <div className="flex flex-wrap gap-2">
+                {tournamentWins.map((win) => {
+                  const d = new Date(win.date)
+                  return (
+                    <div
+                      key={win.tournamentId}
+                      className="flex items-center gap-2 rounded-xl px-3 py-2"
+                      style={{ background: "var(--surface-3)", border: "1px solid #FFD70030" }}
+                    >
+                      <span className="text-xl leading-none">🏆</span>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-black leading-tight" style={{ color: "#FFD700" }}>
+                          {win.tournamentName}
+                        </span>
+                        <span className="text-[0.65rem] text-white/40 leading-tight">
+                          {MONTH_NAMES_IT[d.getMonth() + 1]} {d.getFullYear()}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
                 {monthlyAwards.map((award) => {
                   const meta = AWARD_META[award.position]
                   return (
