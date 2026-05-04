@@ -45,13 +45,16 @@ export function StatsInfoSheet() {
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-end"
+          className="fixed inset-0 z-[200] flex items-end"
           style={{ background: "rgba(0,0,0,0.6)" }}
           onClick={() => setOpen(false)}
         >
           <div
-            className="w-full rounded-t-3xl bg-[var(--surface-1)] p-5 pb-10 space-y-4"
-            style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 2.5rem)" }}
+            className="w-full rounded-t-3xl bg-[var(--surface-1)] p-5 space-y-4 overflow-y-auto"
+            style={{
+              maxHeight: "80vh",
+              paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 2.5rem)",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}

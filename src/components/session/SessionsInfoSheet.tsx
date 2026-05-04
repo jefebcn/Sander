@@ -58,13 +58,16 @@ export function SessionsInfoSheet() {
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-end overflow-y-auto"
+          className="fixed inset-0 z-[200] flex items-end"
           style={{ background: "rgba(0,0,0,0.65)" }}
           onClick={() => setOpen(false)}
         >
           <div
-            className="w-full rounded-t-3xl bg-[var(--surface-1)] p-5 space-y-3"
-            style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 2.5rem)" }}
+            className="w-full rounded-t-3xl bg-[var(--surface-1)] p-5 space-y-3 overflow-y-auto"
+            style={{
+              maxHeight: "80vh",
+              paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 2.5rem)",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Handle */}
