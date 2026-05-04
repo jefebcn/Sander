@@ -268,6 +268,19 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             isAdmin={isAdmin}
           />
         )}
+
+        {isAdmin && tournament.status === "COMPLETED" && (
+          <div className="px-4 pb-4">
+            <form action={async () => {
+              "use server"
+              await adminFixChiceceTournamentWinners(id)
+            }}>
+              <button type="submit" className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] py-3 text-sm font-bold text-[var(--danger)]">
+                🔧 Correggi vincitore torneo (admin)
+              </button>
+            </form>
+          </div>
+        )}
       </div>
     )
   }
@@ -463,16 +476,6 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             <Trophy className="mx-auto mb-2 h-10 w-10 text-[var(--gold)]" aria-hidden="true" />
             <p className="font-bold text-[var(--completed)]">Torneo Completato</p>
           </div>
-          {isAdmin && tournament.type === "CHICECE" && (
-            <form action={async () => {
-              "use server"
-              await adminFixChiceceTournamentWinners(id)
-            }}>
-              <button type="submit" className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] py-3 text-sm font-bold text-[var(--danger)]">
-                🔧 Correggi vincitore torneo (admin)
-              </button>
-            </form>
-          )}
         </div>
       )}
 
