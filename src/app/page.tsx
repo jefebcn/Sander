@@ -13,6 +13,7 @@ import { ClientOnlyHomeWidgets } from "@/components/home/ClientOnlyHomeWidgets"
 import { NotificationBell } from "@/components/push/NotificationBell"
 import { getUnreadCount } from "@/actions/notifications"
 import { WhatsAppAnnouncementBanner } from "@/components/home/WhatsAppAnnouncementBanner"
+import { StatsInfoSheet } from "@/components/home/StatsInfoSheet"
 
 function getMilestoneTitle(level: number): string {
   if (level >= 50) return "Sand King"
@@ -235,7 +236,10 @@ export default async function Home() {
             {/* ── Stats Card ────────────────────────────────────── */}
             <div className="slide-up stagger-3 overflow-hidden rounded-2xl bg-[var(--surface-2)]">
               {/* Top stats row */}
-              <div className="grid grid-cols-3 divide-x divide-[var(--border)] pb-3 pt-5">
+              <div className="relative grid grid-cols-3 divide-x divide-[var(--border)] pb-3 pt-5">
+                <div className="absolute right-2 top-2">
+                  <StatsInfoSheet />
+                </div>
                 {[
                   { label: "GLK", value: glickoDisplay },
                   { label: "PLA", value: fullPlayer.sessionsPlayed },
