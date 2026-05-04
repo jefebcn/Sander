@@ -4,6 +4,7 @@ import { listTournaments } from "@/actions/tournaments"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
 import { TournamentPriceBadge } from "@/components/tournament/TournamentPriceBadge"
+import { TournamentsInfoSheet } from "@/components/tournament/TournamentsInfoSheet"
 import { formatDate } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
@@ -17,13 +18,16 @@ export default async function TournamentsPage() {
         title="Tornei"
         subtitle={`${tournaments.length} torneo${tournaments.length !== 1 ? "i" : ""}`}
         action={
-          <Link
-            href="/tournaments/new"
-            className="flex h-11 items-center gap-2 rounded-xl bg-[var(--accent)] px-4 text-sm font-bold text-black"
-          >
-            <Plus className="h-5 w-5" />
-            Nuovo
-          </Link>
+          <div className="flex items-center gap-2">
+            <TournamentsInfoSheet />
+            <Link
+              href="/tournaments/new"
+              className="flex h-11 items-center gap-2 rounded-xl bg-[var(--accent)] px-4 text-sm font-bold text-black"
+            >
+              <Plus className="h-5 w-5" />
+              Nuovo
+            </Link>
+          </div>
         }
       />
 
