@@ -5,6 +5,7 @@ import { Plus } from "lucide-react"
 import { getSessions } from "@/actions/sessions"
 import { FilterableSessionList } from "@/components/session/FilterableSessionList"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
+import { SessionsInfoSheet } from "@/components/session/SessionsInfoSheet"
 
 export default async function SessionsPage() {
   const currentPlayer = await getCurrentPlayer()
@@ -14,8 +15,9 @@ export default async function SessionsPage() {
     <div className="flex flex-col pb-6">
 
       {/* ── Page title ────────────────────────────────────────── */}
-      <div className="px-4 pt-5 pb-4">
+      <div className="flex items-center justify-between px-4 pt-5 pb-4">
         <h1 className="text-2xl font-black text-white">Partite</h1>
+        <SessionsInfoSheet />
       </div>
 
       {/* ── Session list with format filters ─────────────────── */}
