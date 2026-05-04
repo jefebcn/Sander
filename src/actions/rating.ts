@@ -33,11 +33,61 @@ export async function updateGlickoAfterSession(sessionId: string) {
         },
       },
       sets: true,
+      sessionMatches: {
+        where: { isCompleted: true },
+        include: { players: { select: { playerId: true, team: true } } },
+      },
     },
   })
   if (!session) return
 
-  // Need sets to determine a winner
+  // matchMode: aggregate each player's results across all individual matches
+  if (session.matchMode) {
+    const decided = session.sessionMatches.filter(
+      (m) => m.teamAScore != null && m.teamBScore != null && m.teamAScore !== m.teamBScore,
+    )
+    if (decided.length === 0) return
+
+    const allIds = new Set<string>()
+    for (const m of decided) m.players.forEach((p) => allIds.add(p.playerId))
+    const freshPlayers = await db.player.findMany({
+      where: { id: { in: [...allIds] } },
+      select: { id: true, glickoRating: true, glickoRD: true, glickoVolatility: true },
+    })
+    const snap = new Map(freshPlayers.map((p) => [p.id, p]))
+    const playerResults = new Map<string, { opponent: { rating: number; rd: number; volatility: number }; score: number }[]>()
+    allIds.forEach((id) => playerResults.set(id, []))
+
+    for (const m of decided) {
+      const aWon = (m.teamAScore ?? 0) > (m.teamBScore ?? 0)
+      const teamA = m.players.filter((p) => p.team === 0)
+      const teamB = m.players.filter((p) => p.team === 1)
+      for (const pA of teamA) {
+        const sA = snap.get(pA.playerId)
+        if (!sA) continue
+        const score = 0.5 + FRIENDLY_DAMPENING * (aWon ? 0.5 : -0.5)
+        for (const pB of teamB) {
+          const sB = snap.get(pB.playerId)
+          if (!sB) continue
+          playerResults.get(pA.playerId)!.push({ opponent: { rating: sB.glickoRating, rd: sB.glickoRD, volatility: sB.glickoVolatility }, score })
+          playerResults.get(pB.playerId)!.push({ opponent: { rating: sA.glickoRating, rd: sA.glickoRD, volatility: sA.glickoVolatility }, score: 1 - score })
+        }
+      }
+    }
+
+    for (const [playerId, results] of playerResults) {
+      if (results.length === 0) continue
+      const s = snap.get(playerId)
+      if (!s) continue
+      const updated = updateRating({ rating: s.glickoRating, rd: s.glickoRD, volatility: s.glickoVolatility }, results)
+      await db.player.update({ where: { id: playerId }, data: { glickoRating: updated.rating, glickoRD: updated.rd, glickoVolatility: updated.volatility } })
+      await db.ratingHistory.create({ data: { playerId, rating: updated.rating, rd: updated.rd, source: "session", sourceId: sessionId } })
+    }
+    revalidatePath("/players")
+    return
+  }
+
+  // non-matchMode: need sets to determine a winner
   if (!session.sets || session.sets.length === 0) return
 
   // Determine winning team from set results (majority of sets won)

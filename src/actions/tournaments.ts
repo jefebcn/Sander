@@ -1368,12 +1368,14 @@ async function _replaySession(sessionId: string) {
     })
   }
 
-  // matchMode W/L from individual SessionMatch results
+  // matchMode: W/L + Glicko from individual SessionMatch results
   if (session.matchMode) {
     const sessionMatches = await db.sessionMatch.findMany({
       where: { sessionId, isCompleted: true },
       include: { players: { select: { playerId: true, team: true } } },
     })
+
+    // W/L per match
     for (const m of sessionMatches) {
       if (m.teamAScore == null || m.teamBScore == null || m.teamAScore === m.teamBScore) continue
       const aWon = m.teamAScore > m.teamBScore
@@ -1381,13 +1383,55 @@ async function _replaySession(sessionId: string) {
         const won = (mp.team === 0 && aWon) || (mp.team === 1 && !aWon)
         await db.player.update({
           where: { id: mp.playerId },
-          data: { matchesWon: { increment: won ? 1 : 0 }, matchesLost: { increment: won ? 0 : 1 } },
+          data: won ? { matchesWon: { increment: 1 } } : { matchesLost: { increment: 1 } },
         })
+      }
+    }
+
+    // Glicko: aggregate all match results into one rating period per player
+    const decidedMatches = sessionMatches.filter(
+      (m) => m.teamAScore != null && m.teamBScore != null && m.teamAScore !== m.teamBScore,
+    )
+    if (decidedMatches.length > 0) {
+      const allIds = new Set<string>()
+      for (const m of decidedMatches) m.players.forEach((p) => allIds.add(p.playerId))
+      const freshPlayers = await db.player.findMany({
+        where: { id: { in: [...allIds] } },
+        select: { id: true, glickoRating: true, glickoRD: true, glickoVolatility: true },
+      })
+      const snap = new Map(freshPlayers.map((p) => [p.id, p]))
+      const playerResults = new Map<string, { opponent: { rating: number; rd: number; volatility: number }; score: number }[]>()
+      allIds.forEach((id) => playerResults.set(id, []))
+
+      for (const m of decidedMatches) {
+        const aWon = (m.teamAScore ?? 0) > (m.teamBScore ?? 0)
+        const teamA = m.players.filter((p) => p.team === 0)
+        const teamB = m.players.filter((p) => p.team === 1)
+        for (const pA of teamA) {
+          const sA = snap.get(pA.playerId)
+          if (!sA) continue
+          const score = 0.5 + FRIENDLY_DAMPENING * (aWon ? 0.5 : -0.5)
+          for (const pB of teamB) {
+            const sB = snap.get(pB.playerId)
+            if (!sB) continue
+            playerResults.get(pA.playerId)!.push({ opponent: { rating: sB.glickoRating, rd: sB.glickoRD, volatility: sB.glickoVolatility }, score })
+            playerResults.get(pB.playerId)!.push({ opponent: { rating: sA.glickoRating, rd: sA.glickoRD, volatility: sA.glickoVolatility }, score: 1 - score })
+          }
+        }
+      }
+
+      for (const [playerId, results] of playerResults) {
+        if (results.length === 0) continue
+        const s = snap.get(playerId)
+        if (!s) continue
+        const updated = updateRating({ rating: s.glickoRating, rd: s.glickoRD, volatility: s.glickoVolatility }, results)
+        await db.player.update({ where: { id: playerId }, data: { glickoRating: updated.rating, glickoRD: updated.rd, glickoVolatility: updated.volatility } })
+        await db.ratingHistory.create({ data: { playerId, rating: updated.rating, rd: updated.rd, source: "session", sourceId: sessionId } })
       }
     }
   }
 
-  // Session sets W/L (non-matchMode sessions with results)
+  // non-matchMode W/L: count 1 win or loss per session based on set majority
   if (!session.matchMode && session.sets.length > 0) {
     const aSetWins = session.sets.filter((s) => s.teamAScore > s.teamBScore).length
     const bSetWins = session.sets.filter((s) => s.teamBScore > s.teamAScore).length
@@ -1398,21 +1442,20 @@ async function _replaySession(sessionId: string) {
         const won = p.team === winTeam
         await db.player.update({
           where: { id: p.playerId },
-          data: { matchesWon: { increment: won ? 1 : 0 }, matchesLost: { increment: won ? 0 : 1 } },
+          data: won ? { matchesWon: { increment: 1 } } : { matchesLost: { increment: 1 } },
         })
       }
     }
   }
 
-  // Dampened Glicko update (same algorithm as updateGlickoAfterSession)
-  if (session.sets.length > 0) {
+  // non-matchMode Glicko: session outcome from set scores
+  if (!session.matchMode && session.sets.length > 0) {
     const aSetWins = session.sets.filter((s) => s.teamAScore > s.teamBScore).length
     const bSetWins = session.sets.filter((s) => s.teamBScore > s.teamAScore).length
     if (aSetWins !== bSetWins) {
       const winningTeam = aSetWins > bSetWins ? 0 : 1
       const assigned = session.participants.filter((p) => p.team !== null)
       if (assigned.length >= 2) {
-        // Snapshot current ratings (read fresh from DB to reflect prior events)
         const freshPlayers = await db.player.findMany({
           where: { id: { in: assigned.map((p) => p.playerId) } },
           select: { id: true, glickoRating: true, glickoRD: true, glickoVolatility: true },
