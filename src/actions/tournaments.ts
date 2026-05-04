@@ -815,17 +815,17 @@ export async function advanceChiceceToFinals(
   if (new Set(partnerIds).size !== 4) throw new Error("Ogni finalista deve avere un partner diverso")
 
   await db.$transaction(async (tx) => {
-    // Semifinal: 3° + partner vs 4° + partner
+    // Semifinal 1: 1° + partner vs 4° + partner
     await tx.match.create({
       data: {
         tournamentId,
         round: 1,
         matchNumber: 1,
-        bracketSection: "SEMI",
+        bracketSection: "SEMI1",
         players: {
           create: [
-            { playerId: p3, team: 0 },
-            { playerId: p3Partner, team: 0 },
+            { playerId: p1, team: 0 },
+            { playerId: p1Partner, team: 0 },
             { playerId: p4, team: 1 },
             { playerId: p4Partner, team: 1 },
           ],
@@ -833,24 +833,25 @@ export async function advanceChiceceToFinals(
       },
     })
 
-    // Final: 1° + partner vs 2° + partner
+    // Semifinal 2: 2° + partner vs 3° + partner
     await tx.match.create({
       data: {
         tournamentId,
-        round: 2,
+        round: 1,
         matchNumber: 2,
-        bracketSection: "FINAL",
+        bracketSection: "SEMI2",
         players: {
           create: [
-            { playerId: p1, team: 0 },
-            { playerId: p1Partner, team: 0 },
-            { playerId: p2, team: 1 },
-            { playerId: p2Partner, team: 1 },
+            { playerId: p2, team: 0 },
+            { playerId: p2Partner, team: 0 },
+            { playerId: p3, team: 1 },
+            { playerId: p3Partner, team: 1 },
           ],
         },
       },
     })
 
+    // FINAL is not created here — it is auto-created when both semis complete
     await tx.tournament.update({
       where: { id: tournamentId },
       data: { chicecePhase: "FINAL" },
@@ -872,11 +873,19 @@ export async function adminResetChiceceToGroupPhase(tournamentId: string) {
   if (tournament.type !== "CHICECE") throw new Error("Non è un torneo Chicece")
   if (tournament.chicecePhase !== "FINAL") throw new Error("Il torneo non è in fase finale")
 
-  // Only delete non-completed FINAL/SEMI matches — don't touch completed ones
+  // Block reset if any semi has already been played
+  const completedSemi = await db.match.findFirst({
+    where: { tournamentId, bracketSection: { in: ["SEMI", "SEMI1", "SEMI2"] }, isCompleted: true },
+  })
+  if (completedSemi) {
+    throw new Error("Non puoi reimpostare dopo che una semifinale è già stata giocata")
+  }
+
+  // Delete all non-completed FINAL/SEMI matches
   const toDelete = await db.match.findMany({
     where: {
       tournamentId,
-      bracketSection: { in: ["FINAL", "SEMI"] },
+      bracketSection: { in: ["FINAL", "SEMI", "SEMI1", "SEMI2"] },
       isCompleted: false,
     },
     select: { id: true },
@@ -912,28 +921,98 @@ export async function submitChiceceFinalScore(
   if (!ok) throw new Error("Non autorizzato")
 
   if (match.isCompleted) throw new Error("Partita già completata")
-  if (match.bracketSection !== "FINAL" && match.bracketSection !== "SEMI") {
+  const validSections = ["FINAL", "SEMI", "SEMI1", "SEMI2"]
+  if (!validSections.includes(match.bracketSection)) {
     throw new Error("Non è una partita finale")
   }
 
+  // ── Semifinal (new SEMI1/SEMI2 format) ──────────────────────────────────
+  if (match.bracketSection === "SEMI1" || match.bracketSection === "SEMI2") {
+    const otherSection = match.bracketSection === "SEMI1" ? "SEMI2" : "SEMI1"
+
+    await db.$transaction(async (tx) => {
+      await tx.match.update({
+        where: { id: matchId },
+        data: { teamAScore, teamBScore, isCompleted: true },
+      })
+
+      // Check if the other semi is already done
+      const otherSemi = await tx.match.findFirst({
+        where: { tournamentId: match.tournamentId, bracketSection: otherSection, isCompleted: true },
+        include: { players: { select: { playerId: true, team: true } } },
+      })
+
+      if (otherSemi) {
+        // Both semis done — derive winners and create FINAL
+        const thisTeamAWon = teamAScore > teamBScore
+        const thisWinners = match.players
+          .filter((p) => p.team === (thisTeamAWon ? 0 : 1))
+          .map((p) => p.playerId)
+
+        const otherTeamAWon = (otherSemi.teamAScore ?? 0) > (otherSemi.teamBScore ?? 0)
+        const otherWinners = otherSemi.players
+          .filter((p) => p.team === (otherTeamAWon ? 0 : 1))
+          .map((p) => p.playerId)
+
+        // SEMI1 winners → team 0 in final, SEMI2 winners → team 1
+        const [semi1Winners, semi2Winners] =
+          match.bracketSection === "SEMI1"
+            ? [thisWinners, otherWinners]
+            : [otherWinners, thisWinners]
+
+        await tx.match.create({
+          data: {
+            tournamentId: match.tournamentId,
+            round: 2,
+            matchNumber: 3,
+            bracketSection: "FINAL",
+            players: {
+              create: [
+                { playerId: semi1Winners[0], team: 0 },
+                { playerId: semi1Winners[1], team: 0 },
+                { playerId: semi2Winners[0], team: 1 },
+                { playerId: semi2Winners[1], team: 1 },
+              ],
+            },
+          },
+        })
+
+        // Notify finalists
+        const allFinalistIds = [...semi1Winners, ...semi2Winners]
+        import("@/lib/push").then(({ notifyPlayers }) =>
+          notifyPlayers(allFinalistIds, {
+            title: "🏆 La finale è pronta!",
+            body: "Entrambe le semifinali sono finite. Si gioca la grande finale!",
+            url: `/tournaments/${match.tournamentId}`,
+          }),
+        ).catch(() => {})
+      }
+    })
+
+    revalidatePath(`/tournaments/${match.tournamentId}`)
+    return
+  }
+
+  // ── Old-format SEMI (backward compat) ────────────────────────────────────
+  if (match.bracketSection === "SEMI") {
+    await db.match.update({
+      where: { id: matchId },
+      data: { teamAScore, teamBScore, isCompleted: true },
+    })
+    revalidatePath(`/tournaments/${match.tournamentId}`)
+    return
+  }
+
+  // ── FINAL ────────────────────────────────────────────────────────────────
   await db.match.update({
     where: { id: matchId },
     data: { teamAScore, teamBScore, isCompleted: true },
   })
 
-  // Only complete the tournament when the FINAL (not the semi) is done
-  if (match.bracketSection === "FINAL") {
-    await db.tournament.update({
-      where: { id: match.tournamentId },
-      data: { status: "COMPLETED" },
-    })
-  }
-
-  // Standings, career stats and Glicko only run after the FINAL (not semi)
-  if (match.bracketSection !== "FINAL") {
-    revalidatePath(`/tournaments/${match.tournamentId}`)
-    return
-  }
+  await db.tournament.update({
+    where: { id: match.tournamentId },
+    data: { status: "COMPLETED" },
+  })
 
   // Apply per-tournament Glicko-2 update (final match completes the tournament)
   await applyTournamentGlicko(match.tournamentId).catch(() => {})
@@ -1427,6 +1506,55 @@ export async function adminRegenerateChiceceRounds(tournamentId: string) {
   })
 
   revalidatePath(`/tournaments/${tournamentId}`)
+}
+
+// ─── Chicece: scambia giocatori tra partite pendenti ─────────────────────────
+
+export async function swapChiceceGroupMatchPlayers(
+  tournamentId: string,
+  matchAId: string,
+  playerAId: string,
+  matchBId: string,
+  playerBId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const session = await getCurrentSession()
+    const ok = await canManageTournament(session?.user?.email, tournamentId)
+    if (!ok) throw new Error("Non autorizzato")
+
+    if (matchAId === matchBId) throw new Error("I due giocatori devono essere in partite diverse")
+    if (playerAId === playerBId) throw new Error("Seleziona due giocatori diversi")
+
+    const [matchA, matchB] = await Promise.all([
+      db.match.findUniqueOrThrow({ where: { id: matchAId }, select: { bracketSection: true, isCompleted: true, tournamentId: true } }),
+      db.match.findUniqueOrThrow({ where: { id: matchBId }, select: { bracketSection: true, isCompleted: true, tournamentId: true } }),
+    ])
+
+    if (matchA.tournamentId !== tournamentId || matchB.tournamentId !== tournamentId) {
+      throw new Error("Le partite non appartengono a questo torneo")
+    }
+    if (matchA.bracketSection !== "GROUP" || matchB.bracketSection !== "GROUP") {
+      throw new Error("Solo le partite del girone possono essere modificate")
+    }
+    if (matchA.isCompleted || matchB.isCompleted) {
+      throw new Error("Non puoi modificare una partita già completata")
+    }
+
+    const [mpA, mpB] = await Promise.all([
+      db.matchPlayer.findFirstOrThrow({ where: { matchId: matchAId, playerId: playerAId } }),
+      db.matchPlayer.findFirstOrThrow({ where: { matchId: matchBId, playerId: playerBId } }),
+    ])
+
+    await db.$transaction([
+      db.matchPlayer.update({ where: { id: mpA.id }, data: { playerId: playerBId } }),
+      db.matchPlayer.update({ where: { id: mpB.id }, data: { playerId: playerAId } }),
+    ])
+
+    revalidatePath(`/tournaments/${tournamentId}`)
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Errore sconosciuto" }
+  }
 }
 
 // ─── Team Info (name + logo per coppia) ──────────────────────────────────────
