@@ -1224,29 +1224,20 @@ export async function adminFixChiceceTournamentWinners(tournamentId: string) {
     .filter((p) => p.team === (teamAWon ? 0 : 1))
     .map((p) => p.playerId)
 
-  // Who got the trophy incorrectly (first by chicecePlusMinus)
+  // All other registrations that were wrongly awarded
   const regs = await db.tournamentRegistration.findMany({
     where: { tournamentId },
     orderBy: { chicecePlusMinus: "desc" },
   })
-  const wrongId = regs[0]?.playerId
+  const wrongIds = regs.map((r) => r.playerId).filter((pid) => !winnerIds.includes(pid))
 
+  // Use absolute values (idempotent — safe to run multiple times)
   await db.$transaction(async (tx) => {
-    // Remove trophy from wrong player if they're not a true winner
-    if (wrongId && !winnerIds.includes(wrongId)) {
-      await tx.player.update({
-        where: { id: wrongId },
-        data: { tournamentsWon: { decrement: 1 } },
-      })
-    }
-    // Grant trophy to true winners who don't already have it from this fix
     for (const pid of winnerIds) {
-      if (pid !== wrongId) {
-        await tx.player.update({
-          where: { id: pid },
-          data: { tournamentsWon: { increment: 1 } },
-        })
-      }
+      await tx.player.update({ where: { id: pid }, data: { tournamentsWon: 1 } })
+    }
+    for (const pid of wrongIds) {
+      await tx.player.update({ where: { id: pid }, data: { tournamentsWon: 0 } })
     }
   })
 
