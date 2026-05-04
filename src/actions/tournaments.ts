@@ -593,7 +593,64 @@ async function startBracketTournament(
   })
 }
 
-// ── Chicece helpers ────────────────────────────────────────────────────────
+// ── Skill-constrained pair generator ─────────────────────────────────────────
+// Rules:
+//   - L3 + L3 (same level, preferred)
+//   - L3 + L2 allowed as fallback (adjacent level)
+//   - L3 + L1 NEVER (diff = 2) except as absolute last resort
+//   - Never repeats a partnership if a valid alternative exists
+
+interface _PlayerSkill { id: string; skill: number }
+
+function generateSkillConstrainedPairs(
+  players: _PlayerSkill[],
+  usedPartnerships: Set<string>,
+): [string, string][] {
+  const paired = new Set<string>()
+  const result: [string, string][] = []
+
+  // Sort L3 first so they get first pick of same-level partners
+  const sorted = [...players].sort((a, b) => b.skill - a.skill || a.id.localeCompare(b.id))
+
+  function findPartner(player: _PlayerSkill, maxDiff: number, allowRepeat: boolean): _PlayerSkill | null {
+    let best: _PlayerSkill | null = null
+    let bestIsRepeat = true
+    let bestDiff = 99
+    for (const c of sorted) {
+      if (c.id === player.id || paired.has(c.id)) continue
+      const diff = Math.abs(c.skill - player.skill)
+      if (diff > maxDiff) continue
+      const isRepeat = usedPartnerships.has([player.id, c.id].sort().join("|"))
+      if (!allowRepeat && isRepeat) continue
+      if (best === null || (bestIsRepeat && !isRepeat) || (bestIsRepeat === isRepeat && diff < bestDiff)) {
+        best = c; bestIsRepeat = isRepeat; bestDiff = diff
+      }
+    }
+    return best
+  }
+
+  function pass(maxDiff: number, allowRepeat: boolean) {
+    for (const p of sorted) {
+      if (paired.has(p.id)) continue
+      const partner = findPartner(p, maxDiff, allowRepeat)
+      if (partner) {
+        result.push([p.id, partner.id])
+        paired.add(p.id)
+        paired.add(partner.id)
+      }
+    }
+  }
+
+  pass(0, false)   // same level, no repeats
+  pass(1, false)   // adjacent (L3↔L2, L2↔L1), no repeats — L3↔L1 impossible (diff=2)
+  pass(1, true)    // adjacent, allow repeats
+  pass(99, false)  // last resort: any pairing, no repeats (L3↔L1 only here)
+  pass(99, true)   // absolute fallback: any pairing with repeats
+
+  return result
+}
+
+// ── Chicece group schedule ────────────────────────────────────────────────────
 
 function generateChiceceGroupSchedule(
   playerIds: string[],
@@ -604,49 +661,33 @@ function generateChiceceGroupSchedule(
   if (n % 4 !== 0) throw new Error("Chicece richiede un numero di giocatori multiplo di 4")
 
   const numMatchesPerRound = n / 4
-  // 1-factorization: n-1 rounds with fully unique partnerships.
-  // Fix playerIds[n-1]. In round k, pair it with playerIds[k % (n-1)].
-  // Remaining n/2-1 pairs: (k-i mod (n-1), k+i mod (n-1)) for i=1..(n/2-1).
-  const others = n - 1 // indices 0..n-2 rotate; index n-1 is fixed
-  const maxUniqueRounds = others
+  const players: _PlayerSkill[] = playerIds.map((id) => ({
+    id,
+    skill: skillLevels?.get(id) ?? 2,
+  }))
+  const skillOf = (id: string) => players.find((p) => p.id === id)!.skill
 
+  const usedPartnerships = new Set<string>()
   const rounds = []
 
-  for (let round = 0; round < numRounds; round++) {
-    const k = round % maxUniqueRounds
+  for (let roundIdx = 0; roundIdx < numRounds; roundIdx++) {
+    const pairs = generateSkillConstrainedPairs(players, usedPartnerships)
 
-    // Build n/2 unique partner pairs via 1-factorization
-    const pairs: [string, string][] = []
-    pairs.push([playerIds[n - 1], playerIds[k]])
-    for (let i = 1; i <= Math.floor((others - 1) / 2); i++) {
-      const a = (k - i + others) % others
-      const b = (k + i) % others
-      pairs.push([playerIds[a], playerIds[b]])
-    }
-    // pairs.length === n/2
+    for (const [a, b] of pairs) usedPartnerships.add([a, b].sort().join("|"))
 
-    // If skillLevels provided: sort pairs by team skill sum so that
-    // adjacent pairs (→ same match) have similar strength levels.
-    // Partnership uniqueness is still guaranteed by the 1-factorization above.
-    if (skillLevels) {
-      pairs.sort((a, b) => {
-        const sumA = (skillLevels.get(a[0]) ?? 2) + (skillLevels.get(a[1]) ?? 2)
-        const sumB = (skillLevels.get(b[0]) ?? 2) + (skillLevels.get(b[1]) ?? 2)
-        return sumA - sumB
-      })
-    }
+    // Sort pairs by skill sum → adjacent pairs form matches (balanced matchups)
+    pairs.sort((a, b) => (skillOf(a[0]) + skillOf(a[1])) - (skillOf(b[0]) + skillOf(b[1])))
 
-    // Group pairs into matches: pair[0] vs pair[1], pair[2] vs pair[3], etc.
     const matches = []
     for (let i = 0; i < numMatchesPerRound; i++) {
       matches.push({
         teamA: pairs[2 * i] as [string, string],
         teamB: pairs[2 * i + 1] as [string, string],
-        matchNumber: round * numMatchesPerRound + i + 1,
+        matchNumber: roundIdx * numMatchesPerRound + i + 1,
       })
     }
 
-    rounds.push({ roundNumber: round + 1, matches })
+    rounds.push({ roundNumber: roundIdx + 1, matches })
   }
   return rounds
 }
@@ -1016,6 +1057,44 @@ export async function submitChiceceFinalScore(
 
   // Apply per-tournament Glicko-2 update (final match completes the tournament)
   await applyTournamentGlicko(match.tournamentId).catch(() => {})
+
+  // ── Placement bonuses (on top of Glicko) ───────────────────────────────
+  // Tournament winner and finalists get a direct glickoRating boost because
+  // Glicko alone rewards opponent quality but not the prestige of reaching the finals.
+  const WINNER_BONUS = 200
+  const RUNNER_UP_BONUS = 100
+  const SEMIFINALIST_BONUS = 40
+
+  const finalForBonus = await db.match.findFirst({
+    where: { tournamentId: match.tournamentId, bracketSection: "FINAL", isCompleted: true },
+    include: { players: { select: { playerId: true, team: true } } },
+  })
+  if (finalForBonus) {
+    const teamAWon = (finalForBonus.teamAScore ?? 0) > (finalForBonus.teamBScore ?? 0)
+    const winnerIds = finalForBonus.players.filter((p) => p.team === (teamAWon ? 0 : 1)).map((p) => p.playerId)
+    const runnerUpIds = finalForBonus.players.filter((p) => p.team !== (teamAWon ? 0 : 1)).map((p) => p.playerId)
+    await db.$transaction([
+      db.player.updateMany({ where: { id: { in: winnerIds } }, data: { glickoRating: { increment: WINNER_BONUS } } }),
+      db.player.updateMany({ where: { id: { in: runnerUpIds } }, data: { glickoRating: { increment: RUNNER_UP_BONUS } } }),
+    ])
+  }
+
+  // Semi-finalists who didn't reach the final
+  const semis = await db.match.findMany({
+    where: { tournamentId: match.tournamentId, bracketSection: { in: ["SEMI1", "SEMI2"] }, isCompleted: true },
+    include: { players: { select: { playerId: true, team: true } } },
+  })
+  const semiLoserIds: string[] = []
+  for (const semi of semis) {
+    const aWon = (semi.teamAScore ?? 0) > (semi.teamBScore ?? 0)
+    semi.players.filter((p) => p.team === (aWon ? 1 : 0)).forEach((p) => semiLoserIds.push(p.playerId))
+  }
+  if (semiLoserIds.length > 0) {
+    await db.player.updateMany({
+      where: { id: { in: semiLoserIds } },
+      data: { glickoRating: { increment: SEMIFINALIST_BONUS } },
+    })
+  }
 
   // ── Create TournamentStanding records + update career stats ──
   const regs = await db.tournamentRegistration.findMany({
@@ -1396,14 +1475,14 @@ export async function adminRegenerateChiceceRounds(tournamentId: string) {
 
   const allMatches = await db.match.findMany({
     where: { tournamentId, bracketSection: "GROUP" },
-    include: { players: true },
+    include: { players: { select: { playerId: true, team: true } } },
     orderBy: [{ round: "asc" }, { matchNumber: "asc" }],
   })
 
   const completedMatches = allMatches.filter((m) => m.isCompleted)
   const pendingMatchIds = allMatches.filter((m) => !m.isCompleted).map((m) => m.id)
 
-  // Extract already-used partnerships from completed matches
+  // Build used partnerships from completed matches
   const usedPartnerships = new Set<string>()
   for (const m of completedMatches) {
     const teamA = m.players.filter((p) => p.team === 0).map((p) => p.playerId)
@@ -1412,51 +1491,35 @@ export async function adminRegenerateChiceceRounds(tournamentId: string) {
     if (teamB.length === 2) usedPartnerships.add([teamB[0], teamB[1]].sort().join("|"))
   }
 
-  const completedRoundNums = new Set(completedMatches.map((m) => m.round))
-  const completedRoundCount = completedRoundNums.size
+  const completedRoundCount = new Set(completedMatches.map((m) => m.round)).size
   const roundsRemaining = tournament.chiceceMatchCount - completedRoundCount
   if (roundsRemaining <= 0) throw new Error("Tutti i round sono già stati completati")
 
-  // Fetch player IDs ordered by registration date
   const registrations = await db.tournamentRegistration.findMany({
     where: { tournamentId },
     orderBy: { createdAt: "asc" },
-    select: { playerId: true },
+    select: { playerId: true, skillLevel: true },
   })
-  const playerIds = registrations.map((r) => r.playerId)
-  const n = playerIds.length
+  const players: _PlayerSkill[] = registrations.map((r) => ({ id: r.playerId, skill: r.skillLevel ?? 2 }))
+  const n = players.length
   if (n % 4 !== 0) throw new Error(`Numero di giocatori non valido (${n})`)
 
-  const others = n - 1
   const numMatchesPerRound = n / 4
-
-  function kPairs(k: number): [string, string][] {
-    const pairs: [string, string][] = []
-    pairs.push([playerIds[n - 1], playerIds[k]])
-    for (let i = 1; i <= Math.floor((others - 1) / 2); i++) {
-      const a = (k - i + others) % others
-      const b = (k + i) % others
-      pairs.push([playerIds[a], playerIds[b]])
-    }
-    return pairs
-  }
-
-  // Pick k-values that produce no already-used partnerships
-  const validKs: number[] = []
-  for (let k = 0; k < others && validKs.length < roundsRemaining; k++) {
-    const conflicting = kPairs(k).some(([a, b]) => usedPartnerships.has([a, b].sort().join("|")))
-    if (!conflicting) validKs.push(k)
-  }
-  if (validKs.length < roundsRemaining) {
-    throw new Error(`Solo ${validKs.length} combinazioni valide trovate, servono ${roundsRemaining}`)
-  }
-
   const completedMatchCount = completedMatches.length
   const totalRounds = tournament.chiceceMatchCount
+  const skillOf = (id: string) => players.find((p) => p.id === id)!.skill
 
-  const newRounds = validKs.slice(0, roundsRemaining).map((k, ri) => {
+  const activeUsed = new Set(usedPartnerships)
+  const newRounds: Array<{ roundNumber: number; matches: Array<{ teamA: [string, string]; teamB: [string, string]; matchNumber: number; roundNumber: number; courtLabel: string }> }> = []
+
+  for (let ri = 0; ri < roundsRemaining; ri++) {
     const roundNumber = completedRoundCount + ri + 1
-    const pairs = kPairs(k)
+    const pairs = generateSkillConstrainedPairs(players, activeUsed)
+
+    for (const [a, b] of pairs) activeUsed.add([a, b].sort().join("|"))
+
+    pairs.sort((a, b) => (skillOf(a[0]) + skillOf(a[1])) - (skillOf(b[0]) + skillOf(b[1])))
+
     const matches = Array.from({ length: numMatchesPerRound }, (_, mi) => {
       const matchNumber = completedMatchCount + ri * numMatchesPerRound + mi + 1
       return {
@@ -1467,8 +1530,8 @@ export async function adminRegenerateChiceceRounds(tournamentId: string) {
         courtLabel: assignCourtLabel(roundNumber, matchNumber, totalRounds, tournament.numCourts),
       }
     })
-    return { roundNumber, matches }
-  })
+    newRounds.push({ roundNumber, matches })
+  }
 
   await db.$transaction(async (tx) => {
     if (pendingMatchIds.length > 0) {
@@ -1506,6 +1569,88 @@ export async function adminRegenerateChiceceRounds(tournamentId: string) {
   })
 
   revalidatePath(`/tournaments/${tournamentId}`)
+}
+
+// ─── Admin: reimposta fase finale (anche torneo completato) ──────────────────
+// Usata per correggere i risultati delle semifinali/finale dopo che sono già stati inseriti.
+// Ripristina le rating Glicko pre-torneo, cancella SEMI/FINAL e riporta a GROUP phase.
+
+export async function adminForceResetChiceceFinals(tournamentId: string) {
+  await requireAdmin()
+
+  const tournament = await db.tournament.findUniqueOrThrow({
+    where: { id: tournamentId },
+    select: { type: true },
+  })
+  if (tournament.type !== "CHICECE") throw new Error("Non è un torneo Chicece")
+
+  const participantIds = (
+    await db.tournamentRegistration.findMany({ where: { tournamentId }, select: { playerId: true } })
+  ).map((r) => r.playerId)
+
+  await db.$transaction(async (tx) => {
+    // 1. Decrement tournamentsWon for current winners (before deleting the match)
+    const finalMatch = await tx.match.findFirst({
+      where: { tournamentId, bracketSection: "FINAL", isCompleted: true },
+      include: { players: { select: { playerId: true, team: true } } },
+    })
+    if (finalMatch) {
+      const teamAWon = (finalMatch.teamAScore ?? 0) > (finalMatch.teamBScore ?? 0)
+      const winnerIds = finalMatch.players
+        .filter((p) => p.team === (teamAWon ? 0 : 1))
+        .map((p) => p.playerId)
+      for (const wid of winnerIds) {
+        await tx.player.updateMany({
+          where: { id: wid, tournamentsWon: { gt: 0 } },
+          data: { tournamentsWon: { decrement: 1 } },
+        })
+      }
+    }
+
+    // 2. Restore Glicko ratings to pre-tournament state
+    for (const playerId of participantIds) {
+      const tournamentHistoryEntry = await tx.ratingHistory.findFirst({
+        where: { playerId, source: "tournament", sourceId: tournamentId },
+        orderBy: { createdAt: "asc" },
+      })
+      if (tournamentHistoryEntry) {
+        const preEntry = await tx.ratingHistory.findFirst({
+          where: { playerId, createdAt: { lt: tournamentHistoryEntry.createdAt } },
+          orderBy: { createdAt: "desc" },
+        })
+        if (preEntry) {
+          await tx.player.update({
+            where: { id: playerId },
+            data: { glickoRating: preEntry.rating, glickoRD: preEntry.rd },
+          })
+        }
+        await tx.ratingHistory.deleteMany({
+          where: { playerId, source: "tournament", sourceId: tournamentId },
+        })
+      }
+    }
+
+    // 3. Delete all SEMI/FINAL matches
+    const toDelete = await tx.match.findMany({
+      where: { tournamentId, bracketSection: { in: ["SEMI", "SEMI1", "SEMI2", "FINAL"] } },
+      select: { id: true },
+    })
+    if (toDelete.length > 0) {
+      await tx.match.deleteMany({ where: { id: { in: toDelete.map((m) => m.id) } } })
+    }
+
+    // 4. Delete standings
+    await tx.tournamentStanding.deleteMany({ where: { tournamentId } })
+
+    // 5. Reset to LIVE + GROUP phase so draft UI reappears
+    await tx.tournament.update({
+      where: { id: tournamentId },
+      data: { status: "LIVE", chicecePhase: "GROUP" },
+    })
+  })
+
+  revalidatePath(`/tournaments/${tournamentId}`)
+  revalidatePath("/tournaments")
 }
 
 // ─── Chicece: scambia giocatori tra partite pendenti ─────────────────────────

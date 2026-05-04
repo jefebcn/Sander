@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { ChevronRight, Play, Trophy, Shuffle, Trash2, LogOut } from "lucide-react"
 import { getTournamentDashboard } from "@/actions/standings"
-import { startTournament, completeTournament, adminFixChiceceTournamentWinners } from "@/actions/tournaments"
+import { startTournament, completeTournament, adminFixChiceceTournamentWinners, adminForceResetChiceceFinals } from "@/actions/tournaments"
 import { cancelRegistration, adminRemoveRegistration } from "@/actions/registration"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
@@ -270,7 +270,15 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
         )}
 
         {isAdmin && tournament.status === "COMPLETED" && (
-          <div className="px-4 pb-4">
+          <div className="space-y-2 px-4 pb-4">
+            <form action={async () => {
+              "use server"
+              await adminForceResetChiceceFinals(id)
+            }}>
+              <button type="submit" className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] py-3 text-sm font-bold text-[var(--danger)]">
+                🔄 Reimposta fase finale (admin)
+              </button>
+            </form>
             <form action={async () => {
               "use server"
               await adminFixChiceceTournamentWinners(id)
