@@ -11,6 +11,7 @@ import { generateRoundRobinSchedule } from "@/lib/tournament/roundRobin"
 import { generateDoubleElimination } from "@/lib/tournament/doubleElim"
 import { assignCourtLabel } from "@/lib/tournament/courtSchedule"
 import { applyTournamentGlicko } from "@/actions/matches"
+import { updateRating } from "@/lib/tournament/glicko2"
 import { isAdminEmail, canManageTournament } from "@/lib/isAdmin"
 
 async function requireAdmin() {
@@ -1331,109 +1332,262 @@ export async function deleteTournament(tournamentId: string) {
   revalidatePath("/profile")
 }
 
+// ── Full system recalculation helpers ────────────────────────────────────────
+
+const FRIENDLY_DAMPENING = 0.4
+const WINNER_BONUS      = 200
+const RUNNER_UP_BONUS   = 100
+const SEMIFINALIST_BONUS = 40
+
 /**
- * Reset every player's Glicko-2 to defaults, then replay all completed
- * tournaments in date order. Used after deleting a completed tournament.
+ * Replay a completed session: XP, sessionsPlayed, W/L stats, and dampened Glicko.
+ * Reads current player ratings from DB so chronological ordering is preserved.
  */
-async function fullGlickoRecalculation() {
-  await db.player.updateMany({
-    data: { glickoRating: 1500, glickoRD: 350, glickoVolatility: 0.06 },
+async function _replaySession(sessionId: string) {
+  const session = await db.session.findUnique({
+    where: { id: sessionId },
+    include: {
+      participants: {
+        include: {
+          player: { select: { id: true, glickoRating: true, glickoRD: true, glickoVolatility: true } },
+        },
+      },
+      sets: true,
+    },
   })
+  if (!session) return
 
-  const completed = await db.tournament.findMany({
-    where: { status: "COMPLETED" },
-    orderBy: { date: "asc" },
-    select: { id: true },
-  })
+  // XP + sessionsPlayed for every participant
+  for (const p of session.participants) {
+    const cur = await db.player.findUnique({ where: { id: p.playerId }, select: { xp: true } })
+    if (!cur) continue
+    const newXp = cur.xp + 10
+    await db.player.update({
+      where: { id: p.playerId },
+      data: { sessionsPlayed: { increment: 1 }, xp: newXp, level: Math.max(1, Math.floor(newXp / 100) + 1) },
+    })
+  }
 
-  for (const t of completed) {
-    await applyTournamentGlicko(t.id)
+  // matchMode W/L from individual SessionMatch results
+  if (session.matchMode) {
+    const sessionMatches = await db.sessionMatch.findMany({
+      where: { sessionId, isCompleted: true },
+      include: { players: { select: { playerId: true, team: true } } },
+    })
+    for (const m of sessionMatches) {
+      if (m.teamAScore == null || m.teamBScore == null || m.teamAScore === m.teamBScore) continue
+      const aWon = m.teamAScore > m.teamBScore
+      for (const mp of m.players) {
+        const won = (mp.team === 0 && aWon) || (mp.team === 1 && !aWon)
+        await db.player.update({
+          where: { id: mp.playerId },
+          data: { matchesWon: { increment: won ? 1 : 0 }, matchesLost: { increment: won ? 0 : 1 } },
+        })
+      }
+    }
+  }
+
+  // Session sets W/L (non-matchMode sessions with results)
+  if (!session.matchMode && session.sets.length > 0) {
+    const aSetWins = session.sets.filter((s) => s.teamAScore > s.teamBScore).length
+    const bSetWins = session.sets.filter((s) => s.teamBScore > s.teamAScore).length
+    if (aSetWins !== bSetWins) {
+      const winTeam = aSetWins > bSetWins ? 0 : 1
+      for (const p of session.participants) {
+        if (p.team === null) continue
+        const won = p.team === winTeam
+        await db.player.update({
+          where: { id: p.playerId },
+          data: { matchesWon: { increment: won ? 1 : 0 }, matchesLost: { increment: won ? 0 : 1 } },
+        })
+      }
+    }
+  }
+
+  // Dampened Glicko update (same algorithm as updateGlickoAfterSession)
+  if (session.sets.length > 0) {
+    const aSetWins = session.sets.filter((s) => s.teamAScore > s.teamBScore).length
+    const bSetWins = session.sets.filter((s) => s.teamBScore > s.teamAScore).length
+    if (aSetWins !== bSetWins) {
+      const winningTeam = aSetWins > bSetWins ? 0 : 1
+      const assigned = session.participants.filter((p) => p.team !== null)
+      if (assigned.length >= 2) {
+        // Snapshot current ratings (read fresh from DB to reflect prior events)
+        const freshPlayers = await db.player.findMany({
+          where: { id: { in: assigned.map((p) => p.playerId) } },
+          select: { id: true, glickoRating: true, glickoRD: true, glickoVolatility: true },
+        })
+        const snap = new Map(freshPlayers.map((p) => [p.id, p]))
+        const teamA = assigned.filter((p) => p.team === 0)
+        const teamB = assigned.filter((p) => p.team === 1)
+        const updates: { id: string; rating: number; rd: number; volatility: number }[] = []
+
+        for (const part of assigned) {
+          const s = snap.get(part.playerId)
+          if (!s) continue
+          const won = part.team === winningTeam
+          const score = 0.5 + FRIENDLY_DAMPENING * (won ? 0.5 : -0.5)
+          const opponents = part.team === 0 ? teamB : teamA
+          const results = opponents
+            .map((opp) => snap.get(opp.playerId))
+            .filter(Boolean)
+            .map((opp) => ({ opponent: { rating: opp!.glickoRating, rd: opp!.glickoRD, volatility: opp!.glickoVolatility }, score }))
+          if (results.length === 0) continue
+          const updated = updateRating({ rating: s.glickoRating, rd: s.glickoRD, volatility: s.glickoVolatility }, results)
+          updates.push({ id: part.playerId, ...updated })
+        }
+
+        for (const u of updates) {
+          await db.player.update({ where: { id: u.id }, data: { glickoRating: u.rating, glickoRD: u.rd, glickoVolatility: u.volatility } })
+          await db.ratingHistory.create({ data: { playerId: u.id, rating: u.rating, rd: u.rd, source: "session", sourceId: sessionId } })
+        }
+      }
+    }
   }
 }
 
 /**
- * Admin-only: reset ALL player stats (Glicko + career) to zero/default,
- * then replay every completed tournament to restore correct values.
- * Use this to fix stats corrupted by deletions that happened before the
- * revert logic was in place.
+ * Replay a completed tournament: career stats from standings, Glicko,
+ * and placement bonuses for Chicece (winner +200, runner-up +100, semis +40).
+ */
+async function _replayTournament(tournamentId: string, type: string) {
+  const standings = await db.tournamentStanding.findMany({ where: { tournamentId } })
+
+  // Determine CHICECE final winners (rank=1 in standings is group leader, not tournament winner)
+  let chiceceWinnerIds: string[] = []
+  let chiceceFinalMatch: { teamAScore: number | null; teamBScore: number | null; players: { playerId: string; team: number }[] } | null = null
+  if (type === "CHICECE") {
+    chiceceFinalMatch = await db.match.findFirst({
+      where: { tournamentId, bracketSection: "FINAL", isCompleted: true },
+      include: { players: { select: { playerId: true, team: true } } },
+    })
+    if (chiceceFinalMatch) {
+      const aWon = (chiceceFinalMatch.teamAScore ?? 0) > (chiceceFinalMatch.teamBScore ?? 0)
+      chiceceWinnerIds = chiceceFinalMatch.players
+        .filter((p) => p.team === (aWon ? 0 : 1))
+        .map((p) => p.playerId)
+    }
+  }
+
+  // Career stats from standings
+  for (const s of standings) {
+    const isWinner = type === "CHICECE" ? chiceceWinnerIds.includes(s.playerId) : s.rank === 1
+    await db.player.update({
+      where: { id: s.playerId },
+      data: {
+        matchesWon:     { increment: s.matchesWon },
+        matchesLost:    { increment: s.matchesLost },
+        tournamentsWon: isWinner ? { increment: 1 } : undefined,
+      },
+    })
+  }
+
+  // Full Glicko update (no dampening) + ratingHistory
+  await applyTournamentGlicko(tournamentId)
+
+  // Placement bonuses for Chicece only
+  if (type === "CHICECE" && chiceceFinalMatch) {
+    const aWon = (chiceceFinalMatch.teamAScore ?? 0) > (chiceceFinalMatch.teamBScore ?? 0)
+    const winnerIds    = chiceceFinalMatch.players.filter((p) => p.team === (aWon ? 0 : 1)).map((p) => p.playerId)
+    const runnerUpIds  = chiceceFinalMatch.players.filter((p) => p.team !== (aWon ? 0 : 1)).map((p) => p.playerId)
+    if (winnerIds.length)   await db.player.updateMany({ where: { id: { in: winnerIds } },   data: { glickoRating: { increment: WINNER_BONUS } } })
+    if (runnerUpIds.length) await db.player.updateMany({ where: { id: { in: runnerUpIds } }, data: { glickoRating: { increment: RUNNER_UP_BONUS } } })
+
+    const semis = await db.match.findMany({
+      where: { tournamentId, bracketSection: { in: ["SEMI1", "SEMI2"] }, isCompleted: true },
+      include: { players: { select: { playerId: true, team: true } } },
+    })
+    const semiLoserIds: string[] = []
+    for (const semi of semis) {
+      const sAWon = (semi.teamAScore ?? 0) > (semi.teamBScore ?? 0)
+      semi.players.filter((p) => p.team === (sAWon ? 1 : 0)).forEach((p) => semiLoserIds.push(p.playerId))
+    }
+    if (semiLoserIds.length) await db.player.updateMany({ where: { id: { in: semiLoserIds } }, data: { glickoRating: { increment: SEMIFINALIST_BONUS } } })
+  }
+}
+
+/**
+ * Full recalculation of ALL player stats and Glicko ratings.
+ * Processes every completed session and tournament in chronological order:
+ *   - Sessions:    XP, W/L stats, dampened Glicko (FRIENDLY_DAMPENING=0.4)
+ *   - Tournaments: W/L stats from standings, full Glicko, placement bonuses (Chicece)
+ * winRatePct is recomputed for all players at the end.
+ */
+async function _fullRecalculation() {
+  // Reset every player to zero/default
+  await db.player.updateMany({
+    data: {
+      glickoRating: 1500, glickoRD: 350, glickoVolatility: 0.06,
+      matchesWon: 0, matchesLost: 0, winRatePct: 0, tournamentsWon: 0,
+      sessionsPlayed: 0, xp: 0, level: 1,
+    },
+  })
+  // Clear rating history — will be recreated chronologically during replay
+  await db.ratingHistory.deleteMany({})
+
+  // Collect all events sorted chronologically
+  const [completedSessions, completedTournaments] = await Promise.all([
+    db.session.findMany({
+      where: { status: "COMPLETED" },
+      orderBy: { date: "asc" },
+      select: { id: true, date: true },
+    }),
+    db.tournament.findMany({
+      where: { status: "COMPLETED" },
+      orderBy: { date: "asc" },
+      select: { id: true, date: true, type: true },
+    }),
+  ])
+
+  type TimedEvent =
+    | { kind: "session";    id: string; date: Date }
+    | { kind: "tournament"; id: string; date: Date; type: string }
+
+  const events: TimedEvent[] = [
+    ...completedSessions.map((s) => ({ kind: "session" as const, id: s.id, date: s.date })),
+    ...completedTournaments.map((t) => ({ kind: "tournament" as const, id: t.id, date: t.date, type: t.type })),
+  ].sort((a, b) => a.date.getTime() - b.date.getTime())
+
+  for (const event of events) {
+    if (event.kind === "session") {
+      await _replaySession(event.id)
+    } else {
+      await _replayTournament(event.id, event.type)
+    }
+  }
+
+  // Recompute winRatePct for every player
+  const allPlayers = await db.player.findMany({ select: { id: true, matchesWon: true, matchesLost: true } })
+  for (const p of allPlayers) {
+    const total = p.matchesWon + p.matchesLost
+    if (total > 0) {
+      await db.player.update({
+        where: { id: p.id },
+        data: { winRatePct: Math.round((p.matchesWon / total) * 100) },
+      })
+    }
+  }
+}
+
+/**
+ * Internal helper: replay Glicko for all tournaments only (no session replay).
+ * Used after deleting a completed tournament or resetting Chicece finals.
+ * Now delegates to _fullRecalculation for consistency.
+ */
+async function fullGlickoRecalculation() {
+  await _fullRecalculation()
+}
+
+/**
+ * Admin-only: full reset and replay of ALL player stats (Glicko + career)
+ * from every completed session and tournament in chronological order.
  */
 export async function adminRecalculateAllStats() {
   await requireAdmin()
-
-  // Reset all career stats
-  await db.player.updateMany({
-    data: {
-      glickoRating: 1500,
-      glickoRD: 350,
-      glickoVolatility: 0.06,
-      matchesWon: 0,
-      matchesLost: 0,
-      winRatePct: 0,
-      tournamentsWon: 0,
-    },
-  })
-
-  // Replay every completed tournament in chronological order
-  const completed = await db.tournament.findMany({
-    where: { status: "COMPLETED" },
-    orderBy: { date: "asc" },
-    select: { id: true, type: true },
-  })
-
-  for (const t of completed) {
-    // Re-apply career stats from standings (all tournament types)
-    const standings = await db.tournamentStanding.findMany({
-      where: { tournamentId: t.id },
-      orderBy: { rank: "asc" },
-    })
-    if (standings.length > 0) {
-      // For CHICECE: winner is determined by the FINAL match (not rank=1 which is group standings)
-      // For other types: rank=1 is the winner
-      let chiceceFinalWinnerIds: string[] = []
-      if (t.type === "CHICECE") {
-        const finalMatch = await db.match.findFirst({
-          where: { tournamentId: t.id, bracketSection: "FINAL", isCompleted: true },
-          include: { players: { select: { playerId: true, team: true } } },
-        })
-        if (finalMatch) {
-          const teamAWon = (finalMatch.teamAScore ?? 0) > (finalMatch.teamBScore ?? 0)
-          chiceceFinalWinnerIds = finalMatch.players
-            .filter((p) => p.team === (teamAWon ? 0 : 1))
-            .map((p) => p.playerId)
-        }
-      }
-
-      await db.$transaction(
-        standings.map((s) => {
-          const isWinner = t.type === "CHICECE"
-            ? chiceceFinalWinnerIds.includes(s.playerId)
-            : s.rank === 1
-          return db.player.update({
-            where: { id: s.playerId },
-            data: {
-              matchesWon:     { increment: s.matchesWon },
-              matchesLost:    { increment: s.matchesLost },
-              tournamentsWon: isWinner ? { increment: 1 } : undefined,
-            },
-          })
-        })
-      )
-      for (const s of standings) {
-        const player = await db.player.findUniqueOrThrow({ where: { id: s.playerId } })
-        const total = player.matchesWon + player.matchesLost
-        await db.player.update({
-          where: { id: s.playerId },
-          data: { winRatePct: total === 0 ? 0 : Math.round((player.matchesWon / total) * 100) },
-        })
-      }
-    }
-
-    // Re-apply Glicko-2
-    await applyTournamentGlicko(t.id)
-  }
-
+  await _fullRecalculation()
   revalidatePath("/players")
   revalidatePath("/profile")
+  revalidatePath("/tournaments")
 }
 
 
