@@ -1381,33 +1381,50 @@ export async function adminRecalculateAllStats() {
   })
 
   for (const t of completed) {
-    // Re-apply career stats from standings (non-CHICECE only)
-    if (t.type !== "CHICECE") {
-      const standings = await db.tournamentStanding.findMany({
-        where: { tournamentId: t.id },
-        orderBy: { rank: "asc" },
-      })
-      if (standings.length > 0) {
-        await db.$transaction(
-          standings.map((s) =>
-            db.player.update({
-              where: { id: s.playerId },
-              data: {
-                matchesWon:    { increment: s.matchesWon },
-                matchesLost:   { increment: s.matchesLost },
-                tournamentsWon: s.rank === 1 ? { increment: 1 } : undefined,
-              },
-            })
-          )
-        )
-        for (const s of standings) {
-          const player = await db.player.findUniqueOrThrow({ where: { id: s.playerId } })
-          const total = player.matchesWon + player.matchesLost
-          await db.player.update({
-            where: { id: s.playerId },
-            data: { winRatePct: total === 0 ? 0 : Math.round((player.matchesWon / total) * 100) },
-          })
+    // Re-apply career stats from standings (all tournament types)
+    const standings = await db.tournamentStanding.findMany({
+      where: { tournamentId: t.id },
+      orderBy: { rank: "asc" },
+    })
+    if (standings.length > 0) {
+      // For CHICECE: winner is determined by the FINAL match (not rank=1 which is group standings)
+      // For other types: rank=1 is the winner
+      let chiceceFinalWinnerIds: string[] = []
+      if (t.type === "CHICECE") {
+        const finalMatch = await db.match.findFirst({
+          where: { tournamentId: t.id, bracketSection: "FINAL", isCompleted: true },
+          include: { players: { select: { playerId: true, team: true } } },
+        })
+        if (finalMatch) {
+          const teamAWon = (finalMatch.teamAScore ?? 0) > (finalMatch.teamBScore ?? 0)
+          chiceceFinalWinnerIds = finalMatch.players
+            .filter((p) => p.team === (teamAWon ? 0 : 1))
+            .map((p) => p.playerId)
         }
+      }
+
+      await db.$transaction(
+        standings.map((s) => {
+          const isWinner = t.type === "CHICECE"
+            ? chiceceFinalWinnerIds.includes(s.playerId)
+            : s.rank === 1
+          return db.player.update({
+            where: { id: s.playerId },
+            data: {
+              matchesWon:     { increment: s.matchesWon },
+              matchesLost:    { increment: s.matchesLost },
+              tournamentsWon: isWinner ? { increment: 1 } : undefined,
+            },
+          })
+        })
+      )
+      for (const s of standings) {
+        const player = await db.player.findUniqueOrThrow({ where: { id: s.playerId } })
+        const total = player.matchesWon + player.matchesLost
+        await db.player.update({
+          where: { id: s.playerId },
+          data: { winRatePct: total === 0 ? 0 : Math.round((player.matchesWon / total) * 100) },
+        })
       }
     }
 
@@ -1573,7 +1590,7 @@ export async function adminRegenerateChiceceRounds(tournamentId: string) {
 
 // ─── Admin: reimposta fase finale (anche torneo completato) ──────────────────
 // Usata per correggere i risultati delle semifinali/finale dopo che sono già stati inseriti.
-// Ripristina le rating Glicko pre-torneo, cancella SEMI/FINAL e riporta a GROUP phase.
+// Ripristina le statistiche di carriera, cancella SEMI/FINAL e ricalcola Glicko da zero.
 
 export async function adminForceResetChiceceFinals(tournamentId: string) {
   await requireAdmin()
@@ -1584,73 +1601,70 @@ export async function adminForceResetChiceceFinals(tournamentId: string) {
   })
   if (tournament.type !== "CHICECE") throw new Error("Non è un torneo Chicece")
 
-  const participantIds = (
-    await db.tournamentRegistration.findMany({ where: { tournamentId }, select: { playerId: true } })
-  ).map((r) => r.playerId)
-
-  await db.$transaction(async (tx) => {
-    // 1. Decrement tournamentsWon for current winners (before deleting the match)
-    const finalMatch = await tx.match.findFirst({
+  // Read standings and final match before any modification
+  const [standings, finalMatch] = await Promise.all([
+    db.tournamentStanding.findMany({ where: { tournamentId } }),
+    db.match.findFirst({
       where: { tournamentId, bracketSection: "FINAL", isCompleted: true },
       include: { players: { select: { playerId: true, team: true } } },
-    })
-    if (finalMatch) {
-      const teamAWon = (finalMatch.teamAScore ?? 0) > (finalMatch.teamBScore ?? 0)
-      const winnerIds = finalMatch.players
-        .filter((p) => p.team === (teamAWon ? 0 : 1))
-        .map((p) => p.playerId)
-      for (const wid of winnerIds) {
-        await tx.player.updateMany({
-          where: { id: wid, tournamentsWon: { gt: 0 } },
-          data: { tournamentsWon: { decrement: 1 } },
-        })
-      }
-    }
+    }),
+  ])
 
-    // 2. Restore Glicko ratings to pre-tournament state
-    for (const playerId of participantIds) {
-      const tournamentHistoryEntry = await tx.ratingHistory.findFirst({
-        where: { playerId, source: "tournament", sourceId: tournamentId },
-        orderBy: { createdAt: "asc" },
+  // Determine final winners (to undo tournamentsWon)
+  const winnerIds: string[] = []
+  if (finalMatch) {
+    const teamAWon = (finalMatch.teamAScore ?? 0) > (finalMatch.teamBScore ?? 0)
+    finalMatch.players
+      .filter((p) => p.team === (teamAWon ? 0 : 1))
+      .forEach((p) => winnerIds.push(p.playerId))
+  }
+
+  await db.$transaction(async (tx) => {
+    // 1. Revert career stats (matchesWon/matchesLost/tournamentsWon)
+    for (const s of standings) {
+      await tx.player.update({
+        where: { id: s.playerId },
+        data: {
+          matchesWon: { decrement: s.matchesWon },
+          matchesLost: { decrement: s.matchesLost },
+          ...(winnerIds.includes(s.playerId) && { tournamentsWon: { decrement: 1 } }),
+        },
       })
-      if (tournamentHistoryEntry) {
-        const preEntry = await tx.ratingHistory.findFirst({
-          where: { playerId, createdAt: { lt: tournamentHistoryEntry.createdAt } },
-          orderBy: { createdAt: "desc" },
-        })
-        if (preEntry) {
-          await tx.player.update({
-            where: { id: playerId },
-            data: { glickoRating: preEntry.rating, glickoRD: preEntry.rd },
-          })
-        }
-        await tx.ratingHistory.deleteMany({
-          where: { playerId, source: "tournament", sourceId: tournamentId },
-        })
-      }
     }
 
-    // 3. Delete all SEMI/FINAL matches
-    const toDelete = await tx.match.findMany({
+    // 2. Delete all SEMI/FINAL matches (MatchPlayer cascades automatically)
+    await tx.match.deleteMany({
       where: { tournamentId, bracketSection: { in: ["SEMI", "SEMI1", "SEMI2", "FINAL"] } },
-      select: { id: true },
     })
-    if (toDelete.length > 0) {
-      await tx.match.deleteMany({ where: { id: { in: toDelete.map((m) => m.id) } } })
-    }
 
-    // 4. Delete standings
+    // 3. Delete standings and ratingHistory for this tournament
     await tx.tournamentStanding.deleteMany({ where: { tournamentId } })
+    await tx.ratingHistory.deleteMany({ where: { source: "tournament", sourceId: tournamentId } })
 
-    // 5. Reset to LIVE + GROUP phase so draft UI reappears
+    // 4. Reset to LIVE + GROUP phase so draft UI reappears
     await tx.tournament.update({
       where: { id: tournamentId },
       data: { status: "LIVE", chicecePhase: "GROUP" },
     })
   })
 
+  // Fix winRatePct for affected players after career stat changes
+  for (const s of standings) {
+    const player = await db.player.findUnique({ where: { id: s.playerId } })
+    if (!player) continue
+    const total = Math.max(0, player.matchesWon) + Math.max(0, player.matchesLost)
+    await db.player.update({
+      where: { id: s.playerId },
+      data: { winRatePct: total === 0 ? 0 : Math.round((Math.max(0, player.matchesWon) / total) * 100) },
+    })
+  }
+
+  // Full Glicko recalculation — this tournament is now LIVE so it's excluded from replay
+  await fullGlickoRecalculation()
+
   revalidatePath(`/tournaments/${tournamentId}`)
   revalidatePath("/tournaments")
+  revalidatePath("/players")
 }
 
 // ─── Chicece: scambia giocatori tra partite pendenti ─────────────────────────
