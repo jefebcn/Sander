@@ -21,7 +21,9 @@ import { AdminRecalcStatsButton } from "@/components/profile/AdminRecalcStatsBut
 import { NotifyPermission } from "@/components/push/NotifyPermission"
 
 import { isAdminEmail } from "@/lib/isAdmin"
-import { getTournamentWins } from "@/actions/players"
+import { getTournamentWins, getMatchHistory, getPartnerStats } from "@/actions/players"
+import { MatchHistory } from "@/components/player/MatchHistory"
+import { PartnerStats } from "@/components/player/PartnerStats"
 
 const MONTH_NAMES_IT = [
   "", "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
@@ -143,6 +145,10 @@ export default async function ProfilePage({ searchParams }: Props) {
         orderBy: { date: "desc" },
       })
     : []
+
+  const [matchHistory, partnerStats] = activeTab === "profilo"
+    ? await Promise.all([getMatchHistory(player.id), getPartnerStats(player.id)])
+    : [[], []]
 
   const promoCode = buildPromoCode(player.id)
 
@@ -299,6 +305,12 @@ export default async function ProfilePage({ searchParams }: Props) {
               </div>
             </div>
           )}
+          {/* ── Partner stats ──────────────────────────────────── */}
+          <PartnerStats stats={partnerStats} />
+
+          {/* ── Match history ──────────────────────────────────── */}
+          <MatchHistory entries={matchHistory} />
+
           <Link
             href="/stats-guide"
             className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-semibold text-[var(--accent)]"

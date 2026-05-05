@@ -1,12 +1,14 @@
 export const dynamic = "force-dynamic"
 
-import { getPlayer, getHeadToHeadStats, getPlayerAdvancedStats, getTournamentWins } from "@/actions/players"
+import { getPlayer, getHeadToHeadStats, getPlayerAdvancedStats, getTournamentWins, getMatchHistory, getPartnerStats } from "@/actions/players"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { getStreak } from "@/lib/streak"
 import { db } from "@/lib/db"
 import { SanderCardFut, playerToCardData } from "@/components/player/SanderCardFut"
 import { RatingChart } from "@/components/player/RatingChart"
 import { PlayerStats } from "@/components/player/PlayerStats"
+import { MatchHistory } from "@/components/player/MatchHistory"
+import { PartnerStats } from "@/components/player/PartnerStats"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { Users, Swords } from "lucide-react"
 
@@ -28,7 +30,7 @@ const AWARD_META: Record<number, { emoji: string; label: string; color: string }
 
 export default async function PlayerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const [player, streak, me, ratingHistory, advancedStats, monthlyAwards, tournamentWins] = await Promise.all([
+  const [player, streak, me, ratingHistory, advancedStats, monthlyAwards, tournamentWins, matchHistory, partnerStats] = await Promise.all([
     getPlayer(id),
     getStreak(id),
     getCurrentPlayer(),
@@ -43,6 +45,8 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
       orderBy: [{ year: "desc" }, { month: "desc" }],
     }),
     getTournamentWins(id),
+    getMatchHistory(id),
+    getPartnerStats(id),
   ])
 
   // Only show H2H when a different logged-in player is viewing this profile
@@ -209,6 +213,12 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
             </p>
           </div>
         )}
+
+        {/* ── Partner stats ────────────────────────────────────── */}
+        <PartnerStats stats={partnerStats} />
+
+        {/* ── Match history ────────────────────────────────────── */}
+        <MatchHistory entries={matchHistory} />
       </div>
     </div>
   )
