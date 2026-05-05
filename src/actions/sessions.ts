@@ -168,6 +168,53 @@ export async function leaveSession(sessionId: string) {
   revalidatePath("/sessions")
 }
 
+export async function createRematch(sessionId: string): Promise<string> {
+  const player = await getCurrentPlayer()
+  if (!player) throw new Error("Non autenticato")
+
+  const original = await db.session.findUniqueOrThrow({
+    where: { id: sessionId },
+    include: {
+      participants: { select: { playerId: true, team: true } },
+    },
+  })
+
+  if (original.status !== "COMPLETED") throw new Error("La sessione non è completata")
+
+  const isParticipant = original.participants.some((p) => p.playerId === player.id)
+  if (!isParticipant) throw new Error("Non sei partecipante di questa sessione")
+
+  // Schedule rematch for the next day at the same time
+  const rematchDate = new Date(original.date)
+  rematchDate.setDate(rematchDate.getDate() + 1)
+
+  const newSession = await db.session.create({
+    data: {
+      organizerId: player.id,
+      title: original.title,
+      location: original.location,
+      date: rematchDate,
+      format: original.format,
+      maxPlayers: original.maxPlayers,
+      courtCost: original.courtCost,
+      notes: original.notes,
+      paymentType: original.paymentType,
+      quotaAmount: original.quotaAmount,
+      loserPays: original.loserPays,
+      matchMode: original.matchMode,
+      participants: {
+        create: original.participants.map((p) => ({
+          playerId: p.playerId,
+          team: p.team === 0 ? 1 : p.team === 1 ? 0 : null,
+        })),
+      },
+    },
+  })
+
+  revalidatePath("/sessions")
+  return newSession.id
+}
+
 export async function assignTeam(input: unknown) {
   const player = await getCurrentPlayer()
   if (!player) throw new Error("Non autenticato")

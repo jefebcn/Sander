@@ -12,6 +12,7 @@ import { QRCodeButton } from "@/components/ui/QRCode"
 import { SessionStatusBadge } from "@/components/session/SessionStatusBadge"
 import { ParticipantList } from "@/components/session/ParticipantList"
 import { SessionMatchRounds } from "@/components/session/SessionMatchRounds"
+import { RematchButton } from "@/components/session/RematchButton"
 import { PageHeader } from "@/components/layout/PageHeader"
 
 export async function generateMetadata(
@@ -202,6 +203,10 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
           />
         )}
 
+        {/* Rematch CTA for completed sessions */}
+        {session.status === "COMPLETED" && isParticipant && (
+          <RematchButton sessionId={session.id} />
+        )}
 
       </div>
     </div>
