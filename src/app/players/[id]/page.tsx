@@ -9,6 +9,8 @@ import { RatingChart } from "@/components/player/RatingChart"
 import { PlayerStats } from "@/components/player/PlayerStats"
 import { MatchHistory } from "@/components/player/MatchHistory"
 import { PartnerStats } from "@/components/player/PartnerStats"
+import { Achievements } from "@/components/player/Achievements"
+import { computeAchievements } from "@/lib/achievements"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { Users, Swords } from "lucide-react"
 
@@ -52,6 +54,18 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
   // Only show H2H when a different logged-in player is viewing this profile
   const showH2H = me && me.id !== id
   const h2h = showH2H ? await getHeadToHeadStats(me.id, id) : null
+
+  const achievements = computeAchievements({
+    matchesWon: player.matchesWon,
+    matchesLost: player.matchesLost,
+    winRatePct: player.winRatePct,
+    sessionsPlayed: player.sessionsPlayed,
+    tournamentsWon: player.tournamentsWon,
+    glickoRating: player.glickoRating,
+    level: player.level,
+    streak,
+    monthlyAwardPositions: monthlyAwards.map((a) => a.position),
+  })
 
   return (
     <div>
@@ -213,6 +227,9 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
             </p>
           </div>
         )}
+
+        {/* ── Achievements ─────────────────────────────────────── */}
+        <Achievements achievements={achievements} />
 
         {/* ── Partner stats ────────────────────────────────────── */}
         <PartnerStats stats={partnerStats} />

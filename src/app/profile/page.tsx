@@ -24,6 +24,8 @@ import { isAdminEmail } from "@/lib/isAdmin"
 import { getTournamentWins, getMatchHistory, getPartnerStats } from "@/actions/players"
 import { MatchHistory } from "@/components/player/MatchHistory"
 import { PartnerStats } from "@/components/player/PartnerStats"
+import { Achievements } from "@/components/player/Achievements"
+import { computeAchievements } from "@/lib/achievements"
 
 const MONTH_NAMES_IT = [
   "", "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
@@ -149,6 +151,20 @@ export default async function ProfilePage({ searchParams }: Props) {
   const [matchHistory, partnerStats] = activeTab === "profilo"
     ? await Promise.all([getMatchHistory(player.id), getPartnerStats(player.id)])
     : [[], []]
+
+  const achievements = activeTab === "profilo"
+    ? computeAchievements({
+        matchesWon: fullPlayer.matchesWon,
+        matchesLost: fullPlayer.matchesLost,
+        winRatePct: fullPlayer.winRatePct,
+        sessionsPlayed: fullPlayer.sessionsPlayed,
+        tournamentsWon: fullPlayer.tournamentsWon,
+        glickoRating: fullPlayer.glickoRating,
+        level: fullPlayer.level,
+        streak,
+        monthlyAwardPositions: monthlyAwards.map((a) => a.position),
+      })
+    : []
 
   const promoCode = buildPromoCode(player.id)
 
@@ -305,6 +321,9 @@ export default async function ProfilePage({ searchParams }: Props) {
               </div>
             </div>
           )}
+          {/* ── Achievements ───────────────────────────────────── */}
+          <Achievements achievements={achievements} />
+
           {/* ── Partner stats ──────────────────────────────────── */}
           <PartnerStats stats={partnerStats} />
 
