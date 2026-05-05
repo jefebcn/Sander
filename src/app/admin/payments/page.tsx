@@ -4,14 +4,13 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 import { ChevronLeft } from "lucide-react"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
+import { isAdminEmail } from "@/lib/isAdmin"
 import { AdminPendingPaymentsList } from "@/components/tournament/AdminPendingPaymentsList"
-
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
 
 export default async function AdminPaymentsPage() {
   const session = await getCurrentSession()
   if (!session?.user?.id) redirect("/auth/signin?callbackUrl=/admin/payments")
-  if (!ADMIN_EMAIL || session.user.email !== ADMIN_EMAIL) redirect("/")
+  if (!isAdminEmail(session.user.email)) redirect("/")
 
   return (
     <div className="min-h-dvh pb-10">

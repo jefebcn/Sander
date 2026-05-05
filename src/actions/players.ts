@@ -81,6 +81,7 @@ export async function checkHasPlayerProfile(): Promise<boolean> {
 export async function listUsersWithoutProfile() {
   const session = await getCurrentSession()
   if (!session?.user?.id) throw new Error("Non autenticato")
+  if (!isAdminEmail(session.user.email)) throw new Error("Non autorizzato")
 
   return db.user.findMany({
     where: { player: null },
@@ -92,6 +93,9 @@ export async function listUsersWithoutProfile() {
 export async function createMinimalPlayerForUser(userId: string) {
   const session = await getCurrentSession()
   if (!session?.user?.id) throw new Error("Non autenticato")
+  if (session.user.id !== userId && !isAdminEmail(session.user.email)) {
+    throw new Error("Non autorizzato")
+  }
 
   const user = await db.user.findUniqueOrThrow({
     where: { id: userId },
