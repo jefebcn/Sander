@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { MapPin, ChevronRight, Banknote, Beer, Gift, Shuffle } from "lucide-react"
+import { MapPin, ChevronRight, Banknote, Beer, Gift, Shuffle, Coins } from "lucide-react"
 import { createSession } from "@/actions/sessions"
 import { cn } from "@/lib/utils"
 
@@ -13,12 +13,13 @@ const FORMATS = [
 ] as const
 
 type Format = (typeof FORMATS)[number]["value"]
-type PaymentType = "FREE" | "QUOTA" | "LOSER_PAYS"
+type PaymentType = "FREE" | "QUOTA" | "LOSER_PAYS" | "SC"
 
 const PAYMENT_OPTIONS: { value: PaymentType; label: string; sub: string; icon: React.ElementType }[] = [
-  { value: "FREE",        label: "Gratis",        sub: "Nessuna quota",         icon: Gift },
-  { value: "QUOTA",       label: "A quota",        sub: "Ognuno paga la sua parte", icon: Banknote },
-  { value: "LOSER_PAYS",  label: "Chi perde paga", sub: "Birra, cena…",          icon: Beer },
+  { value: "FREE",        label: "Gratis",         sub: "Nessuna quota",            icon: Gift },
+  { value: "QUOTA",       label: "A quota",         sub: "Ognuno paga la sua parte", icon: Banknote },
+  { value: "LOSER_PAYS",  label: "Chi perde paga",  sub: "Birra, cena…",             icon: Beer },
+  { value: "SC",          label: "SanderCredits",   sub: "Paga con SC in-app",       icon: Coins },
 ]
 
 export function CreateSessionForm() {
@@ -51,6 +52,8 @@ export function CreateSessionForm() {
           paymentType,
           quotaAmount: paymentType === "QUOTA" && quotaAmount
             ? Math.round(parseFloat(quotaAmount) * 100)
+            : paymentType === "SC" && quotaAmount
+            ? parseInt(quotaAmount, 10)
             : undefined,
           loserPays: paymentType === "LOSER_PAYS" && loserPays ? loserPays : undefined,
           matchMode: format === "TWO_VS_TWO" ? matchMode : false,
@@ -168,7 +171,7 @@ export function CreateSessionForm() {
       {/* Payment type */}
       <div className="space-y-2">
         <label className="text-sm font-semibold text-[var(--muted-text)]">Modalità di pagamento</label>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {PAYMENT_OPTIONS.map(({ value, label, sub, icon: Icon }) => (
             <button
               key={value}
@@ -223,6 +226,26 @@ export function CreateSessionForm() {
                 className="w-full bg-transparent text-base font-semibold text-white focus:outline-none placeholder:text-[var(--muted-text)] placeholder:font-normal"
               />
             </div>
+          </div>
+        )}
+
+        {/* SC — SanderCredits cost input */}
+        {paymentType === "SC" && (
+          <div className="flex items-center gap-3 rounded-2xl bg-[var(--surface-2)] px-4 py-3">
+            <Coins className="h-5 w-5 shrink-0 text-[var(--accent)]" />
+            <div className="flex-1">
+              <p className="text-xs text-[var(--muted-text)] mb-1">Costo a persona (SC)</p>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={quotaAmount}
+                onChange={(e) => setQuotaAmount(e.target.value)}
+                placeholder="es. 8"
+                className="w-full bg-transparent text-lg font-black text-white focus:outline-none placeholder:text-[var(--muted-text)] placeholder:font-normal placeholder:text-base"
+              />
+            </div>
+            <span className="text-xl font-black text-[var(--accent)]">SC</span>
           </div>
         )}
       </div>

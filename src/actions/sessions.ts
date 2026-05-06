@@ -133,6 +133,26 @@ export async function joinSession(sessionId: string) {
     throw new Error("Sessione al completo")
   }
 
+  // SC payment: check and deduct balance
+  if (session.paymentType === "SC") {
+    const scCost = session.quotaAmount ?? 0
+    if (scCost > 0) {
+      const playerData = await db.player.findUniqueOrThrow({
+        where: { id: player.id },
+        select: { sanderCredits: true },
+      })
+      if (playerData.sanderCredits < scCost) {
+        throw new Error(
+          `Crediti insufficienti. Ti servono ${scCost} SC (ne hai ${playerData.sanderCredits}).`
+        )
+      }
+      await db.player.update({
+        where: { id: player.id },
+        data: { sanderCredits: { decrement: scCost } },
+      })
+    }
+  }
+
   await db.sessionParticipant.create({
     data: { sessionId, playerId: player.id },
   })
@@ -155,11 +175,23 @@ export async function leaveSession(sessionId: string) {
     where: { sessionId_playerId: { sessionId, playerId: player.id } },
   })
 
-  // Re-open if was FULL
   const session = await db.session.findUnique({
     where: { id: sessionId },
-    select: { status: true },
+    select: { status: true, paymentType: true, quotaAmount: true },
   })
+
+  // Refund SC if session not yet completed
+  if (session?.paymentType === "SC" && session.status !== "COMPLETED") {
+    const scCost = session.quotaAmount ?? 0
+    if (scCost > 0) {
+      await db.player.update({
+        where: { id: player.id },
+        data: { sanderCredits: { increment: scCost } },
+      })
+    }
+  }
+
+  // Re-open if was FULL
   if (session?.status === "FULL") {
     await db.session.update({ where: { id: sessionId }, data: { status: "OPEN" } })
   }

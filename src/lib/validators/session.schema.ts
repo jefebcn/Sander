@@ -7,7 +7,7 @@ export const CreateSessionSchema = z.object({
   format: z.enum(["TWO_VS_TWO", "THREE_VS_THREE", "FOUR_VS_FOUR"]),
   courtCost: z.number().int().min(0).optional(),
   notes: z.string().max(200).optional(),
-  paymentType: z.enum(["FREE", "QUOTA", "LOSER_PAYS"]).default("FREE"),
+  paymentType: z.enum(["FREE", "QUOTA", "LOSER_PAYS", "SC"]).default("FREE"),
   quotaAmount: z.number().int().min(0).optional(),
   loserPays: z.string().max(60).optional(),
   matchMode: z.boolean().optional().default(false),

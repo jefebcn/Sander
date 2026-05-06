@@ -142,6 +142,9 @@ model Player {
   level Int @default(1)
   xp    Int @default(0)
 
+  // In-app currency
+  sanderCredits Int @default(0)
+
   // Glicko-2 skill rating (initial values per algorithm spec)
   glickoRating     Float @default(1500)
   glickoRD         Float @default(350)

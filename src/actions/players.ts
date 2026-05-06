@@ -116,6 +116,19 @@ export async function createMinimalPlayerForUser(userId: string) {
   return player
 }
 
+export async function adminAddCredits(playerId: string, amount: number) {
+  const session = await getCurrentSession()
+  if (!isAdminEmail(session?.user?.email)) throw new Error("Non autorizzato")
+  if (!Number.isInteger(amount) || amount <= 0) throw new Error("Importo non valido")
+
+  await db.player.update({
+    where: { id: playerId },
+    data: { sanderCredits: { increment: amount } },
+  })
+
+  revalidatePath("/profile")
+}
+
 export async function getHeadToHeadStats(playerAId: string, playerBId: string) {
   // Find all completed tournament matches where BOTH players participated
   const matches = await db.match.findMany({

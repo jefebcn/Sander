@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic"
 
 import type { Metadata } from "next"
-import { MapPin, Calendar, Euro, FileText } from "lucide-react"
+import { MapPin, Calendar, Euro, FileText, Coins } from "lucide-react"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { getSession } from "@/actions/sessions"
@@ -66,6 +66,13 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
     if (!isParticipant) notFound()
   }
 
+  // Fetch SC balance if this session costs SanderCredits
+  const currentPlayerCredits =
+    session.paymentType === "SC" && currentPlayer
+      ? await db.player.findUnique({ where: { id: currentPlayer.id }, select: { sanderCredits: true } })
+          .then((p) => p?.sanderCredits ?? 0)
+      : null
+
   const dateObj = new Date(session.date)
   const dateStr = dateObj.toLocaleDateString("it-IT", {
     weekday: "long",
@@ -115,6 +122,23 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
             <div className="flex items-center gap-3 text-sm">
               <Euro className="h-4 w-4 shrink-0 text-[var(--accent)]" aria-hidden="true" />
               <span>€{costPerPlayer} a persona</span>
+            </div>
+          )}
+          {session.paymentType === "SC" && session.quotaAmount && (
+            <div className="flex items-center gap-3 text-sm">
+              <Coins className="h-4 w-4 shrink-0 text-[var(--accent)]" aria-hidden="true" />
+              <span>
+                <span className="font-black text-[var(--accent)]">{session.quotaAmount} SC</span>
+                {" "}a persona
+                {currentPlayerCredits !== null && (
+                  <span className="ml-2 text-[var(--muted-text)]">
+                    · il tuo saldo:{" "}
+                    <span className={currentPlayerCredits >= session.quotaAmount ? "text-white font-bold" : "text-[var(--danger)] font-bold"}>
+                      {currentPlayerCredits} SC
+                    </span>
+                  </span>
+                )}
+              </span>
             </div>
           )}
           {session.notes && (

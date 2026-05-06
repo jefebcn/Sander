@@ -26,6 +26,8 @@ import { MatchHistory } from "@/components/player/MatchHistory"
 import { PartnerStats } from "@/components/player/PartnerStats"
 import { Achievements } from "@/components/player/Achievements"
 import { computeAchievements } from "@/lib/achievements"
+import { WalletCard } from "@/components/session/WalletCard"
+import { AdminCreditsManager } from "@/components/admin/AdminCreditsManager"
 
 const MONTH_NAMES_IT = [
   "", "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
@@ -200,9 +202,11 @@ export default async function ProfilePage({ searchParams }: Props) {
           select: {
             id: true,
             name: true,
+            firstName: true,
             avatarUrl: true,
             level: true,
             createdAt: true,
+            sanderCredits: true,
             user: { select: { email: true } },
           },
         }),
@@ -260,6 +264,10 @@ export default async function ProfilePage({ searchParams }: Props) {
       {activeTab === "profilo" && (
         <div className="px-4 space-y-3">
           <SanderCardFut playerData={playerToCardData(fullPlayer)} />
+          <WalletCard
+            credits={fullPlayer.sanderCredits}
+            playerName={fullPlayer.firstName ?? fullPlayer.name.split(" ")[0]}
+          />
           <ShareCardButton playerData={playerToCardData(fullPlayer)} />
           <StatPercentageEditor
             glickoRating={fullPlayer.glickoRating}
@@ -674,6 +682,10 @@ export default async function ProfilePage({ searchParams }: Props) {
               ))}
             </div>
           </div>
+
+          {/* SanderCredits manager */}
+          <AdminCreditsManager players={adminPlayers} />
+
         </div>
       )}
     </div>
