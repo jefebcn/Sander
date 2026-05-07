@@ -92,6 +92,13 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
 
     return (
       <div className="pb-6">
+        {/* Cover image */}
+        {tournament.coverUrl && (
+          <div className="relative h-52 w-full">
+            <img src={tournament.coverUrl} alt={tournament.name} className="h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+          </div>
+        )}
         {/* Header */}
         <div className="flex items-start gap-3 px-4 pt-5 pb-3">
           <div className="min-w-0 flex-1">
@@ -302,6 +309,13 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
 
   return (
     <div className="pb-6">
+      {/* Cover image */}
+      {tournament.coverUrl && (
+        <div className="relative h-52 w-full">
+          <img src={tournament.coverUrl} alt={tournament.name} className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-start justify-between gap-3 px-4 pt-5 pb-3">
         <div className="min-w-0 flex-1">

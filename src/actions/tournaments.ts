@@ -45,6 +45,10 @@ export async function createTournament(input: CreateTournamentInput): Promise<{ 
         priceCents:            data.priceCents ?? null,
         priceCurrency:         data.priceCurrency,
         isOpenForRegistration: data.isOpenForRegistration,
+        coverUrl:              data.coverUrl ?? null,
+        skillLevel:            data.skillLevel ?? null,
+        gender:                data.gender ?? null,
+        maxTeams:              data.maxTeams ?? null,
         createdByPlayerId:     creatorPlayer?.id ?? null,
 
         registrations: {
@@ -103,6 +107,19 @@ export async function getTournament(id: string) {
       },
     },
   })
+}
+
+export async function updateTournamentMeta(
+  tournamentId: string,
+  data: { coverUrl?: string | null; skillLevel?: string | null; gender?: string | null; maxTeams?: number | null }
+) {
+  const session = await getCurrentSession()
+  const ok = await canManageTournament(session?.user?.email, tournamentId)
+  if (!ok) throw new Error("Non autorizzato")
+
+  await db.tournament.update({ where: { id: tournamentId }, data })
+  revalidatePath(`/tournaments/${tournamentId}`)
+  revalidatePath("/tournaments")
 }
 
 export async function listTournaments() {

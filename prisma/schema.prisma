@@ -209,6 +209,12 @@ model Tournament {
   createdByPlayerId String?
   createdByPlayer   Player?  @relation("TournamentCreator", fields: [createdByPlayerId], references: [id], onDelete: SetNull)
 
+  // Cover image & display metadata
+  coverUrl   String?
+  skillLevel String?   // es. "Open", "B/C", "A/B/C", "Multilevel"
+  gender     String?   // es. "Maschile", "Femminile", "Misto"
+  maxTeams   Int?      // numero massimo squadre/coppie iscritte
+
   registrations TournamentRegistration[]
   matches       Match[]
   standings     TournamentStanding[]

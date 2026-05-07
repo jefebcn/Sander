@@ -20,6 +20,12 @@ export const CreateTournamentSchema = z.object({
   priceCents:            z.number().int().min(0).max(10_000_00).optional().nullable(),
   priceCurrency:         z.enum(["EUR", "USD"]).default("EUR"),
   isOpenForRegistration: z.boolean().default(false),
+
+  // Cover & display
+  coverUrl:   z.string().url().optional().nullable(),
+  skillLevel: z.string().max(50).optional().nullable(),
+  gender:     z.string().max(30).optional().nullable(),
+  maxTeams:   z.number().int().min(1).optional().nullable(),
 }).refine(
   (d) => d.isOpenForRegistration || d.playerIds.length >= 4,
   { message: "At least 4 players required (or enable open registration)", path: ["playerIds"] },

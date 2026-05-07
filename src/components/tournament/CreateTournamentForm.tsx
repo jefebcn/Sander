@@ -6,6 +6,7 @@ import { ChevronRight, Check, Trophy, Crown, Users, RotateCcw, Swords, Shuffle }
 import { createTournament } from "@/actions/tournaments"
 import { cn } from "@/lib/utils"
 import type { Player } from "@/generated/prisma/client"
+import { TournamentCoverUpload } from "@/components/tournament/TournamentCoverUpload"
 
 interface CreateTournamentFormProps {
   players: Player[]
@@ -22,6 +23,12 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
   const [numCourts, setNumCourts] = useState(2)
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
+
+  // Cover & display metadata
+  const [coverUrl, setCoverUrl] = useState("")
+  const [skillLevel, setSkillLevel] = useState("")
+  const [gender, setGender] = useState("")
+  const [maxTeams, setMaxTeams] = useState("")
 
   // Registration & payment fields
   const [isOpenForRegistration, setIsOpenForRegistration] = useState(false)
@@ -79,6 +86,10 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
         priceCents,
         priceCurrency: "EUR",
         isOpenForRegistration,
+        coverUrl: coverUrl || null,
+        skillLevel: skillLevel.trim() || null,
+        gender: gender || null,
+        maxTeams: maxTeams ? parseInt(maxTeams, 10) : null,
       })
       if (!result.ok) {
         setError(result.error)
@@ -104,6 +115,9 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
           className="w-full rounded-xl bg-[var(--surface-2)] px-4 py-3 text-base text-[var(--foreground)] placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
         />
       </div>
+
+      {/* Cover image */}
+      <TournamentCoverUpload value={coverUrl} onChange={setCoverUrl} />
 
       {/* Date */}
       <div className="space-y-1.5">
@@ -276,6 +290,55 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
             value={prizePool}
             onChange={(e) => setPrizePool(e.target.value)}
             placeholder="es. 1°: €500 · 2°: €250 · trofeo"
+            className="w-full rounded-xl bg-[var(--surface-3)] px-3 py-2.5 text-sm text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+          />
+        </div>
+
+        {/* Gender + Skill level */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-[var(--muted-text)]">Genere</label>
+            <select
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
+              className="w-full rounded-xl bg-[var(--surface-3)] px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            >
+              <option value="">—</option>
+              <option value="Maschile">Maschile</option>
+              <option value="Femminile">Femminile</option>
+              <option value="Misto">Misto</option>
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-[var(--muted-text)]">Livello</label>
+            <select
+              value={skillLevel}
+              onChange={(e) => setSkillLevel(e.target.value)}
+              className="w-full rounded-xl bg-[var(--surface-3)] px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            >
+              <option value="">—</option>
+              <option value="Open">Open</option>
+              <option value="Multilevel">Multilevel</option>
+              <option value="D">D</option>
+              <option value="C/D">C/D</option>
+              <option value="C">C</option>
+              <option value="B/C">B/C</option>
+              <option value="B">B</option>
+              <option value="A/B">A/B</option>
+              <option value="A">A</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Max teams */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-[var(--muted-text)]">Max squadre <span className="font-normal opacity-60">— opzionale</span></label>
+          <input
+            type="number"
+            min="2"
+            value={maxTeams}
+            onChange={(e) => setMaxTeams(e.target.value)}
+            placeholder="es. 18"
             className="w-full rounded-xl bg-[var(--surface-3)] px-3 py-2.5 text-sm text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           />
         </div>
