@@ -1427,12 +1427,12 @@ async function _replaySession(sessionId: string) {
         for (const pA of teamA) {
           const sA = snap.get(pA.playerId)
           if (!sA) continue
-          const score = 0.5 + FRIENDLY_DAMPENING * (aWon ? 0.5 : -0.5)
+          const scoreA = aWon ? 1 : 0
           for (const pB of teamB) {
             const sB = snap.get(pB.playerId)
             if (!sB) continue
-            playerResults.get(pA.playerId)!.push({ opponent: { rating: sB.glickoRating, rd: sB.glickoRD, volatility: sB.glickoVolatility }, score })
-            playerResults.get(pB.playerId)!.push({ opponent: { rating: sA.glickoRating, rd: sA.glickoRD, volatility: sA.glickoVolatility }, score: 1 - score })
+            playerResults.get(pA.playerId)!.push({ opponent: { rating: sB.glickoRating, rd: sB.glickoRD, volatility: sB.glickoVolatility }, score: scoreA })
+            playerResults.get(pB.playerId)!.push({ opponent: { rating: sA.glickoRating, rd: sA.glickoRD, volatility: sA.glickoVolatility }, score: 1 - scoreA })
           }
         }
       }
@@ -1441,9 +1441,11 @@ async function _replaySession(sessionId: string) {
         if (results.length === 0) continue
         const s = snap.get(playerId)
         if (!s) continue
-        const updated = updateRating({ rating: s.glickoRating, rd: s.glickoRD, volatility: s.glickoVolatility }, results)
-        await db.player.update({ where: { id: playerId }, data: { glickoRating: updated.rating, glickoRD: updated.rd, glickoVolatility: updated.volatility } })
-        await db.ratingHistory.create({ data: { playerId, rating: updated.rating, rd: updated.rd, source: "session", sourceId: sessionId } })
+        const original = { rating: s.glickoRating, rd: s.glickoRD, volatility: s.glickoVolatility }
+        const updated = updateRating(original, results)
+        const dampedRating = original.rating + FRIENDLY_DAMPENING * (updated.rating - original.rating)
+        await db.player.update({ where: { id: playerId }, data: { glickoRating: dampedRating, glickoRD: updated.rd, glickoVolatility: updated.volatility } })
+        await db.ratingHistory.create({ data: { playerId, rating: dampedRating, rd: updated.rd, source: "session", sourceId: sessionId } })
       }
     }
   }
@@ -1486,15 +1488,17 @@ async function _replaySession(sessionId: string) {
           const s = snap.get(part.playerId)
           if (!s) continue
           const won = part.team === winningTeam
-          const score = 0.5 + FRIENDLY_DAMPENING * (won ? 0.5 : -0.5)
+          const score = won ? 1 : 0
           const opponents = part.team === 0 ? teamB : teamA
           const results = opponents
             .map((opp) => snap.get(opp.playerId))
             .filter(Boolean)
             .map((opp) => ({ opponent: { rating: opp!.glickoRating, rd: opp!.glickoRD, volatility: opp!.glickoVolatility }, score }))
           if (results.length === 0) continue
-          const updated = updateRating({ rating: s.glickoRating, rd: s.glickoRD, volatility: s.glickoVolatility }, results)
-          updates.push({ id: part.playerId, ...updated })
+          const original = { rating: s.glickoRating, rd: s.glickoRD, volatility: s.glickoVolatility }
+          const updated = updateRating(original, results)
+          const dampedRating = original.rating + FRIENDLY_DAMPENING * (updated.rating - original.rating)
+          updates.push({ id: part.playerId, rating: dampedRating, rd: updated.rd, volatility: updated.volatility })
         }
 
         for (const u of updates) {

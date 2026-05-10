@@ -65,12 +65,12 @@ export async function updateGlickoAfterSession(sessionId: string) {
       for (const pA of teamA) {
         const sA = snap.get(pA.playerId)
         if (!sA) continue
-        const score = 0.5 + FRIENDLY_DAMPENING * (aWon ? 0.5 : -0.5)
+        const scoreA = aWon ? 1 : 0
         for (const pB of teamB) {
           const sB = snap.get(pB.playerId)
           if (!sB) continue
-          playerResults.get(pA.playerId)!.push({ opponent: { rating: sB.glickoRating, rd: sB.glickoRD, volatility: sB.glickoVolatility }, score })
-          playerResults.get(pB.playerId)!.push({ opponent: { rating: sA.glickoRating, rd: sA.glickoRD, volatility: sA.glickoVolatility }, score: 1 - score })
+          playerResults.get(pA.playerId)!.push({ opponent: { rating: sB.glickoRating, rd: sB.glickoRD, volatility: sB.glickoVolatility }, score: scoreA })
+          playerResults.get(pB.playerId)!.push({ opponent: { rating: sA.glickoRating, rd: sA.glickoRD, volatility: sA.glickoVolatility }, score: 1 - scoreA })
         }
       }
     }
@@ -79,9 +79,11 @@ export async function updateGlickoAfterSession(sessionId: string) {
       if (results.length === 0) continue
       const s = snap.get(playerId)
       if (!s) continue
-      const updated = updateRating({ rating: s.glickoRating, rd: s.glickoRD, volatility: s.glickoVolatility }, results)
-      await db.player.update({ where: { id: playerId }, data: { glickoRating: updated.rating, glickoRD: updated.rd, glickoVolatility: updated.volatility } })
-      await db.ratingHistory.create({ data: { playerId, rating: updated.rating, rd: updated.rd, source: "session", sourceId: sessionId } })
+      const original = { rating: s.glickoRating, rd: s.glickoRD, volatility: s.glickoVolatility }
+      const updated = updateRating(original, results)
+      const dampedRating = original.rating + FRIENDLY_DAMPENING * (updated.rating - original.rating)
+      await db.player.update({ where: { id: playerId }, data: { glickoRating: dampedRating, glickoRD: updated.rd, glickoVolatility: updated.volatility } })
+      await db.ratingHistory.create({ data: { playerId, rating: dampedRating, rd: updated.rd, source: "session", sourceId: sessionId } })
     }
     revalidatePath("/players")
     return
@@ -122,22 +124,22 @@ export async function updateGlickoAfterSession(sessionId: string) {
   for (const participant of assigned) {
     const playerSnap = snapshot.get(participant.playerId)!
     const playerWon = participant.team === winningTeam
-    const rawScore = playerWon ? 1 : 0
-    const adjustedScore = 0.5 + FRIENDLY_DAMPENING * (rawScore - 0.5)
+    const score = playerWon ? 1 : 0
 
     // Opponents are on the other team
     const opponents = participant.team === 0 ? teamB : teamA
     const results = opponents.map((opp) => ({
       opponent: snapshot.get(opp.playerId)!,
-      score: adjustedScore,
+      score,
     }))
 
     if (results.length === 0) continue
 
     const updated = updateRating(playerSnap, results)
+    const dampedRating = playerSnap.rating + FRIENDLY_DAMPENING * (updated.rating - playerSnap.rating)
     updates.push({
       id: participant.playerId,
-      rating: updated.rating,
+      rating: dampedRating,
       rd: updated.rd,
       volatility: updated.volatility,
     })
