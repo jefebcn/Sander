@@ -130,47 +130,214 @@ export async function adminAddCredits(playerId: string, amount: number) {
 }
 
 export async function getHeadToHeadStats(playerAId: string, playerBId: string) {
-  // Find all completed tournament matches where BOTH players participated
-  const matches = await db.match.findMany({
-    where: {
-      isCompleted: true,
-      AND: [
-        { players: { some: { playerId: playerAId } } },
-        { players: { some: { playerId: playerBId } } },
-      ],
-    },
-    include: { players: true },
-  })
+  const [tournamentMatches, sessionMatches, nonMatchModeSessions] = await Promise.all([
+    db.match.findMany({
+      where: {
+        isCompleted: true,
+        isBye: false,
+        AND: [
+          { players: { some: { playerId: playerAId } } },
+          { players: { some: { playerId: playerBId } } },
+        ],
+      },
+      include: { players: { select: { playerId: true, team: true } } },
+    }),
+    db.sessionMatch.findMany({
+      where: {
+        isCompleted: true,
+        AND: [
+          { players: { some: { playerId: playerAId } } },
+          { players: { some: { playerId: playerBId } } },
+        ],
+      },
+      include: { players: { select: { playerId: true, team: true } } },
+    }),
+    db.session.findMany({
+      where: {
+        status: "COMPLETED",
+        matchMode: false,
+        sets: { some: {} },
+        AND: [
+          { participants: { some: { playerId: playerAId } } },
+          { participants: { some: { playerId: playerBId } } },
+        ],
+      },
+      include: {
+        participants: { select: { playerId: true, team: true } },
+        sets: { select: { teamAScore: true, teamBScore: true } },
+      },
+    }),
+  ])
 
-  const together = { played: 0, won: 0, lost: 0 }
-  const versus   = { played: 0, won: 0, lost: 0 }
+  const together = { played: 0, won: 0, lost: 0, setsWon: 0, setsLost: 0 }
+  const versus   = { played: 0, won: 0, lost: 0, setsWon: 0, setsLost: 0 }
 
-  for (const match of matches) {
-    const mpA = match.players.find((p) => p.playerId === playerAId)
-    const mpB = match.players.find((p) => p.playerId === playerBId)
-    if (!mpA || !mpB) continue
+  function processMatch(
+    players: { playerId: string; team: number }[],
+    aScore: number,
+    bScore: number,
+    isSetScore = false,
+  ) {
+    if (aScore === bScore) return
+    const pA = players.find((p) => p.playerId === playerAId)
+    const pB = players.find((p) => p.playerId === playerBId)
+    if (!pA || !pB) return
 
-    const teamAWon =
-      match.teamAScore !== null &&
-      match.teamBScore !== null &&
-      match.teamAScore > match.teamBScore
+    const aWon = aScore > bScore
+    const aWins = pA.team === 0 ? aWon : !aWon
+    const myScore  = pA.team === 0 ? aScore : bScore
+    const oppScore = pA.team === 0 ? bScore : aScore
 
-    const aWon = mpA.team === 0 ? teamAWon : !teamAWon
-
-    if (mpA.team === mpB.team) {
-      // Same team — together
+    if (pA.team === pB.team) {
       together.played++
-      if (aWon) together.won++
-      else together.lost++
+      if (aWins) { together.won++; together.setsWon += myScore; together.setsLost += oppScore }
+      else        { together.lost++; together.setsWon += myScore; together.setsLost += oppScore }
     } else {
-      // Different teams — versus
       versus.played++
-      if (aWon) versus.won++
-      else versus.lost++
+      if (aWins) { versus.won++; versus.setsWon += myScore; versus.setsLost += oppScore }
+      else        { versus.lost++; versus.setsWon += myScore; versus.setsLost += oppScore }
     }
   }
 
+  for (const m of tournamentMatches) {
+    processMatch(m.players, m.teamAScore ?? 0, m.teamBScore ?? 0)
+  }
+  for (const m of sessionMatches) {
+    processMatch(m.players, m.teamAScore ?? 0, m.teamBScore ?? 0)
+  }
+  for (const s of nonMatchModeSessions) {
+    const aSetWins = s.sets.filter((set) => set.teamAScore > set.teamBScore).length
+    const bSetWins = s.sets.filter((set) => set.teamBScore > set.teamAScore).length
+    processMatch(s.participants.filter((p) => p.team !== null) as { playerId: string; team: number }[], aSetWins, bSetWins, true)
+  }
+
   return { together, versus }
+}
+
+export async function getH2HMatchHistory(playerAId: string, playerBId: string): Promise<MatchHistoryEntry[]> {
+  const [tournamentMatches, sessionMatches, nonMatchModeSessions] = await Promise.all([
+    db.match.findMany({
+      where: {
+        isCompleted: true,
+        isBye: false,
+        AND: [
+          { players: { some: { playerId: playerAId } } },
+          { players: { some: { playerId: playerBId } } },
+        ],
+      },
+      include: {
+        players: { include: { player: { select: { id: true, name: true, firstName: true } } } },
+        tournament: { select: { id: true, name: true, date: true } },
+      },
+    }),
+    db.sessionMatch.findMany({
+      where: {
+        isCompleted: true,
+        AND: [
+          { players: { some: { playerId: playerAId } } },
+          { players: { some: { playerId: playerBId } } },
+        ],
+      },
+      include: {
+        players: { include: { player: { select: { id: true, name: true, firstName: true } } } },
+        session: { select: { id: true, title: true, date: true } },
+      },
+    }),
+    db.session.findMany({
+      where: {
+        status: "COMPLETED",
+        matchMode: false,
+        sets: { some: {} },
+        AND: [
+          { participants: { some: { playerId: playerAId } } },
+          { participants: { some: { playerId: playerBId } } },
+        ],
+      },
+      include: {
+        participants: { include: { player: { select: { id: true, name: true, firstName: true } } } },
+        sets: true,
+      },
+    }),
+  ])
+
+  const entries: MatchHistoryEntry[] = []
+
+  for (const m of tournamentMatches) {
+    const aScore = m.teamAScore ?? 0
+    const bScore = m.teamBScore ?? 0
+    if (aScore === bScore) continue
+    const me = m.players.find((p) => p.playerId === playerAId)
+    if (!me) continue
+    const myTeam = me.team as 0 | 1
+    const aWon = aScore > bScore
+    const won = (myTeam === 0 && aWon) || (myTeam === 1 && !aWon)
+    entries.push({
+      id: `h2h-tm-${m.id}`,
+      date: m.tournament.date,
+      type: "tournament",
+      sourceName: m.tournament.name,
+      sourceId: m.tournament.id,
+      result: won ? "won" : "lost",
+      scoreA: aScore,
+      scoreB: bScore,
+      myTeam,
+      partners: m.players.filter((p) => p.playerId !== playerAId && p.team === myTeam).map((p) => p.player),
+      opponents: m.players.filter((p) => p.team !== myTeam).map((p) => p.player),
+      isSetScore: false,
+    })
+  }
+
+  for (const m of sessionMatches) {
+    const aScore = m.teamAScore ?? 0
+    const bScore = m.teamBScore ?? 0
+    if (aScore === bScore) continue
+    const me = m.players.find((p) => p.playerId === playerAId)
+    if (!me) continue
+    const myTeam = me.team as 0 | 1
+    const aWon = aScore > bScore
+    const won = (myTeam === 0 && aWon) || (myTeam === 1 && !aWon)
+    entries.push({
+      id: `h2h-sm-${m.id}`,
+      date: m.session.date,
+      type: "session",
+      sourceName: m.session.title,
+      sourceId: m.session.id,
+      result: won ? "won" : "lost",
+      scoreA: aScore,
+      scoreB: bScore,
+      myTeam,
+      partners: m.players.filter((p) => p.playerId !== playerAId && p.team === myTeam).map((p) => p.player),
+      opponents: m.players.filter((p) => p.team !== myTeam).map((p) => p.player),
+      isSetScore: false,
+    })
+  }
+
+  for (const s of nonMatchModeSessions) {
+    const aSetWins = s.sets.filter((set) => set.teamAScore > set.teamBScore).length
+    const bSetWins = s.sets.filter((set) => set.teamBScore > set.teamAScore).length
+    if (aSetWins === bSetWins) continue
+    const me = s.participants.find((p) => p.playerId === playerAId)
+    if (!me || me.team === null) continue
+    const myTeam = me.team as 0 | 1
+    const aWon = aSetWins > bSetWins
+    const won = (myTeam === 0 && aWon) || (myTeam === 1 && !aWon)
+    entries.push({
+      id: `h2h-s-${s.id}`,
+      date: s.date,
+      type: "session",
+      sourceName: s.title,
+      sourceId: s.id,
+      result: won ? "won" : "lost",
+      scoreA: aSetWins,
+      scoreB: bSetWins,
+      myTeam,
+      partners: s.participants.filter((p) => p.playerId !== playerAId && p.team === myTeam).map((p) => p.player),
+      opponents: s.participants.filter((p) => p.team !== null && p.team !== myTeam).map((p) => p.player),
+      isSetScore: true,
+    })
+  }
+
+  return entries.sort((a, b) => b.date.getTime() - a.date.getTime())
 }
 
 export async function updateStatPercentages(input: UpdateStatPctInput) {
