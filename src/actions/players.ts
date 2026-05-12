@@ -185,17 +185,22 @@ export async function getHeadToHeadStats(playerAId: string, playerBId: string) {
 
     const aWon = aScore > bScore
     const aWins = pA.team === 0 ? aWon : !aWon
-    const myScore  = pA.team === 0 ? aScore : bScore
-    const oppScore = pA.team === 0 ? bScore : aScore
+
+    // For multi-set matches the scores ARE the set counts; for single-set matches
+    // (tournament points, session match points) count 1 set for winner, 0 for loser.
+    const mySetScore  = isSetScore ? (pA.team === 0 ? aScore : bScore) : (aWins ? 1 : 0)
+    const oppSetScore = isSetScore ? (pA.team === 0 ? bScore : aScore) : (aWins ? 0 : 1)
 
     if (pA.team === pB.team) {
       together.played++
-      if (aWins) { together.won++; together.setsWon += myScore; together.setsLost += oppScore }
-      else        { together.lost++; together.setsWon += myScore; together.setsLost += oppScore }
+      if (aWins) together.won++; else together.lost++
+      together.setsWon  += mySetScore
+      together.setsLost += oppSetScore
     } else {
       versus.played++
-      if (aWins) { versus.won++; versus.setsWon += myScore; versus.setsLost += oppScore }
-      else        { versus.lost++; versus.setsWon += myScore; versus.setsLost += oppScore }
+      if (aWins) versus.won++; else versus.lost++
+      versus.setsWon  += mySetScore
+      versus.setsLost += oppSetScore
     }
   }
 
