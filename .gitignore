@@ -15,7 +15,8 @@
 
 # next.js
 /.next/
-/out/
+# /out/ kept for Capacitor webDir fallback — do not ignore
+!/out/
 
 # production
 /build
