@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils"
+import { PlayerPhoto } from "@/components/player/PlayerPhoto"
 
 /* ──────────────────────────────────────────────────────────────────────────── */
 /*  Types                                                                      */
@@ -119,13 +120,10 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
       >
         {/* ── Z-0 — Player photo (rows 3–10, cols 7–15) ─────────────── */}
         {playerData.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <PlayerPhoto
             src={playerData.imageUrl}
             alt={playerData.name}
-            crossOrigin="anonymous"
-            className="absolute object-cover object-center"
-            style={{ zIndex: 0, top: "15%", left: "35%", width: "40%", height: "35%" }}
+            initials={playerData.name.slice(0, 2).toUpperCase()}
           />
         ) : (
           <div
