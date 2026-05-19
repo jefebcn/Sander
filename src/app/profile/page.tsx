@@ -663,7 +663,7 @@ export default async function ProfilePage({ searchParams }: Props) {
               Account giocatori
             </p>
             <div className="space-y-2">
-              {adminPlayers.map((p: { id: string; name: string; level: number; createdAt: Date; user?: { email?: string } }) => (
+              {adminPlayers.map((p: { id: string; name: string; level: number; createdAt: Date; avatarUrl?: string | null; user?: { email?: string } }) => (
                 <div
                   key={p.id}
                   className="flex items-center gap-2 rounded-2xl bg-[var(--surface-2)] p-3"
@@ -672,7 +672,14 @@ export default async function ProfilePage({ searchParams }: Props) {
                     href={`/players/${p.id}`}
                     className="flex-1 min-w-0 active:opacity-80"
                   >
-                    <p className="font-bold text-white text-sm truncate">{p.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-white text-sm truncate">{p.name}</p>
+                      {!p.avatarUrl && (
+                        <span className="text-[0.6rem] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[var(--muted-text)]/20 text-[var(--muted-text)]">
+                          no foto
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-[var(--muted-text)] truncate">
                       {p.user?.email ?? "—"} · Lv.{p.level} · {formatDate(p.createdAt)}
                     </p>
