@@ -124,10 +124,10 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
           <ShareButton path={`/tournaments/${id}`} title={tournament.name} text={`Unisciti al torneo "${tournament.name}" su SANDER 🏐`} />
         </div>
 
-        {/* Open for self-registration */}
-        {tournament.status === "DRAFT" && tournament.isOpenForRegistration && (
+        {/* Participant lists: always for admin, or when open for registration in draft */}
+        {(isAdmin || (tournament.status === "DRAFT" && tournament.isOpenForRegistration)) && (
           <div className="mx-4 mb-4 space-y-2">
-            {/* Participants list */}
+            {/* Players list */}
             <div className="overflow-hidden rounded-2xl bg-[var(--surface-1)]">
               <p className="px-4 pt-3 pb-2 text-xs font-bold uppercase tracking-wide text-[var(--muted-text)]">
                 Iscritti · {playerRegs.length}
@@ -177,14 +177,17 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 </div>
               )}
             </div>
-            <PaymentCtaButton
-              tournamentId={id}
-              isFree={!tournament.priceCents || tournament.priceCents === 0}
-              status={chiceceRegStatus}
-              isAuthed={!!currentPlayer}
-              inline
-              currentSkillLevel={myChiceceReg?.skillLevel ?? null}
-            />
+            {/* CTA buttons only when registration is open */}
+            {tournament.status === "DRAFT" && tournament.isOpenForRegistration && (
+              <PaymentCtaButton
+                tournamentId={id}
+                isFree={!tournament.priceCents || tournament.priceCents === 0}
+                status={chiceceRegStatus}
+                isAuthed={!!currentPlayer}
+                inline
+                currentSkillLevel={myChiceceReg?.skillLevel ?? null}
+              />
+            )}
             {/* Spectators list */}
             {spectatorRegs.length > 0 && (
               <div className="overflow-hidden rounded-2xl bg-[var(--surface-1)]">
@@ -201,7 +204,8 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 </div>
               </div>
             )}
-            {currentPlayer && (
+            {/* Spectator CTA only when registration is open */}
+            {tournament.isOpenForRegistration && currentPlayer && (
               <SpectatorButton
                 tournamentId={id}
                 alreadyRegistered={alreadySpectator}
@@ -209,13 +213,15 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 priceCurrency={tournament.priceCurrency}
               />
             )}
-            <ShareButton
-              path={`/tournaments/${id}`}
-              title={tournament.name}
-              text={`Unisciti al torneo "${tournament.name}" su SANDER 🏐`}
-              fullWidth
-              label="Condividi torneo"
-            />
+            {tournament.status === "DRAFT" && tournament.isOpenForRegistration && (
+              <ShareButton
+                path={`/tournaments/${id}`}
+                title={tournament.name}
+                text={`Unisciti al torneo "${tournament.name}" su SANDER 🏐`}
+                fullWidth
+                label="Condividi torneo"
+              />
+            )}
           </div>
         )}
 
@@ -384,10 +390,10 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
         <ShareButton path={`/tournaments/${id}`} title={tournament.name} text={`Unisciti al torneo "${tournament.name}" su SANDER 🏐`} />
       </div>
 
-      {/* Open for self-registration — visible to everyone */}
-      {tournament.status === "DRAFT" && tournament.isOpenForRegistration && (
+      {/* Participant lists: always for admin, or when open for registration in draft */}
+      {(isAdmin || (tournament.status === "DRAFT" && tournament.isOpenForRegistration)) && (
         <div className="mx-4 mb-4 space-y-2">
-          {/* Participants list */}
+          {/* Players list */}
           <div className="overflow-hidden rounded-2xl bg-[var(--surface-1)]">
             <p className="px-4 pt-3 pb-2 text-xs font-bold uppercase tracking-wide text-[var(--muted-text)]">
               Iscritti · {playerRegs.length}
@@ -437,14 +443,17 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               </div>
             )}
           </div>
-          <PaymentCtaButton
-            tournamentId={id}
-            isFree={!tournament.priceCents || tournament.priceCents === 0}
-            status={regStatus}
-            isAuthed={!!currentPlayer}
-            inline
-            currentSkillLevel={myRegistration?.skillLevel ?? null}
-          />
+          {/* CTA buttons only when registration is open */}
+          {tournament.status === "DRAFT" && tournament.isOpenForRegistration && (
+            <PaymentCtaButton
+              tournamentId={id}
+              isFree={!tournament.priceCents || tournament.priceCents === 0}
+              status={regStatus}
+              isAuthed={!!currentPlayer}
+              inline
+              currentSkillLevel={myRegistration?.skillLevel ?? null}
+            />
+          )}
           {/* Spectators list */}
           {spectatorRegs.length > 0 && (
             <div className="overflow-hidden rounded-2xl bg-[var(--surface-1)]">
@@ -461,7 +470,8 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               </div>
             </div>
           )}
-          {!isAdmin && currentPlayer && (
+          {/* Spectator CTA only when registration is open */}
+          {tournament.isOpenForRegistration && currentPlayer && (
             <SpectatorButton
               tournamentId={id}
               alreadyRegistered={alreadySpectator}
@@ -469,13 +479,15 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               priceCurrency={tournament.priceCurrency}
             />
           )}
-          <ShareButton
-            path={`/tournaments/${id}`}
-            title={tournament.name}
-            text={`Unisciti al torneo "${tournament.name}" su SANDER 🏐`}
-            fullWidth
-            label="Condividi torneo"
-          />
+          {tournament.status === "DRAFT" && tournament.isOpenForRegistration && (
+            <ShareButton
+              path={`/tournaments/${id}`}
+              title={tournament.name}
+              text={`Unisciti al torneo "${tournament.name}" su SANDER 🏐`}
+              fullWidth
+              label="Condividi torneo"
+            />
+          )}
         </div>
       )}
 
