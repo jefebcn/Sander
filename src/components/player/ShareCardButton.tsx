@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { Share2, Download } from "lucide-react"
+import { Share2, Download, AlertCircle } from "lucide-react"
 import { SanderCardFut } from "./SanderCardFut"
 import type { PlayerCardData } from "./SanderCardFut"
 
@@ -9,55 +9,87 @@ interface Props {
   playerData: PlayerCardData
 }
 
-/** Wait until every <img> inside el has finished loading (or errored). */
-function waitForImages(el: HTMLElement): Promise<void> {
-  const imgs = Array.from(el.querySelectorAll<HTMLImageElement>("img"))
-  return Promise.all(
-    imgs.map(
-      (img) =>
-        img.complete
-          ? Promise.resolve()
-          : new Promise<void>((resolve) => {
-              img.onload = () => resolve()
-              img.onerror = () => resolve() // don't block on broken images
-            }),
-    ),
-  ).then(() => undefined)
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
+/** Replace every external <img> src with a same-origin proxy URL so
+ *  html-to-image can inline them without CORS issues.
+ *  Returns a cleanup function that restores original srcs. */
+async function inlineImages(node: HTMLElement): Promise<() => void> {
+  const imgs = Array.from(node.querySelectorAll<HTMLImageElement>("img"))
+  const restorers: (() => void)[] = []
+
+  await Promise.all(
+    imgs.map(async (img) => {
+      const src = img.src
+      if (!src || src.startsWith("data:") || src.startsWith(window.location.origin)) return
+      try {
+        const proxied = `/api/img-proxy?url=${encodeURIComponent(src)}`
+        const res = await fetch(proxied)
+        if (!res.ok) return
+        const dataUrl = await blobToDataUrl(await res.blob())
+        img.src = dataUrl
+        restorers.push(() => { img.src = src })
+      } catch {
+        // leave original src — capture may still succeed
+      }
+    }),
+  )
+
+  // Wait for re-paint after src swaps
+  await new Promise((r) => setTimeout(r, 150))
+  return () => restorers.forEach((r) => r())
 }
 
 export function ShareCardButton({ playerData }: Props) {
   const cardRef = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(false)
 
   async function captureCard(): Promise<Blob> {
     const { toPng } = await import("html-to-image")
     const node = cardRef.current
     if (!node) throw new Error("Card element not found")
 
-    // 1. Wait for all images (frame PNG, flag CDN, avatar) to finish loading
-    await waitForImages(node)
+    // Wait for all <img> to finish loading
+    const imgs = Array.from(node.querySelectorAll<HTMLImageElement>("img"))
+    await Promise.all(
+      imgs.map((img) =>
+        img.complete
+          ? Promise.resolve()
+          : new Promise<void>((res) => {
+              img.onload = () => res()
+              img.onerror = () => res()
+            }),
+      ),
+    )
 
-    // 2. Short buffer for fonts (Chakra Petch) and layout paint
-    await new Promise((r) => setTimeout(r, 350))
+    // Inline external images via proxy to avoid CORS canvas taint
+    const restore = await inlineImages(node)
 
-    const opts = {
-      pixelRatio: 2,
-      cacheBust: true,
-      skipFonts: false,
-      fetchRequestInit: { mode: "cors" as RequestMode },
+    const opts = { pixelRatio: 2, cacheBust: true, skipFonts: false }
+
+    try {
+      // First pass warms html-to-image's internal font/asset cache
+      await toPng(node, opts)
+      // Second pass produces the clean render
+      const dataUrl = await toPng(node, opts)
+      const res = await fetch(dataUrl)
+      return res.blob()
+    } finally {
+      restore()
     }
-
-    // 3. First pass warms html-to-image's internal asset cache
-    await toPng(node, opts)
-    // 4. Second pass produces the clean, fully-rendered image
-    const dataUrl = await toPng(node, opts)
-
-    const res = await fetch(dataUrl)
-    return res.blob()
   }
 
   async function handleShare() {
     setLoading(true)
+    setError(false)
     try {
       const blob = await captureCard()
       const safeName = playerData.name.replace(/\s+/g, "_")
@@ -73,7 +105,7 @@ export function ShareCardButton({ playerData }: Props) {
           title: `${playerData.name} — Sander Card`,
         })
       } else {
-        // Desktop / unsupported browser: download PNG
+        // Desktop / unsupported browser: trigger download
         const url = URL.createObjectURL(blob)
         const a = document.createElement("a")
         a.href = url
@@ -86,6 +118,7 @@ export function ShareCardButton({ playerData }: Props) {
     } catch (err) {
       if (err instanceof Error && err.name !== "AbortError") {
         console.error("[ShareCard]", err)
+        setError(true)
       }
     } finally {
       setLoading(false)
@@ -94,12 +127,7 @@ export function ShareCardButton({ playerData }: Props) {
 
   return (
     <>
-      {/*
-        Off-screen render target.
-        - Fixed + far off-screen so it never affects layout
-        - No debug grid rendered here (SanderCardFut never mounts the grid)
-        - Width 400px matches the card's max-w-[400px]
-      */}
+      {/* Off-screen render target — fixed far off-screen, width matches card */}
       <div
         aria-hidden
         className="pointer-events-none fixed"
@@ -115,19 +143,21 @@ export function ShareCardButton({ playerData }: Props) {
         disabled={loading}
         className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-semibold"
         style={{
-          background: "rgba(201,243,29,0.07)",
-          border: "1px solid rgba(201,243,29,0.2)",
-          color: "var(--accent)",
+          background: error ? "rgba(239,68,68,0.07)" : "rgba(201,243,29,0.07)",
+          border: `1px solid ${error ? "rgba(239,68,68,0.3)" : "rgba(201,243,29,0.2)"}`,
+          color: error ? "var(--danger)" : "var(--accent)",
           opacity: loading ? 0.6 : 1,
           cursor: loading ? "wait" : "pointer",
         }}
       >
         {loading ? (
           <Download className="h-4 w-4 animate-bounce" />
+        ) : error ? (
+          <AlertCircle className="h-4 w-4" />
         ) : (
           <Share2 className="h-4 w-4" />
         )}
-        {loading ? "Preparando..." : "Condividi Carta"}
+        {loading ? "Preparando…" : error ? "Riprova" : "Condividi Carta"}
       </button>
     </>
   )
