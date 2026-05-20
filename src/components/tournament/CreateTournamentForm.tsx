@@ -39,6 +39,7 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
   const [prize2nd, setPrize2nd] = useState("")
   const [prize3rd, setPrize3rd] = useState("")
   const [priceEuros, setPriceEuros] = useState("")
+  const [spectatorPriceEuros, setSpectatorPriceEuros] = useState("")
 
   function togglePlayer(id: string) {
     setSelectedPlayerIds((prev) =>
@@ -73,6 +74,13 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
     }
     const priceCents = priceNumber === null ? null : Math.round(priceNumber * 100)
 
+    const spectatorPriceNumber = spectatorPriceEuros.trim() === "" ? null : Number(spectatorPriceEuros.replace(",", "."))
+    if (spectatorPriceNumber !== null && (Number.isNaN(spectatorPriceNumber) || spectatorPriceNumber < 0)) {
+      setError("Quota bevitori non valida")
+      return
+    }
+    const spectatorPriceCents = spectatorPriceNumber === null ? null : Math.round(spectatorPriceNumber * 100)
+
     startTransition(async () => {
       const result = await createTournament({
         name,
@@ -88,6 +96,7 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
         prize2nd: prize2nd.trim() || null,
         prize3rd: prize3rd.trim() || null,
         priceCents,
+        spectatorPriceCents,
         priceCurrency: "EUR",
         isOpenForRegistration,
         coverUrl: coverUrl || null,
@@ -285,6 +294,18 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
               className="w-full rounded-xl bg-[var(--surface-3)] px-3 py-2.5 text-sm text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             />
           </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-[var(--muted-text)]">🍺 Quota Bevitori (€)</label>
+          <input
+            type="text"
+            inputMode="decimal"
+            value={spectatorPriceEuros}
+            onChange={(e) => setSpectatorPriceEuros(e.target.value)}
+            placeholder="vuoto = gratis"
+            className="w-full rounded-xl bg-[var(--surface-3)] px-3 py-2.5 text-sm text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+          />
         </div>
 
         <div className="space-y-1.5">
