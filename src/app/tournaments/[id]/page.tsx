@@ -261,7 +261,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
         {isAdmin && (tournament.priceCents ?? 0) > 0 && (
           <div className="mx-4 mb-4">
             <TournamentPaymentsList
-              registrations={registrations.map((r) => ({
+              registrations={registrations.filter(r => !r.isSpectator).map((r) => ({
                 id: r.id,
                 player: { name: r.player.name },
                 paymentStatus: r.paymentStatus,
@@ -539,7 +539,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
       {isAdmin && (tournament.priceCents ?? 0) > 0 && (
         <div className="mx-4 mb-4">
           <TournamentPaymentsList
-            registrations={tournament.registrations.map((r) => ({
+            registrations={tournament.registrations.filter(r => !r.isSpectator).map((r) => ({
               id: r.id,
               player: { name: r.player.name },
               paymentStatus: r.paymentStatus,
