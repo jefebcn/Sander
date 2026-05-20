@@ -11,6 +11,8 @@ type Tournament = {
   description: string | null
   registrationDeadline: Date | string | null
   prizePool: string | null
+  prize2nd?: string | null
+  prize3rd?: string | null
   priceCents: number | null
   priceCurrency: string
   _count?: { registrations: number }
@@ -86,11 +88,17 @@ export function TournamentRegistrationRecap({ tournament }: { tournament: Tourna
             }
           />
         )}
-        {tournament.prizePool && (
+        {(tournament.prizePool || tournament.prize2nd || tournament.prize3rd) && (
           <Row
             icon={<Trophy className="h-5 w-5" />}
-            label="Montepremi"
-            value={tournament.prizePool}
+            label="Premi"
+            value={
+              <div className="flex flex-col gap-0.5">
+                {tournament.prizePool && <span>🥇 {tournament.prizePool}</span>}
+                {tournament.prize2nd  && <span>🥈 {tournament.prize2nd}</span>}
+                {tournament.prize3rd  && <span>🥉 {tournament.prize3rd}</span>}
+              </div>
+            }
           />
         )}
         {tournament._count && (

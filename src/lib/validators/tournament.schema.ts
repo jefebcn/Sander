@@ -17,6 +17,8 @@ export const CreateTournamentSchema = z.object({
   description:           z.string().max(4000).optional().nullable(),
   registrationDeadline:  z.coerce.date().optional().nullable(),
   prizePool:             z.string().max(500).optional().nullable(),
+  prize2nd:              z.string().max(500).optional().nullable(),
+  prize3rd:              z.string().max(500).optional().nullable(),
   priceCents:            z.number().int().min(0).max(10_000_00).optional().nullable(),
   priceCurrency:         z.enum(["EUR", "USD"]).default("EUR"),
   isOpenForRegistration: z.boolean().default(false),

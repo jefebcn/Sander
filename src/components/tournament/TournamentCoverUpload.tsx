@@ -24,11 +24,17 @@ export function TournamentCoverUpload({ value, onChange }: TournamentCoverUpload
       const fd = new FormData()
       fd.append("file", file)
       const res = await fetch("/api/tournament-cover", { method: "POST", body: fd })
-      const json = await res.json()
-      if (json.url) onChange(json.url)
-      else if (!json.url && res.ok) onChange("") // blob not configured
+      let json: { url?: string; error?: string } = {}
+      try { json = await res.json() } catch { /* non-JSON response */ }
+      if (json.url) {
+        onChange(json.url)
+      } else if (!res.ok) {
+        setError(json.error ?? `Errore ${res.status}`)
+      } else {
+        onChange("") // blob not configured — skip silently
+      }
     } catch {
-      setError("Errore durante l'upload")
+      setError("Errore di rete durante l'upload")
     } finally {
       setUploading(false)
     }

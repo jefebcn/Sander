@@ -36,6 +36,8 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
   const [description, setDescription] = useState("")
   const [registrationDeadline, setRegistrationDeadline] = useState("")
   const [prizePool, setPrizePool] = useState("")
+  const [prize2nd, setPrize2nd] = useState("")
+  const [prize3rd, setPrize3rd] = useState("")
   const [priceEuros, setPriceEuros] = useState("")
 
   function togglePlayer(id: string) {
@@ -83,6 +85,8 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
         description: description.trim() || null,
         registrationDeadline: registrationDeadline ? new Date(registrationDeadline) : null,
         prizePool: prizePool.trim() || null,
+        prize2nd: prize2nd.trim() || null,
+        prize3rd: prize3rd.trim() || null,
         priceCents,
         priceCurrency: "EUR",
         isOpenForRegistration,
@@ -284,14 +288,25 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-[var(--muted-text)]">Montepremi</label>
-          <input
-            type="text"
-            value={prizePool}
-            onChange={(e) => setPrizePool(e.target.value)}
-            placeholder="es. 1°: €500 · 2°: €250 · trofeo"
-            className="w-full rounded-xl bg-[var(--surface-3)] px-3 py-2.5 text-sm text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-          />
+          <label className="text-xs font-semibold text-[var(--muted-text)]">Premi</label>
+          <div className="flex flex-col gap-2">
+            {[
+              { emoji: "🥇", label: "1° posto", value: prizePool,  set: setPrizePool,  placeholder: "es. €500 + trofeo" },
+              { emoji: "🥈", label: "2° posto", value: prize2nd,   set: setPrize2nd,   placeholder: "es. €250" },
+              { emoji: "🥉", label: "3° posto", value: prize3rd,   set: setPrize3rd,   placeholder: "es. €100" },
+            ].map(({ emoji, label, value, set, placeholder }) => (
+              <div key={label} className="flex items-center gap-2">
+                <span className="text-lg w-7 text-center shrink-0">{emoji}</span>
+                <input
+                  type="text"
+                  value={value}
+                  onChange={(e) => set(e.target.value)}
+                  placeholder={placeholder}
+                  className="flex-1 rounded-xl bg-[var(--surface-3)] px-3 py-2.5 text-sm text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Gender + Skill level */}

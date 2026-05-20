@@ -200,7 +200,9 @@ model Tournament {
   location              String?
   description           String?
   registrationDeadline  DateTime?
-  prizePool             String?
+  prizePool             String?   // 1° posto
+  prize2nd              String?   // 2° posto
+  prize3rd              String?   // 3° posto
   priceCents            Int?          // null = free
   priceCurrency         String        @default("EUR")
   isOpenForRegistration Boolean       @default(false)

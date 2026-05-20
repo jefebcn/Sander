@@ -42,6 +42,8 @@ export async function createTournament(input: CreateTournamentInput): Promise<{ 
         description:           data.description ?? null,
         registrationDeadline:  data.registrationDeadline ?? null,
         prizePool:             data.prizePool ?? null,
+        prize2nd:              data.prize2nd ?? null,
+        prize3rd:              data.prize3rd ?? null,
         priceCents:            data.priceCents ?? null,
         priceCurrency:         data.priceCurrency,
         isOpenForRegistration: data.isOpenForRegistration,
