@@ -201,7 +201,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 </div>
               </div>
             )}
-            {!isAdmin && currentPlayer && (
+            {currentPlayer && (
               <SpectatorButton
                 tournamentId={id}
                 alreadyRegistered={alreadySpectator}
