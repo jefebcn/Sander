@@ -177,8 +177,8 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 </div>
               )}
             </div>
-            {/* CTA buttons only when registration is open */}
-            {tournament.status === "DRAFT" && tournament.isOpenForRegistration && (
+            {/* CTA buttons only when registration is open and not already a spectator */}
+            {tournament.status === "DRAFT" && tournament.isOpenForRegistration && !alreadySpectator && (
               <PaymentCtaButton
                 tournamentId={id}
                 isFree={!tournament.priceCents || tournament.priceCents === 0}
@@ -195,17 +195,31 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                   🍺 Bevitori · {spectatorRegs.length}
                 </p>
                 <div className="pb-1">
-                  {spectatorRegs.map((r) => (
-                    <div key={r.id} className="flex items-center gap-3 px-4 py-2">
-                      <span className="text-base">🍺</span>
-                      <span className="flex-1 truncate text-sm font-medium">{r.player.name}</span>
-                    </div>
-                  ))}
+                  {spectatorRegs.map((r) => {
+                    const isMe = currentPlayer?.id === r.player.id
+                    const canCancel = isMe && r.paymentStatus !== "PAID"
+                    return (
+                      <div key={r.id} className="flex items-center gap-3 px-4 py-2">
+                        <span className="text-base">🍺</span>
+                        <span className="flex-1 truncate text-sm font-medium">{r.player.name}</span>
+                        {canCancel && (
+                          <form action={async () => {
+                            "use server"
+                            await cancelRegistration({ registrationId: r.id })
+                          }}>
+                            <button type="submit" title="Annulla iscrizione" className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--muted-text)] transition-colors hover:bg-red-500/15 hover:text-red-400">
+                              <LogOut className="h-3.5 w-3.5" />
+                            </button>
+                          </form>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )}
-            {/* Spectator CTA only when registration is open */}
-            {tournament.isOpenForRegistration && currentPlayer && (
+            {/* Spectator CTA only when registration is open and not already a player */}
+            {tournament.isOpenForRegistration && currentPlayer && chiceceRegStatus === "NOT_REGISTERED" && (
               <SpectatorButton
                 tournamentId={id}
                 alreadyRegistered={alreadySpectator}
@@ -444,8 +458,8 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               </div>
             )}
           </div>
-          {/* CTA buttons only when registration is open */}
-          {tournament.status === "DRAFT" && tournament.isOpenForRegistration && (
+          {/* CTA buttons only when registration is open and not already a spectator */}
+          {tournament.status === "DRAFT" && tournament.isOpenForRegistration && !alreadySpectator && (
             <PaymentCtaButton
               tournamentId={id}
               isFree={!tournament.priceCents || tournament.priceCents === 0}
@@ -462,17 +476,31 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 🍺 Bevitori · {spectatorRegs.length}
               </p>
               <div className="pb-1">
-                {spectatorRegs.map((r) => (
-                  <div key={r.id} className="flex items-center gap-3 px-4 py-2">
-                    <span className="text-base">🍺</span>
-                    <span className="flex-1 truncate text-sm font-medium">{r.player.name}</span>
-                  </div>
-                ))}
+                {spectatorRegs.map((r) => {
+                  const isMe = currentPlayer?.id === r.player.id
+                  const canCancel = isMe && r.paymentStatus !== "PAID"
+                  return (
+                    <div key={r.id} className="flex items-center gap-3 px-4 py-2">
+                      <span className="text-base">🍺</span>
+                      <span className="flex-1 truncate text-sm font-medium">{r.player.name}</span>
+                      {canCancel && (
+                        <form action={async () => {
+                          "use server"
+                          await cancelRegistration({ registrationId: r.id })
+                        }}>
+                          <button type="submit" title="Annulla iscrizione" className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--muted-text)] transition-colors hover:bg-red-500/15 hover:text-red-400">
+                            <LogOut className="h-3.5 w-3.5" />
+                          </button>
+                        </form>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}
-          {/* Spectator CTA only when registration is open */}
-          {tournament.isOpenForRegistration && currentPlayer && (
+          {/* Spectator CTA only when registration is open and not already a player */}
+          {tournament.isOpenForRegistration && currentPlayer && regStatus === "NOT_REGISTERED" && (
             <SpectatorButton
               tournamentId={id}
               alreadyRegistered={alreadySpectator}
