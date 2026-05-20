@@ -143,7 +143,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 <div className="pb-1">
                   {playerRegs.map((r) => {
                     const isMe = currentPlayer?.id === r.player.id
-                    const canCancel = isMe && r.paymentStatus !== "PAID"
+                    const canCancel = isMe
                     return (
                       <div key={r.id} className="flex items-center gap-3 px-4 py-2">
                         <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${
@@ -197,7 +197,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 <div className="pb-1">
                   {spectatorRegs.map((r) => {
                     const isMe = currentPlayer?.id === r.player.id
-                    const canCancel = isMe && r.paymentStatus !== "PAID"
+                    const canCancel = isMe
                     return (
                       <div key={r.id} className="flex items-center gap-3 px-4 py-2">
                         <span className="text-base">🍺</span>
