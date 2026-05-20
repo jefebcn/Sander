@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ChevronRight, Play, Trophy, Shuffle, Trash2, LogOut } from "lucide-react"
+import { ChevronRight, Play, Trophy, Shuffle, Trash2, LogOut, Eye } from "lucide-react"
 import { getTournamentDashboard } from "@/actions/standings"
 import { startTournament, completeTournament } from "@/actions/tournaments"
 import { cancelRegistration, adminRemoveRegistration } from "@/actions/registration"
@@ -17,6 +17,8 @@ import { ShareButton, WhatsAppShareButton } from "@/components/ui/ShareButton"
 import { TournamentPriceBadge } from "@/components/tournament/TournamentPriceBadge"
 import { TournamentPaymentsList } from "@/components/tournament/TournamentPaymentsList"
 import { PaymentCtaButton } from "@/components/tournament/PaymentCtaButton"
+import { TournamentCoverEdit } from "@/components/tournament/TournamentCoverEdit"
+import { SpectatorButton } from "@/components/tournament/SpectatorButton"
 import { formatDate, formatPrice } from "@/lib/utils"
 import { redirect } from "next/navigation"
 
@@ -75,12 +77,14 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
 
     const typeLabel = "Chicece"
 
-    const myChiceceReg = currentPlayer && tournament.isOpenForRegistration
+    const myReg = currentPlayer && tournament.isOpenForRegistration
       ? await db.tournamentRegistration.findUnique({
           where: { tournamentId_playerId: { tournamentId: id, playerId: currentPlayer.id } },
-          select: { paymentStatus: true, paymentMethod: true, skillLevel: true },
+          select: { paymentStatus: true, paymentMethod: true, skillLevel: true, isSpectator: true },
         })
       : null
+    const myChiceceReg = myReg && !myReg.isSpectator ? myReg : null
+    const alreadySpectator = myReg?.isSpectator ?? false
     const csReg = myChiceceReg
     const chiceceRegStatus =
       !csReg ? "NOT_REGISTERED" as const
@@ -90,10 +94,15 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
       : csReg.paymentStatus === "PENDING" && !csReg.paymentMethod ? "REGISTERED_UNPAID" as const
       : "NOT_REGISTERED" as const
 
+    const playerRegs = registrations.filter(r => !r.isSpectator)
+    const spectatorRegs = registrations.filter(r => r.isSpectator)
+
     return (
       <div className="pb-6">
         {/* Cover image */}
-        {tournament.coverUrl && (
+        {isAdmin ? (
+          <TournamentCoverEdit tournamentId={id} currentCoverUrl={tournament.coverUrl ?? null} />
+        ) : tournament.coverUrl && (
           <div className="relative h-52 w-full">
             <img src={tournament.coverUrl} alt={tournament.name} className="h-full w-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
@@ -120,18 +129,18 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             {/* Participants list */}
             <div className="overflow-hidden rounded-2xl bg-[var(--surface-1)]">
               <p className="px-4 pt-3 pb-2 text-xs font-bold uppercase tracking-wide text-[var(--muted-text)]">
-                Iscritti · {registrations.length}
+                Iscritti · {playerRegs.length}
                 {(tournament.priceCents ?? 0) > 0 && (
                   <span className="ml-2 font-normal normal-case text-[var(--accent)]">
                     {formatPrice(tournament.priceCents, tournament.priceCurrency)}
                   </span>
                 )}
               </p>
-              {registrations.length === 0 ? (
+              {playerRegs.length === 0 ? (
                 <p className="px-4 pb-3 text-sm text-[var(--muted-text)]">Nessun iscritto ancora. Sii il primo!</p>
               ) : (
                 <div className="pb-1">
-                  {registrations.map((r) => {
+                  {playerRegs.map((r) => {
                     const isMe = currentPlayer?.id === r.player.id
                     const canCancel = isMe && r.paymentStatus !== "PAID"
                     return (
@@ -175,6 +184,30 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               inline
               currentSkillLevel={myChiceceReg?.skillLevel ?? null}
             />
+            {/* Spectators list */}
+            {spectatorRegs.length > 0 && (
+              <div className="overflow-hidden rounded-2xl bg-[var(--surface-1)]">
+                <p className="px-4 pt-3 pb-2 text-xs font-bold uppercase tracking-wide text-[var(--muted-text)]">
+                  <Eye className="inline h-3 w-3 mr-1" />Presenti · {spectatorRegs.length}
+                </p>
+                <div className="pb-1">
+                  {spectatorRegs.map((r) => (
+                    <div key={r.id} className="flex items-center gap-3 px-4 py-2">
+                      <Eye className="h-3.5 w-3.5 shrink-0 text-[var(--muted-text)]" />
+                      <span className="flex-1 truncate text-sm font-medium">{r.player.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {!isAdmin && currentPlayer && (
+              <SpectatorButton
+                tournamentId={id}
+                alreadyRegistered={alreadySpectator}
+                spectatorPriceCents={tournament.spectatorPriceCents ?? null}
+                priceCurrency={tournament.priceCurrency}
+              />
+            )}
             <ShareButton
               path={`/tournaments/${id}`}
               title={tournament.name}
@@ -289,12 +322,14 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   const { tournament } = data
 
   // currentPlayer already fetched above
-  const myRegistration = currentPlayer && tournament.isOpenForRegistration
+  const myRegRaw = currentPlayer && tournament.isOpenForRegistration
     ? await db.tournamentRegistration.findUnique({
         where: { tournamentId_playerId: { tournamentId: id, playerId: currentPlayer.id } },
-        select: { paymentStatus: true, paymentMethod: true, skillLevel: true },
+        select: { paymentStatus: true, paymentMethod: true, skillLevel: true, isSpectator: true },
       })
     : null
+  const myRegistration = myRegRaw && !myRegRaw.isSpectator ? myRegRaw : null
+  const alreadySpectator = myRegRaw?.isSpectator ?? false
 
   function getRegStatus() {
     if (!myRegistration) return "NOT_REGISTERED" as const
@@ -307,10 +342,15 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   }
   const regStatus = getRegStatus()
 
+  const playerRegs = tournament.registrations.filter(r => !r.isSpectator)
+  const spectatorRegs = tournament.registrations.filter(r => r.isSpectator)
+
   return (
     <div className="pb-6">
       {/* Cover image */}
-      {tournament.coverUrl && (
+      {isAdmin ? (
+        <TournamentCoverEdit tournamentId={id} currentCoverUrl={tournament.coverUrl ?? null} />
+      ) : tournament.coverUrl && (
         <div className="relative h-52 w-full">
           <img src={tournament.coverUrl} alt={tournament.name} className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
@@ -345,18 +385,18 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
           {/* Participants list */}
           <div className="overflow-hidden rounded-2xl bg-[var(--surface-1)]">
             <p className="px-4 pt-3 pb-2 text-xs font-bold uppercase tracking-wide text-[var(--muted-text)]">
-              Iscritti · {tournament.registrations.length}
+              Iscritti · {playerRegs.length}
               {(tournament.priceCents ?? 0) > 0 && (
                 <span className="ml-2 font-normal normal-case text-[var(--accent)]">
                   {formatPrice(tournament.priceCents, tournament.priceCurrency)}
                 </span>
               )}
             </p>
-            {tournament.registrations.length === 0 ? (
+            {playerRegs.length === 0 ? (
               <p className="px-4 pb-3 text-sm text-[var(--muted-text)]">Nessun iscritto ancora. Sii il primo!</p>
             ) : (
               <div className="pb-1">
-                {tournament.registrations.map((r) => {
+                {playerRegs.map((r) => {
                   const isMe = currentPlayer?.id === r.player.id
                   const canCancel = isMe && r.paymentStatus !== "PAID"
                   return (
@@ -400,6 +440,30 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             inline
             currentSkillLevel={myRegistration?.skillLevel ?? null}
           />
+          {/* Spectators list */}
+          {spectatorRegs.length > 0 && (
+            <div className="overflow-hidden rounded-2xl bg-[var(--surface-1)]">
+              <p className="px-4 pt-3 pb-2 text-xs font-bold uppercase tracking-wide text-[var(--muted-text)]">
+                <Eye className="inline h-3 w-3 mr-1" />Presenti · {spectatorRegs.length}
+              </p>
+              <div className="pb-1">
+                {spectatorRegs.map((r) => (
+                  <div key={r.id} className="flex items-center gap-3 px-4 py-2">
+                    <Eye className="h-3.5 w-3.5 shrink-0 text-[var(--muted-text)]" />
+                    <span className="flex-1 truncate text-sm font-medium">{r.player.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {!isAdmin && currentPlayer && (
+            <SpectatorButton
+              tournamentId={id}
+              alreadyRegistered={alreadySpectator}
+              spectatorPriceCents={tournament.spectatorPriceCents ?? null}
+              priceCurrency={tournament.priceCurrency}
+            />
+          )}
           <ShareButton
             path={`/tournaments/${id}`}
             title={tournament.name}

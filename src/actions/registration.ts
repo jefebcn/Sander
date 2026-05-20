@@ -559,3 +559,44 @@ export async function listPendingManualRegistrations() {
     },
   })
 }
+
+export async function registerAsSpectator(tournamentId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const session = await getCurrentSession()
+    if (!session?.user?.id) return { ok: false, error: "Non autenticato" }
+    const player = await db.player.findUnique({ where: { userId: session.user.id } })
+    if (!player) return { ok: false, error: "Profilo non trovato" }
+
+    const tournament = await db.tournament.findUnique({
+      where: { id: tournamentId },
+      select: { isOpenForRegistration: true, status: true, spectatorPriceCents: true, name: true },
+    })
+    if (!tournament) return { ok: false, error: "Torneo non trovato" }
+    if (!tournament.isOpenForRegistration) return { ok: false, error: "Iscrizioni chiuse" }
+
+    const existing = await db.tournamentRegistration.findUnique({
+      where: { tournamentId_playerId: { tournamentId, playerId: player.id } },
+    })
+    if (existing) return { ok: false, error: "Sei già nella lista" }
+
+    const isFree = !tournament.spectatorPriceCents || tournament.spectatorPriceCents === 0
+
+    await db.tournamentRegistration.create({
+      data: {
+        tournamentId,
+        playerId: player.id,
+        isSpectator: true,
+        paymentStatus: isFree ? "FREE" : "PENDING",
+        paymentMethod: isFree ? "FREE" : null,
+        paidAt: isFree ? new Date() : null,
+        amountPaidCents: isFree ? 0 : null,
+      },
+    })
+
+    revalidatePath(`/tournaments/${tournamentId}`)
+    revalidatePath("/tournaments")
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+  }
+}

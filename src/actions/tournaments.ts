@@ -45,6 +45,7 @@ export async function createTournament(input: CreateTournamentInput): Promise<{ 
         prize2nd:              data.prize2nd ?? null,
         prize3rd:              data.prize3rd ?? null,
         priceCents:            data.priceCents ?? null,
+        spectatorPriceCents:   data.spectatorPriceCents ?? null,
         priceCurrency:         data.priceCurrency,
         isOpenForRegistration: data.isOpenForRegistration,
         coverUrl:              data.coverUrl ?? null,
@@ -113,7 +114,16 @@ export async function getTournament(id: string) {
 
 export async function updateTournamentMeta(
   tournamentId: string,
-  data: { coverUrl?: string | null; skillLevel?: string | null; gender?: string | null; maxTeams?: number | null }
+  data: {
+    coverUrl?: string | null
+    skillLevel?: string | null
+    gender?: string | null
+    maxTeams?: number | null
+    spectatorPriceCents?: number | null
+    prizePool?: string | null
+    prize2nd?: string | null
+    prize3rd?: string | null
+  }
 ) {
   const session = await getCurrentSession()
   const ok = await canManageTournament(session?.user?.email, tournamentId)

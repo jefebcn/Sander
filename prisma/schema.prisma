@@ -204,6 +204,7 @@ model Tournament {
   prize2nd              String?   // 2° posto
   prize3rd              String?   // 3° posto
   priceCents            Int?          // null = free
+  spectatorPriceCents   Int?          // quota per spettatori/presenti
   priceCurrency         String        @default("EUR")
   isOpenForRegistration Boolean       @default(false)
 
@@ -238,6 +239,9 @@ model TournamentRegistration {
 
   // Skill level (1=Dilettante, 2=Intermedio, 3=Avanzato). Nullable per retro-compatibilità.
   skillLevel Int?
+
+  // Spectator (non-player, just attending)
+  isSpectator           Boolean @default(false)
 
   // Payment tracking
   paymentStatus         PaymentStatus @default(FREE)
