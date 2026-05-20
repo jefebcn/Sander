@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic"
 
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { ArrowUpRight, MapPin, Calendar, Settings, ShieldCheck, Users, Trophy } from "lucide-react"
+import { ArrowUpRight, MapPin, Calendar, Settings, ShieldCheck, Users, Trophy, Pencil } from "lucide-react"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { SanderCardFut, playerToCardData } from "@/components/player/SanderCardFut"
@@ -235,10 +235,18 @@ export default async function ProfilePage({ searchParams }: Props) {
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.25rem)" }}
       >
         <h1 className="text-2xl font-black text-white">Profilo</h1>
-        <SignOutButton
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface-2)] text-[var(--muted-text)] transition-colors hover:text-[var(--foreground)]"
-          iconOnly
-        />
+        <div className="flex items-center gap-2">
+          <Link
+            href="/onboarding/profile"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface-2)] text-[var(--muted-text)] transition-colors hover:text-[var(--foreground)]"
+          >
+            <Pencil className="h-4 w-4" />
+          </Link>
+          <SignOutButton
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface-2)] text-[var(--muted-text)] transition-colors hover:text-[var(--foreground)]"
+            iconOnly
+          />
+        </div>
       </div>
 
       {/* ── Tab bar (horizontal scroll) ───────────────────── */}
