@@ -261,7 +261,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
         {isAdmin && (tournament.priceCents ?? 0) > 0 && (
           <div className="mx-4 mb-4">
             <TournamentPaymentsList
-              registrations={registrations.filter(r => !r.isSpectator).map((r) => ({
+              registrations={registrations.map((r) => ({
                 id: r.id,
                 player: { name: r.player.name },
                 paymentStatus: r.paymentStatus,
@@ -269,6 +269,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 paidAt: r.paidAt,
                 amountPaidCents: r.amountPaidCents,
                 skillLevel: r.skillLevel,
+                isSpectator: r.isSpectator,
               }))}
               priceCents={tournament.priceCents!}
               isAdmin={isAdmin}
@@ -539,7 +540,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
       {isAdmin && (tournament.priceCents ?? 0) > 0 && (
         <div className="mx-4 mb-4">
           <TournamentPaymentsList
-            registrations={tournament.registrations.filter(r => !r.isSpectator).map((r) => ({
+            registrations={tournament.registrations.map((r) => ({
               id: r.id,
               player: { name: r.player.name },
               paymentStatus: r.paymentStatus,
@@ -547,6 +548,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               paidAt: r.paidAt,
               amountPaidCents: r.amountPaidCents,
               skillLevel: r.skillLevel,
+              isSpectator: r.isSpectator,
             }))}
             priceCents={tournament.priceCents!}
             isAdmin={isAdmin}

@@ -12,6 +12,7 @@ interface Registration {
   paidAt: Date | null
   amountPaidCents: number | null
   skillLevel: number | null
+  isSpectator?: boolean
 }
 
 interface TournamentPaymentsListProps {
@@ -74,9 +75,12 @@ export function TournamentPaymentsList({
             return (
               <li key={r.id} className="flex items-center gap-2 px-4 py-3">
                 {statusDot(r.paymentStatus)}
-                <span className="min-w-0 flex-1 truncate text-sm font-semibold text-white">{r.player.name}</span>
+                <span className="min-w-0 flex-1 truncate text-sm font-semibold text-white">
+                  {r.player.name}
+                  {r.isSpectator && <span className="ml-1 text-base leading-none">🍺</span>}
+                </span>
 
-                {isAdmin ? (
+                {!r.isSpectator && (isAdmin ? (
                   <AdminSkillLevelSelect
                     registrationId={r.id}
                     current={r.skillLevel}
@@ -84,7 +88,7 @@ export function TournamentPaymentsList({
                   />
                 ) : (
                   <SkillBadge level={r.skillLevel} />
-                )}
+                ))}
 
                 <span className="shrink-0 text-xs text-[var(--muted-text)]">
                   {methodLabel(r.paymentMethod, r.paymentStatus)}
