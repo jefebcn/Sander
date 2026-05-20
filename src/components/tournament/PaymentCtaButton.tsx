@@ -32,7 +32,7 @@ export function PaymentCtaButton({
   const [error, setError] = useState<string | null>(null)
 
   function redirectToAuth() {
-    router.push(`/auth/signin?callbackUrl=/tournaments/${tournamentId}/register`)
+    router.push(`/auth/signin?callbackUrl=/tournaments/${tournamentId}`)
   }
 
   // Used by /register fixed-bar: open sheet so user can pick skill level and (if paid) method
