@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ChevronRight, Play, Trophy, Shuffle, Trash2, LogOut, Eye } from "lucide-react"
+import { ChevronRight, Play, Trophy, Shuffle, Trash2, LogOut } from "lucide-react"
 import { getTournamentDashboard } from "@/actions/standings"
 import { startTournament, completeTournament } from "@/actions/tournaments"
 import { cancelRegistration, adminRemoveRegistration } from "@/actions/registration"
@@ -188,12 +188,12 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             {spectatorRegs.length > 0 && (
               <div className="overflow-hidden rounded-2xl bg-[var(--surface-1)]">
                 <p className="px-4 pt-3 pb-2 text-xs font-bold uppercase tracking-wide text-[var(--muted-text)]">
-                  <Eye className="inline h-3 w-3 mr-1" />Presenti · {spectatorRegs.length}
+                  🍺 Bevitori · {spectatorRegs.length}
                 </p>
                 <div className="pb-1">
                   {spectatorRegs.map((r) => (
                     <div key={r.id} className="flex items-center gap-3 px-4 py-2">
-                      <Eye className="h-3.5 w-3.5 shrink-0 text-[var(--muted-text)]" />
+                      <span className="text-base">🍺</span>
                       <span className="flex-1 truncate text-sm font-medium">{r.player.name}</span>
                     </div>
                   ))}
@@ -444,12 +444,12 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
           {spectatorRegs.length > 0 && (
             <div className="overflow-hidden rounded-2xl bg-[var(--surface-1)]">
               <p className="px-4 pt-3 pb-2 text-xs font-bold uppercase tracking-wide text-[var(--muted-text)]">
-                <Eye className="inline h-3 w-3 mr-1" />Presenti · {spectatorRegs.length}
+                🍺 Bevitori · {spectatorRegs.length}
               </p>
               <div className="pb-1">
                 {spectatorRegs.map((r) => (
                   <div key={r.id} className="flex items-center gap-3 px-4 py-2">
-                    <Eye className="h-3.5 w-3.5 shrink-0 text-[var(--muted-text)]" />
+                    <span className="text-base">🍺</span>
                     <span className="flex-1 truncate text-sm font-medium">{r.player.name}</span>
                   </div>
                 ))}
