@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { ChevronRight, Play, Trophy, Shuffle, Trash2, LogOut } from "lucide-react"
 import { getTournamentDashboard } from "@/actions/standings"
-import { startTournament, completeTournament } from "@/actions/tournaments"
+import { startTournament, completeTournament, updateTournamentMeta } from "@/actions/tournaments"
 import { cancelRegistration, adminRemoveRegistration } from "@/actions/registration"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
@@ -224,6 +224,33 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             <p className="mb-3 text-sm text-[var(--muted-text)]">
               Torneo in bozza con {registrations.length} giocatori registrati.
             </p>
+            {/* Spectator price editor */}
+            <form
+              action={async (fd: FormData) => {
+                "use server"
+                const val = ((fd.get("spectatorPrice") as string) ?? "").trim()
+                const euros = val === "" ? null : Number(val.replace(",", "."))
+                const cents = euros === null || isNaN(euros) ? null : Math.round(euros * 100)
+                await updateTournamentMeta(id, { spectatorPriceCents: cents })
+                redirect(`/tournaments/${id}`)
+              }}
+              className="mb-3 flex items-end gap-2"
+            >
+              <div className="flex-1 space-y-1">
+                <label className="text-xs font-semibold text-[var(--muted-text)]">🍺 Quota Bevitori (€)</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  name="spectatorPrice"
+                  defaultValue={tournament.spectatorPriceCents ? (tournament.spectatorPriceCents / 100).toFixed(2) : ""}
+                  placeholder="vuoto = gratis"
+                  className="w-full rounded-xl bg-[var(--surface-3)] px-3 py-2.5 text-sm text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                />
+              </div>
+              <button type="submit" className="shrink-0 rounded-xl bg-[var(--surface-3)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--surface-2)]">
+                Salva
+              </button>
+            </form>
             <form
               action={async () => {
                 "use server"
@@ -491,6 +518,33 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             <p className="mb-3 text-sm text-[var(--muted-text)]">
               Torneo in bozza con {tournament.registrations.length} giocatori registrati.
             </p>
+            {/* Spectator price editor */}
+            <form
+              action={async (fd: FormData) => {
+                "use server"
+                const val = ((fd.get("spectatorPrice") as string) ?? "").trim()
+                const euros = val === "" ? null : Number(val.replace(",", "."))
+                const cents = euros === null || isNaN(euros) ? null : Math.round(euros * 100)
+                await updateTournamentMeta(id, { spectatorPriceCents: cents })
+                redirect(`/tournaments/${id}`)
+              }}
+              className="mb-3 flex items-end gap-2"
+            >
+              <div className="flex-1 space-y-1">
+                <label className="text-xs font-semibold text-[var(--muted-text)]">🍺 Quota Bevitori (€)</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  name="spectatorPrice"
+                  defaultValue={tournament.spectatorPriceCents ? (tournament.spectatorPriceCents / 100).toFixed(2) : ""}
+                  placeholder="vuoto = gratis"
+                  className="w-full rounded-xl bg-[var(--surface-3)] px-3 py-2.5 text-sm text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                />
+              </div>
+              <button type="submit" className="shrink-0 rounded-xl bg-[var(--surface-3)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--surface-2)]">
+                Salva
+              </button>
+            </form>
             <form
               action={async () => {
                 "use server"
