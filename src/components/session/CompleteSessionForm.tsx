@@ -6,7 +6,9 @@ import { completeSession } from "@/actions/sessions"
 
 interface Participant {
   id: string
-  player: { id: string; name: string }
+  playerId: string | null
+  guestName: string | null
+  player: { id: string; name: string } | null
   team: number | null
 }
 
@@ -85,7 +87,7 @@ export function CompleteSessionForm({ sessionId, participants }: Props) {
             {teamA.length === 0
               ? <p className="text-xs text-[var(--muted-text)]">Nessuno</p>
               : teamA.map((p) => (
-                <p key={p.id} className="text-sm text-white truncate">{p.player.name}</p>
+                <p key={p.id} className="text-sm text-white truncate">{p.player?.name ?? p.guestName ?? "Ospite"}</p>
               ))}
           </div>
           <div className="rounded-xl bg-[var(--surface-2)] p-3">
@@ -93,7 +95,7 @@ export function CompleteSessionForm({ sessionId, participants }: Props) {
             {teamB.length === 0
               ? <p className="text-xs text-[var(--muted-text)]">Nessuno</p>
               : teamB.map((p) => (
-                <p key={p.id} className="text-sm text-white truncate">{p.player.name}</p>
+                <p key={p.id} className="text-sm text-white truncate">{p.player?.name ?? p.guestName ?? "Ospite"}</p>
               ))}
           </div>
         </div>

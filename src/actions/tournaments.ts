@@ -1386,8 +1386,9 @@ async function _replaySession(sessionId: string) {
   })
   if (!session) return
 
-  // XP + sessionsPlayed for every participant
+  // XP + sessionsPlayed for every participant (skip guests)
   for (const p of session.participants) {
+    if (!p.playerId) continue
     const cur = await db.player.findUnique({ where: { id: p.playerId }, select: { xp: true } })
     if (!cur) continue
     const newXp = cur.xp + 10
@@ -1469,7 +1470,7 @@ async function _replaySession(sessionId: string) {
     if (aSetWins !== bSetWins) {
       const winTeam = aSetWins > bSetWins ? 0 : 1
       for (const p of session.participants) {
-        if (p.team === null) continue
+        if (!p.playerId || p.team === null) continue
         const won = p.team === winTeam
         await db.player.update({
           where: { id: p.playerId },
@@ -1485,10 +1486,10 @@ async function _replaySession(sessionId: string) {
     const bSetWins = session.sets.filter((s) => s.teamBScore > s.teamAScore).length
     if (aSetWins !== bSetWins) {
       const winningTeam = aSetWins > bSetWins ? 0 : 1
-      const assigned = session.participants.filter((p) => p.team !== null)
+      const assigned = session.participants.filter((p) => p.team !== null && p.playerId !== null)
       if (assigned.length >= 2) {
         const freshPlayers = await db.player.findMany({
-          where: { id: { in: assigned.map((p) => p.playerId) } },
+          where: { id: { in: assigned.map((p) => p.playerId!) } },
           select: { id: true, glickoRating: true, glickoRD: true, glickoVolatility: true },
         })
         const snap = new Map(freshPlayers.map((p) => [p.id, p]))
@@ -1497,13 +1498,15 @@ async function _replaySession(sessionId: string) {
         const updates: { id: string; rating: number; rd: number; volatility: number }[] = []
 
         for (const part of assigned) {
+          if (!part.playerId) continue
           const s = snap.get(part.playerId)
           if (!s) continue
           const won = part.team === winningTeam
           const score = won ? 1 : 0
           const opponents = part.team === 0 ? teamB : teamA
           const results = opponents
-            .map((opp) => snap.get(opp.playerId))
+            .filter(opp => opp.playerId)
+            .map((opp) => snap.get(opp.playerId!))
             .filter(Boolean)
             .map((opp) => ({ opponent: { rating: opp!.glickoRating, rd: opp!.glickoRD, volatility: opp!.glickoVolatility }, score }))
           if (results.length === 0) continue

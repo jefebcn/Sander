@@ -62,7 +62,7 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
 
   // Completed sessions are private — only participants can view them
   if (session.status === "COMPLETED") {
-    const isParticipant = session.participants.some((p) => p.player.id === currentPlayer?.id)
+    const isParticipant = session.participants.some((p) => p.player?.id === currentPlayer?.id)
     if (!isParticipant) notFound()
   }
 
@@ -88,7 +88,7 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
       : null
 
   const isParticipant = currentPlayer
-    ? session.participants.some((p) => p.player.id === currentPlayer.id)
+    ? session.participants.some((p) => p.player?.id === currentPlayer.id)
     : false
 
   const isOrganizer = currentPlayer?.id === session.organizerId

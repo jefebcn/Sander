@@ -99,18 +99,18 @@ export async function updateGlickoAfterSession(sessionId: string) {
 
   const winningTeam = teamAWins > teamBWins ? 0 : 1
 
-  // Only participants with assigned teams
-  const assigned = session.participants.filter((p) => p.team !== null)
+  // Only participants with assigned teams and a registered player account (skip guests)
+  const assigned = session.participants.filter((p) => p.team !== null && p.playerId !== null && p.player !== null)
   if (assigned.length < 2) return
 
   // Snapshot ratings before any updates (prevents order-dependent drift)
   const snapshot = new Map(
     assigned.map((p) => [
-      p.playerId,
+      p.playerId!,
       {
-        rating: p.player.glickoRating,
-        rd: p.player.glickoRD,
-        volatility: p.player.glickoVolatility,
+        rating: p.player!.glickoRating,
+        rd: p.player!.glickoRD,
+        volatility: p.player!.glickoVolatility,
       },
     ])
   )
@@ -122,14 +122,14 @@ export async function updateGlickoAfterSession(sessionId: string) {
   const updates: { id: string; rating: number; rd: number; volatility: number }[] = []
 
   for (const participant of assigned) {
-    const playerSnap = snapshot.get(participant.playerId)!
+    const playerSnap = snapshot.get(participant.playerId!)!
     const playerWon = participant.team === winningTeam
     const score = playerWon ? 1 : 0
 
     // Opponents are on the other team
     const opponents = participant.team === 0 ? teamB : teamA
     const results = opponents.map((opp) => ({
-      opponent: snapshot.get(opp.playerId)!,
+      opponent: snapshot.get(opp.playerId!)!,
       score,
     }))
 
@@ -138,7 +138,7 @@ export async function updateGlickoAfterSession(sessionId: string) {
     const updated = updateRating(playerSnap, results)
     const dampedRating = playerSnap.rating + FRIENDLY_DAMPENING * (updated.rating - playerSnap.rating)
     updates.push({
-      id: participant.playerId,
+      id: participant.playerId!,
       rating: dampedRating,
       rd: updated.rd,
       volatility: updated.volatility,

@@ -336,8 +336,8 @@ export async function getH2HMatchHistory(playerAId: string, playerBId: string): 
       scoreA: aSetWins,
       scoreB: bSetWins,
       myTeam,
-      partners: s.participants.filter((p) => p.playerId !== playerAId && p.team === myTeam).map((p) => p.player),
-      opponents: s.participants.filter((p) => p.team !== null && p.team !== myTeam).map((p) => p.player),
+      partners: s.participants.filter((p) => p.playerId !== playerAId && p.team === myTeam && p.player).map((p) => p.player!),
+      opponents: s.participants.filter((p) => p.team !== null && p.team !== myTeam && p.player).map((p) => p.player!),
       isSetScore: true,
     })
   }
@@ -467,7 +467,7 @@ export async function getMonthlyTopPlayers() {
     if (teamASetWins === teamBSetWins) continue
     const winningTeam = teamASetWins > teamBSetWins ? 0 : 1
     for (const p of s.participants) {
-      if (p.team !== winningTeam) continue
+      if (!p.playerId || p.team !== winningTeam) continue
       winMap[p.playerId] = (winMap[p.playerId] ?? 0) + 1
     }
   }
@@ -544,7 +544,7 @@ async function getLastMonthTopPlayers() {
     if (teamASetWins === teamBSetWins) continue
     const winningTeam = teamASetWins > teamBSetWins ? 0 : 1
     for (const p of s.participants) {
-      if (p.team !== winningTeam) continue
+      if (!p.playerId || p.team !== winningTeam) continue
       winMap[p.playerId] = (winMap[p.playerId] ?? 0) + 1
     }
   }
@@ -761,8 +761,8 @@ export async function getMatchHistory(playerId: string, limit = 20): Promise<Mat
       scoreA: aSetWins,
       scoreB: bSetWins,
       myTeam,
-      partners: s.participants.filter((p) => p.playerId !== playerId && p.team === myTeam).map((p) => p.player),
-      opponents: s.participants.filter((p) => p.team !== null && p.team !== myTeam).map((p) => p.player),
+      partners: s.participants.filter((p) => p.playerId !== playerId && p.team === myTeam && p.player).map((p) => p.player!),
+      opponents: s.participants.filter((p) => p.team !== null && p.team !== myTeam && p.player).map((p) => p.player!),
       isSetScore: true,
     })
   }

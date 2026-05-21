@@ -268,8 +268,8 @@ export async function assignTeam(input: unknown) {
     },
   })
 
-  // Notify the assigned player (fire-and-forget)
-  if (data.team !== null) {
+  // Notify the assigned player (fire-and-forget) — skip guests
+  if (data.team !== null && participant.player) {
     const teamLabel = data.team === 0 ? "Team A" : "Team B"
     safeNotifyPlayer(participant.player.id, {
       title: "Sei stato assegnato a una squadra!",
@@ -304,11 +304,13 @@ export async function completeSession(
     })
 
     if (completedMatches.length > 0) {
-      // Build initial standings for every participant
-      let standings: StandingEntry[] = session.participants.map((p) => ({
-        playerId: p.playerId,
-        points: 0, matchesWon: 0, matchesLost: 0, pointsFor: 0, pointsAgainst: 0, rank: 0,
-      }))
+      // Build initial standings for every participant (skip guests)
+      let standings: StandingEntry[] = session.participants
+        .filter(p => p.playerId !== null)
+        .map((p) => ({
+          playerId: p.playerId!,
+          points: 0, matchesWon: 0, matchesLost: 0, pointsFor: 0, pointsAgainst: 0, rank: 0,
+        }))
 
       for (const m of completedMatches) {
         if (m.teamAScore == null || m.teamBScore == null) continue
@@ -363,6 +365,7 @@ export async function completeSession(
 
     // Update matchesWon / matchesLost for participants with assigned teams
     for (const p of session.participants) {
+      if (!p.playerId) continue  // skip guests
       if (p.team === null || winningTeam === null) continue
       const won = p.team === winningTeam
       const current = await db.player.findUniqueOrThrow({
@@ -390,8 +393,9 @@ export async function completeSession(
     console.error("Glicko update failed for session", sessionId, e)
   }
 
-  // Update sessionsPlayed + XP for every participant
+  // Update sessionsPlayed + XP for every participant (skip guests)
   for (const p of session.participants) {
+    if (!p.playerId) continue  // skip guests
     const current = await db.player.findUniqueOrThrow({
       where: { id: p.playerId },
       select: { xp: true, sessionsPlayed: true },
@@ -457,6 +461,42 @@ export async function addPlayerToSession(sessionId: string, playerId: string) {
   revalidatePath("/sessions")
 }
 
+export async function addGuestToSession(sessionId: string, guestName: string) {
+  const player = await getCurrentPlayer()
+  if (!player) throw new Error("Non autenticato")
+  const trimmed = guestName.trim()
+  if (!trimmed) throw new Error("Nome ospite non valido")
+
+  const session = await db.session.findUniqueOrThrow({
+    where: { id: sessionId },
+    select: { organizerId: true, maxPlayers: true, _count: { select: { participants: true } } },
+  })
+  if (session.organizerId !== player.id) throw new Error("Solo l'organizzatore può aggiungere ospiti")
+  if (session._count.participants >= session.maxPlayers) throw new Error("Sessione al completo")
+
+  await db.sessionParticipant.create({
+    data: { sessionId, guestName: trimmed },
+  })
+  revalidatePath(`/sessions/${sessionId}`)
+  return { ok: true as const }
+}
+
+export async function removeGuestFromSession(participantId: string) {
+  const player = await getCurrentPlayer()
+  if (!player) throw new Error("Non autenticato")
+
+  const participant = await db.sessionParticipant.findUniqueOrThrow({
+    where: { id: participantId },
+    include: { session: { select: { organizerId: true, id: true } } },
+  })
+  if (participant.session.organizerId !== player.id) throw new Error("Solo l'organizzatore può rimuovere ospiti")
+  if (participant.playerId !== null) throw new Error("Usa l'azione di rimozione normale per i giocatori")
+
+  await db.sessionParticipant.delete({ where: { id: participantId } })
+  revalidatePath(`/sessions/${participant.session.id}`)
+  return { ok: true as const }
+}
+
 export async function cancelSession(sessionId: string) {
   const player = await getCurrentPlayer()
   if (!player) throw new Error("Non autenticato")
@@ -497,7 +537,9 @@ export async function generateSessionMatches(
   const hasScores = session.sessionMatches.some((m) => m.isCompleted)
   if (hasScores) throw new Error("Impossibile rigenerare: alcuni risultati già inseriti")
 
-  const playerIds = session.participants.map((p) => p.playerId)
+  const playerIds = session.participants
+    .filter(p => p.playerId !== null)
+    .map((p) => p.playerId!)
   if (playerIds.length < 4) throw new Error("Servono almeno 4 giocatori per generare le partite")
 
   const schedule = generateKOTBSchedule(playerIds, requestedRounds)

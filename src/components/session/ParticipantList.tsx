@@ -1,17 +1,20 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { UserPlus, UserMinus, Search } from "lucide-react"
+import { UserPlus, UserMinus, Search, User, X, UserX } from "lucide-react"
 import { toast } from "sonner"
-import { joinSession, leaveSession, assignTeam, cancelSession } from "@/actions/sessions"
+import { joinSession, leaveSession, assignTeam, cancelSession, removeGuestFromSession } from "@/actions/sessions"
 import { cn } from "@/lib/utils"
 import { CompleteSessionForm } from "./CompleteSessionForm"
 import { AddPlayerSheet } from "./AddPlayerSheet"
+import { AddGuestButton } from "./AddGuestButton"
 
 type Participant = {
   id: string
   team: number | null
-  player: { id: string; name: string; preferredRole: string; level: number }
+  playerId: string | null
+  guestName: string | null
+  player: { id: string; name: string; preferredRole: string; level: number } | null
 }
 
 interface ParticipantListProps {
@@ -37,7 +40,7 @@ export function ParticipantList({ session, participants, currentPlayerId }: Part
   const [addPlayerOpen, setAddPlayerOpen] = useState(false)
 
   const isOrganizer = currentPlayerId === session.organizerId
-  const isParticipant = participants.some((p) => p.player.id === currentPlayerId)
+  const isParticipant = participants.some((p) => p.player?.id === currentPlayerId)
   const spotsLeft = session.maxPlayers - participants.length
   const canJoin = !isParticipant && spotsLeft > 0 && session.status === "OPEN"
 
@@ -88,6 +91,17 @@ export function ParticipantList({ session, participants, currentPlayerId }: Part
     })
   }
 
+  function handleRemoveGuest(participantId: string) {
+    startTransition(async () => {
+      try {
+        await removeGuestFromSession(participantId)
+        toast.success("Ospite rimosso")
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Errore")
+      }
+    })
+  }
+
   return (
     <div className="space-y-4">
       {/* Format + spots */}
@@ -117,6 +131,7 @@ export function ParticipantList({ session, participants, currentPlayerId }: Part
                     participant={p}
                     isOrganizer={isOrganizer}
                     onAssign={handleAssign}
+                    onRemoveGuest={handleRemoveGuest}
                     isPending={isPending}
                   />
                 ))}
@@ -142,6 +157,7 @@ export function ParticipantList({ session, participants, currentPlayerId }: Part
                 participant={p}
                 isOrganizer={isOrganizer}
                 onAssign={handleAssign}
+                onRemoveGuest={handleRemoveGuest}
                 isPending={isPending}
               />
             ))}
@@ -188,6 +204,8 @@ export function ParticipantList({ session, participants, currentPlayerId }: Part
             Aggiungi giocatore
           </button>
 
+          <AddGuestButton sessionId={session.id} />
+
           <CompleteSessionForm sessionId={session.id} participants={participants} />
           <button
             onClick={handleCancel}
@@ -203,7 +221,7 @@ export function ParticipantList({ session, participants, currentPlayerId }: Part
       {addPlayerOpen && (
         <AddPlayerSheet
           sessionId={session.id}
-          existingPlayerIds={participants.map((p) => p.player.id)}
+          existingPlayerIds={participants.filter((p) => p.playerId !== null).map((p) => p.player!.id)}
           onClose={() => setAddPlayerOpen(false)}
           onDone={() => setAddPlayerOpen(false)}
         />
@@ -216,48 +234,76 @@ function PlayerRow({
   participant,
   isOrganizer,
   onAssign,
+  onRemoveGuest,
   isPending,
 }: {
   participant: Participant
   isOrganizer: boolean
   onAssign: (id: string, team: 0 | 1 | null) => void
+  onRemoveGuest: (id: string) => void
   isPending: boolean
 }) {
+  const isGuest = participant.playerId === null
+
   return (
     <div className="flex items-center gap-2">
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--surface-3)] text-xs font-black">
-        {participant.player.name.slice(0, 2).toUpperCase()}
+        {isGuest ? (
+          <User className="h-4 w-4 text-[var(--muted-text)]" />
+        ) : (
+          participant.player!.name.slice(0, 2).toUpperCase()
+        )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold">{participant.player.name}</p>
-        <p className="text-xs text-[var(--muted-text)]">Lv.{participant.player.level}</p>
+        <p className="truncate text-sm font-semibold">
+          {isGuest ? participant.guestName : participant.player!.name}
+          {isGuest && (
+            <span className="ml-1.5 text-xs font-normal text-[var(--muted-text)]">ospite</span>
+          )}
+        </p>
+        {!isGuest && (
+          <p className="text-xs text-[var(--muted-text)]">Lv.{participant.player!.level}</p>
+        )}
       </div>
       {isOrganizer && (
         <div className="flex gap-1">
-          <button
-            onClick={() => onAssign(participant.id, participant.team === 0 ? null : 0)}
-            disabled={isPending}
-            className={cn(
-              "rounded-lg px-2 py-1 text-xs font-bold transition-colors",
-              participant.team === 0
-                ? "bg-blue-500/20 text-blue-300"
-                : "bg-[var(--surface-3)] text-[var(--muted-text)]",
-            )}
-          >
-            A
-          </button>
-          <button
-            onClick={() => onAssign(participant.id, participant.team === 1 ? null : 1)}
-            disabled={isPending}
-            className={cn(
-              "rounded-lg px-2 py-1 text-xs font-bold transition-colors",
-              participant.team === 1
-                ? "bg-orange-500/20 text-orange-300"
-                : "bg-[var(--surface-3)] text-[var(--muted-text)]",
-            )}
-          >
-            B
-          </button>
+          {isGuest ? (
+            <button
+              onClick={() => onRemoveGuest(participant.id)}
+              disabled={isPending}
+              className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--danger)]/15 text-[var(--danger)] transition-colors hover:bg-[var(--danger)]/25 disabled:opacity-40"
+              title="Rimuovi ospite"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={() => onAssign(participant.id, participant.team === 0 ? null : 0)}
+                disabled={isPending}
+                className={cn(
+                  "rounded-lg px-2 py-1 text-xs font-bold transition-colors",
+                  participant.team === 0
+                    ? "bg-blue-500/20 text-blue-300"
+                    : "bg-[var(--surface-3)] text-[var(--muted-text)]",
+                )}
+              >
+                A
+              </button>
+              <button
+                onClick={() => onAssign(participant.id, participant.team === 1 ? null : 1)}
+                disabled={isPending}
+                className={cn(
+                  "rounded-lg px-2 py-1 text-xs font-bold transition-colors",
+                  participant.team === 1
+                    ? "bg-orange-500/20 text-orange-300"
+                    : "bg-[var(--surface-3)] text-[var(--muted-text)]",
+                )}
+              >
+                B
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>
