@@ -3,10 +3,11 @@ import type { CapacitorConfig } from "@capacitor/cli"
 const config: CapacitorConfig = {
   appId: "com.sanderbv.app",
   appName: "Sander",
-  // Points to the live Vercel deployment — no static export needed
   server: {
-    url: "https://sander-two.vercel.app",
+    url: "https://www.sanderbv.it",
     cleartext: false,
+    // Allow navigation within both the main domain and Vercel preview
+    allowNavigation: ["sanderbv.it", "*.sanderbv.it", "sander-two.vercel.app"],
   },
   ios: {
     contentInset: "always",
@@ -17,7 +18,6 @@ const config: CapacitorConfig = {
   android: {
     backgroundColor: "#07090a",
   },
-  // Local web assets folder (used as fallback / for cap sync)
   webDir: "out",
   plugins: {
     SplashScreen: {
