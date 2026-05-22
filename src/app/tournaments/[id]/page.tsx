@@ -20,6 +20,7 @@ import { PaymentCtaButton } from "@/components/tournament/PaymentCtaButton"
 import { TournamentCoverEdit } from "@/components/tournament/TournamentCoverEdit"
 import { SpectatorButton } from "@/components/tournament/SpectatorButton"
 import { AdminSpectatorPriceForm } from "@/components/tournament/AdminSpectatorPriceForm"
+import { AdminAddPlayerButton } from "@/components/tournament/AdminAddPlayerButton"
 import { formatDate, formatPrice } from "@/lib/utils"
 import { redirect } from "next/navigation"
 
@@ -129,14 +130,22 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
           <div className="mx-4 mb-4 space-y-2">
             {/* Players list */}
             <div className="overflow-hidden rounded-2xl bg-[var(--surface-1)]">
-              <p className="px-4 pt-3 pb-2 text-xs font-bold uppercase tracking-wide text-[var(--muted-text)]">
-                Iscritti · {playerRegs.length}
-                {(tournament.priceCents ?? 0) > 0 && (
-                  <span className="ml-2 font-normal normal-case text-[var(--accent)]">
-                    {formatPrice(tournament.priceCents, tournament.priceCurrency)}
-                  </span>
+              <div className="flex items-center justify-between px-4 pt-3 pb-2">
+                <p className="text-xs font-bold uppercase tracking-wide text-[var(--muted-text)]">
+                  Iscritti · {playerRegs.length}
+                  {(tournament.priceCents ?? 0) > 0 && (
+                    <span className="ml-2 font-normal normal-case text-[var(--accent)]">
+                      {formatPrice(tournament.priceCents, tournament.priceCurrency)}
+                    </span>
+                  )}
+                </p>
+                {isAdmin && (
+                  <AdminAddPlayerButton
+                    tournamentId={id}
+                    existingPlayerIds={registrations.map((r) => r.player.id)}
+                  />
                 )}
-              </p>
+              </div>
               {playerRegs.length === 0 ? (
                 <p className="px-4 pb-3 text-sm text-[var(--muted-text)]">Nessun iscritto ancora. Sii il primo!</p>
               ) : (
@@ -410,14 +419,22 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
         <div className="mx-4 mb-4 space-y-2">
           {/* Players list */}
           <div className="overflow-hidden rounded-2xl bg-[var(--surface-1)]">
-            <p className="px-4 pt-3 pb-2 text-xs font-bold uppercase tracking-wide text-[var(--muted-text)]">
-              Iscritti · {playerRegs.length}
-              {(tournament.priceCents ?? 0) > 0 && (
-                <span className="ml-2 font-normal normal-case text-[var(--accent)]">
-                  {formatPrice(tournament.priceCents, tournament.priceCurrency)}
-                </span>
+            <div className="flex items-center justify-between px-4 pt-3 pb-2">
+              <p className="text-xs font-bold uppercase tracking-wide text-[var(--muted-text)]">
+                Iscritti · {playerRegs.length}
+                {(tournament.priceCents ?? 0) > 0 && (
+                  <span className="ml-2 font-normal normal-case text-[var(--accent)]">
+                    {formatPrice(tournament.priceCents, tournament.priceCurrency)}
+                  </span>
+                )}
+              </p>
+              {isAdmin && (
+                <AdminAddPlayerButton
+                  tournamentId={id}
+                  existingPlayerIds={tournament.registrations.map((r) => r.player.id)}
+                />
               )}
-            </p>
+            </div>
             {playerRegs.length === 0 ? (
               <p className="px-4 pb-3 text-sm text-[var(--muted-text)]">Nessun iscritto ancora. Sii il primo!</p>
             ) : (

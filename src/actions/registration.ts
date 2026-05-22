@@ -498,6 +498,49 @@ export async function adminRemoveRegistration(input: unknown) {
   revalidatePath("/admin/payments")
 }
 
+// ─────────────────────────── adminAddPlayerToTournament ──────────────────────
+
+export async function adminAddPlayerToTournament(
+  tournamentId: string,
+  playerId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const session = await getCurrentSession()
+    if (!session?.user?.id) return { ok: false, error: "Non autenticato" }
+    const allowed = await canManageTournament(session.user.email, tournamentId)
+    if (!allowed) return { ok: false, error: "Accesso non autorizzato" }
+
+    const tournament = await db.tournament.findUnique({
+      where: { id: tournamentId },
+      select: { priceCents: true },
+    })
+    if (!tournament) return { ok: false, error: "Torneo non trovato" }
+
+    const existing = await db.tournamentRegistration.findUnique({
+      where: { tournamentId_playerId: { tournamentId, playerId } },
+    })
+    if (existing) return { ok: false, error: "Giocatore già iscritto" }
+
+    const isFree = !tournament.priceCents || tournament.priceCents === 0
+
+    await db.tournamentRegistration.create({
+      data: {
+        tournamentId,
+        playerId,
+        paymentStatus: isFree ? "FREE" : "PENDING",
+        paymentMethod: isFree ? "FREE" : "CASH",
+        paidAt: isFree ? new Date() : null,
+        amountPaidCents: isFree ? 0 : null,
+      },
+    })
+
+    revalidatePath(`/tournaments/${tournamentId}`)
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+  }
+}
+
 // ──────────────────────── list / read helpers ────────────────────────────────
 
 export async function getOpenTournaments() {
