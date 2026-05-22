@@ -240,12 +240,18 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
           </div>
         )}
 
-        {/* Admin: add player — always visible regardless of tournament status */}
+        {/* Admin: add player / add spectator — always visible regardless of tournament status */}
         {isAdmin && (
-          <div className="mx-4 mb-4">
+          <div className="mx-4 mb-4 grid grid-cols-2 gap-2">
             <AdminAddPlayerButton
               tournamentId={id}
               existingPlayerIds={registrations.map((r) => r.player.id)}
+              mode="player"
+            />
+            <AdminAddPlayerButton
+              tournamentId={id}
+              existingPlayerIds={registrations.map((r) => r.player.id)}
+              mode="spectator"
             />
           </div>
         )}
@@ -531,12 +537,18 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
         </div>
       )}
 
-      {/* Admin: add player — always visible regardless of tournament status */}
+      {/* Admin: add player / add spectator — always visible regardless of tournament status */}
       {isAdmin && (
-        <div className="mx-4 mb-4">
+        <div className="mx-4 mb-4 grid grid-cols-2 gap-2">
           <AdminAddPlayerButton
             tournamentId={id}
             existingPlayerIds={tournament.registrations.map((r) => r.player.id)}
+            mode="player"
+          />
+          <AdminAddPlayerButton
+            tournamentId={id}
+            existingPlayerIds={tournament.registrations.map((r) => r.player.id)}
+            mode="spectator"
           />
         </div>
       )}

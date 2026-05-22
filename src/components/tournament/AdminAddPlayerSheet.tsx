@@ -3,13 +3,14 @@
 import { useState, useEffect, useTransition } from "react"
 import { Search, X, UserCheck, UserPlus } from "lucide-react"
 import { listPlayers } from "@/actions/players"
-import { adminAddPlayerToTournament } from "@/actions/registration"
+import { adminAddPlayerToTournament, adminAddSpectatorToTournament } from "@/actions/registration"
 import { cn } from "@/lib/utils"
 import type { Player } from "@/generated/prisma/client"
 
 interface AdminAddPlayerSheetProps {
   tournamentId: string
   existingPlayerIds: string[]
+  mode?: "player" | "spectator"
   onClose: () => void
   onDone: () => void
 }
@@ -17,6 +18,7 @@ interface AdminAddPlayerSheetProps {
 export function AdminAddPlayerSheet({
   tournamentId,
   existingPlayerIds,
+  mode = "player",
   onClose,
   onDone,
 }: AdminAddPlayerSheetProps) {
@@ -42,7 +44,9 @@ export function AdminAddPlayerSheet({
   function handleSelect(playerId: string) {
     setError(null)
     startTransition(async () => {
-      const result = await adminAddPlayerToTournament(tournamentId, playerId)
+      const result = mode === "spectator"
+        ? await adminAddSpectatorToTournament(tournamentId, playerId)
+        : await adminAddPlayerToTournament(tournamentId, playerId)
       if (result.ok) {
         onDone()
       } else {
@@ -65,7 +69,7 @@ export function AdminAddPlayerSheet({
         className="fixed bottom-0 left-0 right-0 z-50 flex max-h-[75dvh] flex-col rounded-t-3xl bg-[var(--surface-1)]"
         role="dialog"
         aria-modal="true"
-        aria-label="Aggiungi giocatore al torneo"
+        aria-label={mode === "spectator" ? "Aggiungi bevitore al torneo" : "Aggiungi giocatore al torneo"}
       >
         {/* Handle */}
         <div className="flex shrink-0 justify-center pb-1 pt-3">
@@ -74,7 +78,9 @@ export function AdminAddPlayerSheet({
 
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between px-4 pb-3 pt-1">
-          <p className="text-base font-black">Aggiungi Giocatore</p>
+          <p className="text-base font-black">
+            {mode === "spectator" ? "🍺 Aggiungi Bevitore" : "Aggiungi Giocatore"}
+          </p>
           <button
             type="button"
             onClick={onClose}
