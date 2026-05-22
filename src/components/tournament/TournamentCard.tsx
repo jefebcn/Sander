@@ -72,7 +72,6 @@ export function TournamentCard({ tournament: t }: TournamentCardProps) {
     ? `${deadline.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })} - ${deadline.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`
     : null
 
-  const teamsCount = Math.ceil(t.registrations.length / 2)
   const formula = [TYPE_LABEL[t.type] ?? t.type, t.gender].filter(Boolean).join(" · ")
 
   return (
@@ -134,15 +133,14 @@ export function TournamentCard({ tournament: t }: TournamentCardProps) {
 
         {/* Stats grid */}
         <div className="grid grid-cols-2 gap-2">
-          {/* Teams */}
+          {/* Participants */}
           <div className="rounded-xl bg-[var(--surface-2)] px-3 py-2.5 flex flex-col gap-0.5">
             <div className="flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-wider text-[var(--muted-text)]">
               <Users className="h-3 w-3" />
-              Squadre iscritte
+              Partecipanti
             </div>
             <p className="text-base font-black text-white">
-              {teamsCount}
-              {t.maxTeams ? <span className="text-[var(--muted-text)]">/{t.maxTeams}</span> : null}
+              {t.registrations.length}
             </p>
           </div>
 
