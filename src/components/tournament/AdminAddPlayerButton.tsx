@@ -27,10 +27,10 @@ export function AdminAddPlayerButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold text-[var(--accent)] transition-colors hover:bg-[var(--accent)]/10"
+        className="flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-2xl border border-[var(--accent)]/30 bg-[var(--surface-1)] font-semibold text-[var(--accent)] transition-all active:scale-[0.98] hover:bg-[var(--accent)]/10"
       >
-        <UserPlus className="h-3.5 w-3.5" aria-hidden="true" />
-        Aggiungi
+        <UserPlus className="h-4 w-4" aria-hidden="true" />
+        Aggiungi giocatore
       </button>
 
       {open && (

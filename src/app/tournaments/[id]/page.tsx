@@ -130,22 +130,14 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
           <div className="mx-4 mb-4 space-y-2">
             {/* Players list */}
             <div className="overflow-hidden rounded-2xl bg-[var(--surface-1)]">
-              <div className="flex items-center justify-between px-4 pt-3 pb-2">
-                <p className="text-xs font-bold uppercase tracking-wide text-[var(--muted-text)]">
-                  Iscritti · {playerRegs.length}
-                  {(tournament.priceCents ?? 0) > 0 && (
-                    <span className="ml-2 font-normal normal-case text-[var(--accent)]">
-                      {formatPrice(tournament.priceCents, tournament.priceCurrency)}
-                    </span>
-                  )}
-                </p>
-                {isAdmin && (
-                  <AdminAddPlayerButton
-                    tournamentId={id}
-                    existingPlayerIds={registrations.map((r) => r.player.id)}
-                  />
+              <p className="px-4 pt-3 pb-2 text-xs font-bold uppercase tracking-wide text-[var(--muted-text)]">
+                Iscritti · {playerRegs.length}
+                {(tournament.priceCents ?? 0) > 0 && (
+                  <span className="ml-2 font-normal normal-case text-[var(--accent)]">
+                    {formatPrice(tournament.priceCents, tournament.priceCurrency)}
+                  </span>
                 )}
-              </div>
+              </p>
               {playerRegs.length === 0 ? (
                 <p className="px-4 pb-3 text-sm text-[var(--muted-text)]">Nessun iscritto ancora. Sii il primo!</p>
               ) : (
@@ -245,6 +237,16 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 label="Condividi torneo"
               />
             )}
+          </div>
+        )}
+
+        {/* Admin: add player — always visible regardless of tournament status */}
+        {isAdmin && (
+          <div className="mx-4 mb-4">
+            <AdminAddPlayerButton
+              tournamentId={id}
+              existingPlayerIds={registrations.map((r) => r.player.id)}
+            />
           </div>
         )}
 
@@ -419,22 +421,14 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
         <div className="mx-4 mb-4 space-y-2">
           {/* Players list */}
           <div className="overflow-hidden rounded-2xl bg-[var(--surface-1)]">
-            <div className="flex items-center justify-between px-4 pt-3 pb-2">
-              <p className="text-xs font-bold uppercase tracking-wide text-[var(--muted-text)]">
-                Iscritti · {playerRegs.length}
-                {(tournament.priceCents ?? 0) > 0 && (
-                  <span className="ml-2 font-normal normal-case text-[var(--accent)]">
-                    {formatPrice(tournament.priceCents, tournament.priceCurrency)}
-                  </span>
-                )}
-              </p>
-              {isAdmin && (
-                <AdminAddPlayerButton
-                  tournamentId={id}
-                  existingPlayerIds={tournament.registrations.map((r) => r.player.id)}
-                />
+            <p className="px-4 pt-3 pb-2 text-xs font-bold uppercase tracking-wide text-[var(--muted-text)]">
+              Iscritti · {playerRegs.length}
+              {(tournament.priceCents ?? 0) > 0 && (
+                <span className="ml-2 font-normal normal-case text-[var(--accent)]">
+                  {formatPrice(tournament.priceCents, tournament.priceCurrency)}
+                </span>
               )}
-            </div>
+            </p>
             {playerRegs.length === 0 ? (
               <p className="px-4 pb-3 text-sm text-[var(--muted-text)]">Nessun iscritto ancora. Sii il primo!</p>
             ) : (
@@ -534,6 +528,16 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               label="Condividi torneo"
             />
           )}
+        </div>
+      )}
+
+      {/* Admin: add player — always visible regardless of tournament status */}
+      {isAdmin && (
+        <div className="mx-4 mb-4">
+          <AdminAddPlayerButton
+            tournamentId={id}
+            existingPlayerIds={tournament.registrations.map((r) => r.player.id)}
+          />
         </div>
       )}
 
