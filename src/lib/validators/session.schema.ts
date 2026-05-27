@@ -1,8 +1,8 @@
 import { z } from "zod"
 
 export const CreateSessionSchema = z.object({
-  title: z.string().min(2, "Titolo troppo corto").max(80),
-  location: z.string().min(2, "Inserisci la location").max(100),
+  title: z.string().max(80).optional(),
+  location: z.string().max(100).default(""),
   date: z.coerce.date(),
   format: z.enum(["TWO_VS_TWO", "THREE_VS_THREE", "FOUR_VS_FOUR"]),
   courtCost: z.number().int().min(0).optional(),

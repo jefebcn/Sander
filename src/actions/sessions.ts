@@ -45,10 +45,18 @@ export async function createSession(input: unknown) {
   const data = CreateSessionSchema.parse(input)
   const maxPlayers = FORMAT_MAX[data.format]
 
+  const FORMAT_LABEL: Record<string, string> = {
+    TWO_VS_TWO: "2v2",
+    THREE_VS_THREE: "3v3",
+    FOUR_VS_FOUR: "4v4",
+  }
+  const autoTitle = data.title?.trim() ||
+    (data.location ? `${FORMAT_LABEL[data.format]} — ${data.location}` : FORMAT_LABEL[data.format])
+
   const session = await db.session.create({
     data: {
       organizerId: player.id,
-      title: data.title,
+      title: autoTitle,
       location: data.location,
       date: data.date,
       format: data.format,

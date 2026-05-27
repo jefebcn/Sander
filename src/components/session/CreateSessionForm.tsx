@@ -2,41 +2,55 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { MapPin, ChevronRight, Banknote, Beer, Gift, Shuffle, Coins } from "lucide-react"
+import { MapPin, ChevronRight, Banknote, Beer, Gift, Shuffle, Coins, ChevronDown } from "lucide-react"
 import { createSession } from "@/actions/sessions"
 import { cn } from "@/lib/utils"
 
 const FORMATS = [
-  { value: "TWO_VS_TWO", label: "2 vs 2", sub: "4 giocatori" },
-  { value: "THREE_VS_THREE", label: "3 vs 3", sub: "6 giocatori" },
-  { value: "FOUR_VS_FOUR", label: "4 vs 4", sub: "8 giocatori" },
+  { value: "TWO_VS_TWO",     label: "2 vs 2", sub: "4 gioc." },
+  { value: "THREE_VS_THREE", label: "3 vs 3", sub: "6 gioc." },
+  { value: "FOUR_VS_FOUR",   label: "4 vs 4", sub: "8 gioc." },
 ] as const
 
 type Format = (typeof FORMATS)[number]["value"]
 type PaymentType = "FREE" | "QUOTA" | "LOSER_PAYS" | "SC"
 
-const PAYMENT_OPTIONS: { value: PaymentType; label: string; sub: string; icon: React.ElementType }[] = [
-  { value: "FREE",        label: "Gratis",         sub: "Nessuna quota",            icon: Gift },
-  { value: "QUOTA",       label: "A quota",         sub: "Ognuno paga la sua parte", icon: Banknote },
-  { value: "LOSER_PAYS",  label: "Chi perde paga",  sub: "Birra, cena…",             icon: Beer },
-  { value: "SC",          label: "SanderCredits",   sub: "Paga con SC in-app",       icon: Coins },
+const PAYMENT_OPTIONS: { value: PaymentType; label: string; icon: React.ElementType }[] = [
+  { value: "FREE",       label: "Gratis",   icon: Gift },
+  { value: "QUOTA",      label: "A quota",  icon: Banknote },
+  { value: "LOSER_PAYS", label: "Chi perde",icon: Beer },
+  { value: "SC",         label: "SC",       icon: Coins },
 ]
+
+function nowIso() {
+  const d = new Date()
+  d.setSeconds(0, 0)
+  return d.toISOString().slice(0, 16)
+}
+
+function formatDateLabel(iso: string) {
+  const d = new Date(iso)
+  const today = new Date()
+  const isToday = d.toDateString() === today.toDateString()
+  const time = d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })
+  if (isToday) return `Oggi, ${time}`
+  return `${d.toLocaleDateString("it-IT", { day: "2-digit", month: "short" })}, ${time}`
+}
 
 export function CreateSessionForm() {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
-  const [title, setTitle] = useState("")
-  const [location, setLocation] = useState("")
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 16))
   const [format, setFormat] = useState<Format>("TWO_VS_TWO")
-  const [notes, setNotes] = useState("")
-
+  const [location, setLocation] = useState("")
+  const [date, setDate] = useState(nowIso)
   const [paymentType, setPaymentType] = useState<PaymentType>("FREE")
   const [quotaAmount, setQuotaAmount] = useState("")
   const [loserPays, setLoserPays] = useState("")
   const [matchMode, setMatchMode] = useState(false)
+  const [notes, setNotes] = useState("")
+  const [showAdvanced, setShowAdvanced] = useState(false)
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -44,17 +58,17 @@ export function CreateSessionForm() {
     startTransition(async () => {
       try {
         const session = await createSession({
-          title,
           location,
           date: new Date(date),
           format,
           notes: notes || undefined,
           paymentType,
-          quotaAmount: paymentType === "QUOTA" && quotaAmount
-            ? Math.round(parseFloat(quotaAmount) * 100)
-            : paymentType === "SC" && quotaAmount
-            ? parseInt(quotaAmount, 10)
-            : undefined,
+          quotaAmount:
+            paymentType === "QUOTA" && quotaAmount
+              ? Math.round(parseFloat(quotaAmount) * 100)
+              : paymentType === "SC" && quotaAmount
+              ? parseInt(quotaAmount, 10)
+              : undefined,
           loserPays: paymentType === "LOSER_PAYS" && loserPays ? loserPays : undefined,
           matchMode: format === "TWO_VS_TWO" ? matchMode : false,
         })
@@ -66,204 +80,171 @@ export function CreateSessionForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 px-4 pb-8">
-      {/* Title */}
-      <div className="space-y-1.5">
-        <label className="text-sm font-semibold text-[var(--muted-text)]">Titolo</label>
-        <input
-          type="text"
-          required
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="es. Sessione serale — Copacabana"
-          className="w-full rounded-xl bg-[var(--surface-2)] px-4 py-3 text-base text-[var(--foreground)] placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-        />
-      </div>
-
-      {/* Location */}
-      <div className="space-y-1.5">
-        <label className="text-sm font-semibold text-[var(--muted-text)]">Campo / Location</label>
-        <div className="relative">
-          <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-text)]" aria-hidden="true" />
-          <input
-            type="text"
-            required
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            placeholder="es. Lido Milano Nord, Campo 3"
-            className="w-full rounded-xl bg-[var(--surface-2)] py-3 pl-9 pr-4 text-base text-[var(--foreground)] placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-          />
-        </div>
-      </div>
-
-      {/* Date & time */}
-      <div className="space-y-1.5">
-        <label className="text-sm font-semibold text-[var(--muted-text)]">Data e ora</label>
-        <input
-          type="datetime-local"
-          required
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="w-full rounded-xl bg-[var(--surface-2)] px-4 py-3 text-base text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] [color-scheme:dark]"
-        />
-      </div>
-
-      {/* Format */}
-      <div className="space-y-1.5">
-        <label className="text-sm font-semibold text-[var(--muted-text)]">Formato</label>
-        <div className="grid grid-cols-3 gap-2">
-          {FORMATS.map(({ value, label, sub }) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setFormat(value)}
-              className={cn(
-                "flex min-h-[4rem] flex-col items-center justify-center gap-0.5 rounded-2xl border-2 p-3 text-sm font-bold transition-colors",
-                format === value
-                  ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
-                  : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted-text)]",
-              )}
-            >
-              {label}
-              <span className="text-xs font-normal">{sub}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Multi-match mode — only for 2v2 */}
-      {format === "TWO_VS_TWO" && (
-        <button
-          type="button"
-          onClick={() => setMatchMode((v) => !v)}
-          className={cn(
-            "flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3.5 text-left transition-colors",
-            matchMode
-              ? "border-[var(--accent)] bg-[var(--accent)]/10"
-              : "border-[var(--border)] bg-[var(--surface-2)]",
-          )}
-        >
-          <Shuffle className={cn("h-5 w-5 shrink-0", matchMode ? "text-[var(--accent)]" : "text-[var(--muted-text)]")} />
-          <div className="flex-1">
-            <p className={cn("text-sm font-bold", matchMode ? "text-[var(--accent)]" : "text-white")}>
-              Modalità multi-partita
-            </p>
-            <p className="text-xs text-[var(--muted-text)]">
-              Le coppie ruotano automaticamente tra i gironi
-            </p>
-          </div>
-          <div
+    <form onSubmit={handleSubmit} className="space-y-3 px-4 pb-8">
+      {/* Format — first and largest */}
+      <div className="grid grid-cols-3 gap-2">
+        {FORMATS.map(({ value, label, sub }) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setFormat(value)}
             className={cn(
-              "h-6 w-10 rounded-full transition-colors",
-              matchMode ? "bg-[var(--accent)]" : "bg-[var(--border)]",
+              "flex min-h-[5rem] flex-col items-center justify-center gap-1 rounded-2xl border-2 p-3 transition-colors",
+              format === value
+                ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
+                : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted-text)]",
             )}
           >
-            <div
-              className={cn(
-                "mt-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
-                matchMode ? "translate-x-4.5 ml-0.5" : "ml-0.5",
-              )}
-            />
-          </div>
-        </button>
-      )}
-
-      {/* Payment type */}
-      <div className="space-y-2">
-        <label className="text-sm font-semibold text-[var(--muted-text)]">Modalità di pagamento</label>
-        <div className="grid grid-cols-2 gap-2">
-          {PAYMENT_OPTIONS.map(({ value, label, sub, icon: Icon }) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setPaymentType(value)}
-              className={cn(
-                "flex min-h-[5rem] flex-col items-center justify-center gap-1 rounded-2xl border-2 p-3 text-xs font-bold transition-colors",
-                paymentType === value
-                  ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
-                  : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted-text)]",
-              )}
-            >
-              <Icon className="h-5 w-5" />
-              {label}
-              <span className="text-[0.65rem] font-normal text-center leading-tight opacity-70">{sub}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* QUOTA — amount input */}
-        {paymentType === "QUOTA" && (
-          <div className="flex items-center gap-3 rounded-2xl bg-[var(--surface-2)] px-4 py-3">
-            <Banknote className="h-5 w-5 shrink-0 text-[var(--accent)]" />
-            <div className="flex-1">
-              <p className="text-xs text-[var(--muted-text)] mb-1">Quota a persona (€)</p>
-              <input
-                type="number"
-                min="0"
-                step="0.50"
-                value={quotaAmount}
-                onChange={(e) => setQuotaAmount(e.target.value)}
-                placeholder="es. 8.00"
-                className="w-full bg-transparent text-lg font-black text-white focus:outline-none placeholder:text-[var(--muted-text)] placeholder:font-normal placeholder:text-base"
-              />
-            </div>
-            <span className="text-2xl font-black text-[var(--accent)]">€</span>
-          </div>
-        )}
-
-        {/* LOSER_PAYS — description input */}
-        {paymentType === "LOSER_PAYS" && (
-          <div className="flex items-center gap-3 rounded-2xl bg-[var(--surface-2)] px-4 py-3">
-            <Beer className="h-5 w-5 shrink-0 text-[var(--accent)]" />
-            <div className="flex-1">
-              <p className="text-xs text-[var(--muted-text)] mb-1">Cosa paga chi perde?</p>
-              <input
-                type="text"
-                maxLength={60}
-                value={loserPays}
-                onChange={(e) => setLoserPays(e.target.value)}
-                placeholder="es. 1 birra a testa, una cena…"
-                className="w-full bg-transparent text-base font-semibold text-white focus:outline-none placeholder:text-[var(--muted-text)] placeholder:font-normal"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* SC — SanderCredits cost input */}
-        {paymentType === "SC" && (
-          <div className="flex items-center gap-3 rounded-2xl bg-[var(--surface-2)] px-4 py-3">
-            <Coins className="h-5 w-5 shrink-0 text-[var(--accent)]" />
-            <div className="flex-1">
-              <p className="text-xs text-[var(--muted-text)] mb-1">Costo a persona (SC)</p>
-              <input
-                type="number"
-                min="1"
-                step="1"
-                value={quotaAmount}
-                onChange={(e) => setQuotaAmount(e.target.value)}
-                placeholder="es. 8"
-                className="w-full bg-transparent text-lg font-black text-white focus:outline-none placeholder:text-[var(--muted-text)] placeholder:font-normal placeholder:text-base"
-              />
-            </div>
-            <span className="text-xl font-black text-[var(--accent)]">SC</span>
-          </div>
-        )}
+            <span className="text-lg font-black">{label}</span>
+            <span className="text-xs font-normal">{sub}</span>
+          </button>
+        ))}
       </div>
 
-      {/* Notes */}
-      <div className="space-y-1.5">
-        <label className="text-sm font-semibold text-[var(--muted-text)]">
-          Note <span className="font-normal opacity-60">— opzionale</span>
-        </label>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="es. Portate le vostre palline, si inizia alle 18:30"
-          rows={2}
-          maxLength={200}
-          className="w-full resize-none rounded-xl bg-[var(--surface-2)] px-4 py-3 text-base text-[var(--foreground)] placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+      {/* Location — optional */}
+      <div className="relative">
+        <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-text)]" aria-hidden="true" />
+        <input
+          type="text"
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+          placeholder="Campo / Location (opzionale)"
+          className="w-full rounded-xl bg-[var(--surface-2)] py-3 pl-9 pr-4 text-base text-[var(--foreground)] placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
         />
       </div>
+
+      {/* Date — styled tap-target over a hidden native input */}
+      <div className="relative">
+        <div className="flex items-center gap-3 rounded-xl bg-[var(--surface-2)] px-4 py-3 pointer-events-none">
+          <span className="text-base" aria-hidden="true">📅</span>
+          <span className="flex-1 text-base font-semibold text-white">{formatDateLabel(date)}</span>
+          <span className="text-xs font-semibold text-[var(--accent)]">Cambia</span>
+        </div>
+        <input
+          type="datetime-local"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="absolute inset-0 opacity-0 cursor-pointer w-full"
+          style={{ colorScheme: "dark" }}
+        />
+      </div>
+
+      {/* Payment — 4 compact pills */}
+      <div className="grid grid-cols-4 gap-1.5">
+        {PAYMENT_OPTIONS.map(({ value, label, icon: Icon }) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setPaymentType(value)}
+            className={cn(
+              "flex flex-col items-center gap-1.5 rounded-xl border-2 py-3 px-1 text-[0.65rem] font-bold transition-colors",
+              paymentType === value
+                ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
+                : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted-text)]",
+            )}
+          >
+            <Icon className="h-4 w-4" aria-hidden="true" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Conditional payment detail */}
+      {paymentType === "QUOTA" && (
+        <div className="flex items-center gap-3 rounded-xl bg-[var(--surface-2)] px-4 py-3">
+          <Banknote className="h-5 w-5 shrink-0 text-[var(--accent)]" aria-hidden="true" />
+          <input
+            type="number"
+            min="0"
+            step="0.50"
+            value={quotaAmount}
+            onChange={(e) => setQuotaAmount(e.target.value)}
+            placeholder="Quota a persona (€)"
+            autoFocus
+            className="flex-1 bg-transparent text-base font-semibold text-white focus:outline-none placeholder:text-[var(--muted-text)] placeholder:font-normal"
+          />
+          <span className="text-xl font-black text-[var(--accent)]">€</span>
+        </div>
+      )}
+      {paymentType === "LOSER_PAYS" && (
+        <div className="flex items-center gap-3 rounded-xl bg-[var(--surface-2)] px-4 py-3">
+          <Beer className="h-5 w-5 shrink-0 text-[var(--accent)]" aria-hidden="true" />
+          <input
+            type="text"
+            maxLength={60}
+            value={loserPays}
+            onChange={(e) => setLoserPays(e.target.value)}
+            placeholder="Cosa paga chi perde? (es. 1 birra)"
+            autoFocus
+            className="flex-1 bg-transparent text-base font-semibold text-white focus:outline-none placeholder:text-[var(--muted-text)] placeholder:font-normal"
+          />
+        </div>
+      )}
+      {paymentType === "SC" && (
+        <div className="flex items-center gap-3 rounded-xl bg-[var(--surface-2)] px-4 py-3">
+          <Coins className="h-5 w-5 shrink-0 text-[var(--accent)]" aria-hidden="true" />
+          <input
+            type="number"
+            min="1"
+            step="1"
+            value={quotaAmount}
+            onChange={(e) => setQuotaAmount(e.target.value)}
+            placeholder="Costo a persona (SC)"
+            autoFocus
+            className="flex-1 bg-transparent text-base font-semibold text-white focus:outline-none placeholder:text-[var(--muted-text)] placeholder:font-normal"
+          />
+          <span className="text-xl font-black text-[var(--accent)]">SC</span>
+        </div>
+      )}
+
+      {/* Advanced — collapsible */}
+      <button
+        type="button"
+        onClick={() => setShowAdvanced((v) => !v)}
+        className="flex items-center gap-1.5 text-sm text-[var(--muted-text)] pt-1"
+      >
+        <ChevronDown
+          className={cn("h-4 w-4 transition-transform", showAdvanced && "rotate-180")}
+          aria-hidden="true"
+        />
+        Opzioni avanzate
+      </button>
+
+      {showAdvanced && (
+        <div className="space-y-3">
+          {format === "TWO_VS_TWO" && (
+            <button
+              type="button"
+              onClick={() => setMatchMode((v) => !v)}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3.5 text-left transition-colors",
+                matchMode
+                  ? "border-[var(--accent)] bg-[var(--accent)]/10"
+                  : "border-[var(--border)] bg-[var(--surface-2)]",
+              )}
+            >
+              <Shuffle className={cn("h-5 w-5 shrink-0", matchMode ? "text-[var(--accent)]" : "text-[var(--muted-text)]")} aria-hidden="true" />
+              <div className="flex-1">
+                <p className={cn("text-sm font-bold", matchMode ? "text-[var(--accent)]" : "text-white")}>
+                  Modalità multi-partita
+                </p>
+                <p className="text-xs text-[var(--muted-text)]">Le coppie ruotano tra i gironi</p>
+              </div>
+              <div className={cn("h-6 w-10 rounded-full transition-colors", matchMode ? "bg-[var(--accent)]" : "bg-[var(--border)]")}>
+                <div className={cn("mt-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform", matchMode ? "translate-x-4.5 ml-0.5" : "ml-0.5")} />
+              </div>
+            </button>
+          )}
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Note (opzionale)"
+            rows={2}
+            maxLength={200}
+            className="w-full resize-none rounded-xl bg-[var(--surface-2)] px-4 py-3 text-base text-[var(--foreground)] placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+          />
+        </div>
+      )}
 
       {error && (
         <p role="alert" className="rounded-xl bg-[var(--danger)]/15 px-4 py-3 text-sm font-medium text-[var(--danger)]">
@@ -273,19 +254,13 @@ export function CreateSessionForm() {
 
       <button
         type="submit"
-        disabled={isPending || title.trim().length < 2 || location.trim().length < 2}
-        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-bold text-black transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+        disabled={isPending}
+        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-bold text-black transition-all active:scale-[0.98] disabled:opacity-60"
       >
         {isPending ? (
-          <>
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent" />
-            Creazione...
-          </>
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent" />
         ) : (
-          <>
-            Crea Sessione
-            <ChevronRight className="h-5 w-5" />
-          </>
+          <>Crea Sessione <ChevronRight className="h-5 w-5" aria-hidden="true" /></>
         )}
       </button>
     </form>
