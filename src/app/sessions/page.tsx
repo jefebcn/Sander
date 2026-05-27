@@ -15,19 +15,14 @@ export default async function SessionsPage() {
     <div className="flex flex-col pb-6">
 
       {/* ── Page title ────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 pt-5 pb-4">
+      <div className="flex items-center justify-between px-4 pt-5 pb-3">
         <h1 className="text-2xl font-black text-white">Partite</h1>
         <SessionsInfoSheet />
       </div>
 
-      {/* ── Session list with format filters ─────────────────── */}
-      <FilterableSessionList
-        sessions={sessions.map((s) => ({ ...s, status: s.status as "OPEN" | "FULL" | "COMPLETED" | "CANCELLED" }))}
-      />
-
       {/* ── + Crea una partita CTA ────────────────────────────── */}
       {currentPlayer && (
-        <div className="sticky bottom-[5rem] px-4 pt-6">
+        <div className="px-4 pb-4">
           <Link
             href="/sessions/new"
             className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-black text-black text-base transition-opacity active:opacity-80"
@@ -38,6 +33,11 @@ export default async function SessionsPage() {
           </Link>
         </div>
       )}
+
+      {/* ── Session list with format filters ─────────────────── */}
+      <FilterableSessionList
+        sessions={sessions.map((s) => ({ ...s, status: s.status as "OPEN" | "FULL" | "COMPLETED" | "CANCELLED" }))}
+      />
     </div>
   )
 }
