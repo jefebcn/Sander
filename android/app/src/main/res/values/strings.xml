@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Sander</string>
+    <string name="title_activity_main">Sander</string>
+    <string name="package_name">com.sanderbv.app</string>
+    <string name="custom_url_scheme">com.sanderbv.app</string>
+</resources>
