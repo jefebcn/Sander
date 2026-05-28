@@ -149,13 +149,6 @@ export default async function Home() {
 
         {fullPlayer ? (
           <>
-            {/* ── Annuncio evento ───────────────────────────────── */}
-            <WhatsAppAnnouncementBanner
-              url="https://chat.whatsapp.com/LnZvWR2ffXgIfzPCUFE7jL?mode=gi_t"
-              title="Gruppo WhatsApp Sander"
-              cta="Entra nel gruppo"
-            />
-
             {/* ── Profile Card ──────────────────────────────────── */}
             <div className="slide-up flex items-center gap-4 rounded-2xl bg-[var(--surface-2)] p-5">
               {/* Avatar */}
@@ -183,10 +176,13 @@ export default async function Home() {
                   {fullPlayer.lastName ??
                     fullPlayer.name.split(" ").slice(1).join(" ")}
                 </p>
-                <span className="mt-1 inline-block rounded-full px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-wider"
-                  style={{ background: "rgba(201,243,29,0.15)", color: "var(--accent)" }}>
-                  {getMilestoneTitle(fullPlayer.level)}
-                </span>
+                <div className="mt-1 flex items-center gap-1.5">
+                  <span className="text-[0.55rem] font-bold uppercase tracking-wider text-[var(--muted-text)]">Titolo</span>
+                  <span className="inline-block rounded-full px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-wider"
+                    style={{ background: "rgba(201,243,29,0.15)", color: "var(--accent)" }}>
+                    {getMilestoneTitle(fullPlayer.level)}
+                  </span>
+                </div>
               </div>
               {/* Level badge — tap to see how XP works */}
               <Link
@@ -251,9 +247,9 @@ export default async function Home() {
                   <StatsInfoSheet />
                 </div>
                 {[
-                  { label: "GLK", value: glickoDisplay },
-                  { label: "PLA", value: fullPlayer.sessionsPlayed },
-                  { label: "ORG", value: fullPlayer._count.organizedSessions },
+                  { label: "RATING", value: glickoDisplay },
+                  { label: "PARTITE", value: fullPlayer.sessionsPlayed },
+                  { label: "ORG.", value: fullPlayer._count.organizedSessions },
                 ].map(({ label, value }) => (
                   <div key={label} className="flex flex-col items-center gap-1 py-1">
                     <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--muted-text)]">
@@ -266,48 +262,69 @@ export default async function Home() {
 
               <div className="mx-4 border-t border-[var(--border)]" />
 
-              {/* Streak row */}
+              {/* Win rate row */}
               <div className="px-5 py-4">
-                <div className="flex items-center gap-3">
-                  <span className="flex-shrink-0 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
-                    STREAK
-                  </span>
-                  {/* Colour bar */}
-                  <div className="relative h-2 flex-1 overflow-hidden rounded-full">
-                    <div
-                      className="absolute inset-0 rounded-full"
-                      style={{
-                        background:
-                          "linear-gradient(to right, #ef4444 0%, #f97316 33%, #eab308 66%, #22c55e 100%)",
-                      }}
-                    />
-                    {streakPct < 100 && (
-                      <div
-                        className="absolute inset-y-0 right-0 bg-[var(--surface-2)]"
-                        style={{ left: `${streakPct}%` }}
-                      />
-                    )}
-                    {/* Thumb */}
-                    <div
-                      className="absolute top-1/2 h-4 w-1.5 -translate-y-1/2 rounded-sm bg-white shadow"
-                      style={{ left: `${Math.max(0, Math.min(93, streakPct))}%` }}
-                    />
+                {totalMatches === 0 ? (
+                  <div className="mb-3 py-1 text-center">
+                    <p className="text-sm font-bold text-white/70">Nessuna partita ancora</p>
+                    <p className="mt-0.5 text-xs text-[var(--muted-text)]">
+                      Crea o unisciti a una partita per vedere le tue stats
+                    </p>
                   </div>
-                  <span className="flex-shrink-0 text-xl font-black text-white">
-                    {fullPlayer.matchesWon}
-                  </span>
-                </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <span className="flex-shrink-0 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
+                        WIN RATE
+                      </span>
+                      {/* Colour bar */}
+                      <div className="relative h-2 flex-1 overflow-hidden rounded-full">
+                        <div
+                          className="absolute inset-0 rounded-full"
+                          style={{
+                            background:
+                              "linear-gradient(to right, #ef4444 0%, #f97316 33%, #eab308 66%, #22c55e 100%)",
+                          }}
+                        />
+                        {streakPct < 100 && (
+                          <div
+                            className="absolute inset-y-0 right-0 bg-[var(--surface-2)]"
+                            style={{ left: `${streakPct}%` }}
+                          />
+                        )}
+                        {/* Thumb */}
+                        <div
+                          className="absolute top-1/2 h-4 w-1.5 -translate-y-1/2 rounded-sm bg-white shadow"
+                          style={{ left: `${Math.max(0, Math.min(93, streakPct))}%` }}
+                        />
+                      </div>
+                      <span className="flex-shrink-0 text-xl font-black text-white">
+                        {streakPct}%
+                      </span>
+                    </div>
+                    <p className="mt-1.5 text-xs text-[var(--muted-text)]">
+                      {fullPlayer.matchesWon} vinte · {totalMatches} giocate
+                    </p>
+                  </>
+                )}
                 <Link
                   href="/sessions"
                   className="mt-3 flex items-center justify-between"
                 >
                   <span className="text-sm text-[var(--muted-text)]">
-                    Partite nelle ultime 4 settimane
+                    Vai alle partite
                   </span>
                   <ChevronRight className="h-4 w-4 flex-shrink-0 text-[var(--accent)]" />
                 </Link>
               </div>
             </div>
+
+            {/* ── Annuncio evento ───────────────────────────────── */}
+            <WhatsAppAnnouncementBanner
+              url="https://chat.whatsapp.com/LnZvWR2ffXgIfzPCUFE7jL?mode=gi_t"
+              title="Gruppo WhatsApp Sander"
+              cta="Entra nel gruppo"
+            />
 
             {/* ── Per te (Personalised recommendations) ──────── */}
             {recs && (recs.performanceInsight || recs.suggestedSessions.length > 0 || recs.suggestedTournaments.length > 0) && (

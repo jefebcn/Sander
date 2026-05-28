@@ -6,22 +6,27 @@ import { Info, X } from "lucide-react"
 
 const ITEMS = [
   {
-    label: "GLK — Glicko",
+    label: "RATING — Glicko",
     description:
       "Il tuo rating competitivo. Sale quando batti giocatori più forti, scende quando perdi contro i più deboli. Più giochi, più è preciso.",
   },
   {
-    label: "PLA — Partite",
+    label: "PARTITE",
     description: "Quante partite hai giocato in totale su Sander.",
   },
   {
-    label: "ORG — Organizzate",
+    label: "ORG. — Organizzate",
     description: "Quante sessioni di gioco hai creato e organizzato per gli altri.",
   },
   {
-    label: "STREAK — Barra vittorie",
+    label: "WIN RATE — Tasso vittorie",
     description:
-      "La barra mostra il tuo rapporto vittorie / partite totali. Tutto rosso = poche vittorie, tutto verde = vinci spesso. Il numero a destra sono le vittorie totali.",
+      "La barra mostra la percentuale di vittorie sul totale. Tutto rosso = poche vittorie, tutto verde = vinci spesso. La percentuale e il conteggio vinte/giocate sono sempre visibili.",
+  },
+  {
+    label: "TITOLO",
+    description:
+      "Il titolo cambia man mano che sali di livello: Drop-In → Sand Digger → Setter → Spiker → Ace → Sand King.",
   },
   {
     label: "LIVELLO & XP",
