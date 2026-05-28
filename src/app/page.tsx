@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic"
 
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronRight, ExternalLink, Sparkles, MapPin, Trophy, Shuffle } from "lucide-react"
+import { ChevronRight, ExternalLink, Sparkles, MapPin, Trophy, Shuffle, Plus } from "lucide-react"
 import { redirect } from "next/navigation"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
@@ -232,6 +232,16 @@ export default async function Home() {
                 <ChevronRight className="h-4 w-4 flex-shrink-0 text-[var(--accent)]" />
               </Link>
             </div>
+
+            {/* ── Crea partita rapida ──────────────────────────── */}
+            <Link
+              href="/sessions/new"
+              className="flex min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl font-black text-black text-base transition-opacity active:opacity-80"
+              style={{ background: "var(--accent)" }}
+            >
+              <Plus className="h-5 w-5" />
+              Crea partita
+            </Link>
 
             {/* ── Stats Card ────────────────────────────────────── */}
             <div className="slide-up stagger-3 overflow-hidden rounded-2xl bg-[var(--surface-2)]">

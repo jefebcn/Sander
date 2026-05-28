@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useTransition, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { MapPin, ChevronRight, Banknote, Beer, Gift, Shuffle, Coins, ChevronDown } from "lucide-react"
 import { createSession } from "@/actions/sessions"
@@ -22,6 +22,15 @@ const PAYMENT_OPTIONS: { value: PaymentType; label: string; icon: React.ElementT
   { value: "SC",         label: "SC",       icon: Coins },
 ]
 
+interface Presets {
+  format: string
+  location: string
+  paymentType: string
+  quotaAmount: number | null
+  loserPays: string | null
+  matchMode: boolean
+}
+
 function nowIso() {
   const d = new Date()
   d.setSeconds(0, 0)
@@ -37,20 +46,66 @@ function formatDateLabel(iso: string) {
   return `${d.toLocaleDateString("it-IT", { day: "2-digit", month: "short" })}, ${time}`
 }
 
-export function CreateSessionForm() {
+const LOCATIONS_KEY = "sander_locations"
+
+function saveLocation(location: string) {
+  if (!location.trim()) return
+  try {
+    const stored = localStorage.getItem(LOCATIONS_KEY)
+    const existing: string[] = stored ? (JSON.parse(stored) as string[]) : []
+    const deduped = [location, ...existing.filter((l) => l !== location)].slice(0, 5)
+    localStorage.setItem(LOCATIONS_KEY, JSON.stringify(deduped))
+  } catch {
+    // ignore
+  }
+}
+
+function presetsToQuotaDisplay(presets: Presets): string {
+  if (presets.quotaAmount == null) return ""
+  if (presets.paymentType === "QUOTA") {
+    // DB stores cents for QUOTA → convert to euros string
+    return (presets.quotaAmount / 100).toFixed(2)
+  }
+  if (presets.paymentType === "SC") {
+    // DB stores raw integer for SC
+    return String(presets.quotaAmount)
+  }
+  return ""
+}
+
+export function CreateSessionForm({ presets }: { presets?: Presets }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
-  const [format, setFormat] = useState<Format>("TWO_VS_TWO")
-  const [location, setLocation] = useState("")
+  const [format, setFormat] = useState<Format>(
+    (presets?.format as Format | undefined) ?? "TWO_VS_TWO",
+  )
+  const [location, setLocation] = useState(presets?.location ?? "")
   const [date, setDate] = useState(nowIso)
-  const [paymentType, setPaymentType] = useState<PaymentType>("FREE")
-  const [quotaAmount, setQuotaAmount] = useState("")
-  const [loserPays, setLoserPays] = useState("")
-  const [matchMode, setMatchMode] = useState(false)
+  const [paymentType, setPaymentType] = useState<PaymentType>(
+    (presets?.paymentType as PaymentType | undefined) ?? "FREE",
+  )
+  const [quotaAmount, setQuotaAmount] = useState(
+    presets ? presetsToQuotaDisplay(presets) : "",
+  )
+  const [loserPays, setLoserPays] = useState(presets?.loserPays ?? "")
+  const [matchMode, setMatchMode] = useState(presets?.matchMode ?? false)
   const [notes, setNotes] = useState("")
   const [showAdvanced, setShowAdvanced] = useState(false)
+
+  const [recentLocations, setRecentLocations] = useState<string[]>([])
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(LOCATIONS_KEY)
+      if (stored) {
+        setRecentLocations(JSON.parse(stored) as string[])
+      }
+    } catch {
+      // ignore
+    }
+  }, [])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -72,6 +127,7 @@ export function CreateSessionForm() {
           loserPays: paymentType === "LOSER_PAYS" && loserPays ? loserPays : undefined,
           matchMode: format === "TWO_VS_TWO" ? matchMode : false,
         })
+        saveLocation(location)
         router.push(`/sessions/${session.id}`)
       } catch (err) {
         setError(err instanceof Error ? err.message : "Errore durante la creazione")
@@ -112,6 +168,27 @@ export function CreateSessionForm() {
           className="w-full rounded-xl bg-[var(--surface-2)] py-3 pl-9 pr-4 text-base text-[var(--foreground)] placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
         />
       </div>
+
+      {/* Recent location pills */}
+      {recentLocations.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {recentLocations.map((loc) => (
+            <button
+              key={loc}
+              type="button"
+              onClick={() => setLocation(loc)}
+              className={cn(
+                "rounded-full border px-3 py-1 text-xs font-semibold transition-colors",
+                location === loc
+                  ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
+                  : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted-text)]",
+              )}
+            >
+              📍 {loc}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Date — styled tap-target over a hidden native input */}
       <div className="relative">

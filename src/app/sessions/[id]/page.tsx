@@ -1,13 +1,13 @@
 export const dynamic = "force-dynamic"
 
 import type { Metadata } from "next"
-import { MapPin, Calendar, Euro, FileText, Coins } from "lucide-react"
+import { MapPin, Calendar, Euro, FileText, Coins, RefreshCw } from "lucide-react"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { getSession } from "@/actions/sessions"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
-import { ShareButton } from "@/components/ui/ShareButton"
+import { ShareButton, WhatsAppShareButton } from "@/components/ui/ShareButton"
 import { QRCodeButton } from "@/components/ui/QRCode"
 import { SessionStatusBadge } from "@/components/session/SessionStatusBadge"
 import { ParticipantList } from "@/components/session/ParticipantList"
@@ -186,6 +186,10 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
               text={`Unisciti a "${session.title}" su SANDER 🏐`}
               fullWidth
             />
+            <WhatsAppShareButton
+              path={`/sessions/${session.id}`}
+              text={`Unisciti a "${session.title}" a ${session.location} su SANDER 🏐`}
+            />
             <QRCodeButton
               path={`/sessions/${session.id}`}
               title={session.title}
@@ -227,9 +231,19 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
           />
         )}
 
-        {/* Rematch CTA for completed sessions */}
+        {/* Ricrea sessione + Rematch CTA for completed sessions */}
         {session.status === "COMPLETED" && isParticipant && (
-          <RematchButton sessionId={session.id} />
+          <div className="space-y-2">
+            <Link
+              href={`/sessions/new?from=${session.id}`}
+              className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-bold text-base transition-opacity active:opacity-80"
+              style={{ background: "var(--surface-2)", color: "var(--muted-text)" }}
+            >
+              <RefreshCw className="h-5 w-5" />
+              Ricrea sessione
+            </Link>
+            <RematchButton sessionId={session.id} />
+          </div>
         )}
 
       </div>

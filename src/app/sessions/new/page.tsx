@@ -6,9 +6,18 @@ import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { CreateSessionForm } from "@/components/session/CreateSessionForm"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { SignInButton } from "@/components/auth/SignInButton"
+import { db } from "@/lib/db"
 
-export default async function NewSessionPage() {
-  const [authSession, player] = await Promise.all([getCurrentSession(), getCurrentPlayer()])
+export default async function NewSessionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string }>
+}) {
+  const [authSession, player, { from }] = await Promise.all([
+    getCurrentSession(),
+    getCurrentPlayer(),
+    searchParams,
+  ])
 
   if (!authSession) {
     return (
@@ -26,10 +35,42 @@ export default async function NewSessionPage() {
     redirect("/players/new?from=sessions")
   }
 
+  let presets: {
+    format: string
+    location: string
+    paymentType: string
+    quotaAmount: number | null
+    loserPays: string | null
+    matchMode: boolean
+  } | null = null
+
+  if (from) {
+    presets = await db.session
+      .findUnique({
+        where: { id: from },
+        select: {
+          format: true,
+          location: true,
+          paymentType: true,
+          quotaAmount: true,
+          loserPays: true,
+          matchMode: true,
+        },
+      })
+      .catch(() => null)
+  }
+
+  const title = presets ? "Ricrea Sessione" : "Nuova Sessione"
+
   return (
     <div className="pb-6">
-      <PageHeader title="Nuova Sessione" backHref="/sessions" />
-      <CreateSessionForm />
+      <PageHeader title={title} backHref="/sessions" />
+      {presets && (
+        <p className="px-4 pb-2 text-sm text-[var(--accent)]">
+          ↩ Precompilato dalla sessione precedente
+        </p>
+      )}
+      <CreateSessionForm presets={presets ?? undefined} />
     </div>
   )
 }
