@@ -28,8 +28,8 @@ export default function PrivacyPage() {
           <p>
             Il titolare del trattamento dei dati personali è <strong className="text-white">SANDER</strong>.
             Per qualsiasi richiesta relativa alla privacy puoi contattarci a{" "}
-            <a href="mailto:privacy@sander.app" className="text-[var(--accent)] underline">
-              privacy@sander.app
+            <a href="mailto:conti9708@gmail.com" className="text-[var(--accent)] underline">
+              conti9708@gmail.com
             </a>
           </p>
         </Section>
@@ -153,8 +153,8 @@ export default function PrivacyPage() {
           </ul>
           <p className="mt-2">
             Per esercitare i tuoi diritti scrivi a{" "}
-            <a href="mailto:privacy@sander.app" className="text-[var(--accent)] underline">
-              privacy@sander.app
+            <a href="mailto:conti9708@gmail.com" className="text-[var(--accent)] underline">
+              conti9708@gmail.com
             </a>
             . Risponderemo entro 30 giorni. Hai inoltre il diritto di presentare reclamo al Garante
             per la Protezione dei Dati Personali (
