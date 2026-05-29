@@ -1,0 +1,160 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:390px;height:844px;overflow:hidden;background:#07090a;font-family:-apple-system,"SF Pro Display","Helvetica Neue",Arial,sans-serif;color:white}
+.bg{position:absolute;inset:0;background:radial-gradient(ellipse 75% 45% at 105% 0%,rgba(201,243,29,0.13) 0%,transparent 65%),linear-gradient(175deg,#0d1209 0%,#090b09 40%,#040504 100%)}
+.content{position:relative;z-index:10;padding:0 0 80px;overflow:hidden;height:764px}
+.header{display:flex;align-items:center;justify-content:space-between;padding:52px 16px 8px}
+.title{font-size:24px;font-weight:900}
+.header-right{display:flex;gap:8px}
+.icon-btn{width:36px;height:36px;border-radius:12px;background:#1a1f1a;display:flex;align-items:center;justify-content:center;font-size:14px;color:rgba(255,255,255,0.45)}
+/* Tab bar */
+.tabs{display:flex;gap:4px;padding:0 16px 12px;overflow-x:auto;scrollbar-width:none}
+.tab{flex-shrink:0;border-radius:12px;height:36px;padding:0 14px;display:flex;align-items:center;font-size:12px;font-weight:700}
+.tab.active{background:#c9f31d;color:#000}
+.tab.inactive{background:#1a1f1a;color:rgba(255,255,255,0.45)}
+/* Sander Card */
+.card-container{padding:0 16px 12px}
+.sander-card{border-radius:20px;overflow:hidden;position:relative;height:190px;background:linear-gradient(135deg,#3d2808 0%,#6b4012 40%,#4a2c0e 100%)}
+.card-bg-pattern{position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 90% 20%,rgba(205,127,50,0.5) 0%,transparent 60%),radial-gradient(ellipse 40% 60% at 10% 80%,rgba(100,60,20,0.6) 0%,transparent 50%)}
+.card-frame{position:absolute;inset:0;border-radius:20px;border:1.5px solid rgba(205,127,50,0.6);box-shadow:inset 0 0 40px rgba(205,127,50,0.1)}
+.card-content{position:relative;z-index:2;padding:18px;display:flex;flex-direction:column;height:100%;justify-content:space-between}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start}
+.card-rating{font-size:36px;font-weight:900;color:#7a4f20;text-shadow:1px 1px 0 rgba(255,255,255,0.15),-1px -1px 0 rgba(0,0,0,0.5);line-height:1}
+.card-rating-label{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#7a4f20;margin-top:1px}
+.card-flag{width:32px;height:22px;border-radius:4px;overflow:hidden;border:1px solid rgba(255,255,255,0.2)}
+.flag-sm{font-size:24px;line-height:22px;text-align:center;display:block}
+.card-name-row{display:flex;flex-direction:column}
+.card-name{font-size:28px;font-weight:900;color:#5a3810;text-shadow:0.5px 0.5px 0 rgba(255,255,255,0.08),-0.5px -0.5px 0 rgba(0,0,0,0.5);line-height:1}
+.card-role{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#7a5020;margin-top:2px}
+.card-stats{display:flex;gap:14px}
+.stat-col{text-align:center}
+.stat-val{font-size:22px;font-weight:900;color:#5a3810;text-shadow:0.5px 0.5px 0 rgba(255,255,255,0.1),-0.5px -0.5px 0 rgba(0,0,0,0.4);line-height:1}
+.stat-key{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7a5020;margin-top:1px}
+/* Actions */
+.actions{display:flex;gap:8px;padding:0 16px 12px}
+.action-btn{flex:1;background:#1a1f1a;border-radius:14px;height:44px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.7)}
+/* Stats grid */
+.stats-section{padding:0 16px 10px}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.stat-box{background:#111611;border-radius:14px;padding:12px;text-align:center}
+.sb-val{font-size:22px;font-weight:900;color:white}
+.sb-label{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.35);margin-top:2px}
+/* Recent matches */
+.matches-header{padding:4px 16px 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.35)}
+.matches{display:flex;flex-direction:column;gap:6px;padding:0 16px}
+.match-row{background:#111611;border-radius:14px;padding:10px 14px;display:flex;align-items:center;gap:12px;min-height:52px}
+.match-date{width:44px;flex-shrink:0;text-align:center}
+.match-date-d{font-size:15px;font-weight:900;color:#c9f31d;line-height:1}
+.match-date-m{font-size:10px;color:rgba(255,255,255,0.35);margin-top:1px}
+.match-info{flex:1}
+.match-name{font-size:13px;font-weight:700}
+.match-sub{font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px}
+.match-result{text-align:right;flex-shrink:0}
+.result-w{font-size:12px;font-weight:900;color:#22c55e;background:rgba(34,197,94,0.12);border-radius:100px;padding:3px 8px}
+.result-l{font-size:12px;font-weight:900;color:#ef4444;background:rgba(239,68,68,0.12);border-radius:100px;padding:3px 8px}
+.nav{position:absolute;bottom:0;left:0;right:0;background:#0a0d0a;border-top:1px solid #1e241e;display:flex;padding:12px 0 20px}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:600;color:rgba(255,255,255,0.35)}
+.nav-item.active{color:#c9f31d}
+.nav-icon{font-size:20px;line-height:1}
+</style></head><body>
+<div class="bg"></div>
+<div class="content">
+  <div class="header">
+    <span class="title">Profilo</span>
+    <div class="header-right">
+      <div class="icon-btn">✏️</div>
+      <div class="icon-btn">⚙️</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active">Profilo</div>
+    <div class="tab inactive">Partite</div>
+    <div class="tab inactive">Organizzate</div>
+    <div class="tab inactive">App</div>
+  </div>
+
+  <!-- SanderCard (bronze tier) -->
+  <div class="card-container">
+    <div class="sander-card">
+      <div class="card-bg-pattern"></div>
+      <div class="card-frame"></div>
+      <div class="card-content">
+        <div class="card-top">
+          <div>
+            <div class="card-rating">1512</div>
+            <div class="card-rating-label">RATING</div>
+          </div>
+          <div class="card-flag"><span class="flag-sm">🇸🇲</span></div>
+        </div>
+        <div class="card-name-row">
+          <div class="card-name">ALEX CONTI</div>
+          <div class="card-role">Drop-In · Livello 1</div>
+        </div>
+        <div class="card-stats">
+          <div class="stat-col"><div class="stat-val">65</div><div class="stat-key">ATT</div></div>
+          <div class="stat-col"><div class="stat-val">70</div><div class="stat-key">DIF</div></div>
+          <div class="stat-col"><div class="stat-val">60</div><div class="stat-key">RIC</div></div>
+          <div class="stat-col"><div class="stat-val">55</div><div class="stat-key">MUR</div></div>
+          <div class="stat-col"><div class="stat-val">62</div><div class="stat-key">ALZ</div></div>
+          <div class="stat-col"><div class="stat-val">75</div><div class="stat-key">STA</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick actions -->
+  <div class="actions">
+    <div class="action-btn">📤 Condividi</div>
+    <div class="action-btn">🪙 Wallet</div>
+    <div class="action-btn">🏅 Badge</div>
+  </div>
+
+  <!-- Stats overview -->
+  <div class="stats-section">
+    <div class="stats-grid">
+      <div class="stat-box"><div class="sb-val">5.2</div><div class="sb-label">RATING</div></div>
+      <div class="stat-box"><div class="sb-val">3</div><div class="sb-label">PARTITE</div></div>
+      <div class="stat-box"><div class="sb-val">67%</div><div class="sb-label">WIN RATE</div></div>
+    </div>
+  </div>
+
+  <!-- Recent matches -->
+  <div class="matches-header">Ultime partite</div>
+  <div class="matches">
+    <div class="match-row">
+      <div class="match-date"><div class="match-date-d">10</div><div class="match-date-m">giu</div></div>
+      <div class="match-info">
+        <div class="match-name">Spiaggia Rimini Nord</div>
+        <div class="match-sub">2v2 · con Federica L.</div>
+      </div>
+      <div class="match-result"><span class="result-w">VINTA</span></div>
+    </div>
+    <div class="match-row">
+      <div class="match-date"><div class="match-date-d">07</div><div class="match-date-m">giu</div></div>
+      <div class="match-info">
+        <div class="match-name">Campo Centrale Chicece</div>
+        <div class="match-sub">3v3 · con Marco C.</div>
+      </div>
+      <div class="match-result"><span class="result-w">VINTA</span></div>
+    </div>
+    <div class="match-row">
+      <div class="match-date"><div class="match-date-d">03</div><div class="match-date-m">giu</div></div>
+      <div class="match-info">
+        <div class="match-name">Allenamento Serale</div>
+        <div class="match-sub">2v2 · con Sara R.</div>
+      </div>
+      <div class="match-result"><span class="result-l">PERSA</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="nav">
+  <div class="nav-item"><div class="nav-icon">⌂</div>Home</div>
+  <div class="nav-item"><div class="nav-icon">▦</div>Partite</div>
+  <div class="nav-item"><div class="nav-icon">🏆</div>Tornei</div>
+  <div class="nav-item"><div class="nav-icon">👥</div>Giocatori</div>
+  <div class="nav-item active"><div class="nav-icon">◯</div>Profilo</div>
+</div>
+</body></html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:390px;height:844px;overflow:hidden;background:#07090a;font-family:-apple-system,"SF Pro Display","Helvetica Neue",Arial,sans-serif;color:white}
+.bg{position:absolute;inset:0;background:radial-gradient(ellipse 75% 45% at 105% 0%,rgba(201,243,29,0.13) 0%,transparent 65%),linear-gradient(175deg,#0d1209 0%,#090b09 40%,#040504 100%)}
+.content{position:relative;z-index:10;padding:0 0 80px}
+.header{display:flex;align-items:center;justify-content:space-between;padding:52px 16px 12px}
+.title{font-size:24px;font-weight:900}
+.cta-btn{background:#c9f31d;border-radius:16px;height:44px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:14px;font-weight:900;color:#000;margin:0 16px 12px}
+.plus{font-size:18px;font-weight:900;line-height:1}
+.filters{display:flex;gap:8px;padding:0 16px 12px;overflow:hidden}
+.pill{border-radius:100px;padding:6px 14px;font-size:12px;font-weight:700;flex-shrink:0}
+.pill.active{background:#c9f31d;color:#000}
+.pill.inactive{background:#1a1f1a;color:rgba(255,255,255,0.45)}
+.section-label{display:flex;align-items:center;gap:6px;padding:0 16px 8px}
+.section-icon{color:#c9f31d;font-size:13px}
+.section-text{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#c9f31d}
+.sessions{display:flex;flex-direction:column;gap:8px;padding:0 16px}
+.card{background:#111611;border-radius:20px;padding:14px 16px;display:flex;align-items:center;gap:14px;min-height:80px}
+.time-col{width:48px;flex-shrink:0;text-align:center}
+.time{font-size:17px;font-weight:900;color:#c9f31d;line-height:1}
+.date{font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px}
+.info{flex:1;min-width:0}
+.card-title{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:3px;font-size:11px;color:rgba(255,255,255,0.45)}
+.meta-item{display:flex;align-items:center;gap:3px}
+.right{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.status-open{background:rgba(34,197,94,0.15);color:#22c55e;border-radius:100px;padding:3px 8px;font-size:10px;font-weight:700}
+.status-full{background:rgba(234,179,8,0.15);color:#eab308;border-radius:100px;padding:3px 8px;font-size:10px;font-weight:700}
+.spots{background:#1a1f1a;color:rgba(255,255,255,0.5);border-radius:100px;padding:2px 8px;font-size:10px;font-weight:600}
+.price{display:flex;align-items:center;gap:2px;font-size:11px;font-weight:700;color:white}
+.price-icon{color:#c9f31d;font-size:10px}
+.section-recent{padding:16px 16px 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,0.35)}
+.nav{position:absolute;bottom:0;left:0;right:0;background:#0a0d0a;border-top:1px solid #1e241e;display:flex;padding:12px 0 20px}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:600;color:rgba(255,255,255,0.35)}
+.nav-item.active{color:#c9f31d}
+.nav-icon{font-size:20px;line-height:1}
+</style></head><body>
+<div class="bg"></div>
+<div class="content">
+  <div class="header">
+    <span class="title">Partite</span>
+  </div>
+
+  <div class="cta-btn"><span class="plus">+</span> Crea una partita</div>
+
+  <div class="filters">
+    <span class="pill active">Tutti</span>
+    <span class="pill inactive">2v2</span>
+    <span class="pill inactive">3v3</span>
+    <span class="pill inactive">4v4</span>
+  </div>
+
+  <div class="section-label">
+    <span class="section-icon">◆</span>
+    <span class="section-text">In programma</span>
+  </div>
+
+  <div class="sessions">
+    <div class="card">
+      <div class="time-col"><div class="time">18:00</div><div class="date">14 giu</div></div>
+      <div class="info">
+        <div class="card-title">Spiaggia Rimini Nord</div>
+        <div class="meta">
+          <span class="meta-item">📍 Rimini Nord</span>
+          <span class="meta-item">👥 2 vs 2</span>
+        </div>
+      </div>
+      <div class="right">
+        <span class="status-open">Aperta</span>
+        <span class="spots">2 posti</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="time-col"><div class="time">20:30</div><div class="date">14 giu</div></div>
+      <div class="info">
+        <div class="card-title">Campo Centrale Chicece</div>
+        <div class="meta">
+          <span class="meta-item">📍 Bellaria</span>
+          <span class="meta-item">👥 3 vs 3</span>
+        </div>
+      </div>
+      <div class="right">
+        <span class="status-full">Completa</span>
+        <span class="price"><span class="price-icon">€</span>5.00</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="time-col"><div class="time">17:30</div><div class="date">15 giu</div></div>
+      <div class="info">
+        <div class="card-title">Partita Pomeridiana</div>
+        <div class="meta">
+          <span class="meta-item">📍 Riccione</span>
+          <span class="meta-item">👥 4 vs 4</span>
+        </div>
+      </div>
+      <div class="right">
+        <span class="status-open">Aperta</span>
+        <span class="spots">1 posto</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-recent">Recenti</div>
+  <div class="sessions">
+    <div class="card" style="opacity:0.6">
+      <div class="time-col"><div class="time">19:00</div><div class="date">10 giu</div></div>
+      <div class="info">
+        <div class="card-title">Allenamento Serale</div>
+        <div class="meta">
+          <span class="meta-item">📍 Rimini Centro</span>
+          <span class="meta-item">👥 2 vs 2</span>
+        </div>
+      </div>
+      <div class="right">
+        <span style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.4);border-radius:100px;padding:3px 8px;font-size:10px;font-weight:700">Completata</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="nav">
+  <div class="nav-item"><div class="nav-icon">⌂</div>Home</div>
+  <div class="nav-item active"><div class="nav-icon">▦</div>Partite</div>
+  <div class="nav-item"><div class="nav-icon">🏆</div>Tornei</div>
+  <div class="nav-item"><div class="nav-icon">👥</div>Giocatori</div>
+  <div class="nav-item"><div class="nav-icon">◯</div>Profilo</div>
+</div>
+</body></html>
