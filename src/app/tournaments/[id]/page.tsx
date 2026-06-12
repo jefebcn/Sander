@@ -13,6 +13,7 @@ import { ConfirmActionButton } from "@/components/tournament/ConfirmActionButton
 import { ChiceceDashboard } from "@/components/tournament/ChiceceDashboard"
 import { TeamPairingEditor } from "@/components/tournament/TeamPairingEditor"
 import { AdminChiceceCompletedActions } from "@/components/tournament/AdminChiceceCompletedActions"
+import { AdminTournamentSettingsForm } from "@/components/tournament/AdminTournamentSettingsForm"
 import { ShareButton, WhatsAppShareButton } from "@/components/ui/ShareButton"
 import { TournamentPriceBadge } from "@/components/tournament/TournamentPriceBadge"
 import { TournamentPaymentsList } from "@/components/tournament/TournamentPaymentsList"
@@ -262,6 +263,12 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             <p className="mb-3 text-sm text-[var(--muted-text)]">
               Torneo in bozza con {registrations.length} giocatori registrati.
             </p>
+            <AdminTournamentSettingsForm
+              tournamentId={id}
+              isOpenForRegistration={tournament.isOpenForRegistration}
+              date={tournament.date}
+              registrationDeadline={tournament.registrationDeadline ?? null}
+            />
             <AdminSpectatorPriceForm
               tournamentId={id}
               currentCents={tournament.spectatorPriceCents ?? null}
@@ -570,6 +577,12 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             <p className="mb-3 text-sm text-[var(--muted-text)]">
               Torneo in bozza con {tournament.registrations.length} giocatori registrati.
             </p>
+            <AdminTournamentSettingsForm
+              tournamentId={id}
+              isOpenForRegistration={tournament.isOpenForRegistration}
+              date={tournament.date}
+              registrationDeadline={tournament.registrationDeadline ?? null}
+            />
             <AdminSpectatorPriceForm
               tournamentId={id}
               currentCents={tournament.spectatorPriceCents ?? null}

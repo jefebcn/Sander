@@ -112,6 +112,31 @@ export async function getTournament(id: string) {
   })
 }
 
+export async function updateTournamentSettings(
+  tournamentId: string,
+  data: {
+    isOpenForRegistration?: boolean
+    date?: Date
+    registrationDeadline?: Date | null
+  }
+) {
+  const session = await getCurrentSession()
+  const ok = await canManageTournament(session?.user?.email, tournamentId)
+  if (!ok) throw new Error("Non autorizzato")
+
+  await db.tournament.update({
+    where: { id: tournamentId },
+    data: {
+      ...(data.isOpenForRegistration !== undefined && { isOpenForRegistration: data.isOpenForRegistration }),
+      ...(data.date !== undefined && { date: data.date }),
+      ...("registrationDeadline" in data && { registrationDeadline: data.registrationDeadline }),
+    },
+  })
+
+  revalidatePath(`/tournaments/${tournamentId}`)
+  revalidatePath("/tournaments")
+}
+
 export async function updateTournamentMeta(
   tournamentId: string,
   data: {
