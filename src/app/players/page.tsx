@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic"
 
 import Link from "next/link"
-import { Info } from "lucide-react"
+import { Info, TrendingUp, Crown } from "lucide-react"
 import { listPlayers, getMonthlyTopPlayers, awardMonthlyPodium } from "@/actions/players"
 import { FilterablePlayerList } from "@/components/player/FilterablePlayerList"
 import { PodiumSection } from "@/components/home/PodiumSection"
@@ -47,8 +47,32 @@ export default async function PlayersPage({ searchParams }: Props) {
         )}
       </div>
 
+      {/* ── Discover: weekly recap + territories ──────────────── */}
+      <div className="flex gap-2 px-4 pt-3">
+        <Link
+          href="/settimana"
+          className="flex flex-1 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
+        >
+          <TrendingUp className="h-5 w-5 text-[var(--accent)]" />
+          <div className="min-w-0">
+            <p className="text-sm font-black text-white leading-tight">La settimana</p>
+            <p className="truncate text-[0.65rem] text-[var(--muted-text)]">Movers &amp; MVP</p>
+          </div>
+        </Link>
+        <Link
+          href="/bagni"
+          className="flex flex-1 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
+        >
+          <Crown className="h-5 w-5 text-[var(--gold)]" />
+          <div className="min-w-0">
+            <p className="text-sm font-black text-white leading-tight">Re dei Bagni</p>
+            <p className="truncate text-[0.65rem] text-[var(--muted-text)]">Classifiche campi</p>
+          </div>
+        </Link>
+      </div>
+
       {/* ── Tab bar ───────────────────────────────────────────── */}
-      <div className="flex gap-1 px-4 pt-2 pb-4">
+      <div className="flex gap-1 px-4 pt-3 pb-4">
         <Link
           href="/players"
           className="flex-1 rounded-xl py-2.5 text-center text-sm font-bold transition-colors"
