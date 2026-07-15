@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic"
 
 import Link from "next/link"
-import { Plus } from "lucide-react"
+import { Plus, Gauge } from "lucide-react"
 import { getSessions } from "@/actions/sessions"
 import { FilterableSessionList } from "@/components/session/FilterableSessionList"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
@@ -21,18 +21,27 @@ export default async function SessionsPage() {
       </div>
 
       {/* ── + Crea una partita CTA ────────────────────────────── */}
-      {currentPlayer && (
-        <div className="px-4 pb-4">
+      <div className="flex gap-2 px-4 pb-4">
+        {currentPlayer && (
           <Link
             href="/sessions/new"
-            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-black text-black text-base transition-opacity active:opacity-80"
+            className="flex min-h-[3.5rem] flex-1 items-center justify-center gap-2 rounded-2xl font-black text-black text-base transition-opacity active:opacity-80"
             style={{ background: "var(--accent)" }}
           >
             <Plus className="h-5 w-5" />
             Crea una partita
           </Link>
-        </div>
-      )}
+        )}
+        <Link
+          href="/segna"
+          className={`flex min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-black text-white transition-opacity active:opacity-80 ${
+            currentPlayer ? "px-4" : "flex-1 text-base"
+          }`}
+        >
+          <Gauge className="h-5 w-5 text-[var(--accent)]" />
+          {currentPlayer ? "Segna" : "Segna dal vivo"}
+        </Link>
+      </div>
 
       {/* ── Session list with format filters ─────────────────── */}
       <FilterableSessionList

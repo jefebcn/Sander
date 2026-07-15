@@ -12,6 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/stagione",
     "/settimana",
     "/bagni",
+    "/segna",
     "/players",
     "/tournaments",
     "/sessions",
