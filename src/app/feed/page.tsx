@@ -3,6 +3,9 @@ export const dynamic = "force-dynamic"
 import { Trophy, Volleyball, Activity } from "lucide-react"
 import Link from "next/link"
 import { getRecentMatchResults, getRecentSessions, getRecentTournamentEvents } from "@/actions/feed"
+import { getReactionSummary, type ReactionTargetType } from "@/actions/reactions"
+import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
+import { KudosButton } from "@/components/feed/KudosButton"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { formatDate } from "@/lib/utils"
 
@@ -146,6 +149,14 @@ export default async function FeedPage() {
     ...tournaments.map((t) => ({ kind: "tournament" as const, ts: t.updatedAt, data: t })),
   ].sort((a, b) => b.ts.getTime() - a.ts.getTime())
 
+  // Kudos summary for every visible item
+  const [currentPlayer, reactions] = await Promise.all([
+    getCurrentPlayer(),
+    getReactionSummary(
+      feed.map((item) => ({ type: item.kind as ReactionTargetType, id: item.data.id })),
+    ),
+  ])
+
   return (
     <div className="pb-6">
       <PageHeader title="Feed" subtitle="Attività recente" />
@@ -161,10 +172,23 @@ export default async function FeedPage() {
         {feed.map((item, i) => {
           const stagger = i < 6 ? `stagger-${i + 1}` : ""
           const cls = `slide-up ${stagger}`
+          const state = reactions[`${item.kind}:${item.data.id}`] ?? { count: 0, reacted: false }
+          const kudos = (
+            <div className="mt-1.5 flex justify-end pr-1">
+              <KudosButton
+                targetType={item.kind as ReactionTargetType}
+                targetId={item.data.id}
+                initialCount={state.count}
+                initialReacted={state.reacted}
+                canReact={!!currentPlayer}
+              />
+            </div>
+          )
           if (item.kind === "match") {
             return (
               <div key={`m-${i}`} className={cls}>
                 <MatchResultCard match={item.data} />
+                {kudos}
               </div>
             )
           }
@@ -172,12 +196,14 @@ export default async function FeedPage() {
             return (
               <div key={`s-${i}`} className={cls}>
                 <SessionCard session={item.data} />
+                {kudos}
               </div>
             )
           }
           return (
             <div key={`t-${i}`} className={cls}>
               <TournamentEventCard tournament={item.data} />
+              {kudos}
             </div>
           )
         })}

@@ -175,6 +175,7 @@ model Player {
   videoSubmissions     VideoSubmission[]
   ratingHistory        RatingHistory[]
   invitedUsers         User[]             @relation("PlayerInvites")
+  reactions            Reaction[]
 
   @@map("players")
 }
@@ -495,6 +496,23 @@ model MonthlyAward {
   @@unique([playerId, month, year])
   @@unique([position, month, year])
   @@map("monthly_awards")
+}
+
+// ─── Reaction (kudos on feed activity) ──────────────────────────────────────
+
+model Reaction {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  playerId   String
+  player     Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  targetType String // "match" | "session" | "tournament"
+  targetId   String
+  emoji      String @default("🔥")
+
+  @@unique([playerId, targetType, targetId])
+  @@index([targetType, targetId])
+  @@map("reactions")
 }
 
 // ─── Season (ranked seasons + divisions) ────────────────────────────────────
