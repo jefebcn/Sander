@@ -1,22 +1,31 @@
 "use client"
 
 import { useState } from "react"
-import { Copy, Check, Share2, Info, Users } from "lucide-react"
+import { Copy, Check, Share2, Info, Users, Crown } from "lucide-react"
+import { INVITER_SC, INVITEE_SC, INVITER_XP } from "@/lib/referral"
 
 const APP_URL = "https://www.sanderbv.it"
+
+interface ReferralLeader {
+  id: string
+  name: string
+  avatarUrl: string | null
+  invites: number
+}
 
 interface InviteTabProps {
   promoCode: string
   playerName: string
   inviteCount: number
+  leaderboard?: ReferralLeader[]
 }
 
-export function InviteTab({ promoCode, playerName: _playerName, inviteCount }: InviteTabProps) {
+export function InviteTab({ promoCode, playerName: _playerName, inviteCount, leaderboard = [] }: InviteTabProps) {
   const [copied, setCopied] = useState(false)
   const [showInfo, setShowInfo] = useState(false)
 
   const shareUrl = `${APP_URL}/auth/signin?invite=${promoCode}`
-  const shareText = `Unisciti a SANDER, la piattaforma per il beach volleyball! Registrati con il mio codice ${promoCode} e guadagni un bonus. 🏐`
+  const shareText = `Unisciti a SANDER, la piattaforma per il beach volleyball! Registrati con il mio codice ${promoCode} e ricevi ${INVITEE_SC} SanderCredits di benvenuto. 🏐`
 
   async function copyLink() {
     await navigator.clipboard.writeText(shareUrl)
@@ -47,10 +56,13 @@ export function InviteTab({ promoCode, playerName: _playerName, inviteCount }: I
         </div>
         <div>
           <h2 className="text-xl font-black text-white leading-snug">
-            Invita gli amici e guadagna XP!
+            Invita gli amici, guadagnate entrambi!
           </h2>
           <p className="text-sm text-[var(--muted-text)] mt-1">
-            Per ogni amico che si registra con il tuo codice, ricevi <strong className="text-[var(--accent)]">+50 XP</strong>.
+            Per ogni amico che si registra col tuo codice ricevi{" "}
+            <strong className="text-[var(--accent)]">+{INVITER_SC} SC</strong> e{" "}
+            <strong className="text-[var(--accent)]">+{INVITER_XP} XP</strong>. Il tuo amico riceve{" "}
+            <strong className="text-[var(--accent)]">+{INVITEE_SC} SC</strong> di benvenuto.
           </p>
         </div>
       </div>
@@ -66,8 +78,8 @@ export function InviteTab({ promoCode, playerName: _playerName, inviteCount }: I
           <p className="text-xl font-black text-white">{inviteCount}</p>
         </div>
         <div className="ml-auto text-right">
-          <p className="text-xs text-[var(--muted-text)]">XP guadagnati</p>
-          <p className="text-xl font-black text-[var(--accent)]">{inviteCount * 50}</p>
+          <p className="text-xs text-[var(--muted-text)]">SC guadagnati</p>
+          <p className="text-xl font-black text-[var(--accent)]">{inviteCount * INVITER_SC}</p>
         </div>
       </div>
 
@@ -118,8 +130,44 @@ export function InviteTab({ promoCode, playerName: _playerName, inviteCount }: I
         >
           <p>1. Condividi il tuo link o codice con un amico.</p>
           <p>2. Il tuo amico si registra su SANDER usando il tuo codice.</p>
-          <p>3. Ricevi automaticamente <strong className="text-white">+50 XP</strong> non appena si registra.</p>
-          <p>4. Non ci sono limiti — invita quanti amici vuoi!</p>
+          <p>3. Ricevi <strong className="text-white">+{INVITER_SC} SC</strong> e <strong className="text-white">+{INVITER_XP} XP</strong> appena si registra.</p>
+          <p>4. Il tuo amico riceve <strong className="text-white">+{INVITEE_SC} SC</strong> quando completa il profilo.</p>
+          <p>5. Nessun limite — invita quanti amici vuoi!</p>
+        </div>
+      )}
+
+      {/* Referral leaderboard */}
+      {leaderboard.length > 0 && (
+        <div className="space-y-2 pt-1">
+          <div className="flex items-center gap-1.5">
+            <Crown className="h-4 w-4 text-[var(--gold)]" />
+            <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
+              Top invitanti
+            </p>
+          </div>
+          <div className="space-y-1.5">
+            {leaderboard.map((l, i) => (
+              <div
+                key={l.id}
+                className="flex items-center gap-3 rounded-2xl px-4 py-2.5"
+                style={{ background: "var(--surface-2)" }}
+              >
+                <span className="w-4 text-center text-sm font-bold text-[var(--muted-text)]">
+                  {i + 1}
+                </span>
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-1)] text-xs font-black text-[var(--muted-text)]">
+                  {l.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={l.avatarUrl} alt={l.name} className="h-full w-full object-cover" />
+                  ) : (
+                    l.name.slice(0, 2).toUpperCase()
+                  )}
+                </div>
+                <span className="flex-1 truncate text-sm font-medium text-white">{l.name}</span>
+                <span className="text-sm font-black text-[var(--accent)]">{l.invites}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

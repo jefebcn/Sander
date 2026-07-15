@@ -3,6 +3,7 @@
 import { db } from "@/lib/db"
 import { auth } from "@/lib/auth"
 import { SaveProfileSchema } from "@/lib/validators/profile.schema"
+import { INVITEE_SC } from "@/lib/referral"
 import { revalidatePath } from "next/cache"
 
 export async function saveProfile(input: unknown) {
@@ -31,16 +32,24 @@ export async function saveProfile(input: unknown) {
       },
     })
   } else {
+    // Was this user invited by someone? Grant a welcome SanderCredits bonus.
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: { invitedByPlayerId: true },
+    })
+    const invited = Boolean(user?.invitedByPlayerId)
+
     await db.player.create({
       data: {
-        name:        fullName,
-        firstName:   data.firstName,
-        lastName:    data.lastName,
-        birthDate:   new Date(data.birthDate),
-        gender:      data.gender,
-        nationality: data.nationality,
-        avatarUrl:   data.avatarUrl ?? null,
-        userId:      session.user.id,
+        name:          fullName,
+        firstName:     data.firstName,
+        lastName:      data.lastName,
+        birthDate:     new Date(data.birthDate),
+        gender:        data.gender,
+        nationality:   data.nationality,
+        avatarUrl:     data.avatarUrl ?? null,
+        userId:        session.user.id,
+        sanderCredits: invited ? INVITEE_SC : 0,
       },
     })
   }

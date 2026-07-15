@@ -11,6 +11,7 @@ import { ShareCardButton } from "@/components/player/ShareCardButton"
 import { ShareStoryButton } from "@/components/share/ShareStoryButton"
 import { SignOutButton } from "@/components/auth/SignOutButton"
 import { InviteTab } from "@/components/profile/InviteTab"
+import { getReferralLeaderboard } from "@/actions/invite"
 import { APP_VERSION_DISPLAY } from "@/lib/appVersion"
 import { formatDate } from "@/lib/utils"
 import { getStreak } from "@/lib/streak"
@@ -171,9 +172,12 @@ export default async function ProfilePage({ searchParams }: Props) {
 
   const promoCode = buildPromoCode(player.id)
 
-  const inviteCount = activeTab === "invita"
-    ? await db.user.count({ where: { invitedByPlayerId: player.id } })
-    : 0
+  const [inviteCount, referralLeaderboard] = activeTab === "invita"
+    ? await Promise.all([
+        db.user.count({ where: { invitedByPlayerId: player.id } }),
+        getReferralLeaderboard(),
+      ])
+    : [0, []]
 
   // Admin data (only fetched when admin views the admin tab)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -486,7 +490,7 @@ export default async function ProfilePage({ searchParams }: Props) {
 
       {/* ══ Invita tab ════════════════════════════════════════ */}
       {activeTab === "invita" && (
-        <InviteTab promoCode={promoCode} playerName={fullPlayer.name} inviteCount={inviteCount} />
+        <InviteTab promoCode={promoCode} playerName={fullPlayer.name} inviteCount={inviteCount} leaderboard={referralLeaderboard} />
       )}
 
       {/* ══ App tab ═══════════════════════════════════════════ */}

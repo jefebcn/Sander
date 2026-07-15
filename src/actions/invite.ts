@@ -3,6 +3,7 @@
 import { db } from "@/lib/db"
 import { auth } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
+import { INVITER_SC, INVITER_XP } from "@/lib/referral"
 
 // Must match the buildPromoCode function in profile/page.tsx
 function buildPromoCode(id: string): string {
@@ -24,8 +25,9 @@ export async function findPlayerByInviteCode(code: string): Promise<string | nul
 }
 
 /**
- * Link a newly registered user to the player who invited them,
- * and award the inviter 50 XP.
+ * Link a newly registered user to the player who invited them, and reward the
+ * inviter with XP + SanderCredits. The invitee's welcome bonus is granted later,
+ * when their Player profile is created during onboarding (see saveProfile).
  */
 export async function redeemInvite(
   userId: string,
@@ -37,13 +39,57 @@ export async function redeemInvite(
     data: { invitedByPlayerId: inviterPlayerId },
   })
 
-  // Award 50 XP to the inviter
+  // Reward the inviter: XP + SanderCredits
   await db.player.update({
     where: { id: inviterPlayerId },
-    data: { xp: { increment: 50 } },
+    data: {
+      xp: { increment: INVITER_XP },
+      sanderCredits: { increment: INVITER_SC },
+    },
   })
 
+  // Notify the inviter (fire-and-forget)
+  import("@/lib/push")
+    .then(({ notifyPlayer }) =>
+      notifyPlayer(inviterPlayerId, {
+        title: "🎉 Un amico si è iscritto!",
+        body: `Hai guadagnato +${INVITER_SC} SanderCredits e +${INVITER_XP} XP. Continua a invitare!`,
+        url: "/profile?tab=invita",
+      }),
+    )
+    .catch(() => {})
+
   revalidatePath("/profile")
+}
+
+/** Ranking of players by number of friends invited (with a linked account). */
+export async function getReferralLeaderboard(
+  limit = 10,
+): Promise<{ id: string; name: string; avatarUrl: string | null; invites: number }[]> {
+  const grouped = await db.user.groupBy({
+    by: ["invitedByPlayerId"],
+    where: { invitedByPlayerId: { not: null } },
+    _count: { _all: true },
+  })
+  if (grouped.length === 0) return []
+
+  const ids = grouped.map((g) => g.invitedByPlayerId!).filter(Boolean)
+  const players = await db.player.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, name: true, avatarUrl: true },
+  })
+  const nameById = new Map(players.map((p) => [p.id, p]))
+
+  return grouped
+    .map((g) => {
+      const p = nameById.get(g.invitedByPlayerId!)
+      return p
+        ? { id: p.id, name: p.name, avatarUrl: p.avatarUrl, invites: g._count._all }
+        : null
+    })
+    .filter((x): x is { id: string; name: string; avatarUrl: string | null; invites: number } => x !== null)
+    .sort((a, b) => b.invites - a.invites)
+    .slice(0, limit)
 }
 
 /**
