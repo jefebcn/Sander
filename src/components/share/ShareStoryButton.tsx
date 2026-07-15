@@ -49,21 +49,21 @@ export function ShareStoryButton({
   const [qr, setQr] = useState<string | null>(null)
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle")
 
-  // Absolute URL back to the app, tagged for attribution.
-  const shareUrl =
-    (typeof window !== "undefined" ? window.location.origin : "https://www.sanderbv.it") +
-    "/?ref=story"
+  const origin =
+    typeof window !== "undefined" ? window.location.origin : "https://www.sanderbv.it"
+  // QR + caption point to the conversion landing; the displayed text stays clean.
+  const landingUrl = `${origin}/scarica?ref=story`
 
   // Generate the QR once (fails soft → URL text fallback in the story).
   useEffect(() => {
     let alive = true
-    makeQrDataUrl(shareUrl).then((data) => {
+    makeQrDataUrl(landingUrl).then((data) => {
       if (alive) setQr(data)
     })
     return () => {
       alive = false
     }
-  }, [shareUrl])
+  }, [landingUrl])
 
   async function handleShare() {
     if (!storyRef.current) return
@@ -74,7 +74,7 @@ export function ShareStoryButton({
       const result = await shareOrDownloadBlob(
         blob,
         `SANDER_${variant}_${safeName}.png`,
-        caption(variant, shareUrl.replace("/?ref=story", "")),
+        caption(variant, `${origin}/scarica`),
       )
       setStatus(result === "cancelled" ? "idle" : "done")
       if (result !== "cancelled") setTimeout(() => setStatus("idle"), 2500)
@@ -102,7 +102,7 @@ export function ShareStoryButton({
             headline={headline}
             subline={subline}
             qrDataUrl={qr}
-            shareUrl={shareUrl.replace("/?ref=story", "")}
+            shareUrl={origin}
           />
         </div>
       </div>
