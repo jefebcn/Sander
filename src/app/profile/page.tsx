@@ -10,6 +10,7 @@ import { StatPercentageEditor } from "@/components/player/StatPercentageEditor"
 import { ShareCardButton } from "@/components/player/ShareCardButton"
 import { ShareStoryButton } from "@/components/share/ShareStoryButton"
 import { WrappedShareButton } from "@/components/share/WrappedShareButton"
+import { DuoShareButton } from "@/components/share/DuoShareButton"
 import { getPlayerRecap } from "@/actions/recap"
 import { SignOutButton } from "@/components/auth/SignOutButton"
 import { InviteTab } from "@/components/profile/InviteTab"
@@ -383,6 +384,32 @@ export default async function ProfilePage({ searchParams }: Props) {
           )}
           {/* ── Achievements ───────────────────────────────────── */}
           <Achievements achievements={achievements} />
+
+          {/* ── Duo card — shareable pair chemistry (top partner) ─ */}
+          {partnerStats.length > 0 && (
+            <div className="rounded-2xl bg-[var(--surface-2)] p-4 space-y-3">
+              <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
+                La tua coppia migliore
+              </p>
+              <div className="flex items-center justify-between">
+                <p className="font-black text-white">
+                  {fullPlayer.firstName ?? fullPlayer.name.split(" ")[0]} &amp;{" "}
+                  {partnerStats[0].player.firstName ?? partnerStats[0].player.name.split(" ")[0]}
+                </p>
+                <p className="text-lg font-black text-[var(--accent)]">{partnerStats[0].winRate}%</p>
+              </div>
+              <p className="text-xs text-[var(--muted-text)]">
+                {partnerStats[0].played} partite insieme · {partnerStats[0].won} vinte
+              </p>
+              <DuoShareButton
+                playerA={fullPlayer.name}
+                playerB={partnerStats[0].player.name}
+                played={partnerStats[0].played}
+                won={partnerStats[0].won}
+                winRate={partnerStats[0].winRate}
+              />
+            </div>
+          )}
 
           {/* ── Partner stats ──────────────────────────────────── */}
           <PartnerStats stats={partnerStats} />
