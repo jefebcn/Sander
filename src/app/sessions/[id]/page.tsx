@@ -14,6 +14,8 @@ import { ParticipantList } from "@/components/session/ParticipantList"
 import { SessionMatchRounds } from "@/components/session/SessionMatchRounds"
 import { RematchButton } from "@/components/session/RematchButton"
 import { PageHeader } from "@/components/layout/PageHeader"
+import { ShareStoryButton } from "@/components/share/ShareStoryButton"
+import { playerToCardData } from "@/components/player/SanderCardFut"
 
 export async function generateMetadata(
   { params }: { params: Promise<{ id: string }> }
@@ -152,27 +154,43 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
           {session.status === "COMPLETED" && sets.length > 0 && (() => {
             const teamAWins = sets.filter((s) => s.teamAScore > s.teamBScore).length
             const teamBWins = sets.filter((s) => s.teamBScore > s.teamAScore).length
+            const myTeam = session.participants.find((p) => p.player?.id === currentPlayer?.id)?.team
+            const didWin =
+              (myTeam === 0 && teamAWins > teamBWins) ||
+              (myTeam === 1 && teamBWins > teamAWins)
             return (
-              <div className="mt-1 rounded-xl bg-[var(--surface-2)] p-3">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Risultato</p>
-                  <p className="text-xs font-bold text-[var(--accent)]">{teamAWins} — {teamBWins}</p>
+              <>
+                <div className="mt-1 rounded-xl bg-[var(--surface-2)] p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Risultato</p>
+                    <p className="text-xs font-bold text-[var(--accent)]">{teamAWins} — {teamBWins}</p>
+                  </div>
+                  <div className="grid grid-cols-[4rem_repeat(auto-fill,_2rem)] gap-1 items-center">
+                    <p className="text-xs font-bold text-[var(--accent)]">Team A</p>
+                    {sets.map((s) => (
+                      <p key={s.id} className={`text-center text-sm font-bold ${s.teamAScore > s.teamBScore ? "text-white" : "text-[var(--muted-text)]"}`}>
+                        {s.teamAScore}
+                      </p>
+                    ))}
+                    <p className="text-xs font-bold text-[var(--muted-text)]">Team B</p>
+                    {sets.map((s) => (
+                      <p key={s.id} className={`text-center text-sm font-bold ${s.teamBScore > s.teamAScore ? "text-white" : "text-[var(--muted-text)]"}`}>
+                        {s.teamBScore}
+                      </p>
+                    ))}
+                  </div>
                 </div>
-                <div className="grid grid-cols-[4rem_repeat(auto-fill,_2rem)] gap-1 items-center">
-                  <p className="text-xs font-bold text-[var(--accent)]">Team A</p>
-                  {sets.map((s) => (
-                    <p key={s.id} className={`text-center text-sm font-bold ${s.teamAScore > s.teamBScore ? "text-white" : "text-[var(--muted-text)]"}`}>
-                      {s.teamAScore}
-                    </p>
-                  ))}
-                  <p className="text-xs font-bold text-[var(--muted-text)]">Team B</p>
-                  {sets.map((s) => (
-                    <p key={s.id} className={`text-center text-sm font-bold ${s.teamBScore > s.teamAScore ? "text-white" : "text-[var(--muted-text)]"}`}>
-                      {s.teamBScore}
-                    </p>
-                  ))}
-                </div>
-              </div>
+                {/* Viral moment: winner can share the victory as a Story */}
+                {didWin && currentPlayer && (
+                  <div className="mt-2">
+                    <ShareStoryButton
+                      playerData={playerToCardData(currentPlayer)}
+                      variant="win"
+                      subline={`Vittoria a ${session.location}`}
+                    />
+                  </div>
+                )}
+              </>
             )
           })()}
         </div>

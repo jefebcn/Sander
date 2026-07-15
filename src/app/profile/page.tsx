@@ -8,6 +8,7 @@ import { db } from "@/lib/db"
 import { SanderCardFut, playerToCardData } from "@/components/player/SanderCardFut"
 import { StatPercentageEditor } from "@/components/player/StatPercentageEditor"
 import { ShareCardButton } from "@/components/player/ShareCardButton"
+import { ShareStoryButton } from "@/components/share/ShareStoryButton"
 import { SignOutButton } from "@/components/auth/SignOutButton"
 import { InviteTab } from "@/components/profile/InviteTab"
 import { APP_VERSION_DISPLAY } from "@/lib/appVersion"
@@ -276,6 +277,9 @@ export default async function ProfilePage({ searchParams }: Props) {
             credits={fullPlayer.sanderCredits}
             playerName={fullPlayer.firstName ?? fullPlayer.name.split(" ")[0]}
           />
+          {/* Viral share: Story-format image for Instagram/WhatsApp (primary) */}
+          <ShareStoryButton playerData={playerToCardData(fullPlayer)} variant="card" />
+          {/* Square card download (secondary) */}
           <ShareCardButton playerData={playerToCardData(fullPlayer)} />
           <StatPercentageEditor
             glickoRating={fullPlayer.glickoRating}

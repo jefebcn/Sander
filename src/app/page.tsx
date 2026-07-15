@@ -10,6 +10,7 @@ import { ratingToDisplayLevel } from "@/lib/tournament/glicko2"
 import { getPersonalizedRecommendations } from "@/actions/recommendations"
 import { formatDate } from "@/lib/utils"
 import { ClientOnlyHomeWidgets } from "@/components/home/ClientOnlyHomeWidgets"
+import { playerToCardData } from "@/components/player/SanderCardFut"
 import { NotificationBell } from "@/components/push/NotificationBell"
 import { getUnreadCount } from "@/actions/notifications"
 import { WhatsAppAnnouncementBanner } from "@/components/home/WhatsAppAnnouncementBanner"
@@ -507,6 +508,7 @@ export default async function Home() {
             <ClientOnlyHomeWidgets
               currentLevel={fullPlayer.level}
               playerName={fullPlayer.name}
+              cardData={playerToCardData(fullPlayer)}
             />
 
             {/* ── Social section ────────────────────────────────── */}

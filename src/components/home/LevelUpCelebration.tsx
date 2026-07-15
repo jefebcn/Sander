@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { X, Zap } from "lucide-react"
+import { ShareStoryButton } from "@/components/share/ShareStoryButton"
+import type { PlayerCardData } from "@/components/player/SanderCardFut"
 
 const STORAGE_KEY = "sander_level_celebrated"
 
@@ -24,9 +26,10 @@ function getMessage(level: number) {
 interface LevelUpCelebrationProps {
   currentLevel: number
   playerName: string
+  cardData?: PlayerCardData
 }
 
-export function LevelUpCelebration({ currentLevel, playerName }: LevelUpCelebrationProps) {
+export function LevelUpCelebration({ currentLevel, playerName, cardData }: LevelUpCelebrationProps) {
   const [show, setShow] = useState(false)
 
   useEffect(() => {
@@ -100,13 +103,31 @@ export function LevelUpCelebration({ currentLevel, playerName }: LevelUpCelebrat
           Gioca, vinci e ricevi Super Vote per salire.
         </div>
 
-        <button
-          onClick={dismiss}
-          className="w-full rounded-2xl py-3.5 text-base font-black text-black"
-          style={{ background: "var(--accent)" }}
-        >
-          Continua a giocare 🏐
-        </button>
+        {cardData ? (
+          <div className="space-y-2">
+            <ShareStoryButton
+              playerData={cardData}
+              variant="levelup"
+              headline={`LIVELLO ${currentLevel}`}
+              subline="Nuovo livello sbloccato"
+              label="Condividi il traguardo"
+            />
+            <button
+              onClick={dismiss}
+              className="w-full rounded-2xl py-3 text-sm font-bold text-[var(--muted-text)]"
+            >
+              Continua a giocare 🏐
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={dismiss}
+            className="w-full rounded-2xl py-3.5 text-base font-black text-black"
+            style={{ background: "var(--accent)" }}
+          >
+            Continua a giocare 🏐
+          </button>
+        )}
       </div>
     </div>
   )
