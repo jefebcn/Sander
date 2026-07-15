@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic"
 
 import type { Metadata } from "next"
-import { MapPin, Calendar, Euro, FileText, Coins, RefreshCw } from "lucide-react"
+import { MapPin, Calendar, Euro, FileText, Coins, RefreshCw, Gauge } from "lucide-react"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { getSession } from "@/actions/sessions"
@@ -238,6 +238,22 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
           participants={session.participants}
           currentPlayerId={currentPlayer?.id ?? null}
         />
+
+        {/* Live scoreboard — organizer, standard session, teams assigned */}
+        {isOrganizer &&
+          !session.matchMode &&
+          (session.status === "OPEN" || session.status === "FULL") &&
+          session.participants.some((p) => p.team === 0) &&
+          session.participants.some((p) => p.team === 1) && (
+            <Link
+              href={`/segna?session=${session.id}`}
+              className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-black text-black text-base transition-opacity active:opacity-80"
+              style={{ background: "var(--accent)" }}
+            >
+              <Gauge className="h-5 w-5" />
+              Segna dal vivo
+            </Link>
+          )}
 
         {/* Multi-match rounds (matchMode sessions) */}
         {session.matchMode && (

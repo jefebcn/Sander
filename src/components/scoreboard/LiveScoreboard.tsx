@@ -1,25 +1,36 @@
 "use client"
 
 import { useState } from "react"
-import { RotateCcw, Undo2, Trophy, X } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { RotateCcw, Undo2, Trophy, X, Loader2, Save, AlertCircle } from "lucide-react"
+import { completeSession } from "@/actions/sessions"
 
-/* Courtside live scoreboard — beach volley rules, zero backend. Big touch
-   targets so it's usable one-handed on the sand. */
+/* Courtside live scoreboard — beach volley rules, big touch targets.
+   Standalone by default; in "session mode" it saves the final result through
+   the existing completeSession pipeline (ratings, season, feed all update). */
 
 type Team = 0 | 1
 interface HistoryEntry {
   team: Team
 }
 
+interface Props {
+  /** When set, finishing the match saves the result to this session. */
+  session?: { id: string }
+  initialNames?: [string, string]
+}
+
 const TEAM_COLORS = ["#c9f31d", "#3b82f6"] as const
 
 function setTarget(setIndex: number, bestOf: number): number {
-  // Deciding set (3rd of a best-of-3) is shorter.
   return bestOf === 3 && setIndex === 2 ? 15 : 21
 }
 
-export function LiveScoreboard() {
-  const [names, setNames] = useState<[string, string]>(["Squadra A", "Squadra B"])
+export function LiveScoreboard({ session, initialNames }: Props) {
+  const router = useRouter()
+  const sessionMode = Boolean(session)
+
+  const [names, setNames] = useState<[string, string]>(initialNames ?? ["Squadra A", "Squadra B"])
   const [bestOf, setBestOf] = useState<1 | 3>(3)
   const [showSetup, setShowSetup] = useState(true)
 
@@ -27,7 +38,11 @@ export function LiveScoreboard() {
   const [setsWon, setSetsWon] = useState<[number, number]>([0, 0])
   const [setIndex, setSetIndex] = useState(0)
   const [history, setHistory] = useState<HistoryEntry[]>([])
+  const [setResults, setSetResults] = useState<[number, number][]>([])
   const [matchWinner, setMatchWinner] = useState<Team | null>(null)
+
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const target = setTarget(setIndex, bestOf)
   const setsToWin = bestOf === 3 ? 2 : 1
@@ -38,21 +53,19 @@ export function LiveScoreboard() {
     next[team] += 1
     setHistory((h) => [...h, { team }])
 
-    const [a, b] = next
-    const lead = Math.abs(a - b)
-    const winner = team
+    const lead = Math.abs(next[0] - next[1])
     const reached = next[team] >= target && lead >= 2
 
     if (reached) {
+      setSetResults((r) => [...r, next])
       const newSets: [number, number] = [setsWon[0], setsWon[1]]
-      newSets[winner] += 1
+      newSets[team] += 1
       setSetsWon(newSets)
-      if (newSets[winner] >= setsToWin) {
+      if (newSets[team] >= setsToWin) {
         setScores(next)
-        setMatchWinner(winner)
+        setMatchWinner(team)
         return
       }
-      // Next set
       setScores([0, 0])
       setSetIndex((i) => i + 1)
       setHistory([])
@@ -75,8 +88,26 @@ export function LiveScoreboard() {
     setSetsWon([0, 0])
     setSetIndex(0)
     setHistory([])
+    setSetResults([])
     setMatchWinner(null)
+    setSaveError(null)
     setShowSetup(true)
+  }
+
+  async function saveResult() {
+    if (!session) return
+    setSaving(true)
+    setSaveError(null)
+    try {
+      await completeSession(
+        session.id,
+        setResults.map(([a, b]) => ({ teamAScore: a, teamBScore: b })),
+      )
+      router.push(`/sessions/${session.id}`)
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Errore nel salvataggio")
+      setSaving(false)
+    }
   }
 
   // ── Setup screen ──────────────────────────────────────────────────────
@@ -86,7 +117,9 @@ export function LiveScoreboard() {
         <div className="text-center">
           <h1 className="text-3xl font-black text-white">Segna dal vivo</h1>
           <p className="mt-1 text-sm text-[var(--muted-text)]">
-            Tabellone da campo. Tocca il lato di una squadra per il punto.
+            {sessionMode
+              ? "A fine partita salvi il risultato: rating e classifiche si aggiornano da soli."
+              : "Tabellone da campo. Tocca il lato di una squadra per il punto."}
           </p>
         </div>
 
@@ -99,6 +132,7 @@ export function LiveScoreboard() {
               />
               <input
                 value={names[t]}
+                readOnly={sessionMode}
                 onChange={(e) =>
                   setNames((n) => (t === 0 ? [e.target.value, n[1]] : [n[0], e.target.value]))
                 }
@@ -175,7 +209,6 @@ export function LiveScoreboard() {
                 border: `1px solid ${TEAM_COLORS[t]}40`,
               }}
             >
-              {/* sets pips */}
               <div className="absolute top-4 flex gap-1.5">
                 {Array.from({ length: setsToWin }).map((_, i) => (
                   <span
@@ -209,30 +242,59 @@ export function LiveScoreboard() {
       {matchWinner !== null && (
         <div
           className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-6 px-8 text-center"
-          style={{ background: "rgba(0,0,0,0.88)", backdropFilter: "blur(6px)" }}
+          style={{ background: "rgba(0,0,0,0.9)", backdropFilter: "blur(6px)" }}
         >
-          <button onClick={resetMatch} className="absolute right-5 top-5 text-[var(--muted-text)]">
-            <X className="h-6 w-6" />
-          </button>
+          {!saving && (
+            <button onClick={resetMatch} className="absolute right-5 top-5 text-[var(--muted-text)]">
+              <X className="h-6 w-6" />
+            </button>
+          )}
           <Trophy className="h-16 w-16" style={{ color: TEAM_COLORS[matchWinner] }} />
           <div>
-            <p className="text-sm font-bold uppercase tracking-widest text-[var(--muted-text)]">
-              Vince
-            </p>
+            <p className="text-sm font-bold uppercase tracking-widest text-[var(--muted-text)]">Vince</p>
             <p className="text-4xl font-black" style={{ color: TEAM_COLORS[matchWinner] }}>
               {names[matchWinner]}
             </p>
             <p className="mt-2 text-lg font-bold text-white">
-              {setsWon[0]} – {setsWon[1]}
+              {setResults.map(([a, b], i) => (
+                <span key={i} className="mx-1 tabular-nums">
+                  {a}-{b}
+                </span>
+              ))}
             </p>
           </div>
-          <button
-            onClick={resetMatch}
-            className="min-h-[3.5rem] w-full max-w-xs rounded-2xl text-lg font-black text-black"
-            style={{ background: "var(--accent)" }}
-          >
-            Nuova partita
-          </button>
+
+          {sessionMode ? (
+            <div className="w-full max-w-xs space-y-2">
+              <button
+                onClick={saveResult}
+                disabled={saving}
+                className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl text-lg font-black text-black disabled:opacity-60"
+                style={{ background: "var(--accent)" }}
+              >
+                {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
+                {saving ? "Salvataggio…" : "Salva risultato"}
+              </button>
+              {saveError && (
+                <p className="flex items-center justify-center gap-1.5 text-sm font-bold text-red-400">
+                  <AlertCircle className="h-4 w-4" /> {saveError}
+                </p>
+              )}
+              {!saving && (
+                <button onClick={resetMatch} className="w-full py-2 text-sm font-bold text-[var(--muted-text)]">
+                  Ricomincia
+                </button>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={resetMatch}
+              className="min-h-[3.5rem] w-full max-w-xs rounded-2xl text-lg font-black text-black"
+              style={{ background: "var(--accent)" }}
+            >
+              Nuova partita
+            </button>
+          )}
         </div>
       )}
     </div>
