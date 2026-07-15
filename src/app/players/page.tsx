@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic"
 
 import Link from "next/link"
-import { Info, TrendingUp, Crown } from "lucide-react"
+import { Info, TrendingUp, Crown, Waves } from "lucide-react"
 import { listPlayers, getMonthlyTopPlayers, awardMonthlyPodium } from "@/actions/players"
 import { FilterablePlayerList } from "@/components/player/FilterablePlayerList"
 import { PodiumSection } from "@/components/home/PodiumSection"
@@ -47,26 +47,40 @@ export default async function PlayersPage({ searchParams }: Props) {
         )}
       </div>
 
-      {/* ── Discover: weekly recap + territories ──────────────── */}
-      <div className="flex gap-2 px-4 pt-3">
+      {/* ── Discover: season + weekly + territories ───────────── */}
+      <div className="flex gap-2 overflow-x-auto px-4 pt-3" style={{ scrollbarWidth: "none" }}>
+        <Link
+          href="/stagione"
+          className="flex min-w-[130px] flex-1 items-center gap-2 rounded-2xl px-4 py-3 active:opacity-80"
+          style={{
+            background: "linear-gradient(135deg, rgba(168,85,247,0.16), rgba(59,130,246,0.08))",
+            border: "1px solid rgba(168,85,247,0.25)",
+          }}
+        >
+          <Waves className="h-5 w-5" style={{ color: "#a855f7" }} />
+          <div className="min-w-0">
+            <p className="text-sm font-black text-white leading-tight">Stagione</p>
+            <p className="truncate text-[0.65rem] text-[var(--muted-text)]">Divisioni</p>
+          </div>
+        </Link>
         <Link
           href="/settimana"
-          className="flex flex-1 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
+          className="flex min-w-[130px] flex-1 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
         >
           <TrendingUp className="h-5 w-5 text-[var(--accent)]" />
           <div className="min-w-0">
             <p className="text-sm font-black text-white leading-tight">La settimana</p>
-            <p className="truncate text-[0.65rem] text-[var(--muted-text)]">Movers &amp; MVP</p>
+            <p className="truncate text-[0.65rem] text-[var(--muted-text)]">Movers</p>
           </div>
         </Link>
         <Link
           href="/bagni"
-          className="flex flex-1 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
+          className="flex min-w-[130px] flex-1 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
         >
           <Crown className="h-5 w-5 text-[var(--gold)]" />
           <div className="min-w-0">
             <p className="text-sm font-black text-white leading-tight">Re dei Bagni</p>
-            <p className="truncate text-[0.65rem] text-[var(--muted-text)]">Classifiche campi</p>
+            <p className="truncate text-[0.65rem] text-[var(--muted-text)]">Campi</p>
           </div>
         </Link>
       </div>

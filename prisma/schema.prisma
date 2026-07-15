@@ -496,3 +496,17 @@ model MonthlyAward {
   @@unique([position, month, year])
   @@map("monthly_awards")
 }
+
+// ─── Season (ranked seasons + divisions) ────────────────────────────────────
+
+model Season {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  name     String   // "Estate 2026", "Luglio"
+  startsAt DateTime
+  endsAt   DateTime
+  isActive Boolean  @default(true)
+
+  @@map("seasons")
+}

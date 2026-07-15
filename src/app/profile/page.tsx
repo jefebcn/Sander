@@ -33,6 +33,8 @@ import { Achievements } from "@/components/player/Achievements"
 import { computeAchievements } from "@/lib/achievements"
 import { WalletCard } from "@/components/session/WalletCard"
 import { AdminCreditsManager } from "@/components/admin/AdminCreditsManager"
+import { AdminSeasonManager } from "@/components/admin/AdminSeasonManager"
+import { getActiveSeason } from "@/actions/seasons"
 
 const MONTH_NAMES_IT = [
   "", "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
@@ -193,11 +195,12 @@ export default async function ProfilePage({ searchParams }: Props) {
   let adminTournaments: any[] = []
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let adminPlayers: any[] = []
+  let adminActiveSeason: Awaited<ReturnType<typeof getActiveSeason>> = null
   let adminError: string | null = null
 
   if (isAdmin && activeTab === "admin") {
     try {
-      ;[adminSessions, adminTournaments, adminPlayers] = await Promise.all([
+      ;[adminSessions, adminTournaments, adminPlayers, adminActiveSeason] = await Promise.all([
         db.session.findMany({
           orderBy: { date: "desc" },
           include: {
@@ -222,6 +225,7 @@ export default async function ProfilePage({ searchParams }: Props) {
             user: { select: { email: true } },
           },
         }),
+        getActiveSeason(),
       ])
     } catch (e) {
       adminError = e instanceof Error ? e.message : String(e)
@@ -768,6 +772,9 @@ export default async function ProfilePage({ searchParams }: Props) {
               ))}
             </div>
           </div>
+
+          {/* Season manager */}
+          <AdminSeasonManager activeSeason={adminActiveSeason} />
 
           {/* SanderCredits manager */}
           <AdminCreditsManager players={adminPlayers} />
