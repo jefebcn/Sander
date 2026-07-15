@@ -93,3 +93,90 @@ export async function getWeeklyRecap(referenceDate?: Date): Promise<WeeklyRecap>
     activePlayers: results.length,
   }
 }
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  Personal "SANDER Wrapped" — a shareable period recap for one player.       */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+export interface PlayerRecap {
+  days: number
+  matches: number
+  wins: number
+  winRate: number
+  ratingDelta: number
+  peakRating: number
+  currentRating: number
+  level: number
+  favouriteSpot: string | null
+}
+
+export async function getPlayerRecap(playerId: string, days = 30): Promise<PlayerRecap> {
+  const now = new Date()
+  const windowStart = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
+
+  const [player, history, sessions] = await Promise.all([
+    db.player.findUniqueOrThrow({
+      where: { id: playerId },
+      select: { glickoRating: true, level: true },
+    }),
+    db.ratingHistory.findMany({
+      where: { playerId, createdAt: { gte: windowStart, lte: now } },
+      orderBy: { createdAt: "asc" },
+      select: { rating: true },
+    }),
+    db.session.findMany({
+      where: {
+        status: "COMPLETED",
+        date: { gte: windowStart },
+        participants: { some: { playerId } },
+        sets: { some: {} },
+      },
+      select: {
+        location: true,
+        sets: { select: { teamAScore: true, teamBScore: true } },
+        participants: { where: { playerId }, select: { team: true } },
+      },
+    }),
+  ])
+
+  // Rating delta + peak over the window
+  const pre = await db.ratingHistory.findFirst({
+    where: { playerId, createdAt: { lt: windowStart } },
+    orderBy: { createdAt: "desc" },
+    select: { rating: true },
+  })
+  const startRating = pre?.rating ?? history[0]?.rating ?? player.glickoRating
+  const endRating = history[history.length - 1]?.rating ?? player.glickoRating
+  const peakRating = history.reduce((m, h) => Math.max(m, h.rating), endRating)
+
+  // Wins / matches / favourite spot from completed sessions
+  let wins = 0
+  let matches = 0
+  const spotCount = new Map<string, number>()
+  for (const s of sessions) {
+    const myTeam = s.participants[0]?.team
+    if (myTeam !== 0 && myTeam !== 1) continue
+    const aWins = s.sets.filter((x) => x.teamAScore > x.teamBScore).length
+    const bWins = s.sets.filter((x) => x.teamBScore > x.teamAScore).length
+    if (aWins === bWins) continue
+    matches += 1
+    if ((myTeam === 0 && aWins > bWins) || (myTeam === 1 && bWins > aWins)) wins += 1
+    const loc = s.location.trim()
+    if (loc) spotCount.set(loc, (spotCount.get(loc) ?? 0) + 1)
+  }
+
+  const favouriteSpot =
+    [...spotCount.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+
+  return {
+    days,
+    matches,
+    wins,
+    winRate: matches > 0 ? Math.round((wins / matches) * 100) : 0,
+    ratingDelta: Math.round(endRating - startRating),
+    peakRating: Math.round(peakRating),
+    currentRating: Math.round(player.glickoRating),
+    level: player.level,
+    favouriteSpot,
+  }
+}

@@ -9,6 +9,8 @@ import { SanderCardFut, playerToCardData } from "@/components/player/SanderCardF
 import { StatPercentageEditor } from "@/components/player/StatPercentageEditor"
 import { ShareCardButton } from "@/components/player/ShareCardButton"
 import { ShareStoryButton } from "@/components/share/ShareStoryButton"
+import { WrappedShareButton } from "@/components/share/WrappedShareButton"
+import { getPlayerRecap } from "@/actions/recap"
 import { SignOutButton } from "@/components/auth/SignOutButton"
 import { InviteTab } from "@/components/profile/InviteTab"
 import { getReferralLeaderboard } from "@/actions/invite"
@@ -152,9 +154,13 @@ export default async function ProfilePage({ searchParams }: Props) {
       })
     : []
 
-  const [matchHistory, partnerStats] = activeTab === "profilo"
-    ? await Promise.all([getMatchHistory(player.id), getPartnerStats(player.id)])
-    : [[], []]
+  const [matchHistory, partnerStats, playerRecap] = activeTab === "profilo"
+    ? await Promise.all([
+        getMatchHistory(player.id),
+        getPartnerStats(player.id),
+        getPlayerRecap(player.id, 30),
+      ])
+    : [[], [], null]
 
   const achievements = activeTab === "profilo"
     ? computeAchievements({
@@ -283,6 +289,36 @@ export default async function ProfilePage({ searchParams }: Props) {
           />
           {/* Viral share: Story-format image for Instagram/WhatsApp (primary) */}
           <ShareStoryButton playerData={playerToCardData(fullPlayer)} variant="card" />
+
+          {/* SANDER Wrapped — personal 30-day recap (only when there's activity) */}
+          {playerRecap && playerRecap.matches > 0 && (
+            <div className="rounded-2xl bg-[var(--surface-2)] p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
+                  Il tuo mese
+                </p>
+                <span className="text-xs text-[var(--muted-text)]">ultimi 30 giorni</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <p className="text-2xl font-black text-white">{playerRecap.matches}</p>
+                  <p className="text-[0.6rem] font-bold uppercase tracking-widest text-[var(--muted-text)]">Partite</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-black text-[var(--accent)]">{playerRecap.wins}</p>
+                  <p className="text-[0.6rem] font-bold uppercase tracking-widest text-[var(--muted-text)]">Vittorie</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-black text-white">
+                    {playerRecap.ratingDelta >= 0 ? "+" : ""}{playerRecap.ratingDelta}
+                  </p>
+                  <p className="text-[0.6rem] font-bold uppercase tracking-widest text-[var(--muted-text)]">Rating</p>
+                </div>
+              </div>
+              <WrappedShareButton playerName={fullPlayer.name} recap={playerRecap} />
+            </div>
+          )}
+
           {/* Square card download (secondary) */}
           <ShareCardButton playerData={playerToCardData(fullPlayer)} />
           <StatPercentageEditor
