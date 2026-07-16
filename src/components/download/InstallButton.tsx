@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { Download, Share, Plus, ArrowRight } from "lucide-react"
+import { trackEvent } from "@/lib/analytics"
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>
@@ -40,6 +41,7 @@ export function InstallButton() {
 
   const install = useCallback(async () => {
     if (!deferred) return
+    trackEvent("install_click", { platform: "android" })
     await deferred.prompt()
     await deferred.userChoice
     setDeferred(null)
@@ -74,7 +76,10 @@ export function InstallButton() {
       {/* iOS: instructions */}
       {ios && (
         <button
-          onClick={() => setShowIosHelp((v) => !v)}
+          onClick={() => {
+            setShowIosHelp((v) => !v)
+            trackEvent("install_click", { platform: "ios" })
+          }}
           className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-black text-black"
           style={{ background: "var(--accent)" }}
         >

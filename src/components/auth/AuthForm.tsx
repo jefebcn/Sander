@@ -6,6 +6,7 @@ import Link from "next/link"
 import { signIn } from "next-auth/react"
 import { Eye, EyeOff, LogIn } from "lucide-react"
 import { registerWithEmail } from "@/actions/auth"
+import { trackEvent } from "@/lib/analytics"
 import { cn } from "@/lib/utils"
 
 interface AuthFormProps {
@@ -43,6 +44,7 @@ export function AuthForm({ callbackUrl, inviteCode: initialInviteCode }: AuthFor
             setError(reg.error)
             return
           }
+          trackEvent("signup", { invited: inviteCode.trim() ? "yes" : "no" })
         }
         const result = await signIn("credentials", {
           email,

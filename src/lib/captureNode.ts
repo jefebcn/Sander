@@ -1,5 +1,7 @@
 "use client"
 
+import { trackEvent } from "@/lib/analytics"
+
 /**
  * Shared client-side node-to-image capture pipeline.
  *
@@ -116,6 +118,7 @@ export async function shareOrDownloadBlob(
         files: [file],
         ...(shareText ? { text: shareText } : {}),
       })
+      trackEvent("share", { via: "native", file: fileName })
       return "shared"
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") return "cancelled"
@@ -132,6 +135,7 @@ export async function shareOrDownloadBlob(
   a.click()
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
+  trackEvent("share", { via: "download", file: fileName })
   return "downloaded"
 }
 

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next"
 import Image from "next/image"
+import { Analytics } from "@vercel/analytics/next"
 import { Barlow } from "next/font/google"
 import "./globals.css"
 import { Providers } from "@/lib/providers"
@@ -9,6 +10,7 @@ import { OnboardingGate } from "@/components/onboarding/OnboardingGate"
 import { ClientOnlyBanners } from "@/components/layout/ClientOnlyBanners"
 import { SwRegistrar } from "@/components/push/SwRegistrar"
 import { PageWrapper } from "@/components/layout/PageWrapper"
+import { RefTracker } from "@/components/analytics/RefTracker"
 
 const barlow = Barlow({
   variable: "--font-sans",
@@ -81,7 +83,9 @@ export default function RootLayout({
             <ClientOnlyBanners />
           </div>
           <Toaster />
+          <RefTracker />
         </Providers>
+        <Analytics />
       </body>
     </html>
   )

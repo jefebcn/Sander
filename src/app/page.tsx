@@ -84,11 +84,23 @@ export default async function Home() {
         },
       }),
     ])
-  } else {
-    upcomingChicece = await db.tournament.findFirst({
-      where: { type: "CHICECE", status: { in: ["DRAFT", "LIVE"] } },
-      orderBy: { date: "asc" },
-    })
+  }
+
+  // Social-proof numbers for the logged-out hero
+  let heroStats: { players: number; matches: number } | null = null
+  if (!fullPlayer) {
+    const [players, matches, chicece] = await Promise.all([
+      db.player.count(),
+      db.session.count({ where: { status: "COMPLETED" } }),
+      upcomingChicece
+        ? Promise.resolve(upcomingChicece)
+        : db.tournament.findFirst({
+            where: { type: "CHICECE", status: { in: ["DRAFT", "LIVE"] } },
+            orderBy: { date: "asc" },
+          }),
+    ])
+    heroStats = { players, matches }
+    upcomingChicece = chicece
   }
 
   const xpCurrent = fullPlayer ? fullPlayer.xp % 100 : 0
@@ -600,7 +612,116 @@ export default async function Home() {
               </a>
             </div>
           </>
-        ) : null}
+        ) : (
+          /* ── Logged-out hero — the conversion landing ──────────── */
+          <div className="flex flex-col gap-4">
+            {/* Value prop */}
+            <div className="slide-up pt-2">
+              <h1 className="text-4xl font-black leading-[1.05] text-white">
+                Il beach volley
+                <br />
+                della Riviera.
+              </h1>
+              <p className="mt-3 text-lg text-white/70 leading-snug">
+                Crea la tua <span className="font-bold text-[var(--accent)]">carta giocatore</span>,
+                organizza partite, scala la classifica e conquista i campi.
+              </p>
+            </div>
+
+            {/* Social proof */}
+            {heroStats && (heroStats.players > 0 || heroStats.matches > 0) && (
+              <div className="slide-up stagger-2 flex gap-3">
+                <div className="flex-1 rounded-2xl bg-[var(--surface-2)] p-4 text-center">
+                  <p className="text-3xl font-black text-[var(--accent)]">{heroStats.players}</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
+                    Giocatori
+                  </p>
+                </div>
+                <div className="flex-1 rounded-2xl bg-[var(--surface-2)] p-4 text-center">
+                  <p className="text-3xl font-black text-[var(--accent)]">{heroStats.matches}</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
+                    Partite
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Primary CTAs */}
+            <div className="slide-up stagger-3 flex flex-col gap-2.5">
+              <Link
+                href="/auth/signin"
+                className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl text-lg font-black text-black transition-opacity active:opacity-80"
+                style={{ background: "var(--accent)" }}
+              >
+                <Sparkles className="h-5 w-5" /> Crea la tua carta
+              </Link>
+              <Link
+                href="/scarica"
+                className="flex min-h-[3.25rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-bold text-white transition-opacity active:opacity-80"
+              >
+                <Plus className="h-5 w-5 text-[var(--accent)]" /> Installa l&apos;app
+              </Link>
+            </div>
+
+            {/* Feature strip */}
+            <div className="slide-up stagger-4 grid grid-cols-2 gap-2 pt-1">
+              {[
+                { emoji: "🃏", title: "La tua carta", sub: "stile FUT, sale di livello" },
+                { emoji: "🏐", title: "Partite", sub: "organizza e gioca" },
+                { emoji: "🏆", title: "Tornei", sub: "iscriviti e vinci" },
+                { emoji: "👑", title: "Re dei Bagni", sub: "conquista i campi" },
+              ].map((f) => (
+                <div key={f.title} className="rounded-2xl bg-[var(--surface-2)] p-4">
+                  <p className="text-2xl">{f.emoji}</p>
+                  <p className="mt-1 font-black text-white">{f.title}</p>
+                  <p className="text-xs text-[var(--muted-text)]">{f.sub}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Live proof: explore without an account */}
+            <div className="slide-up stagger-5 flex flex-col gap-2 pt-1">
+              <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
+                Dai un&apos;occhiata
+              </p>
+              <div className="flex gap-2">
+                <Link
+                  href="/settimana"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-[var(--surface-2)] py-3 text-sm font-bold text-white active:opacity-80"
+                >
+                  <Trophy className="h-4 w-4 text-[var(--accent)]" /> Classifica
+                </Link>
+                <Link
+                  href="/players"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-[var(--surface-2)] py-3 text-sm font-bold text-white active:opacity-80"
+                >
+                  <Sparkles className="h-4 w-4 text-[var(--accent)]" /> Giocatori
+                </Link>
+              </div>
+            </div>
+
+            {/* Upcoming Chicece tournament, if any — real activity proof */}
+            {upcomingChicece && (
+              <Link
+                href={`/tournaments/${upcomingChicece.id}`}
+                className="slide-up stagger-5 flex items-center gap-3 rounded-2xl p-4 active:opacity-80"
+                style={{ background: "var(--surface-2)", border: "1px solid rgba(201,243,29,0.3)" }}
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: "rgba(201,243,29,0.12)" }}>
+                  <Shuffle className="h-5 w-5 text-[var(--accent)]" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
+                    Torneo in arrivo
+                  </p>
+                  <p className="truncate font-bold text-white">{upcomingChicece.name}</p>
+                  <p className="text-xs text-[var(--muted-text)]">{formatDate(upcomingChicece.date)} · Chicece</p>
+                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--accent)]" />
+              </Link>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
