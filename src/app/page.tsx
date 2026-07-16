@@ -242,15 +242,24 @@ export default async function Home() {
               </Link>
             </div>
 
-            {/* ── Crea partita rapida ──────────────────────────── */}
-            <Link
-              href="/sessions/new"
-              className="flex min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl font-black text-black text-base transition-opacity active:opacity-80"
-              style={{ background: "var(--accent)" }}
-            >
-              <Plus className="h-5 w-5" />
-              Crea partita
-            </Link>
+            {/* ── Azioni rapide: crea + trova ──────────────────── */}
+            <div className="flex gap-2">
+              <Link
+                href="/sessions/new"
+                className="flex min-h-[3.5rem] flex-[1.4] items-center justify-center gap-2 rounded-2xl font-black text-black text-base transition-opacity active:opacity-80"
+                style={{ background: "var(--accent)" }}
+              >
+                <Plus className="h-5 w-5" />
+                Crea partita
+              </Link>
+              <Link
+                href="/sessions"
+                className="flex min-h-[3.5rem] flex-1 items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-black text-white text-base transition-opacity active:opacity-80"
+              >
+                <MapPin className="h-5 w-5 text-[var(--accent)]" />
+                Trova
+              </Link>
+            </div>
 
             {/* ── Stats Card ────────────────────────────────────── */}
             <div className="slide-up stagger-3 overflow-hidden rounded-2xl bg-[var(--surface-2)]">
@@ -330,6 +339,32 @@ export default async function Home() {
                   <ChevronRight className="h-4 w-4 flex-shrink-0 text-[var(--accent)]" />
                 </Link>
               </div>
+            </div>
+
+            {/* ── Discovery: stagione · settimana · bagni ───────── */}
+            <div className="grid grid-cols-3 gap-2">
+              <Link
+                href="/stagione"
+                className="flex flex-col items-center gap-1 rounded-2xl bg-[var(--surface-2)] py-3 active:opacity-80"
+                style={{ border: "1px solid rgba(168,85,247,0.25)" }}
+              >
+                <span className="text-xl">🌊</span>
+                <span className="text-xs font-black text-white">Stagione</span>
+              </Link>
+              <Link
+                href="/settimana"
+                className="flex flex-col items-center gap-1 rounded-2xl bg-[var(--surface-2)] py-3 active:opacity-80"
+              >
+                <span className="text-xl">📈</span>
+                <span className="text-xs font-black text-white">Settimana</span>
+              </Link>
+              <Link
+                href="/bagni"
+                className="flex flex-col items-center gap-1 rounded-2xl bg-[var(--surface-2)] py-3 active:opacity-80"
+              >
+                <span className="text-xl">👑</span>
+                <span className="text-xs font-black text-white">Bagni</span>
+              </Link>
             </div>
 
             {/* ── Annuncio evento ───────────────────────────────── */}

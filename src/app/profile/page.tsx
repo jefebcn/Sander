@@ -298,6 +298,8 @@ export default async function ProfilePage({ searchParams }: Props) {
           />
           {/* Viral share: Story-format image for Instagram/WhatsApp (primary) */}
           <ShareStoryButton playerData={playerToCardData(fullPlayer)} variant="card" />
+          {/* Square card download — kept next to the story share, one sharing block */}
+          <ShareCardButton playerData={playerToCardData(fullPlayer)} />
 
           {/* SANDER Wrapped — personal 30-day recap (only when there's activity) */}
           {playerRecap && playerRecap.matches > 0 && (
@@ -328,8 +330,6 @@ export default async function ProfilePage({ searchParams }: Props) {
             </div>
           )}
 
-          {/* Square card download (secondary) */}
-          <ShareCardButton playerData={playerToCardData(fullPlayer)} />
           <StatPercentageEditor
             glickoRating={fullPlayer.glickoRating}
             initial={{
