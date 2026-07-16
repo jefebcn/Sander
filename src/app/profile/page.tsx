@@ -419,11 +419,19 @@ export default async function ProfilePage({ searchParams }: Props) {
             </div>
           )}
 
-          {/* ── Partner stats ──────────────────────────────────── */}
-          <PartnerStats stats={partnerStats} />
-
-          {/* ── Match history ──────────────────────────────────── */}
-          <MatchHistory entries={matchHistory} />
+          {/* ── Statistiche avanzate + cronologia (collassabile) ── */}
+          <details className="group">
+            <summary className="flex min-h-[3.25rem] cursor-pointer list-none items-center justify-between rounded-2xl bg-[var(--surface-2)] px-4 font-black text-white [&::-webkit-details-marker]:hidden">
+              <span className="text-sm">Compagni e cronologia partite</span>
+              <span className="text-lg text-[var(--accent)] transition-transform duration-200 group-open:rotate-90">
+                ›
+              </span>
+            </summary>
+            <div className="mt-2 space-y-3">
+              <PartnerStats stats={partnerStats} />
+              <MatchHistory entries={matchHistory} />
+            </div>
+          </details>
 
           <Link
             href="/stats-guide"
