@@ -1,34 +1,29 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import type { PointerEvent as ReactPointerEvent } from "react"
 import { Pause, Play, RotateCcw, Home, Zap } from "lucide-react"
 import {
   createGameState,
   step,
-  predictLandingX,
   STEP,
-  FIELD_W,
-  FIELD_H,
-  GROUND_Y,
-  NET_X,
-  NET_TOP,
-  NET_HALF_W,
-  BALL_R,
-  PLAYER_BODY,
+  COURT_W,
+  COURT_L,
+  NET_Z,
   type GameState,
   type GameEvent,
-  type Inputs,
+  type PlayerInput,
 } from "@/lib/game/engine"
 import {
   statsToParams,
   cpuStatsForDifficulty,
+  cpuProfileForDifficulty,
   type GameStats,
 } from "@/lib/game/stats"
-import { cpuInput, createAiMemory, type AiMemory } from "@/lib/game/ai"
-import { Controls } from "./Controls"
 
 /* ────────────────────────────────────────────────────────────────────────── */
-/*  SANDER Arcade — canvas, fixed-timestep loop, input, juice, HUD.            */
+/*  SANDER Arcade — vertical pseudo-3D court (Beach Volley Clash style).       */
+/*  One finger: drag to aim during slow-mo, release to spike.                  */
 /* ────────────────────────────────────────────────────────────────────────── */
 
 export interface ArcadePlayer {
@@ -43,6 +38,19 @@ const DIFF_LABELS = ["Facile", "Media", "Difficile", "Pro", "Leggenda"]
 const ME_COLOR = "#c9f31d"
 const CPU_COLOR = "#3b82f6"
 
+// Logical viewport (portrait) + court projection anchors
+const VIEW = { W: 420, H: 700, cx: 210, nearY: 645, farY: 150, nearHalf: 196, farHalf: 104 }
+const NET_H = 55
+
+function proj(x: number, z: number, y: number) {
+  const t = z / COURT_L // 0 = your baseline (bottom), 1 = far baseline (top)
+  const half = VIEW.nearHalf + (VIEW.farHalf - VIEW.nearHalf) * t
+  const scale = half / VIEW.nearHalf
+  const sx = VIEW.cx + ((x - COURT_W / 2) / (COURT_W / 2)) * half
+  const sy = VIEW.nearY + (VIEW.farY - VIEW.nearY) * t - y * scale
+  return { sx, sy, scale }
+}
+
 const STAT_ROWS: { key: keyof GameStats; label: string }[] = [
   { key: "velocita", label: "Velocità" },
   { key: "potenza", label: "Potenza" },
@@ -54,10 +62,11 @@ const STAT_ROWS: { key: keyof GameStats; label: string }[] = [
 export function GameCanvas({ player }: { player: ArcadePlayer }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
-  // Game refs (no re-renders on the hot path)
+  // Hot-path refs
   const stateRef = useRef<GameState | null>(null)
-  const inputRef = useRef<Inputs>({ left: false, right: false, jump: false, spike: false })
-  const aiMemRef = useRef<AiMemory>(createAiMemory())
+  const inputRef = useRef<PlayerInput>({ aimX: COURT_W / 2, aimZ: NET_Z + 130, release: false })
+  const draggingRef = useRef(false)
+  const lastPtRef = useRef({ x: 0, y: 0 })
   const matchDiffRef = useRef(2)
   const rafRef = useRef(0)
   const lastTsRef = useRef(0)
@@ -78,7 +87,7 @@ export function GameCanvas({ player }: { player: ArcadePlayer }) {
 
   screenRef.current = screen
 
-  // Avatar image (drawn on the player's head)
+  // Avatar (drawn as your players' heads)
   useEffect(() => {
     if (!player.avatarUrl) return
     const img = new window.Image()
@@ -89,51 +98,43 @@ export function GameCanvas({ player }: { player: ArcadePlayer }) {
     img.src = player.avatarUrl
   }, [player.avatarUrl])
 
-  // Keyboard
+  // Keyboard fallback: arrows nudge the aim, space/enter releases
   useEffect(() => {
-    const map = (e: KeyboardEvent, down: boolean): boolean => {
+    const onDown = (e: KeyboardEvent) => {
+      const inp = inputRef.current
       switch (e.key) {
         case "ArrowLeft":
-        case "a":
-          inputRef.current.left = down
-          return true
+          inp.aimX -= 14
+          break
         case "ArrowRight":
-        case "d":
-          inputRef.current.right = down
-          return true
+          inp.aimX += 14
+          break
         case "ArrowUp":
-        case "w":
+          inp.aimZ += 16
+          break
+        case "ArrowDown":
+          inp.aimZ -= 16
+          break
         case " ":
-          inputRef.current.jump = down
-          return true
-        case "x":
-        case "X":
-        case "Shift":
-          inputRef.current.spike = down
-          return true
+        case "Enter":
+          inp.release = true
+          break
+        default:
+          return
       }
-      return false
-    }
-    const onDown = (e: KeyboardEvent) => {
-      if (map(e, true)) e.preventDefault()
-    }
-    const onUp = (e: KeyboardEvent) => {
-      if (map(e, false)) e.preventDefault()
+      e.preventDefault()
     }
     window.addEventListener("keydown", onDown)
-    window.addEventListener("keyup", onUp)
-    return () => {
-      window.removeEventListener("keydown", onDown)
-      window.removeEventListener("keyup", onUp)
-    }
+    return () => window.removeEventListener("keydown", onDown)
   }, [])
 
   function startMatch() {
     const mine = statsToParams(player.stats)
     const cpu = statsToParams(cpuStatsForDifficulty(difficulty))
+    const profile = cpuProfileForDifficulty(difficulty)
     matchDiffRef.current = difficulty
-    stateRef.current = createGameState(mine, cpu, target, Math.floor(Math.random() * 2 ** 31))
-    aiMemRef.current = createAiMemory()
+    stateRef.current = createGameState(mine, cpu, profile, target, Math.floor(Math.random() * 2 ** 31))
+    inputRef.current = { aimX: COURT_W / 2, aimZ: NET_Z + 130, release: false }
     trailRef.current = []
     shakeRef.current = 0
     flashRef.current = 0
@@ -144,11 +145,24 @@ export function GameCanvas({ player }: { player: ArcadePlayer }) {
 
   const handleEvent = useCallback((ev: GameEvent, st: GameState) => {
     switch (ev.type) {
-      case "spike":
-        shakeRef.current = 9
+      case "aim":
+        if (ev.side === 0) {
+          // your turn: reset the reticle to the engine default, clear stale release
+          inputRef.current.aimX = st.aimX
+          inputRef.current.aimZ = st.aimZ
+          inputRef.current.release = false
+        }
         break
-      case "touch":
-        shakeRef.current = Math.max(shakeRef.current, 2)
+      case "spike":
+      case "serve":
+        shakeRef.current = ev.side === 0 ? 9 : 6
+        trailRef.current = []
+        break
+      case "receive":
+        shakeRef.current = Math.max(shakeRef.current, 3)
+        break
+      case "dive":
+        shakeRef.current = Math.max(shakeRef.current, 6)
         break
       case "point":
         flashRef.current = 1
@@ -163,7 +177,32 @@ export function GameCanvas({ player }: { player: ArcadePlayer }) {
     }
   }, [])
 
-  // ── Render ──────────────────────────────────────────────────────────────
+  // ── Pointer aiming ──────────────────────────────────────────────────────
+  const onPointerDown = useCallback((e: ReactPointerEvent<HTMLCanvasElement>) => {
+    e.currentTarget.setPointerCapture(e.pointerId)
+    draggingRef.current = true
+    lastPtRef.current = { x: e.clientX, y: e.clientY }
+    inputRef.current.release = false
+  }, [])
+
+  const onPointerMove = useCallback((e: ReactPointerEvent<HTMLCanvasElement>) => {
+    if (!draggingRef.current) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const dx = e.clientX - lastPtRef.current.x
+    const dy = e.clientY - lastPtRef.current.y
+    lastPtRef.current = { x: e.clientX, y: e.clientY }
+    // drag right → aim right; drag UP → aim deeper (larger z)
+    inputRef.current.aimX += dx * (COURT_W / rect.width) * 1.2
+    inputRef.current.aimZ -= dy * (COURT_L / rect.height) * 1.2
+  }, [])
+
+  const onPointerUp = useCallback(() => {
+    if (!draggingRef.current) return
+    draggingRef.current = false
+    inputRef.current.release = true
+  }, [])
+
+  // ── Renderer ────────────────────────────────────────────────────────────
   const render = useCallback(
     (st: GameState) => {
       const canvas = canvasRef.current
@@ -172,9 +211,9 @@ export function GameCanvas({ player }: { player: ArcadePlayer }) {
       if (!ctx) return
 
       const dpr = Math.min(window.devicePixelRatio || 1, 2)
-      if (canvas.width !== FIELD_W * dpr) {
-        canvas.width = FIELD_W * dpr
-        canvas.height = FIELD_H * dpr
+      if (canvas.width !== VIEW.W * dpr) {
+        canvas.width = VIEW.W * dpr
+        canvas.height = VIEW.H * dpr
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
 
@@ -184,144 +223,252 @@ export function GameCanvas({ player }: { player: ArcadePlayer }) {
           (Math.random() - 0.5) * shakeRef.current,
           (Math.random() - 0.5) * shakeRef.current,
         )
-        shakeRef.current *= 0.85
+        shakeRef.current *= 0.86
       }
 
       // Sky
-      const sky = ctx.createLinearGradient(0, 0, 0, FIELD_H)
+      const sky = ctx.createLinearGradient(0, 0, 0, VIEW.H)
       sky.addColorStop(0, "#0d1209")
-      sky.addColorStop(0.6, "#090b09")
-      sky.addColorStop(1, "#050604")
+      sky.addColorStop(0.45, "#090b09")
+      sky.addColorStop(1, "#0b0a07")
       ctx.fillStyle = sky
-      ctx.fillRect(-10, -10, FIELD_W + 20, FIELD_H + 20)
-
-      // Lime glow
-      const glow = ctx.createRadialGradient(FIELD_W * 0.8, 0, 40, FIELD_W * 0.8, 0, 380)
+      ctx.fillRect(-12, -12, VIEW.W + 24, VIEW.H + 24)
+      const glow = ctx.createRadialGradient(VIEW.cx, 40, 20, VIEW.cx, 40, 360)
       glow.addColorStop(0, "rgba(201,243,29,0.10)")
       glow.addColorStop(1, "rgba(201,243,29,0)")
       ctx.fillStyle = glow
-      ctx.fillRect(0, 0, FIELD_W, FIELD_H)
+      ctx.fillRect(0, 0, VIEW.W, VIEW.H)
 
-      // Sand
+      // Court (sand trapezoid + lines)
+      const c00 = proj(0, 0, 0)
+      const c10 = proj(COURT_W, 0, 0)
+      const c11 = proj(COURT_W, COURT_L, 0)
+      const c01 = proj(0, COURT_L, 0)
       ctx.fillStyle = "#8a7a55"
-      ctx.fillRect(-10, GROUND_Y, FIELD_W + 20, FIELD_H - GROUND_Y + 10)
-      ctx.fillStyle = "rgba(255,255,255,0.14)"
-      ctx.fillRect(-10, GROUND_Y, FIELD_W + 20, 3)
+      ctx.beginPath()
+      ctx.moveTo(c00.sx, c00.sy)
+      ctx.lineTo(c10.sx, c10.sy)
+      ctx.lineTo(c11.sx, c11.sy)
+      ctx.lineTo(c01.sx, c01.sy)
+      ctx.closePath()
+      ctx.fill()
+      // beach outside the lines, slightly darker
+      ctx.strokeStyle = "rgba(255,255,255,0.75)"
+      ctx.lineWidth = 3
+      ctx.stroke()
+      // centre (net) line
+      const n0 = proj(0, NET_Z, 0)
+      const n1 = proj(COURT_W, NET_Z, 0)
+      ctx.strokeStyle = "rgba(255,255,255,0.4)"
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.moveTo(n0.sx, n0.sy)
+      ctx.lineTo(n1.sx, n1.sy)
+      ctx.stroke()
 
-      // Landing shadow (predicted spot)
-      if (st.phase === "rally") {
-        const lx = predictLandingX(st.ball)
-        ctx.fillStyle = "rgba(201,243,29,0.28)"
+      // Aim reticle (only while YOU aim)
+      if (st.phase === "aim" && st.aimSide === 0) {
+        const r = proj(st.aimX, st.aimZ, 0)
+        const pulse = 1 + Math.sin(st.aimT * 8) * 0.12
+        ctx.strokeStyle = ME_COLOR
+        ctx.lineWidth = 3
         ctx.beginPath()
-        ctx.ellipse(lx, GROUND_Y + 5, 16, 4, 0, 0, Math.PI * 2)
+        ctx.ellipse(r.sx, r.sy, 26 * r.scale * pulse, 11 * r.scale * pulse, 0, 0, Math.PI * 2)
+        ctx.stroke()
+        ctx.fillStyle = "rgba(201,243,29,0.25)"
+        ctx.beginPath()
+        ctx.ellipse(r.sx, r.sy, 12 * r.scale, 5 * r.scale, 0, 0, Math.PI * 2)
         ctx.fill()
       }
 
-      // Net
-      ctx.fillStyle = "#1a1f1a"
-      ctx.fillRect(NET_X - NET_HALF_W, NET_TOP, NET_HALF_W * 2, GROUND_Y - NET_TOP)
-      ctx.fillStyle = "rgba(255,255,255,0.35)"
-      for (let y = NET_TOP + 10; y < GROUND_Y; y += 14) {
-        ctx.fillRect(NET_X - NET_HALF_W, y, NET_HALF_W * 2, 1)
-      }
-      ctx.fillStyle = "#ffffff"
-      ctx.fillRect(NET_X - NET_HALF_W - 2, NET_TOP - 3, NET_HALF_W * 2 + 4, 4)
+      // ── Depth-ordered entities: far half → net → near half ──
+      const drawPlayer = (side: 0 | 1, idx: 0 | 1) => {
+        const p = st.players[side][idx]
+        const pr = proj(p.x, p.z, 0)
+        const s = pr.scale
+        const color = side === 0 ? ME_COLOR : CPU_COLOR
+        const isAttacker =
+          st.phase === "aim" && st.aimSide === side && st.attackerIdx[side] === idx
 
-      // Ball trail
-      const trail = trailRef.current
-      trail.push({ x: st.ball.x, y: st.ball.y })
-      if (trail.length > 10) trail.shift()
-      for (let i = 0; i < trail.length; i++) {
-        const a = (i / trail.length) * 0.22
-        ctx.fillStyle = `rgba(201,243,29,${a})`
-        ctx.beginPath()
-        ctx.arc(trail[i].x, trail[i].y, BALL_R * (0.4 + (i / trail.length) * 0.5), 0, Math.PI * 2)
-        ctx.fill()
-      }
-
-      // Players
-      for (let i = 0 as 0 | 1; i <= 1; i = (i + 1) as 0 | 1) {
-        const p = st.players[i]
-        const color = i === 0 ? ME_COLOR : CPU_COLOR
-
-        // shadow under player
+        // shadow
         ctx.fillStyle = "rgba(0,0,0,0.35)"
         ctx.beginPath()
-        ctx.ellipse(p.x, GROUND_Y + 6, PLAYER_BODY * 0.8, 5, 0, 0, Math.PI * 2)
+        ctx.ellipse(pr.sx, pr.sy + 3 * s, 16 * s, 5 * s, 0, 0, Math.PI * 2)
         ctx.fill()
 
-        // dome body
-        ctx.fillStyle = color
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, PLAYER_BODY, Math.PI, 0)
-        ctx.closePath()
-        ctx.fill()
-
-        // eye looking at the ball
-        const ex = p.x + (i === 0 ? 12 : -12)
-        const ey = p.y - 16
-        const ang = Math.atan2(st.ball.y - ey, st.ball.x - ex)
-        ctx.fillStyle = "#ffffff"
-        ctx.beginPath()
-        ctx.arc(ex, ey, 7, 0, Math.PI * 2)
-        ctx.fill()
-        ctx.fillStyle = "#0a0d0a"
-        ctx.beginPath()
-        ctx.arc(ex + Math.cos(ang) * 3, ey + Math.sin(ang) * 3, 3.5, 0, Math.PI * 2)
-        ctx.fill()
-
-        // avatar (me) floating above the dome
-        if (i === 0 && avatarImgRef.current) {
-          const r = 15
-          const ay = p.y - PLAYER_BODY - r - 4
-          ctx.save()
-          ctx.beginPath()
-          ctx.arc(p.x, ay, r, 0, Math.PI * 2)
-          ctx.clip()
-          ctx.drawImage(avatarImgRef.current, p.x - r, ay - r, r * 2, r * 2)
-          ctx.restore()
+        // attacker glow ring
+        if (isAttacker) {
           ctx.strokeStyle = color
           ctx.lineWidth = 2
           ctx.beginPath()
-          ctx.arc(p.x, ay, r, 0, Math.PI * 2)
+          ctx.ellipse(pr.sx, pr.sy + 3 * s, 20 * s, 7 * s, 0, 0, Math.PI * 2)
           ctx.stroke()
+        }
+
+        // body
+        const bh = 40 * s
+        const bw = 22 * s
+        ctx.fillStyle = color
+        ctx.beginPath()
+        ctx.ellipse(pr.sx, pr.sy - bh * 0.45, bw / 2, bh / 2, 0, 0, Math.PI * 2)
+        ctx.fill()
+
+        // head (your side wears your avatar)
+        const hr = 9 * s
+        const hy = pr.sy - bh * 0.95 - hr * 0.4
+        if (side === 0 && avatarImgRef.current) {
+          ctx.save()
+          ctx.beginPath()
+          ctx.arc(pr.sx, hy, hr, 0, Math.PI * 2)
+          ctx.clip()
+          ctx.drawImage(avatarImgRef.current, pr.sx - hr, hy - hr, hr * 2, hr * 2)
+          ctx.restore()
+          ctx.strokeStyle = color
+          ctx.lineWidth = 1.5
+          ctx.beginPath()
+          ctx.arc(pr.sx, hy, hr, 0, Math.PI * 2)
+          ctx.stroke()
+        } else {
+          ctx.fillStyle = "#e8d6b8"
+          ctx.beginPath()
+          ctx.arc(pr.sx, hy, hr, 0, Math.PI * 2)
+          ctx.fill()
         }
       }
 
-      // Ball (stretched along its velocity for a sense of speed)
-      {
+      const drawBall = () => {
         const b = st.ball
-        const sp = Math.hypot(b.vx, b.vy)
-        const stretch = Math.min(0.25, sp / 4500)
-        ctx.save()
-        ctx.translate(b.x, b.y)
-        ctx.rotate(Math.atan2(b.vy, b.vx))
-        ctx.scale(1 + stretch, 1 - stretch)
+        // shadow on the sand
+        const sh = proj(b.x, b.z, 0)
+        const shrink = Math.max(0.35, 1 - b.y / 320)
+        ctx.fillStyle = "rgba(0,0,0,0.4)"
+        ctx.beginPath()
+        ctx.ellipse(sh.sx, sh.sy, 9 * sh.scale * shrink, 4 * sh.scale * shrink, 0, 0, Math.PI * 2)
+        ctx.fill()
+
+        // trail during flights
+        if (st.phase === "flight") {
+          const bp = proj(b.x, b.z, b.y)
+          trailRef.current.push({ x: bp.sx, y: bp.sy })
+          if (trailRef.current.length > 12) trailRef.current.shift()
+          for (let i = 0; i < trailRef.current.length; i++) {
+            const a = (i / trailRef.current.length) * 0.25
+            ctx.fillStyle = `rgba(201,243,29,${a})`
+            ctx.beginPath()
+            ctx.arc(trailRef.current[i].x, trailRef.current[i].y, 3 + i * 0.5, 0, Math.PI * 2)
+            ctx.fill()
+          }
+        }
+
+        const bp = proj(b.x, b.z, b.y)
+        const r = 10 * bp.scale
         ctx.fillStyle = "#f5f9e8"
         ctx.beginPath()
-        ctx.arc(0, 0, BALL_R, 0, Math.PI * 2)
+        ctx.arc(bp.sx, bp.sy, r, 0, Math.PI * 2)
         ctx.fill()
         ctx.strokeStyle = ME_COLOR
-        ctx.lineWidth = 2.5
+        ctx.lineWidth = 2
         ctx.beginPath()
-        ctx.arc(0, 0, BALL_R - 3, -0.6, 1.2)
+        ctx.arc(bp.sx, bp.sy, r - 2.5, -0.6, 1.2)
         ctx.stroke()
-        ctx.restore()
       }
 
-      // Point banner
+      // far half first
+      const farOrder: [0 | 1, 0 | 1][] = [
+        [1, 0],
+        [1, 1],
+      ]
+      farOrder
+        .sort((a, b2) => st.players[a[0]][a[1]].z - st.players[b2[0]][b2[1]].z)
+        .reverse()
+        .forEach(([s2, i2]) => drawPlayer(s2, i2))
+      if (st.ball.z > NET_Z) drawBall()
+
+      // net
+      {
+        const t0 = proj(0, NET_Z, 0)
+        const t1 = proj(COURT_W, NET_Z, 0)
+        const u0 = proj(0, NET_Z, NET_H)
+        const u1 = proj(COURT_W, NET_Z, NET_H)
+        ctx.fillStyle = "rgba(255,255,255,0.10)"
+        ctx.beginPath()
+        ctx.moveTo(t0.sx - 8, t0.sy)
+        ctx.lineTo(t1.sx + 8, t1.sy)
+        ctx.lineTo(u1.sx + 8, u1.sy)
+        ctx.lineTo(u0.sx - 8, u0.sy)
+        ctx.closePath()
+        ctx.fill()
+        // mesh lines
+        ctx.strokeStyle = "rgba(255,255,255,0.18)"
+        ctx.lineWidth = 1
+        for (let i = 1; i < 5; i++) {
+          const yy0 = t0.sy + (u0.sy - t0.sy) * (i / 5)
+          const yy1 = t1.sy + (u1.sy - t1.sy) * (i / 5)
+          ctx.beginPath()
+          ctx.moveTo(t0.sx - 8, yy0)
+          ctx.lineTo(t1.sx + 8, yy1)
+          ctx.stroke()
+        }
+        // tape + posts
+        ctx.strokeStyle = "rgba(255,255,255,0.9)"
+        ctx.lineWidth = 3
+        ctx.beginPath()
+        ctx.moveTo(u0.sx - 8, u0.sy)
+        ctx.lineTo(u1.sx + 8, u1.sy)
+        ctx.stroke()
+        ctx.strokeStyle = "rgba(255,255,255,0.5)"
+        ctx.lineWidth = 3
+        ctx.beginPath()
+        ctx.moveTo(t0.sx - 8, t0.sy)
+        ctx.lineTo(u0.sx - 8, u0.sy)
+        ctx.moveTo(t1.sx + 8, t1.sy)
+        ctx.lineTo(u1.sx + 8, u1.sy)
+        ctx.stroke()
+      }
+
+      // near half
+      const nearOrder: [0 | 1, 0 | 1][] = [
+        [0, 0],
+        [0, 1],
+      ]
+      nearOrder
+        .sort((a, b2) => st.players[a[0]][a[1]].z - st.players[b2[0]][b2[1]].z)
+        .reverse()
+        .forEach(([s2, i2]) => drawPlayer(s2, i2))
+      if (st.ball.z <= NET_Z) drawBall()
+
+      // ── Overlays ──
+      if (st.phase === "aim" && st.aimSide === 0) {
+        // slow-mo vignette + timer bar
+        ctx.fillStyle = "rgba(0,0,0,0.18)"
+        ctx.fillRect(0, 0, VIEW.W, VIEW.H)
+        const remain = Math.max(0, 1 - st.aimT / st.params[0].aimTime)
+        ctx.fillStyle = "rgba(255,255,255,0.12)"
+        ctx.fillRect(60, 24, VIEW.W - 120, 8)
+        ctx.fillStyle = ME_COLOR
+        ctx.fillRect(60, 24, (VIEW.W - 120) * remain, 8)
+        ctx.textAlign = "center"
+        ctx.fillStyle = "rgba(255,255,255,0.85)"
+        ctx.font = "800 15px system-ui, sans-serif"
+        ctx.fillText(st.isServe ? "SERVIZIO — trascina e mira" : "TRASCINA E MIRA", VIEW.cx, 52)
+      } else if (st.phase === "aim" && st.aimSide === 1) {
+        ctx.textAlign = "center"
+        ctx.fillStyle = "rgba(255,255,255,0.5)"
+        ctx.font = "800 14px system-ui, sans-serif"
+        ctx.fillText("La CPU attacca…", VIEW.cx, 44)
+      }
+
       if (st.phase === "point") {
         const mine = lastScorerRef.current === 0
         ctx.textAlign = "center"
         ctx.fillStyle = mine ? ME_COLOR : CPU_COLOR
-        ctx.font = "900 44px system-ui, sans-serif"
-        ctx.fillText(mine ? "PUNTO TUO! 🔥" : "PUNTO CPU", NET_X, 150)
+        ctx.font = "900 40px system-ui, sans-serif"
+        ctx.fillText(mine ? "PUNTO TUO! 🔥" : "PUNTO CPU", VIEW.cx, 120)
       }
 
-      // White flash on point
       if (flashRef.current > 0.02) {
         ctx.fillStyle = `rgba(255,255,255,${flashRef.current * 0.14})`
-        ctx.fillRect(0, 0, FIELD_W, FIELD_H)
+        ctx.fillRect(0, 0, VIEW.W, VIEW.H)
         flashRef.current *= 0.9
       }
     },
@@ -341,15 +488,14 @@ export function GameCanvas({ player }: { player: ArcadePlayer }) {
 
       if (lastTsRef.current === 0) lastTsRef.current = ts
       let frame = ts - lastTsRef.current
-      if (frame > 100) frame = 100 // tab was hidden — never spiral
+      if (frame > 100) frame = 100
       lastTsRef.current = ts
       accRef.current += frame
 
       const stepMs = STEP * 1000
       while (accRef.current >= stepMs) {
         accRef.current -= stepMs
-        const cpu = cpuInput(st, aiMemRef.current, matchDiffRef.current, STEP)
-        const events = step(st, inputRef.current, cpu, STEP)
+        const events = step(st, inputRef.current, STEP)
         for (const ev of events) handleEvent(ev, st)
       }
 
@@ -369,13 +515,13 @@ export function GameCanvas({ player }: { player: ArcadePlayer }) {
           <p className="text-xs font-black uppercase tracking-[0.3em] text-[var(--accent)]">
             SANDER Arcade
           </p>
-          <h1 className="mt-1 text-3xl font-black text-white">1v1 in spiaggia</h1>
+          <h1 className="mt-1 text-3xl font-black text-white">Beach Volley Clash</h1>
           <p className="mt-1 text-sm text-[var(--muted-text)]">
-            La tua carta scende in campo: le stat contano davvero.
+            Trascina per mirare in slow-mo, rilascia per schiacciare.
           </p>
         </div>
 
-        {/* Your fighter */}
+        {/* Your duo */}
         <div className="rounded-3xl bg-[var(--surface-2)] p-5">
           <div className="mb-4 flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-[var(--accent)] text-base font-black text-black">
@@ -388,7 +534,7 @@ export function GameCanvas({ player }: { player: ArcadePlayer }) {
             </div>
             <div>
               <p className="font-black text-white">{player.name}</p>
-              <p className="text-xs text-[var(--muted-text)]">Il tuo giocatore</p>
+              <p className="text-xs text-[var(--muted-text)]">La tua coppia in campo</p>
             </div>
           </div>
           <div className="space-y-2.5">
@@ -464,7 +610,7 @@ export function GameCanvas({ player }: { player: ArcadePlayer }) {
         </button>
 
         <p className="text-center text-xs text-[var(--muted-text)]">
-          Tastiera: ← → muovi · ↑/Spazio salto · X schiaccia
+          Un dito solo: trascina il mirino dove vuoi colpire e rilascia. 🏐
         </p>
       </div>
     )
@@ -472,7 +618,7 @@ export function GameCanvas({ player }: { player: ArcadePlayer }) {
 
   // ── Play / pause / over ─────────────────────────────────────────────────
   return (
-    <div className="mx-auto flex max-w-3xl flex-col pb-2">
+    <div className="mx-auto flex max-w-md flex-col pb-4">
       {/* HUD */}
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2">
@@ -498,8 +644,12 @@ export function GameCanvas({ player }: { player: ArcadePlayer }) {
       <div className="relative px-2">
         <canvas
           ref={canvasRef}
-          className="w-full rounded-2xl"
-          style={{ aspectRatio: `${FIELD_W}/${FIELD_H}`, touchAction: "none" }}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+          className="w-full rounded-2xl select-none"
+          style={{ aspectRatio: `${VIEW.W}/${VIEW.H}`, touchAction: "none" }}
         />
 
         {/* Pause button */}
@@ -564,9 +714,6 @@ export function GameCanvas({ player }: { player: ArcadePlayer }) {
           </div>
         )}
       </div>
-
-      {/* Touch controls */}
-      <Controls inputRef={inputRef} />
     </div>
   )
 }

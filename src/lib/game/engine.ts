@@ -1,161 +1,350 @@
 /* ────────────────────────────────────────────────────────────────────────── */
-/*  SANDER Arcade — pure game engine.                                          */
+/*  SANDER Arcade — "aim & rally" engine (Beach Volley Clash style).           */
 /*                                                                             */
-/*  Side-view 1v1 beach volley (slime-style). This module is PURE and          */
-/*  deterministic: no DOM, no Date, no Math.random (seeded LCG in state).      */
-/*  All physics run on a fixed timestep so behaviour never depends on the      */
-/*  frame rate. Rendering, input and AI live elsewhere.                        */
+/*  Vertical pseudo-3D court: you at the bottom, opponent at the top.          */
+/*  Players auto-run to receive; the interactive moment is AIMING the attack   */
+/*  in slow-motion (drag a target on the opponent court, release to spike).    */
+/*                                                                             */
+/*  This module is PURE and deterministic: no DOM, no Date, no Math.random     */
+/*  (seeded LCG in state). Fixed timestep. Rendering/input live elsewhere.     */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-// ── Field & physics constants (logical units = px on an 800×450 court) ──────
-export const FIELD_W = 800
-export const FIELD_H = 450
-export const GROUND_Y = 400
-export const NET_X = FIELD_W / 2
-export const NET_TOP = GROUND_Y - 130
-export const NET_HALF_W = 4
-export const GRAVITY = 1400
-export const BALL_R = 12
-export const PLAYER_BODY = 34 // visual dome radius
-export const STEP = 1 / 60 // fixed timestep (s)
+// ── Court (logical units) ────────────────────────────────────────────────────
+export const COURT_W = 360
+export const COURT_L = 480
+export const NET_Z = COURT_L / 2 // side 0 (you) = z < NET_Z, side 1 = z > NET_Z
+export const HOLD_Y = 120 // ball height while an attacker holds/aims
+export const STEP = 1 / 60
 
-const BOUNCE = 0.78
-const NET_BOUNCE = 0.6
-const MAX_BALL_SPEED = 1300
-const TOUCH_SPEED = 520
-const SPIKE_SPEED = 760
-const POINT_PAUSE = 1.15 // seconds frozen after a point
-const HIT_CENTER_DY = 24 // hit-circle centre sits this far above the feet
-
-// Home/serve positions per side
-const HOME_X: [number, number] = [200, 600]
-const SERVE_X: [number, number] = [160, 640]
-const SERVE_BALL_Y = 140
+const POINT_PAUSE = 1.15
+const DIVE_MARGIN = 34 // beyond catchRadius, a dive can still save it
+const DIVE_CHANCE = 0.55
+const AIM_MARGIN_X = 26
+const AIM_MARGIN_Z = 16
+const AIM_NET_GAP = 22
 
 // ── Types ────────────────────────────────────────────────────────────────────
-export interface GameParams {
-  moveSpeed: number // px/s horizontal
-  jumpVel: number // initial jump velocity (px/s, upward)
-  spikeBoost: number // multiplier on spike speed
-  hitRadius: number // ball-contact radius
-  control: number // 0..1 — reduces random deviation on touches
+export interface SideParams {
+  runSpeed: number // auto-defense movement (units/s)
+  catchRadius: number // receive reach
+  shotSpeed: number // attack flight speed (units/s)
+  arcHeight: number // attack arc apex (lower = flatter/meaner)
+  aimTime: number // seconds of slow-mo aiming
+  aimNoise: number // max scatter applied on release
 }
 
-export interface PlayerState {
-  x: number
-  y: number // FEET y (GROUND_Y when standing)
-  vy: number
-  onGround: boolean
+export interface CpuProfile {
+  noise: number // extra scatter on CPU aim
+  delay: number // seconds the CPU "thinks" before releasing
+  flub: number // chance the CPU drops a reachable ball
 }
 
-export interface BallState {
+export interface PlayerPos {
   x: number
+  z: number
+  tx: number
+  tz: number
+}
+
+export interface BallPos {
+  x: number
+  z: number
   y: number
-  vx: number
-  vy: number
 }
 
-export interface Inputs {
-  left: boolean
-  right: boolean
-  jump: boolean
-  spike: boolean
+interface Segment {
+  x0: number
+  z0: number
+  y0: number
+  x1: number
+  z1: number
+  y1: number
+  h: number // arc apex added on top of the y-lerp
+  T: number
+  t: number
 }
 
-export type GamePhase = "rally" | "point" | "over"
+export type GamePhase = "aim" | "flight" | "point" | "over"
+type OnLand = "resolve" | "toSet" | "toAim"
 
 export interface GameEvent {
-  type: "touch" | "spike" | "bounce" | "point" | "over"
-  side?: 0 | 1 // for touch/spike: who hit; for point/over: who scored/won
+  type: "aim" | "serve" | "spike" | "receive" | "dive" | "point" | "over"
+  side?: 0 | 1
+}
+
+export interface PlayerInput {
+  aimX: number
+  aimZ: number
+  release: boolean
 }
 
 export interface GameState {
-  ball: BallState
-  players: [PlayerState, PlayerState]
-  params: [GameParams, GameParams]
-  score: [number, number]
-  target: number // points to win (win by 2)
-  server: 0 | 1 // side that serves the next rally
+  players: [[PlayerPos, PlayerPos], [PlayerPos, PlayerPos]]
+  ball: BallPos
+  params: [SideParams, SideParams]
+  cpu: CpuProfile
+
   phase: GamePhase
-  phaseT: number // countdown inside "point" phase
+  phaseT: number
+
+  // aim phase
+  aimSide: 0 | 1
+  aimX: number
+  aimZ: number
+  aimT: number
+  isServe: boolean
+  attackerIdx: [0 | 1, 0 | 1] // who holds/attacks per side
+  cpuAimX: number
+  cpuAimZ: number
+
+  // flight phase
+  seg: Segment | null
+  onLand: OnLand
+  segSide: 0 | 1 // attacking side of the current flight
+
+  score: [number, number]
+  target: number
+  server: 0 | 1
   winner: 0 | 1 | null
-  lastTouch: 0 | 1 | null
-  seed: number // LCG state — keeps the engine deterministic
+  seed: number
 }
 
-export const NO_INPUT: Inputs = { left: false, right: false, jump: false, spike: false }
-
-// ── Seeded randomness (deterministic) ───────────────────────────────────────
+// ── Seeded randomness ────────────────────────────────────────────────────────
 function rand(state: GameState): number {
   state.seed = (state.seed * 1664525 + 1013904223) >>> 0
   return state.seed / 4294967296
 }
 
-// ── State construction ───────────────────────────────────────────────────────
-export function createGameState(
-  paramsA: GameParams,
-  paramsB: GameParams,
-  target = 7,
-  seed = 12345,
-): GameState {
-  const state: GameState = {
-    ball: { x: SERVE_X[0], y: SERVE_BALL_Y, vx: 0, vy: 0 },
-    players: [
-      { x: HOME_X[0], y: GROUND_Y, vy: 0, onGround: true },
-      { x: HOME_X[1], y: GROUND_Y, vy: 0, onGround: true },
-    ],
-    params: [paramsA, paramsB],
-    score: [0, 0],
-    target,
-    server: 0,
-    phase: "rally",
-    phaseT: 0,
-    winner: null,
-    lastTouch: null,
-    seed: seed >>> 0,
-  }
-  resetRally(state)
-  return state
-}
-
-function resetRally(state: GameState): void {
-  state.players[0] = { x: HOME_X[0], y: GROUND_Y, vy: 0, onGround: true }
-  state.players[1] = { x: HOME_X[1], y: GROUND_Y, vy: 0, onGround: true }
-  state.ball = { x: SERVE_X[state.server], y: SERVE_BALL_Y, vx: 0, vy: 0 }
-  state.lastTouch = null
-  state.phase = "rally"
-  state.phaseT = 0
-}
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
 function clamp(v: number, lo: number, hi: number): number {
   return v < lo ? lo : v > hi ? hi : v
 }
 
-/** Where the ball will land (x), ignoring future bounces. Used by AI + shadow. */
-export function predictLandingX(ball: BallState): number {
-  const drop = GROUND_Y - BALL_R - ball.y
-  if (drop <= 0) return clamp(ball.x, 0, FIELD_W)
-  const t = (-ball.vy + Math.sqrt(ball.vy * ball.vy + 2 * GRAVITY * drop)) / GRAVITY
-  let x = ball.x + ball.vx * t
-  // one wall reflection is enough for readability
-  if (x < BALL_R) x = 2 * BALL_R - x
-  if (x > FIELD_W - BALL_R) x = 2 * (FIELD_W - BALL_R) - x
-  return clamp(x, 0, FIELD_W)
+function basePositions(side: 0 | 1): [PlayerPos, PlayerPos] {
+  const z1 = side === 0 ? 80 : COURT_L - 80
+  const z2 = side === 0 ? 165 : COURT_L - 165
+  return [
+    { x: 120, z: z1, tx: 120, tz: z1 },
+    { x: 240, z: z2, tx: 240, tz: z2 },
+  ]
 }
 
-// ── The step function (fixed dt, mutates state, returns events) ─────────────
-export function step(
-  state: GameState,
-  inputA: Inputs,
-  inputB: Inputs,
-  dt: number,
-): GameEvent[] {
-  const events: GameEvent[] = []
+/** Clamp an aim target inside the half attacked by `side`. */
+export function clampAim(side: 0 | 1, x: number, z: number): { x: number; z: number } {
+  const cx = clamp(x, AIM_MARGIN_X, COURT_W - AIM_MARGIN_X)
+  const cz =
+    side === 0
+      ? clamp(z, NET_Z + AIM_NET_GAP, COURT_L - AIM_MARGIN_Z)
+      : clamp(z, AIM_MARGIN_Z, NET_Z - AIM_NET_GAP)
+  return { x: cx, z: cz }
+}
 
+function defaultAim(side: 0 | 1): { x: number; z: number } {
+  return side === 0 ? { x: COURT_W / 2, z: NET_Z + 130 } : { x: COURT_W / 2, z: NET_Z - 130 }
+}
+
+// ── State construction ───────────────────────────────────────────────────────
+export function createGameState(
+  paramsA: SideParams,
+  paramsB: SideParams,
+  cpu: CpuProfile,
+  target = 7,
+  seed = 12345,
+): GameState {
+  const state: GameState = {
+    players: [basePositions(0), basePositions(1)],
+    ball: { x: COURT_W / 2, z: 20, y: HOLD_Y },
+    params: [paramsA, paramsB],
+    cpu,
+    phase: "aim",
+    phaseT: 0,
+    aimSide: 0,
+    aimX: 0,
+    aimZ: 0,
+    aimT: 0,
+    isServe: true,
+    attackerIdx: [0, 0],
+    cpuAimX: 0,
+    cpuAimZ: 0,
+    seg: null,
+    onLand: "resolve",
+    segSide: 0,
+    score: [0, 0],
+    target,
+    server: 0,
+    winner: null,
+    seed: seed >>> 0,
+  }
+  setupServe(state)
+  return state
+}
+
+function setupServe(state: GameState): void {
+  const s = state.server
+  state.players = [basePositions(0), basePositions(1)]
+  // the server stands at their baseline centre
+  const srv = state.players[s][0]
+  srv.x = COURT_W / 2
+  srv.z = s === 0 ? 18 : COURT_L - 18
+  srv.tx = srv.x
+  srv.tz = srv.z
+  state.attackerIdx[s] = 0
+  state.ball = { x: srv.x, z: srv.z, y: HOLD_Y }
+  enterAim(state, s, true)
+}
+
+function enterAim(state: GameState, side: 0 | 1, isServe: boolean): void {
+  state.phase = "aim"
+  state.aimSide = side
+  state.aimT = 0
+  state.isServe = isServe
+  const d = defaultAim(side)
+  state.aimX = d.x
+  state.aimZ = d.z
+  if (side === 1) chooseCpuAim(state)
+}
+
+/** CPU picks the candidate spot farthest from your players, plus noise. */
+function chooseCpuAim(state: GameState): void {
+  const candidates = [
+    { x: 52, z: 42 },
+    { x: COURT_W - 52, z: 42 },
+    { x: 52, z: NET_Z - 44 },
+    { x: COURT_W - 52, z: NET_Z - 44 },
+    { x: COURT_W / 2, z: 120 },
+  ]
+  let best = candidates[0]
+  let bestScore = -1
+  for (const c of candidates) {
+    let minD = Infinity
+    for (const p of state.players[0]) {
+      minD = Math.min(minD, Math.hypot(p.x - c.x, p.z - c.z))
+    }
+    if (minD > bestScore) {
+      bestScore = minD
+      best = c
+    }
+  }
+  const n = state.cpu.noise
+  const aimed = clampAim(
+    1,
+    best.x + (rand(state) - 0.5) * 2 * n,
+    best.z + (rand(state) - 0.5) * 2 * n,
+  )
+  state.cpuAimX = aimed.x
+  state.cpuAimZ = aimed.z
+}
+
+// ── Release: turn the aim into a ballistic flight ────────────────────────────
+function release(state: GameState, events: GameEvent[]): void {
+  const side = state.aimSide
+  const prm = state.params[side]
+
+  let { x: tx, z: tz } = clampAim(side, state.aimX, state.aimZ)
+  if (side === 0) {
+    // player scatter shrinks with the control stat
+    const n = prm.aimNoise
+    const aimed = clampAim(
+      0,
+      tx + (rand(state) - 0.5) * 2 * n,
+      tz + (rand(state) - 0.5) * 2 * n,
+    )
+    tx = aimed.x
+    tz = aimed.z
+  }
+
+  const b = state.ball
+  const dist = Math.hypot(tx - b.x, tz - b.z, b.y)
+  const speed = state.isServe ? prm.shotSpeed * 0.8 : prm.shotSpeed
+  const T = clamp(dist / speed, 0.55, 1.6)
+  const h = state.isServe ? prm.arcHeight + 50 : prm.arcHeight
+
+  state.seg = { x0: b.x, z0: b.z, y0: b.y, x1: tx, z1: tz, y1: 0, h, T, t: 0 }
+  state.onLand = "resolve"
+  state.segSide = side
+  state.phase = "flight"
+  events.push({ type: state.isServe ? "serve" : "spike", side })
+
+  // Defenders react: nearest runs to the landing spot, partner covers centre
+  const D = (1 - side) as 0 | 1
+  const dps = state.players[D]
+  const d0 = Math.hypot(dps[0].x - tx, dps[0].z - tz)
+  const d1 = Math.hypot(dps[1].x - tx, dps[1].z - tz)
+  const nearest = d0 <= d1 ? 0 : 1
+  dps[nearest].tx = tx
+  dps[nearest].tz = tz
+  const other = dps[1 - nearest]
+  other.tx = COURT_W / 2
+  other.tz = D === 0 ? NET_Z - 70 : NET_Z + 70
+  state.attackerIdx[D] = nearest as 0 | 1 // receiver becomes the attacker
+}
+
+// ── Landing resolution ───────────────────────────────────────────────────────
+function resolveLanding(state: GameState, events: GameEvent[]): void {
+  const seg = state.seg!
+  const D = (seg.z1 < NET_Z ? 0 : 1) as 0 | 1
+  const prm = state.params[D]
+
+  let nearestIdx: 0 | 1 = 0
+  let best = Infinity
+  for (let i = 0 as 0 | 1; i <= 1; i = (i + 1) as 0 | 1) {
+    const p = state.players[D][i]
+    const d = Math.hypot(p.x - seg.x1, p.z - seg.z1)
+    if (d < best) {
+      best = d
+      nearestIdx = i
+    }
+  }
+  const nearest = state.players[D][nearestIdx]
+  state.attackerIdx[D] = nearestIdx // whoever received becomes the attacker
+
+  let saved = false
+  if (best <= prm.catchRadius) {
+    saved = !(D === 1 && rand(state) < state.cpu.flub)
+  } else if (best <= prm.catchRadius + DIVE_MARGIN) {
+    saved = rand(state) < DIVE_CHANCE
+    if (saved) events.push({ type: "dive", side: D })
+  }
+
+  if (!saved) {
+    const scorer = (1 - D) as 0 | 1
+    state.score[scorer] += 1
+    state.server = scorer // rally point: the winner serves
+    state.phase = "point"
+    state.phaseT = POINT_PAUSE
+    state.seg = null
+    events.push({ type: "point", side: scorer })
+    const s = state.score
+    if (s[scorer] >= state.target && s[scorer] - s[D] >= 2) state.winner = scorer
+    return
+  }
+
+  events.push({ type: "receive", side: D })
+
+  // Bump toward the setter (the partner of the receiver)
+  const setter = state.players[D][1 - nearestIdx]
+  setter.tx = clamp(setter.x, 90, COURT_W - 90)
+  setter.tz = D === 0 ? NET_Z - 70 : NET_Z + 70
+  state.seg = {
+    x0: seg.x1,
+    z0: seg.z1,
+    y0: 6,
+    x1: setter.tx,
+    z1: setter.tz,
+    y1: 50,
+    h: 95,
+    T: 0.5,
+    t: 0,
+  }
+  state.onLand = "toSet"
+  nearest.tx = clamp(seg.x1, 60, COURT_W - 60) // receiver heads to the attack spot
+  nearest.tz = D === 0 ? NET_Z - 40 : NET_Z + 40
+}
+
+// ── Step ─────────────────────────────────────────────────────────────────────
+export function step(state: GameState, input: PlayerInput, dt: number): GameEvent[] {
+  const events: GameEvent[] = []
   if (state.phase === "over") return events
 
-  // Frozen pause between points
   if (state.phase === "point") {
     state.phaseT -= dt
     if (state.phaseT <= 0) {
@@ -163,169 +352,88 @@ export function step(
         state.phase = "over"
         events.push({ type: "over", side: state.winner })
       } else {
-        resetRally(state)
+        setupServe(state)
+        events.push({ type: "aim", side: state.aimSide })
       }
     }
     return events
   }
 
-  const inputs: [Inputs, Inputs] = [inputA, inputB]
-
-  // ── Players ────────────────────────────────────────────────────────────
-  for (let i = 0 as 0 | 1; i <= 1; i = (i + 1) as 0 | 1) {
-    const p = state.players[i]
-    const prm = state.params[i]
-    const inp = inputs[i]
-
-    let dir = 0
-    if (inp.left) dir -= 1
-    if (inp.right) dir += 1
-    p.x += dir * prm.moveSpeed * dt
-
-    if (inp.jump && p.onGround) {
-      p.vy = -prm.jumpVel
-      p.onGround = false
-    }
-    p.vy += GRAVITY * dt
-    p.y += p.vy * dt
-    if (p.y >= GROUND_Y) {
-      p.y = GROUND_Y
-      p.vy = 0
-      p.onGround = true
-    }
-
-    // Each player stays on their side of the net
-    const margin = PLAYER_BODY * 0.7
-    if (i === 0) p.x = clamp(p.x, margin, NET_X - NET_HALF_W - margin)
-    else p.x = clamp(p.x, NET_X + NET_HALF_W + margin, FIELD_W - margin)
-  }
-
-  // ── Ball physics ───────────────────────────────────────────────────────
-  const b = state.ball
-  b.vy += GRAVITY * dt
-  b.x += b.vx * dt
-  b.y += b.vy * dt
-
-  // Walls
-  if (b.x < BALL_R) {
-    b.x = BALL_R
-    b.vx = Math.abs(b.vx) * BOUNCE
-    events.push({ type: "bounce" })
-  } else if (b.x > FIELD_W - BALL_R) {
-    b.x = FIELD_W - BALL_R
-    b.vx = -Math.abs(b.vx) * BOUNCE
-    events.push({ type: "bounce" })
-  }
-  // Ceiling
-  if (b.y < BALL_R) {
-    b.y = BALL_R
-    b.vy = Math.abs(b.vy) * BOUNCE
-  }
-
-  // Net (circle vs rect)
-  {
-    const cx = clamp(b.x, NET_X - NET_HALF_W, NET_X + NET_HALF_W)
-    const cy = clamp(b.y, NET_TOP, GROUND_Y)
-    const dx = b.x - cx
-    const dy = b.y - cy
-    if (dx * dx + dy * dy < BALL_R * BALL_R) {
-      if (b.y < NET_TOP) {
-        // hit the tape — bounce up
-        b.y = NET_TOP - BALL_R
-        b.vy = -Math.abs(b.vy) * NET_BOUNCE
-      } else if (b.x < NET_X) {
-        b.x = NET_X - NET_HALF_W - BALL_R
-        b.vx = -Math.abs(b.vx) * NET_BOUNCE
-      } else {
-        b.x = NET_X + NET_HALF_W + BALL_R
-        b.vx = Math.abs(b.vx) * NET_BOUNCE
+  // Off-ball movement (slowed while YOU aim — the slow-mo moment)
+  const moveDt = state.phase === "aim" && state.aimSide === 0 ? dt * 0.35 : dt
+  for (let s = 0 as 0 | 1; s <= 1; s = (s + 1) as 0 | 1) {
+    const speed = state.params[s].runSpeed
+    for (const p of state.players[s]) {
+      const dx = p.tx - p.x
+      const dz = p.tz - p.z
+      const d = Math.hypot(dx, dz)
+      if (d > 1) {
+        const stepLen = Math.min(d, speed * moveDt)
+        p.x += (dx / d) * stepLen
+        p.z += (dz / d) * stepLen
       }
-      events.push({ type: "bounce" })
     }
   }
 
-  // ── Player-ball contact ────────────────────────────────────────────────
-  for (let i = 0 as 0 | 1; i <= 1; i = (i + 1) as 0 | 1) {
-    const p = state.players[i]
-    const prm = state.params[i]
-    const cx = p.x
-    const cy = p.y - HIT_CENTER_DY
-    const dx = b.x - cx
-    const dy = b.y - cy
-    const reach = prm.hitRadius + BALL_R
-    if (dx * dx + dy * dy >= reach * reach) continue
+  if (state.phase === "aim") {
+    const side = state.aimSide
+    // Ball hovers above the attacker (with a light bob)
+    const att = state.players[side][state.attackerIdx[side]]
+    state.ball.x = att.x
+    state.ball.z = att.z
+    state.ball.y = HOLD_Y + Math.sin(state.aimT * 6) * 6
 
-    const dist = Math.sqrt(dx * dx + dy * dy) || 1
-    let nx = dx / dist
-    let ny = dy / dist
-    if (dist < 0.001) {
-      nx = 0
-      ny = -1
-    }
+    state.aimT += dt
 
-    const spiking = inputs[i].spike && !p.onGround
-    let speed: number
-
-    if (spiking) {
-      // Spike: fast, flat, down-forward toward the opponent court
-      const fwd = i === 0 ? 1 : -1
-      const sx = fwd * 0.74
-      const sy = 0.67
-      const len = Math.hypot(sx, sy)
-      nx = sx / len
-      ny = sy / len
-      speed = SPIKE_SPEED * prm.spikeBoost
-      events.push({ type: "spike", side: i })
+    if (side === 0) {
+      const aimed = clampAim(0, input.aimX, input.aimZ)
+      state.aimX = aimed.x
+      state.aimZ = aimed.z
+      if (input.release || state.aimT >= state.params[0].aimTime) {
+        release(state, events)
+      }
     } else {
-      // Normal touch: reflect away, guaranteed upward arc
-      ny = Math.min(ny, -0.35)
-      const len = Math.hypot(nx, ny) || 1
-      nx /= len
-      ny /= len
-      speed = Math.max(TOUCH_SPEED, Math.hypot(b.vx, b.vy) * 0.85)
-      events.push({ type: "touch", side: i })
+      state.aimX = state.cpuAimX
+      state.aimZ = state.cpuAimZ
+      if (state.aimT >= state.cpu.delay) release(state, events)
     }
-
-    // Control stat dampens the random deviation on contact
-    const jitter = (rand(state) - 0.5) * 0.55 * (1 - prm.control)
-    const cos = Math.cos(jitter)
-    const sin = Math.sin(jitter)
-    const rx = nx * cos - ny * sin
-    const ry = nx * sin + ny * cos
-
-    b.vx = rx * speed
-    b.vy = ry * speed
-    // Push the ball out of the contact circle so it doesn't stick
-    b.x = cx + rx * (reach + 1)
-    b.y = cy + ry * (reach + 1)
-    state.lastTouch = i
+    return events
   }
 
-  // Speed cap keeps rallies playable
-  {
-    const sp = Math.hypot(b.vx, b.vy)
-    if (sp > MAX_BALL_SPEED) {
-      b.vx = (b.vx / sp) * MAX_BALL_SPEED
-      b.vy = (b.vy / sp) * MAX_BALL_SPEED
-    }
-  }
+  // phase === "flight"
+  const seg = state.seg
+  if (!seg) return events
+  seg.t += dt
+  const u = Math.min(1, seg.t / seg.T)
+  state.ball.x = seg.x0 + (seg.x1 - seg.x0) * u
+  state.ball.z = seg.z0 + (seg.z1 - seg.z0) * u
+  state.ball.y = seg.y0 + (seg.y1 - seg.y0) * u + seg.h * 4 * u * (1 - u)
 
-  // ── Ground → point ─────────────────────────────────────────────────────
-  if (b.y + BALL_R >= GROUND_Y) {
-    b.y = GROUND_Y - BALL_R
-    b.vy = -Math.abs(b.vy) * 0.4
-
-    const conceding: 0 | 1 = b.x < NET_X ? 0 : 1
-    const scorer: 0 | 1 = conceding === 0 ? 1 : 0
-    state.score[scorer] += 1
-    state.server = conceding
-    state.phase = "point"
-    state.phaseT = POINT_PAUSE
-    events.push({ type: "point", side: scorer })
-
-    const s = state.score
-    if (s[scorer] >= state.target && s[scorer] - s[conceding] >= 2) {
-      state.winner = scorer
+  if (u >= 1) {
+    if (state.onLand === "resolve") {
+      resolveLanding(state, events)
+    } else if (state.onLand === "toSet") {
+      // Set: lift the ball above the attack spot near the net
+      const D = (seg.z1 < NET_Z ? 0 : 1) as 0 | 1
+      const att = state.players[D][state.attackerIdx[D]]
+      state.seg = {
+        x0: seg.x1,
+        z0: seg.z1,
+        y0: seg.y1,
+        x1: clamp(att.tx, 60, COURT_W - 60),
+        z1: D === 0 ? NET_Z - 40 : NET_Z + 40,
+        y1: HOLD_Y,
+        h: 55,
+        T: 0.6,
+        t: 0,
+      }
+      state.onLand = "toAim"
+    } else {
+      // Ball reaches the attacker's hands → their aim turn begins
+      const D = (seg.z1 < NET_Z ? 0 : 1) as 0 | 1
+      state.seg = null
+      enterAim(state, D, false)
+      events.push({ type: "aim", side: D })
     }
   }
 

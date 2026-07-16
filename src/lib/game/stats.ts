@@ -1,19 +1,23 @@
-import type { GameParams } from "./engine"
+import type { SideParams, CpuProfile } from "./engine"
 
 /* ────────────────────────────────────────────────────────────────────────── */
-/*  Card stats → gameplay parameters.                                          */
+/*  Card stats → gameplay parameters (aim & rally engine).                     */
 /*                                                                             */
-/*  The whole point of the arcade mode: your SANDER card must be FELT in       */
-/*  game. Every stat maps to a visible effect (see the formulas below).        */
+/*  Every stat maps to a FELT effect:                                          */
+/*  velocità → how far your auto-defense reaches in time                       */
+/*  difesa   → receive radius                                                  */
+/*  potenza  → spike speed (harder to defend)                                  */
+/*  salto    → flatter attack arc (arrives sooner)                             */
+/*  controllo→ longer slow-mo aim + less scatter on release                    */
 /* ────────────────────────────────────────────────────────────────────────── */
 
 /** Arcade-facing stats, each 0–99. */
 export interface GameStats {
-  velocita: number // horizontal speed
-  potenza: number // spike power
-  salto: number // jump height
-  difesa: number // ball-contact radius
-  controllo: number // reduces random deviation on touches
+  velocita: number
+  potenza: number
+  salto: number
+  difesa: number
+  controllo: number
 }
 
 function clamp99(v: number): number {
@@ -44,14 +48,15 @@ export function cardToGameStats(card: {
   }
 }
 
-/** The tuning formulas from the spec — deliberately wide so stats are FELT. */
-export function statsToParams(gs: GameStats): GameParams {
+/** Tuning formulas — deliberately wide so stats are FELT in play. */
+export function statsToParams(gs: GameStats): SideParams {
   return {
-    moveSpeed: 220 + gs.velocita * 3,
-    jumpVel: 380 + gs.salto * 4,
-    spikeBoost: 1 + (gs.potenza / 100) * 0.8,
-    hitRadius: 28 + gs.difesa * 0.25,
-    control: gs.controllo / 99,
+    runSpeed: 120 + gs.velocita * 1.6,
+    catchRadius: 26 + gs.difesa * 0.5,
+    shotSpeed: 280 + gs.potenza * 3.4,
+    arcHeight: 150 - gs.salto * 0.9,
+    aimTime: 1.3 + (gs.controllo / 99) * 1.4,
+    aimNoise: 8 + (1 - gs.controllo / 99) * 48,
   }
 }
 
@@ -68,4 +73,15 @@ export const GUEST_STATS: GameStats = {
 export function cpuStatsForDifficulty(difficulty: number): GameStats {
   const base = [45, 55, 68, 80, 93][Math.max(1, Math.min(5, difficulty)) - 1]
   return { velocita: base, potenza: base, salto: base, difesa: base, controllo: base }
+}
+
+/** CPU brain profile: difficulty scales aim precision, thinking time and
+ *  drop chance — never the physics. */
+export function cpuProfileForDifficulty(difficulty: number): CpuProfile {
+  const i = Math.max(1, Math.min(5, difficulty)) - 1
+  return {
+    noise: [70, 52, 36, 22, 10][i],
+    delay: [1.0, 0.85, 0.7, 0.55, 0.4][i],
+    flub: [0.25, 0.17, 0.1, 0.05, 0.02][i],
+  }
 }

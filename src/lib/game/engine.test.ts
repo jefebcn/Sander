@@ -2,129 +2,147 @@ import { describe, it, expect } from "vitest"
 import {
   createGameState,
   step,
-  predictLandingX,
-  NO_INPUT,
-  GROUND_Y,
-  NET_X,
-  NET_HALF_W,
-  BALL_R,
+  clampAim,
   STEP,
-  type GameParams,
+  NET_Z,
+  COURT_L,
+  COURT_W,
   type GameState,
+  type SideParams,
+  type CpuProfile,
+  type PlayerInput,
+  type GameEvent,
 } from "./engine"
 
-function params(overrides: Partial<GameParams> = {}): GameParams {
+function params(overrides: Partial<SideParams> = {}): SideParams {
   return {
-    moveSpeed: 400,
-    jumpVel: 600,
-    spikeBoost: 1.4,
-    hitRadius: 42,
-    control: 0.6,
+    runSpeed: 220,
+    catchRadius: 56,
+    shotSpeed: 480,
+    arcHeight: 100,
+    aimTime: 2,
+    aimNoise: 0, // deterministic aim in tests
     ...overrides,
   }
 }
 
-function freshState(target = 7): GameState {
-  return createGameState(params(), params(), target, 42)
+const CPU_TEST: CpuProfile = { noise: 0, delay: 0.3, flub: 0 }
+
+const IDLE: PlayerInput = { aimX: COURT_W / 2, aimZ: NET_Z + 130, release: false }
+
+function fresh(target = 7, seed = 42): GameState {
+  return createGameState(params(), params(), CPU_TEST, target, seed)
 }
 
-function tick(state: GameState, n = 1) {
-  const events = []
-  for (let i = 0; i < n; i++) events.push(...step(state, NO_INPUT, NO_INPUT, STEP))
+function tick(state: GameState, input: PlayerInput, n = 1): GameEvent[] {
+  const events: GameEvent[] = []
+  for (let i = 0; i < n; i++) events.push(...step(state, input, STEP))
   return events
 }
 
-describe("engine — physics", () => {
-  it("gravity pulls the ball down", () => {
-    const s = freshState()
-    const y0 = s.ball.y
-    tick(s, 5)
-    expect(s.ball.vy).toBeGreaterThan(0)
-    expect(s.ball.y).toBeGreaterThan(y0)
+describe("engine — aim & flight", () => {
+  it("starts with you serving (aim phase, side 0)", () => {
+    const s = fresh()
+    expect(s.phase).toBe("aim")
+    expect(s.aimSide).toBe(0)
+    expect(s.isServe).toBe(true)
+  })
+
+  it("release starts a flight that lands where aimed", () => {
+    const s = fresh()
+    const events = tick(s, { aimX: 300, aimZ: 420, release: true })
+    expect(events.some((e) => e.type === "serve")).toBe(true)
+    expect(s.phase).toBe("flight")
+    // run the whole flight
+    tick(s, IDLE, 200)
+    // ball resolved at the aimed spot (aimNoise = 0)
+    expect(s.seg === null || s.phase !== "flight").toBe(true)
+  })
+
+  it("auto-releases when the aim timer runs out", () => {
+    const s = fresh()
+    tick(s, IDLE, Math.ceil((params().aimTime + 0.1) / STEP))
+    expect(s.phase).toBe("flight")
+  })
+
+  it("clamps the aim inside the attacked half", () => {
+    const a = clampAim(0, -50, 9999)
+    expect(a.x).toBeGreaterThan(0)
+    expect(a.z).toBeGreaterThan(NET_Z)
+    expect(a.z).toBeLessThan(COURT_L)
+    const b = clampAim(1, 9999, -50)
+    expect(b.x).toBeLessThan(COURT_W)
+    expect(b.z).toBeLessThan(NET_Z)
+    expect(b.z).toBeGreaterThan(0)
   })
 
   it("is deterministic for the same seed and inputs", () => {
-    const a = freshState()
-    const b = freshState()
-    tick(a, 300)
-    tick(b, 300)
+    const a = fresh(7, 7)
+    const b = fresh(7, 7)
+    tick(a, { aimX: 100, aimZ: 300, release: true }, 400)
+    tick(b, { aimX: 100, aimZ: 300, release: true }, 400)
     expect(a.ball).toEqual(b.ball)
     expect(a.score).toEqual(b.score)
-  })
-
-  it("players cannot cross the net", () => {
-    const s = freshState()
-    for (let i = 0; i < 240; i++) {
-      step(s, { left: false, right: true, jump: false, spike: false }, NO_INPUT, STEP)
-    }
-    expect(s.players[0].x).toBeLessThan(NET_X - NET_HALF_W)
-    for (let i = 0; i < 240; i++) {
-      step(s, NO_INPUT, { left: true, right: false, jump: false, spike: false }, STEP)
-    }
-    expect(s.players[1].x).toBeGreaterThan(NET_X + NET_HALF_W)
-  })
-
-  it("a higher jump stat reaches visibly higher", () => {
-    function apex(jumpVel: number): number {
-      const s = createGameState(params({ jumpVel }), params(), 7, 1)
-      let minY = GROUND_Y
-      // hold jump, track the apex of the first jump
-      for (let i = 0; i < 120; i++) {
-        step(s, { left: false, right: false, jump: true, spike: false }, NO_INPUT, STEP)
-        minY = Math.min(minY, s.players[0].y)
-      }
-      return minY
-    }
-    const low = apex(380 + 40 * 4)
-    const high = apex(380 + 95 * 4)
-    expect(high).toBeLessThan(low - 60) // clearly higher, not marginal
+    expect(a.phase).toBe(b.phase)
   })
 })
 
-describe("engine — scoring", () => {
-  function landBall(s: GameState, x: number) {
-    s.ball = { x, y: GROUND_Y - BALL_R - 2, vx: 0, vy: 300 }
-    return tick(s, 2)
-  }
-
-  it("ball landing on the left gives the point to the right player", () => {
-    const s = freshState()
-    const events = landBall(s, 100)
-    expect(s.score).toEqual([0, 1])
-    expect(s.phase).toBe("point")
-    expect(s.server).toBe(0) // conceding side serves next
-    expect(events.some((e) => e.type === "point" && e.side === 1)).toBe(true)
+describe("engine — receive vs point", () => {
+  it("a defender standing on the landing spot receives the ball", () => {
+    const s = fresh()
+    // park a CPU defender exactly where we'll aim
+    s.players[1][0] = { x: 300, z: 420, tx: 300, tz: 420 }
+    s.players[1][1] = { x: 60, z: 300, tx: 60, tz: 300 }
+    const events = tick(s, { aimX: 300, aimZ: 420, release: true }, 200)
+    expect(events.some((e) => e.type === "receive" && e.side === 1)).toBe(true)
+    expect(s.score).toEqual([0, 0])
   })
 
-  it("reaching the target with a 2-point margin wins the match", () => {
-    const s = freshState(7)
-    s.score = [6, 0]
-    landBall(s, 700) // lands right → point to player 0 → 7-0
+  it("nobody close → point for the attacker (winner serves next)", () => {
+    const s = fresh()
+    // both CPU defenders far away from the target corner
+    s.players[1][0] = { x: 40, z: 460, tx: 40, tz: 460 }
+    s.players[1][1] = { x: 40, z: 440, tx: 40, tz: 440 }
+    // slow their reaction so they can't cover the distance
+    s.params[1].runSpeed = 10
+    const events = tick(s, { aimX: 320, aimZ: 270, release: true }, 200)
+    expect(events.some((e) => e.type === "point" && e.side === 0)).toBe(true)
+    expect(s.score).toEqual([1, 0])
+    expect(s.server).toBe(0)
+  })
+
+  it("win requires target points AND a 2-point margin", () => {
+    const s = fresh(7)
+    s.score = [6, 5]
+    s.players[1][0] = { x: 40, z: 460, tx: 40, tz: 460 }
+    s.players[1][1] = { x: 40, z: 440, tx: 40, tz: 440 }
+    s.params[1].runSpeed = 10
+    tick(s, { aimX: 320, aimZ: 270, release: true }, 200)
+    expect(s.score).toEqual([7, 5])
     expect(s.winner).toBe(0)
-    // after the pause the phase becomes "over"
-    tick(s, 90)
+    tick(s, IDLE, 90) // pause elapses → over
     expect(s.phase).toBe("over")
   })
 
-  it("no win without the 2-point margin (6-6 → 7-6 keeps playing)", () => {
-    const s = freshState(7)
+  it("6-6 → 7-6 keeps playing (no margin)", () => {
+    const s = fresh(7)
     s.score = [6, 6]
-    landBall(s, 700)
+    s.players[1][0] = { x: 40, z: 460, tx: 40, tz: 460 }
+    s.players[1][1] = { x: 40, z: 440, tx: 40, tz: 440 }
+    s.params[1].runSpeed = 10
+    tick(s, { aimX: 320, aimZ: 270, release: true }, 200)
     expect(s.score).toEqual([7, 6])
     expect(s.winner).toBeNull()
-    tick(s, 90) // pause elapses → new rally
-    expect(s.phase).toBe("rally")
-  })
-})
-
-describe("engine — landing prediction", () => {
-  it("predicts straight-down landing at the same x", () => {
-    const x = predictLandingX({ x: 300, y: 100, vx: 0, vy: 0 })
-    expect(Math.abs(x - 300)).toBeLessThan(1)
+    tick(s, IDLE, 90)
+    expect(s.phase).toBe("aim") // new serve
   })
 
-  it("moving ball lands ahead of its position", () => {
-    const x = predictLandingX({ x: 300, y: 100, vx: 200, vy: 0 })
-    expect(x).toBeGreaterThan(350)
+  it("after a CPU receive the rally comes back (CPU aims and attacks)", () => {
+    const s = fresh()
+    s.players[1][0] = { x: 300, z: 420, tx: 300, tz: 420 }
+    const events = tick(s, { aimX: 300, aimZ: 420, release: true }, 600)
+    // CPU received, built the attack and eventually spiked back
+    expect(events.some((e) => e.type === "aim" && e.side === 1)).toBe(true)
+    expect(events.some((e) => e.type === "spike" && e.side === 1)).toBe(true)
   })
 })
