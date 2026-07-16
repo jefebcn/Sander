@@ -320,26 +320,6 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* ── SANDER Arcade ─────────────────────────────────── */}
-            <Link
-              href="/game"
-              className="flex min-h-[3.5rem] items-center gap-4 rounded-2xl p-4 transition-opacity active:opacity-80"
-              style={{
-                background:
-                  "linear-gradient(120deg, rgba(201,243,29,0.14), rgba(201,243,29,0.04))",
-                border: "1px solid rgba(201,243,29,0.3)",
-              }}
-            >
-              <span className="text-2xl">🎮</span>
-              <div className="min-w-0 flex-1">
-                <p className="font-black text-white leading-tight">SANDER Arcade</p>
-                <p className="truncate text-xs text-[var(--muted-text)]">
-                  Gioca 1v1 con la tua carta — le stat contano davvero
-                </p>
-              </div>
-              <ChevronRight className="h-4 w-4 shrink-0 text-[var(--accent)]" />
-            </Link>
-
             {/* ── Annuncio evento ───────────────────────────────── */}
             <WhatsAppAnnouncementBanner
               url="https://chat.whatsapp.com/LnZvWR2ffXgIfzPCUFE7jL?mode=gi_t"
