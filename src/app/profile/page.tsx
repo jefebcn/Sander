@@ -35,6 +35,8 @@ import { WalletCard } from "@/components/session/WalletCard"
 import { AdminCreditsManager } from "@/components/admin/AdminCreditsManager"
 import { AdminSeasonManager } from "@/components/admin/AdminSeasonManager"
 import { getActiveSeason } from "@/actions/seasons"
+import { ContentQueue } from "@/components/admin/ContentQueue"
+import { listContent } from "@/actions/content"
 
 const MONTH_NAMES_IT = [
   "", "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
@@ -196,6 +198,7 @@ export default async function ProfilePage({ searchParams }: Props) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let adminPlayers: any[] = []
   let adminActiveSeason: Awaited<ReturnType<typeof getActiveSeason>> = null
+  let adminContent: Awaited<ReturnType<typeof listContent>> = []
   let adminError: string | null = null
 
   if (isAdmin && activeTab === "admin") {
@@ -227,6 +230,7 @@ export default async function ProfilePage({ searchParams }: Props) {
         }),
         getActiveSeason(),
       ])
+      adminContent = await listContent()
     } catch (e) {
       adminError = e instanceof Error ? e.message : String(e)
     }
@@ -772,6 +776,9 @@ export default async function ProfilePage({ searchParams }: Props) {
               ))}
             </div>
           </div>
+
+          {/* Auto-generated social content queue */}
+          <ContentQueue initial={adminContent} />
 
           {/* Season manager */}
           <AdminSeasonManager activeSeason={adminActiveSeason} />

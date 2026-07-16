@@ -498,6 +498,24 @@ model MonthlyAward {
   @@map("monthly_awards")
 }
 
+// ─── ContentPost (auto-generated social content queue) ──────────────────────
+
+model ContentPost {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  kind        String // "weekly" | "community" | "tournament"
+  title       String
+  caption     String
+  hashtags    String
+  imagePath   String // route that renders the 1080x1920 image
+  status      String    @default("READY") // READY | PUBLISHED | SKIPPED
+  publishedAt DateTime?
+
+  @@index([status, createdAt])
+  @@map("content_posts")
+}
+
 // ─── Reaction (kudos on feed activity) ──────────────────────────────────────
 
 model Reaction {
