@@ -1,6 +1,7 @@
 "use client"
 
 import { trackEvent } from "@/lib/analytics"
+import { hapticSuccess } from "@/lib/native"
 
 /**
  * Shared client-side node-to-image capture pipeline.
@@ -119,6 +120,7 @@ export async function shareOrDownloadBlob(
         ...(shareText ? { text: shareText } : {}),
       })
       trackEvent("share", { via: "native", file: fileName })
+      hapticSuccess()
       return "shared"
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") return "cancelled"

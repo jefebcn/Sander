@@ -4,6 +4,7 @@ import { useState, useRef, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { ChevronLeft, Camera, ChevronRight, X } from "lucide-react"
 import { saveProfile } from "@/actions/profile"
+import { capturePhoto, isNativeApp, hapticTap } from "@/lib/native"
 import { cn } from "@/lib/utils"
 
 // ─── Countries list ────────────────────────────────────────────────────────────
@@ -227,6 +228,21 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
     setAvatarPreview(url)
   }
 
+  // In the native app use the system camera/gallery; on the web use the file input.
+  async function handleAvatarButton() {
+    hapticTap()
+    if (isNativeApp()) {
+      const blob = await capturePhoto()
+      if (blob) {
+        const file = new File([blob], "avatar.jpg", { type: blob.type || "image/jpeg" })
+        setAvatarFile(file)
+        setAvatarPreview(URL.createObjectURL(blob))
+        return
+      }
+    }
+    fileInputRef.current?.click()
+  }
+
   async function uploadAvatar(): Promise<string | null> {
     if (!avatarFile) return null
     try {
@@ -304,7 +320,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
           {/* Camera badge */}
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={handleAvatarButton}
             className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full bg-[#2a2a2a] shadow-lg"
             aria-label="Carica foto"
           >
