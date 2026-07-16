@@ -70,6 +70,7 @@ type OnLand = "resolve" | "toSet" | "toAim"
 export interface GameEvent {
   type: "aim" | "serve" | "spike" | "receive" | "dive" | "point" | "over"
   side?: 0 | 1
+  idx?: 0 | 1 // which player of that side (for spike/receive/dive animations)
 }
 
 export interface PlayerInput {
@@ -262,7 +263,7 @@ function release(state: GameState, events: GameEvent[]): void {
   state.onLand = "resolve"
   state.segSide = side
   state.phase = "flight"
-  events.push({ type: state.isServe ? "serve" : "spike", side })
+  events.push({ type: state.isServe ? "serve" : "spike", side, idx: state.attackerIdx[side] })
 
   // Defenders react: nearest runs to the landing spot, partner covers centre
   const D = (1 - side) as 0 | 1
@@ -302,7 +303,7 @@ function resolveLanding(state: GameState, events: GameEvent[]): void {
     saved = !(D === 1 && rand(state) < state.cpu.flub)
   } else if (best <= prm.catchRadius + DIVE_MARGIN) {
     saved = rand(state) < DIVE_CHANCE
-    if (saved) events.push({ type: "dive", side: D })
+    if (saved) events.push({ type: "dive", side: D, idx: nearestIdx })
   }
 
   if (!saved) {
@@ -318,7 +319,7 @@ function resolveLanding(state: GameState, events: GameEvent[]): void {
     return
   }
 
-  events.push({ type: "receive", side: D })
+  events.push({ type: "receive", side: D, idx: nearestIdx })
 
   // Bump toward the setter (the partner of the receiver)
   const setter = state.players[D][1 - nearestIdx]
