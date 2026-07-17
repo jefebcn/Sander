@@ -2,8 +2,6 @@
 
 import { db } from "@/lib/db"
 import { auth } from "@/lib/auth"
-import { revalidatePath } from "next/cache"
-import { INVITER_SC, INVITER_XP } from "@/lib/referral"
 
 // Must match the buildPromoCode function in profile/page.tsx
 function buildPromoCode(id: string): string {
@@ -24,43 +22,8 @@ export async function findPlayerByInviteCode(code: string): Promise<string | nul
   return match?.id ?? null
 }
 
-/**
- * Link a newly registered user to the player who invited them, and reward the
- * inviter with XP + SanderCredits. The invitee's welcome bonus is granted later,
- * when their Player profile is created during onboarding (see saveProfile).
- */
-export async function redeemInvite(
-  userId: string,
-  inviterPlayerId: string,
-): Promise<void> {
-  // Link the user to the inviter
-  await db.user.update({
-    where: { id: userId },
-    data: { invitedByPlayerId: inviterPlayerId },
-  })
-
-  // Reward the inviter: XP + SanderCredits
-  await db.player.update({
-    where: { id: inviterPlayerId },
-    data: {
-      xp: { increment: INVITER_XP },
-      sanderCredits: { increment: INVITER_SC },
-    },
-  })
-
-  // Notify the inviter (fire-and-forget)
-  import("@/lib/push")
-    .then(({ notifyPlayer }) =>
-      notifyPlayer(inviterPlayerId, {
-        title: "🎉 Un amico si è iscritto!",
-        body: `Hai guadagnato +${INVITER_SC} SanderCredits e +${INVITER_XP} XP. Continua a invitare!`,
-        url: "/profile?tab=invita",
-      }),
-    )
-    .catch(() => {})
-
-  revalidatePath("/profile")
-}
+// NOTE: invite redemption lives in src/lib/referralRedeem.ts (internal, not a
+// callable server action) so it can't be farmed by clients. Do not re-export it.
 
 /** Ranking of players by number of friends invited (with a linked account). */
 export async function getReferralLeaderboard(

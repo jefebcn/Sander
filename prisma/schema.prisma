@@ -223,6 +223,8 @@ model Tournament {
   matches       Match[]
   standings     TournamentStanding[]
 
+  @@index([status])
+  @@index([type, status])
   @@map("tournaments")
 }
 
@@ -258,6 +260,7 @@ model TournamentRegistration {
 
   @@unique([tournamentId, playerId])
   @@index([tournamentId, paymentStatus])
+  @@index([playerId])
   @@map("tournament_registrations")
 }
 
@@ -298,6 +301,7 @@ model Match {
 
   players MatchPlayer[]
 
+  @@index([tournamentId])
   @@map("matches")
 }
 
@@ -311,6 +315,7 @@ model MatchPlayer {
   player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@unique([matchId, playerId])
+  @@index([playerId])
   @@map("match_players")
 }
 
@@ -332,6 +337,7 @@ model TournamentStanding {
   player     Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@unique([tournamentId, playerId])
+  @@index([playerId])
   @@map("tournament_standings")
 }
 
@@ -365,6 +371,7 @@ model Session {
   sets           SessionSet[]
   sessionMatches SessionMatch[]
 
+  @@index([status, date])
   @@map("sessions")
 }
 
@@ -381,6 +388,7 @@ model SessionMatch {
   session Session             @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   players SessionMatchPlayer[]
 
+  @@index([sessionId])
   @@map("session_matches")
 }
 
@@ -394,6 +402,7 @@ model SessionMatchPlayer {
   player Player       @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@unique([matchId, playerId])
+  @@index([playerId])
   @@map("session_match_players")
 }
 
@@ -419,6 +428,7 @@ model SessionParticipant {
   player  Player?  @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@unique([sessionId, playerId])
+  @@index([playerId])
   @@map("session_participants")
 }
 
@@ -434,6 +444,8 @@ model RatingHistory {
   source     String  // "tournament" | "session"
   sourceId   String  // tournament or session id
 
+  @@index([playerId, createdAt])
+  @@index([createdAt])
   @@map("rating_history")
 }
 

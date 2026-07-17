@@ -5,7 +5,8 @@ import crypto from "crypto"
 import { db } from "@/lib/db"
 import { RegisterSchema, ForgotPasswordSchema, ResetPasswordSchema } from "@/lib/validators/auth.schema"
 import { sendPasswordResetEmail } from "@/lib/email"
-import { findPlayerByInviteCode, redeemInvite } from "@/actions/invite"
+import { findPlayerByInviteCode } from "@/actions/invite"
+import { redeemInvite } from "@/lib/referralRedeem"
 
 type ActionResult = { success: true } | { error: string }
 

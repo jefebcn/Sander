@@ -32,71 +32,71 @@ export async function createTournament(input: CreateTournamentInput): Promise<{ 
 
     // Non-admins pay SanderCredits to create a tournament (admins create free).
     const isAdmin = isAdminEmail(session?.user?.email)
-    if (!isAdmin) {
-      if (!creatorPlayer) {
-        return { ok: false, error: "Devi avere un profilo per creare un torneo." }
-      }
-      const p = await db.player.findUniqueOrThrow({
-        where: { id: creatorPlayer.id },
-        select: { sanderCredits: true },
-      })
-      if (p.sanderCredits < TOURNAMENT_CREATION_SC) {
-        return {
-          ok: false,
-          error: `Ti servono ${TOURNAMENT_CREATION_SC} SC per creare un torneo (ne hai ${p.sanderCredits}). Ricarica dal profilo.`,
+    if (!isAdmin && !creatorPlayer) {
+      return { ok: false, error: "Devi avere un profilo per creare un torneo." }
+    }
+
+    // Fee + creation happen atomically: the conditional decrement can't
+    // double-spend, and if the create fails the fee is rolled back.
+    const tournament = await db.$transaction(async (tx) => {
+      if (!isAdmin && creatorPlayer) {
+        const paid = await tx.player.updateMany({
+          where: { id: creatorPlayer.id, sanderCredits: { gte: TOURNAMENT_CREATION_SC } },
+          data: { sanderCredits: { decrement: TOURNAMENT_CREATION_SC } },
+        })
+        if (paid.count === 0) {
+          const bal = await tx.player.findUnique({
+            where: { id: creatorPlayer.id },
+            select: { sanderCredits: true },
+          })
+          throw new Error(
+            `Ti servono ${TOURNAMENT_CREATION_SC} SC per creare un torneo (ne hai ${bal?.sanderCredits ?? 0}). Ricarica dal profilo.`,
+          )
         }
       }
-    }
 
-    const tournament = await db.tournament.create({
-      data: {
-        name: data.name,
-        date: data.date,
-        type: data.type,
-        status: "DRAFT",
-        numCourts: data.numCourts ?? 2,
-        chiceceMatchCount: data.chiceceMatchCount ?? 4,
+      return tx.tournament.create({
+        data: {
+          name: data.name,
+          date: data.date,
+          type: data.type,
+          status: "DRAFT",
+          numCourts: data.numCourts ?? 2,
+          chiceceMatchCount: data.chiceceMatchCount ?? 4,
 
-        location:              data.location ?? null,
-        description:           data.description ?? null,
-        registrationDeadline:  data.registrationDeadline ?? null,
-        prizePool:             data.prizePool ?? null,
-        prize2nd:              data.prize2nd ?? null,
-        prize3rd:              data.prize3rd ?? null,
-        priceCents:            data.priceCents ?? null,
-        spectatorPriceCents:   data.spectatorPriceCents ?? null,
-        priceCurrency:         data.priceCurrency,
-        isOpenForRegistration: data.isOpenForRegistration,
-        coverUrl:              data.coverUrl ?? null,
-        skillLevel:            data.skillLevel ?? null,
-        gender:                data.gender ?? null,
-        maxTeams:              data.maxTeams ?? null,
-        createdByPlayerId:     creatorPlayer?.id ?? null,
+          location:              data.location ?? null,
+          description:           data.description ?? null,
+          registrationDeadline:  data.registrationDeadline ?? null,
+          prizePool:             data.prizePool ?? null,
+          prize2nd:              data.prize2nd ?? null,
+          prize3rd:              data.prize3rd ?? null,
+          priceCents:            data.priceCents ?? null,
+          spectatorPriceCents:   data.spectatorPriceCents ?? null,
+          priceCurrency:         data.priceCurrency,
+          isOpenForRegistration: data.isOpenForRegistration,
+          coverUrl:              data.coverUrl ?? null,
+          skillLevel:            data.skillLevel ?? null,
+          gender:                data.gender ?? null,
+          maxTeams:              data.maxTeams ?? null,
+          createdByPlayerId:     creatorPlayer?.id ?? null,
 
-        registrations: {
-          create: data.playerIds.map((playerId, i) => ({
-            playerId,
-            seedPosition: i + 1,
-            // Admin-created registrations are considered pre-paid / free
-            paymentStatus: (data.priceCents ?? 0) > 0 ? "PAID" : "FREE",
-            paymentMethod: (data.priceCents ?? 0) > 0 ? "CASH" : "FREE",
-            paidAt: (data.priceCents ?? 0) > 0 ? new Date() : null,
-            amountPaidCents: data.priceCents ?? null,
-          })),
+          registrations: {
+            create: data.playerIds.map((playerId, i) => ({
+              playerId,
+              seedPosition: i + 1,
+              // Admin-created registrations are considered pre-paid / free
+              paymentStatus: (data.priceCents ?? 0) > 0 ? "PAID" : "FREE",
+              paymentMethod: (data.priceCents ?? 0) > 0 ? "CASH" : "FREE",
+              paidAt: (data.priceCents ?? 0) > 0 ? new Date() : null,
+              amountPaidCents: data.priceCents ?? null,
+            })),
+          },
         },
-      },
-      select: { id: true },
+        select: { id: true },
+      })
     })
 
-    // Charge the creation fee now that the tournament exists (non-admins).
-    if (!isAdmin && creatorPlayer) {
-      await db.player.update({
-        where: { id: creatorPlayer.id },
-        data: { sanderCredits: { decrement: TOURNAMENT_CREATION_SC } },
-      })
-      revalidatePath("/profile")
-    }
-
+    if (!isAdmin) revalidatePath("/profile")
     revalidatePath("/tournaments")
 
     // Notify registered players of their tournament registration

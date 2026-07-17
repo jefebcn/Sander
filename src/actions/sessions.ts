@@ -141,23 +141,24 @@ export async function joinSession(sessionId: string) {
     throw new Error("Sessione al completo")
   }
 
-  // SC payment: check and deduct balance
+  // SC payment: atomic conditional deduction (no check-then-write race → no
+  // double-spend if two joins land at once).
   if (session.paymentType === "SC") {
     const scCost = session.quotaAmount ?? 0
     if (scCost > 0) {
-      const playerData = await db.player.findUniqueOrThrow({
-        where: { id: player.id },
-        select: { sanderCredits: true },
-      })
-      if (playerData.sanderCredits < scCost) {
-        throw new Error(
-          `Crediti insufficienti. Ti servono ${scCost} SC (ne hai ${playerData.sanderCredits}).`
-        )
-      }
-      await db.player.update({
-        where: { id: player.id },
+      const paid = await db.player.updateMany({
+        where: { id: player.id, sanderCredits: { gte: scCost } },
         data: { sanderCredits: { decrement: scCost } },
       })
+      if (paid.count === 0) {
+        const bal = await db.player.findUnique({
+          where: { id: player.id },
+          select: { sanderCredits: true },
+        })
+        throw new Error(
+          `Crediti insufficienti. Ti servono ${scCost} SC (ne hai ${bal?.sanderCredits ?? 0}).`,
+        )
+      }
     }
   }
 
