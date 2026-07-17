@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { MapPin, ChevronRight, Banknote, Beer, Gift, Shuffle, Coins, ChevronDown } from "lucide-react"
 import { createSession } from "@/actions/sessions"
+import { POPULAR_BAGNI, bagnoLabel } from "@/lib/bagni"
 import { cn } from "@/lib/utils"
 
 const FORMATS = [
@@ -164,9 +165,31 @@ export function CreateSessionForm({ presets }: { presets?: Presets }) {
           type="text"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
-          placeholder="Campo / Location (opzionale)"
+          placeholder="Bagno o campo (es. Bagno 26)"
           className="w-full rounded-xl bg-[var(--surface-2)] py-3 pl-9 pr-4 text-base text-[var(--foreground)] placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
         />
+      </div>
+
+      {/* Popular bagni quick-pick — keeps locations clean & consistent */}
+      <div className="flex flex-wrap gap-1.5">
+        {POPULAR_BAGNI.map((n) => {
+          const label = bagnoLabel(n)
+          return (
+            <button
+              key={n}
+              type="button"
+              onClick={() => setLocation(label)}
+              className={cn(
+                "rounded-full border px-3 py-1 text-xs font-bold transition-colors",
+                location === label
+                  ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
+                  : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted-text)]",
+              )}
+            >
+              🏖️ {n}
+            </button>
+          )
+        })}
       </div>
 
       {/* Recent location pills */}

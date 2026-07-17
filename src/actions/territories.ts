@@ -1,6 +1,7 @@
 "use server"
 
 import { db } from "@/lib/db"
+import { canonicalLocation, parseBagno } from "@/lib/bagni"
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  "Re dei Bagni" — hyper-local territory leaderboards.                       */
@@ -23,13 +24,10 @@ export interface TerritoryPlayer {
 
 export interface Territory {
   location: string
+  bagno: number | null // parsed bagno number, if this location is a beach club
   king: TerritoryPlayer | null
   standings: TerritoryPlayer[]
   totalMatches: number
-}
-
-function normalizeLocation(loc: string): string {
-  return loc.trim().replace(/\s+/g, " ")
 }
 
 export async function getLocationLeaderboards(): Promise<Territory[]> {
@@ -60,7 +58,7 @@ export async function getLocationLeaderboards(): Promise<Territory[]> {
     if (aWins === bWins) continue // tie / no decisive result
     const winningTeam = aWins > bWins ? 0 : 1
 
-    const loc = normalizeLocation(s.location)
+    const loc = canonicalLocation(s.location)
     if (!loc) continue
     let players = byLocation.get(loc)
     if (!players) {
@@ -93,12 +91,13 @@ export async function getLocationLeaderboards(): Promise<Territory[]> {
 
     territories.push({
       location,
+      bagno: parseBagno(location),
       king: standings[0] ?? null,
       standings,
       totalMatches: standings.reduce((sum, p) => sum + p.matches, 0),
     })
   }
 
-  // Busiest bagni first
+  // Busiest first
   return territories.sort((a, b) => b.totalMatches - a.totalMatches)
 }
