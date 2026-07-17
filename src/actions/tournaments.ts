@@ -13,6 +13,7 @@ import { assignCourtLabel } from "@/lib/tournament/courtSchedule"
 import { applyTournamentGlicko } from "@/actions/matches"
 import { updateRating } from "@/lib/tournament/glicko2"
 import { isAdminEmail, canManageTournament } from "@/lib/isAdmin"
+import { TOURNAMENT_CREATION_SC } from "@/lib/pricing"
 
 async function requireAdmin() {
   const session = await getCurrentSession()
@@ -28,6 +29,24 @@ export async function createTournament(input: CreateTournamentInput): Promise<{ 
     const creatorPlayer = session?.user?.id
       ? await db.player.findUnique({ where: { userId: session.user.id }, select: { id: true } })
       : null
+
+    // Non-admins pay SanderCredits to create a tournament (admins create free).
+    const isAdmin = isAdminEmail(session?.user?.email)
+    if (!isAdmin) {
+      if (!creatorPlayer) {
+        return { ok: false, error: "Devi avere un profilo per creare un torneo." }
+      }
+      const p = await db.player.findUniqueOrThrow({
+        where: { id: creatorPlayer.id },
+        select: { sanderCredits: true },
+      })
+      if (p.sanderCredits < TOURNAMENT_CREATION_SC) {
+        return {
+          ok: false,
+          error: `Ti servono ${TOURNAMENT_CREATION_SC} SC per creare un torneo (ne hai ${p.sanderCredits}). Ricarica dal profilo.`,
+        }
+      }
+    }
 
     const tournament = await db.tournament.create({
       data: {
@@ -68,6 +87,15 @@ export async function createTournament(input: CreateTournamentInput): Promise<{ 
       },
       select: { id: true },
     })
+
+    // Charge the creation fee now that the tournament exists (non-admins).
+    if (!isAdmin && creatorPlayer) {
+      await db.player.update({
+        where: { id: creatorPlayer.id },
+        data: { sanderCredits: { decrement: TOURNAMENT_CREATION_SC } },
+      })
+      revalidatePath("/profile")
+    }
 
     revalidatePath("/tournaments")
 
