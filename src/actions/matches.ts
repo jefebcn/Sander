@@ -7,7 +7,7 @@ import type { SubmitScoreInput } from "@/lib/validators/match.schema"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { updateRating } from "@/lib/tournament/glicko2"
 
-import { isAdminEmail } from "@/lib/isAdmin"
+import { isAdminEmail, canManageTournament } from "@/lib/isAdmin"
 
 export async function submitScore(input: SubmitScoreInput) {
   // Must be authenticated
@@ -283,6 +283,10 @@ export async function replaceMatchPlayer(
     where: { id: matchId },
     select: { tournamentId: true, isCompleted: true },
   })
+
+  // Only the tournament manager/admin may swap players — not any logged-in user.
+  const canManage = await canManageTournament(session.user.email, match.tournamentId)
+  if (!canManage) throw new Error("Non autorizzato")
 
   if (match.isCompleted) throw new Error("Partita già completata")
 

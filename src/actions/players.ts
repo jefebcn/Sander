@@ -623,6 +623,19 @@ export async function getTournamentWins(playerId: string): Promise<TournamentWin
 
 /** Awards MonthlyAward records for the previous month's top 3. Idempotent. */
 export async function awardMonthlyPodium() {
+  // Cheap guard: once last month's podium is stored, skip the heavy recompute.
+  // (This action was running getLastMonthTopPlayers on every /players?tab=podio view.)
+  const guard = new Date()
+  guard.setDate(1)
+  guard.setMonth(guard.getMonth() - 1)
+  const gMonth = guard.getMonth() + 1
+  const gYear = guard.getFullYear()
+  const already = await db.monthlyAward.findFirst({
+    where: { month: gMonth, year: gYear },
+    select: { id: true },
+  })
+  if (already) return
+
   const { top3, month, year } = await getLastMonthTopPlayers()
   if (top3.length === 0) return
 

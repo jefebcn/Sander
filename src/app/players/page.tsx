@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic"
 
 import Link from "next/link"
-import { Info, TrendingUp, Crown, Waves, UserPlus } from "lucide-react"
+import { Info, TrendingUp, Crown, Waves, UserPlus, Activity } from "lucide-react"
 import { listPlayers, getMonthlyTopPlayers, awardMonthlyPodium } from "@/actions/players"
 import { FilterablePlayerList } from "@/components/player/FilterablePlayerList"
 import { PodiumSection } from "@/components/home/PodiumSection"
@@ -89,8 +89,18 @@ export default async function PlayersPage({ searchParams }: Props) {
         >
           <UserPlus className="h-5 w-5 text-[var(--live)]" />
           <div className="min-w-0">
-            <p className="text-sm font-black text-white leading-tight">Trova</p>
+            <p className="text-sm font-black text-white leading-tight">Compagni</p>
             <p className="truncate text-[0.65rem] text-[var(--muted-text)]">Al tuo livello</p>
+          </div>
+        </Link>
+        <Link
+          href="/feed"
+          className="flex min-w-[130px] flex-1 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
+        >
+          <Activity className="h-5 w-5 text-[var(--accent)]" />
+          <div className="min-w-0">
+            <p className="text-sm font-black text-white leading-tight">Feed</p>
+            <p className="truncate text-[0.65rem] text-[var(--muted-text)]">Attività</p>
           </div>
         </Link>
       </div>

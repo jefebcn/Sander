@@ -82,6 +82,10 @@ export async function GET() {
         </div>
       </div>
     ),
-    { width: 1080, height: 1920 },
+    {
+      width: 1080,
+      height: 1920,
+      headers: { "cache-control": "public, max-age=120, s-maxage=600, stale-while-revalidate=86400" },
+    },
   )
 }

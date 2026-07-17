@@ -45,7 +45,7 @@ export default async function SeasonPage() {
     getSeasonStandings(),
   ])
 
-  const me = player ? await getPlayerSeasonInfo(player.id) : null
+  const me = player ? await getPlayerSeasonInfo(player.id, { season, standings }) : null
 
   // ── No active season ──────────────────────────────────────────────────
   if (!season) {

@@ -257,7 +257,7 @@ export default async function Home() {
                 className="flex min-h-[3.5rem] flex-1 items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-black text-white text-base transition-opacity active:opacity-80"
               >
                 <MapPin className="h-5 w-5 text-[var(--accent)]" />
-                Trova
+                Vedi
               </Link>
             </div>
 

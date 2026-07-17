@@ -66,26 +66,31 @@ export async function getSeasonStandings(): Promise<{
     else byPlayer.set(h.playerId, [h])
   }
 
-  const standings = await Promise.all(
-    [...byPlayer.entries()].map(async ([pid, entries]) => {
-      const pre = await db.ratingHistory.findFirst({
-        where: { playerId: pid, createdAt: { lt: start } },
-        orderBy: { createdAt: "desc" },
-        select: { rating: true },
-      })
-      const startRating = pre?.rating ?? entries[0].rating
-      const endRating = entries[entries.length - 1].rating
-      const p = entries[0].player
-      return {
-        id: pid,
-        name: p.name,
-        avatarUrl: p.avatarUrl,
-        rating: Math.round(p.glickoRating),
-        seasonPoints: Math.round(endRating - startRating),
-        division: getDivision(p.glickoRating),
-      } satisfies SeasonStanding
-    }),
-  )
+  // Pre-window baseline ratings in ONE query (was an N+1 findFirst per player).
+  // Rows come newest-first, so the first seen per player is their last rating
+  // before the season started. Fast now that RatingHistory is indexed.
+  const activeIds = [...byPlayer.keys()]
+  const preRows = await db.ratingHistory.findMany({
+    where: { playerId: { in: activeIds }, createdAt: { lt: start } },
+    orderBy: { createdAt: "desc" },
+    select: { playerId: true, rating: true },
+  })
+  const preByPlayer = new Map<string, number>()
+  for (const r of preRows) if (!preByPlayer.has(r.playerId)) preByPlayer.set(r.playerId, r.rating)
+
+  const standings = [...byPlayer.entries()].map(([pid, entries]) => {
+    const startRating = preByPlayer.get(pid) ?? entries[0].rating
+    const endRating = entries[entries.length - 1].rating
+    const p = entries[0].player
+    return {
+      id: pid,
+      name: p.name,
+      avatarUrl: p.avatarUrl,
+      rating: Math.round(p.glickoRating),
+      seasonPoints: Math.round(endRating - startRating),
+      division: getDivision(p.glickoRating),
+    } satisfies SeasonStanding
+  })
 
   standings.sort((a, b) => b.seasonPoints - a.seasonPoints || b.rating - a.rating)
   return { season, standings }
@@ -100,12 +105,17 @@ export interface PlayerSeasonInfo {
   totalPlayers: number
 }
 
-export async function getPlayerSeasonInfo(playerId: string): Promise<PlayerSeasonInfo> {
+export async function getPlayerSeasonInfo(
+  playerId: string,
+  // Pass the already-fetched standings to avoid recomputing them (the /stagione
+  // page renders both the board and the player card in one request).
+  precomputed?: { season: SeasonInfo | null; standings: SeasonStanding[] },
+): Promise<PlayerSeasonInfo> {
   const player = await db.player.findUniqueOrThrow({
     where: { id: playerId },
     select: { glickoRating: true },
   })
-  const { season, standings } = await getSeasonStandings()
+  const { season, standings } = precomputed ?? (await getSeasonStandings())
   const idx = standings.findIndex((s) => s.id === playerId)
   const mine = idx >= 0 ? standings[idx] : null
 
