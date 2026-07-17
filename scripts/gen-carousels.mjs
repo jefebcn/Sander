@@ -81,6 +81,16 @@ const carousels = [
       { kind: "cta", big: ["Trova la tua", "squadra."], hl: ["squadra."], sub: "Al tuo livello, in un tap." },
     ],
   },
+  {
+    id: "c7-coppia",
+    slides: [
+      { kind: "hook", kicker: "2 VS 2", big: ["Nel beach non conta", "quanto sei bravo.", "Conta con CHI giochi."], hl: ["con CHI giochi."], emoji: "🤝", swipe: true },
+      { kind: "value", kicker: "L'AFFIATAMENTO", big: ["Ogni coppia ha", "la sua chimica."], hl: ["la sua chimica."], sub: "Quante ne vincete insieme?", emoji: "🔥" },
+      { kind: "value", kicker: "LA VOSTRA CARTA", big: ["Una carta di coppia,", "solo vostra."], hl: ["solo vostra."], sub: "Con le vittorie che fate insieme.", emoji: "🃏" },
+      { kind: "value", kicker: "LA SFIDA", big: ["Chi è il miglior duo", "della Riviera?"], hl: ["della Riviera?"], emoji: "👑" },
+      { kind: "cta", big: ["Trova il tuo", "compagno."], hl: ["compagno."], sub: "E costruite la vostra chimica." },
+    ],
+  },
 ]
 
 // ── Slide template ───────────────────────────────────────────────────────────
