@@ -5,6 +5,7 @@ import { db } from "@/lib/db"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import {
   CreateSessionSchema,
+  EditSessionSchema,
   AssignTeamSchema,
   SubmitSessionMatchScoreSchema,
 } from "@/lib/validators/session.schema"
@@ -174,6 +175,45 @@ export async function joinSession(sessionId: string) {
 
   revalidatePath(`/sessions/${sessionId}`)
   revalidatePath("/sessions")
+}
+
+export async function editSession(input: unknown): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const data = EditSessionSchema.parse(input)
+    const player = await getCurrentPlayer()
+    if (!player) return { ok: false, error: "Non autenticato" }
+
+    const session = await db.session.findUniqueOrThrow({
+      where: { id: data.sessionId },
+      select: { organizerId: true, status: true, _count: { select: { participants: true } } },
+    })
+    if (session.organizerId !== player.id) {
+      return { ok: false, error: "Solo l'organizzatore può modificare la partita." }
+    }
+    if (session.status === "COMPLETED" || session.status === "CANCELLED") {
+      return { ok: false, error: "Questa partita non è più modificabile." }
+    }
+    // Don't shrink capacity below the players already in.
+    const maxPlayers =
+      data.maxPlayers && data.maxPlayers >= session._count.participants ? data.maxPlayers : undefined
+
+    await db.session.update({
+      where: { id: data.sessionId },
+      data: {
+        ...(data.title !== undefined ? { title: data.title } : {}),
+        location: data.location,
+        date: data.date,
+        notes: data.notes ?? null,
+        ...(maxPlayers ? { maxPlayers } : {}),
+      },
+    })
+
+    revalidatePath(`/sessions/${data.sessionId}`)
+    revalidatePath("/sessions")
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Errore" }
+  }
 }
 
 export async function leaveSession(sessionId: string) {

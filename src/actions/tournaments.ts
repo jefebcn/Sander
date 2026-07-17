@@ -21,6 +21,25 @@ async function requireAdmin() {
   if (!isAdminEmail(session.user.email)) throw new Error("Accesso non autorizzato")
 }
 
+/** Validate a submitted match score (non-negative bounded integers, no draw). */
+function assertValidScore(a: number, b: number) {
+  if (
+    !Number.isInteger(a) || !Number.isInteger(b) ||
+    a < 0 || b < 0 || a > 99 || b > 99
+  ) {
+    throw new Error("Punteggio non valido")
+  }
+  if (a === b) throw new Error("Il risultato non può essere in parità")
+}
+
+/** Only the tournament manager/admin may submit scores. */
+async function requireTournamentManager(tournamentId: string) {
+  const session = await getCurrentSession()
+  if (!(await canManageTournament(session?.user?.email, tournamentId))) {
+    throw new Error("Non autorizzato")
+  }
+}
+
 export async function createTournament(input: CreateTournamentInput): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   try {
     const data = CreateTournamentSchema.parse(input)
@@ -835,13 +854,16 @@ export async function submitChiceceGroupMatchScore(
   teamAScore: number,
   teamBScore: number,
 ) {
-  await requireAdmin()
-  if (teamAScore === teamBScore) throw new Error("Il risultato non può essere in parità")
+  assertValidScore(teamAScore, teamBScore)
 
   const match = await db.match.findUniqueOrThrow({
     where: { id: matchId },
     include: { players: true },
   })
+
+  // Tournament manager/admin only (was global-admin-only, inconsistent with the
+  // final-score action which accepts the creator).
+  await requireTournamentManager(match.tournamentId)
 
   if (match.isCompleted) throw new Error("Partita già completata")
   if (match.bracketSection !== "GROUP") throw new Error("Non è una partita del girone")
@@ -1034,7 +1056,7 @@ export async function submitChiceceFinalScore(
   teamBScore: number,
 ) {
   const session = await getCurrentSession()
-  if (teamAScore === teamBScore) throw new Error("Il risultato non può essere in parità")
+  assertValidScore(teamAScore, teamBScore)
 
   const match = await db.match.findUniqueOrThrow({
     where: { id: matchId },

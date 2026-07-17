@@ -13,6 +13,15 @@ export const CreateSessionSchema = z.object({
   matchMode: z.boolean().optional().default(false),
 })
 
+export const EditSessionSchema = z.object({
+  sessionId: z.string().min(1),
+  title: z.string().max(80).optional(),
+  location: z.string().max(100).default(""),
+  date: z.coerce.date(),
+  notes: z.string().max(200).optional(),
+  maxPlayers: z.number().int().min(2).max(32).optional(),
+})
+
 export const SubmitSessionMatchScoreSchema = z.object({
   matchId:    z.string().min(1),
   teamAScore: z.number().int().min(0),
@@ -26,5 +35,6 @@ export const AssignTeamSchema = z.object({
 })
 
 export type CreateSessionInput = z.infer<typeof CreateSessionSchema>
+export type EditSessionInput = z.infer<typeof EditSessionSchema>
 export type AssignTeamInput = z.infer<typeof AssignTeamSchema>
 export type SubmitSessionMatchScoreInput = z.infer<typeof SubmitSessionMatchScoreSchema>

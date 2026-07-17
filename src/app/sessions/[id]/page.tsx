@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic"
 
 import type { Metadata } from "next"
-import { MapPin, Calendar, Euro, FileText, Coins, RefreshCw, Gauge } from "lucide-react"
+import { MapPin, Calendar, Euro, FileText, Coins, RefreshCw, Gauge, Pencil } from "lucide-react"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { getSession } from "@/actions/sessions"
@@ -223,6 +223,17 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
             style={{ background: "var(--accent)" }}
           >
             Accedi per partecipare
+          </Link>
+        )}
+
+        {/* Organizer: edit the session (fix a typo without cancelling it) */}
+        {isOrganizer && (session.status === "OPEN" || session.status === "FULL") && (
+          <Link
+            href={`/sessions/${session.id}/edit`}
+            className="flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-bold text-white transition-opacity active:opacity-80"
+          >
+            <Pencil className="h-4 w-4 text-[var(--accent)]" />
+            Modifica partita
           </Link>
         )}
 
