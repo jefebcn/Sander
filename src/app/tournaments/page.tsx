@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Plus, Trophy } from "lucide-react"
 import { listTournaments } from "@/actions/tournaments"
+import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { TournamentsInfoSheet } from "@/components/tournament/TournamentsInfoSheet"
 import { TournamentCard } from "@/components/tournament/TournamentCard"
@@ -8,7 +9,10 @@ import { TournamentCard } from "@/components/tournament/TournamentCard"
 export const dynamic = "force-dynamic"
 
 export default async function TournamentsPage() {
-  const tournaments = await listTournaments()
+  const [tournaments, currentPlayer] = await Promise.all([
+    listTournaments(),
+    getCurrentPlayer(),
+  ])
 
   return (
     <div>
@@ -18,13 +22,17 @@ export default async function TournamentsPage() {
         action={
           <div className="flex items-center gap-2">
             <TournamentsInfoSheet />
-            <Link
-              href="/tournaments/new"
-              className="flex h-11 items-center gap-2 rounded-xl bg-[var(--accent)] px-4 text-sm font-bold text-black"
-            >
-              <Plus className="h-5 w-5" />
-              Nuovo
-            </Link>
+            {/* Creating a tournament needs an account (and costs SanderCredits) —
+                don't push newcomers toward a wall; show it only when logged in. */}
+            {currentPlayer && (
+              <Link
+                href="/tournaments/new"
+                className="flex h-11 items-center gap-2 rounded-xl bg-[var(--accent)] px-4 text-sm font-bold text-black"
+              >
+                <Plus className="h-5 w-5" />
+                Nuovo
+              </Link>
+            )}
           </div>
         }
       />
@@ -35,15 +43,15 @@ export default async function TournamentsPage() {
           <div>
             <p className="text-lg font-semibold">Nessun torneo ancora</p>
             <p className="text-sm text-[var(--muted-text)]">
-              Crea il primo torneo per iniziare
+              {currentPlayer ? "Crea il primo torneo per iniziare" : "Accedi per creare il primo torneo"}
             </p>
           </div>
           <Link
-            href="/tournaments/new"
+            href={currentPlayer ? "/tournaments/new" : "/auth/signin?callbackUrl=%2Ftournaments%2Fnew"}
             className="flex h-14 items-center gap-2 rounded-2xl bg-[var(--accent)] px-6 font-bold text-black"
           >
             <Plus className="h-5 w-5" />
-            Crea Torneo
+            {currentPlayer ? "Crea Torneo" : "Accedi per creare"}
           </Link>
         </div>
       ) : (
