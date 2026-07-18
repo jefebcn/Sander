@@ -13,13 +13,34 @@ export default async function SignInPage({
   const resolvedCallback = callbackUrl ?? "/"
 
   return (
-    <div className="relative flex min-h-dvh flex-col bg-[#0a0a0a] px-6 pb-10">
+    <div className="relative flex min-h-dvh flex-col overflow-hidden bg-[#0a0a0a] px-6 pb-10">
+      {/* Background video (muted, looping) — falls back to the dark bg if it fails */}
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-40"
+      >
+        <source src="/beach-volley.mp4" type="video/mp4" />
+      </video>
+      {/* Readability overlay: darker toward the bottom where the form sits */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(to bottom, rgba(10,10,10,0.55) 0%, rgba(10,10,10,0.8) 55%, rgba(10,10,10,0.95) 100%)",
+        }}
+        aria-hidden="true"
+      />
+
       {/* Glow */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 70% 35% at 50% 0%, rgba(201,243,29,0.07) 0%, transparent 60%)",
+            "radial-gradient(ellipse 70% 35% at 50% 0%, rgba(201,243,29,0.10) 0%, transparent 60%)",
         }}
         aria-hidden="true"
       />

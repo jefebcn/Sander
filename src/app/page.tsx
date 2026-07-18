@@ -341,39 +341,6 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* ── Discovery: stagione · settimana · bagni ───────── */}
-            <div className="grid grid-cols-3 gap-2">
-              <Link
-                href="/stagione"
-                className="flex flex-col items-center gap-1 rounded-2xl bg-[var(--surface-2)] py-3 active:opacity-80"
-                style={{ border: "1px solid rgba(168,85,247,0.25)" }}
-              >
-                <span className="text-xl">🌊</span>
-                <span className="text-xs font-black text-white">Stagione</span>
-              </Link>
-              <Link
-                href="/settimana"
-                className="flex flex-col items-center gap-1 rounded-2xl bg-[var(--surface-2)] py-3 active:opacity-80"
-              >
-                <span className="text-xl">📈</span>
-                <span className="text-xs font-black text-white">Settimana</span>
-              </Link>
-              <Link
-                href="/bagni"
-                className="flex flex-col items-center gap-1 rounded-2xl bg-[var(--surface-2)] py-3 active:opacity-80"
-              >
-                <span className="text-xl">👑</span>
-                <span className="text-xs font-black text-white">Bagni</span>
-              </Link>
-            </div>
-
-            {/* ── Annuncio evento ───────────────────────────────── */}
-            <WhatsAppAnnouncementBanner
-              url="https://chat.whatsapp.com/LnZvWR2ffXgIfzPCUFE7jL?mode=gi_t"
-              title="Gruppo WhatsApp Sander"
-              cta="Entra nel gruppo"
-            />
-
             {/* ── Per te (Personalised recommendations) ──────── */}
             {recs && (recs.performanceInsight || recs.suggestedSessions.length > 0 || recs.suggestedTournaments.length > 0) && (
               <div className="slide-up stagger-4 space-y-3">
@@ -494,6 +461,39 @@ export default async function Home() {
               </div>
             )}
 
+            {/* ── Scopri (discovery zone) ───────────────────────── */}
+            <div className="flex items-center gap-2 pt-2">
+              <span className="h-px flex-1 bg-[var(--border)]" />
+              <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-text)]">Scopri</p>
+              <span className="h-px flex-1 bg-[var(--border)]" />
+            </div>
+
+            {/* ── Stagione · settimana · bagni ──────────────────── */}
+            <div className="grid grid-cols-3 gap-2">
+              <Link
+                href="/stagione"
+                className="flex flex-col items-center gap-1 rounded-2xl bg-[var(--surface-2)] py-3 active:opacity-80"
+                style={{ border: "1px solid rgba(168,85,247,0.25)" }}
+              >
+                <span className="text-xl">🌊</span>
+                <span className="text-xs font-black text-white">Stagione</span>
+              </Link>
+              <Link
+                href="/settimana"
+                className="flex flex-col items-center gap-1 rounded-2xl bg-[var(--surface-2)] py-3 active:opacity-80"
+              >
+                <span className="text-xl">📈</span>
+                <span className="text-xs font-black text-white">Settimana</span>
+              </Link>
+              <Link
+                href="/bagni"
+                className="flex flex-col items-center gap-1 rounded-2xl bg-[var(--surface-2)] py-3 active:opacity-80"
+              >
+                <span className="text-xl">👑</span>
+                <span className="text-xs font-black text-white">Bagni</span>
+              </Link>
+            </div>
+
             {/* ── Podio del mese banner ────────────────────────── */}
             <Link
               href="/players?tab=podio"
@@ -551,11 +551,18 @@ export default async function Home() {
               </Link>
             )}
 
-            {/* ── Video + level-up celebration (client-only, lazy) ── */}
-            <ClientOnlyHomeWidgets
-              currentLevel={fullPlayer.level}
-              playerName={fullPlayer.name}
-              cardData={playerToCardData(fullPlayer)}
+            {/* ── Community (header) ────────────────────────────── */}
+            <div className="flex items-center gap-2 pt-2">
+              <span className="h-px flex-1 bg-[var(--border)]" />
+              <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-text)]">Community</p>
+              <span className="h-px flex-1 bg-[var(--border)]" />
+            </div>
+
+            {/* ── Gruppo WhatsApp ───────────────────────────────── */}
+            <WhatsAppAnnouncementBanner
+              url="https://chat.whatsapp.com/LnZvWR2ffXgIfzPCUFE7jL?mode=gi_t"
+              title="Gruppo WhatsApp Sander"
+              cta="Entra nel gruppo"
             />
 
             {/* ── Social section ────────────────────────────────── */}
@@ -646,6 +653,13 @@ export default async function Home() {
                 </div>
               </a>
             </div>
+
+            {/* ── Video + level-up celebration (client-only, lazy) ── */}
+            <ClientOnlyHomeWidgets
+              currentLevel={fullPlayer.level}
+              playerName={fullPlayer.name}
+              cardData={playerToCardData(fullPlayer)}
+            />
           </>
         ) : (
           /* ── Logged-out hero — the conversion landing ──────────── */
