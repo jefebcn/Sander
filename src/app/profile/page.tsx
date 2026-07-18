@@ -270,22 +270,30 @@ export default async function ProfilePage({ searchParams }: Props) {
       </div>
 
       {/* ── Tab bar (horizontal scroll) ───────────────────── */}
-      <div className="flex gap-2 overflow-x-auto px-4 pb-3 scrollbar-none"
-        style={{ scrollbarWidth: "none" }}>
-        {TABS.map(({ id, label }) => (
-          <Link
-            key={id}
-            href={id === "profilo" ? "/profile" : `/profile?tab=${id}`}
-            className="shrink-0 rounded-xl px-4 py-2 text-sm font-bold transition-colors whitespace-nowrap"
-            style={
-              activeTab === id
-                ? { background: "var(--accent)", color: "#000" }
-                : { background: "var(--surface-2)", color: "var(--muted-text)", border: "1px solid rgba(255,255,255,0.08)" }
-            }
-          >
-            {label}
-          </Link>
-        ))}
+      <div className="relative pb-3">
+        <div className="flex gap-2 overflow-x-auto px-4 scrollbar-none"
+          style={{ scrollbarWidth: "none" }}>
+          {TABS.map(({ id, label }) => (
+            <Link
+              key={id}
+              href={id === "profilo" ? "/profile" : `/profile?tab=${id}`}
+              className="shrink-0 rounded-xl px-4 py-2 text-sm font-bold transition-colors whitespace-nowrap"
+              style={
+                activeTab === id
+                  ? { background: "var(--accent)", color: "#000" }
+                  : { background: "var(--surface-2)", color: "var(--muted-text)", border: "1px solid rgba(255,255,255,0.08)" }
+              }
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
+        {/* right-edge fade — hints the tab bar scrolls horizontally */}
+        <div
+          className="pointer-events-none absolute bottom-3 right-0 top-0 w-12"
+          style={{ background: "linear-gradient(to right, transparent, var(--background))" }}
+          aria-hidden="true"
+        />
       </div>
 
       {/* ══ Profilo tab ═══════════════════════════════════════ */}
