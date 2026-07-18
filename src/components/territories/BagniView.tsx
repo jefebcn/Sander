@@ -20,12 +20,16 @@ function KingAvatar({ name, url }: { name: string; url: string | null }) {
 }
 
 /** One row: a bagno/location with its king, or an empty "claim it" state. */
-function TerritoryRow({ t, bagno }: { t?: Territory; bagno?: number }) {
+function TerritoryRow({ t, bagno, muted }: { t?: Territory; bagno?: number; muted?: boolean }) {
   const label = t?.location ?? (bagno ? bagnoLabel(bagno) : "")
   const num = t?.bagno ?? bagno ?? null
 
   return (
-    <div className="flex items-center gap-3 rounded-2xl bg-[var(--surface-2)] px-3 py-2.5">
+    <div
+      className={`flex items-center gap-3 rounded-2xl bg-[var(--surface-2)] px-3 py-2.5 ${
+        muted ? "opacity-55" : ""
+      }`}
+    >
       {/* Number / icon badge */}
       <div
         className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-xl"
@@ -93,9 +97,13 @@ export function BagniView({ territories }: { territories: Territory[] }) {
   })
 
   // Everything else that has actual play, minus the popular ones
-  const others = territories
+  const rest = territories
     .filter((t) => !(t.bagno !== null && POPULAR_BAGNI.includes(t.bagno)))
     .filter(matches)
+
+  // Classified bagni (real, numbered spots) vs free-text courts players typed by hand.
+  const otherBagni = rest.filter((t) => t.bagno !== null)
+  const freeCampi = rest.filter((t) => t.bagno === null)
 
   return (
     <div className="space-y-5">
@@ -128,21 +136,35 @@ export function BagniView({ territories }: { territories: Territory[] }) {
         </section>
       )}
 
-      {/* Other courts */}
-      {others.length > 0 && (
+      {/* Other classified bagni (real, numbered spots) */}
+      {otherBagni.length > 0 && (
         <section className="px-4">
           <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
-            Altri campi
+            Altri bagni
           </p>
           <div className="space-y-2">
-            {others.map((t) => (
+            {otherBagni.map((t) => (
               <TerritoryRow key={t.location} t={t} />
             ))}
           </div>
         </section>
       )}
 
-      {popular.length === 0 && others.length === 0 && (
+      {/* Free-text courts — de-emphasised, not real classified bagni */}
+      {freeCampi.length > 0 && (
+        <section className="px-4">
+          <p className="mb-2 text-[0.65rem] font-bold uppercase tracking-wider text-[var(--muted-text)]/70">
+            Altri campi
+          </p>
+          <div className="space-y-1.5">
+            {freeCampi.map((t) => (
+              <TerritoryRow key={t.location} t={t} muted />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {popular.length === 0 && otherBagni.length === 0 && freeCampi.length === 0 && (
         <p className="px-4 text-center text-sm text-[var(--muted-text)]">Nessun campo trovato.</p>
       )}
     </div>
