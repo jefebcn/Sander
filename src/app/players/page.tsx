@@ -48,10 +48,11 @@ export default async function PlayersPage({ searchParams }: Props) {
       </div>
 
       {/* ── Discover: season + weekly + territories ───────────── */}
-      <div className="flex gap-2 overflow-x-auto px-4 pt-3" style={{ scrollbarWidth: "none" }}>
+      <div className="relative pt-3">
+        <div className="flex gap-2 overflow-x-auto px-4" style={{ scrollbarWidth: "none" }}>
         <Link
           href="/stagione"
-          className="flex min-w-[130px] flex-1 items-center gap-2 rounded-2xl px-4 py-3 active:opacity-80"
+          className="flex w-[150px] shrink-0 items-center gap-2 rounded-2xl px-4 py-3 active:opacity-80"
           style={{
             background: "linear-gradient(135deg, rgba(168,85,247,0.16), rgba(59,130,246,0.08))",
             border: "1px solid rgba(168,85,247,0.25)",
@@ -65,7 +66,7 @@ export default async function PlayersPage({ searchParams }: Props) {
         </Link>
         <Link
           href="/settimana"
-          className="flex min-w-[130px] flex-1 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
+          className="flex w-[150px] shrink-0 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
         >
           <TrendingUp className="h-5 w-5 text-[var(--accent)]" />
           <div className="min-w-0">
@@ -75,7 +76,7 @@ export default async function PlayersPage({ searchParams }: Props) {
         </Link>
         <Link
           href="/bagni"
-          className="flex min-w-[130px] flex-1 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
+          className="flex w-[150px] shrink-0 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
         >
           <Crown className="h-5 w-5 text-[var(--gold)]" />
           <div className="min-w-0">
@@ -85,7 +86,7 @@ export default async function PlayersPage({ searchParams }: Props) {
         </Link>
         <Link
           href="/trova"
-          className="flex min-w-[130px] flex-1 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
+          className="flex w-[150px] shrink-0 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
         >
           <UserPlus className="h-5 w-5 text-[var(--live)]" />
           <div className="min-w-0">
@@ -95,7 +96,7 @@ export default async function PlayersPage({ searchParams }: Props) {
         </Link>
         <Link
           href="/feed"
-          className="flex min-w-[130px] flex-1 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
+          className="flex w-[150px] shrink-0 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
         >
           <Activity className="h-5 w-5 text-[var(--accent)]" />
           <div className="min-w-0">
@@ -103,6 +104,13 @@ export default async function PlayersPage({ searchParams }: Props) {
             <p className="truncate text-[0.65rem] text-[var(--muted-text)]">Attività</p>
           </div>
         </Link>
+        </div>
+        {/* right-edge fade — hints that the strip scrolls horizontally */}
+        <div
+          className="pointer-events-none absolute bottom-0 right-0 top-3 w-12"
+          style={{ background: "linear-gradient(to right, transparent, var(--background))" }}
+          aria-hidden="true"
+        />
       </div>
 
       {/* ── Tab bar ───────────────────────────────────────────── */}
