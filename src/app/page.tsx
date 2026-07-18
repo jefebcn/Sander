@@ -341,6 +341,13 @@ export default async function Home() {
               </div>
             </div>
 
+            {/* ── Video della community (social proof / credibility) ── */}
+            <ClientOnlyHomeWidgets
+              currentLevel={fullPlayer.level}
+              playerName={fullPlayer.name}
+              cardData={playerToCardData(fullPlayer)}
+            />
+
             {/* ── Per te (Personalised recommendations) ──────── */}
             {recs && (recs.performanceInsight || recs.suggestedSessions.length > 0 || recs.suggestedTournaments.length > 0) && (
               <div className="slide-up stagger-4 space-y-3">
@@ -653,13 +660,6 @@ export default async function Home() {
                 </div>
               </a>
             </div>
-
-            {/* ── Video + level-up celebration (client-only, lazy) ── */}
-            <ClientOnlyHomeWidgets
-              currentLevel={fullPlayer.level}
-              playerName={fullPlayer.name}
-              cardData={playerToCardData(fullPlayer)}
-            />
           </>
         ) : (
           /* ── Logged-out hero — the conversion landing ──────────── */
