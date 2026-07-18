@@ -197,15 +197,16 @@ export default async function Home() {
                   </span>
                 </div>
               </div>
-              {/* Level badge — tap to see how XP works */}
+              {/* Level badge — tap to see how XP works (accent = tappable) */}
               <Link
                 href="/level-info"
                 className="pop-in flex flex-shrink-0 flex-col items-center justify-center rounded-xl bg-[var(--surface-3)] px-4 py-2 active:opacity-70"
+                style={{ border: "1px solid rgba(201,243,29,0.35)" }}
               >
                 <span className="text-[0.6rem] font-bold uppercase tracking-widest text-[var(--muted-text)]">
                   LIVELLO
                 </span>
-                <span className="text-3xl font-black leading-tight text-white">
+                <span className="text-3xl font-black leading-tight text-[var(--accent)]">
                   {fullPlayer.level}
                 </span>
               </Link>
