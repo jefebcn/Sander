@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic"
 
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronRight, ExternalLink, Sparkles, MapPin, Trophy, Shuffle, Plus } from "lucide-react"
+import { ChevronRight, ExternalLink, Sparkles, MapPin, Trophy, Shuffle, Plus, Music2 } from "lucide-react"
 import { redirect } from "next/navigation"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
@@ -578,41 +578,64 @@ export default async function Home() {
               <p className="mb-3 text-base text-white/70">
                 Segui Sander sui social
               </p>
-              <a
-                href="https://www.instagram.com/sanderbeachvolley/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="relative flex h-44 items-end overflow-hidden rounded-2xl"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #1a0830 0%, #2d1458 50%, #0d1a0d 100%)",
-                }}
-              >
-                {/* Faint logo in social card */}
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-10">
-                  <Image
-                    src="/sander-logo.png"
-                    alt=""
-                    width={180}
-                    height={180}
-                    className="object-contain"
-                  />
-                </div>
-                <div className="relative z-10 flex w-full items-center gap-3 p-4">
-                  <div
-                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl"
-                    style={{
-                      background:
-                        "radial-gradient(circle at 30% 107%, #fdf497 0%, #fd5949 35%, #d6249f 60%, #285AEB 90%)",
-                    }}
-                  >
-                    <ExternalLink className="h-5 w-5 text-white" />
+              {/* Two side-by-side cards: Instagram (left) · TikTok (right) */}
+              <div className="flex gap-3">
+                {/* Instagram */}
+                <a
+                  href="https://www.instagram.com/sanderbeachvolley/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="relative flex h-40 flex-1 items-end overflow-hidden rounded-2xl"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #1a0830 0%, #2d1458 50%, #0d1a0d 100%)",
+                  }}
+                >
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-10">
+                    <Image src="/sander-logo.png" alt="" width={120} height={120} className="object-contain" />
                   </div>
-                  <span className="text-base font-bold text-white">
-                    Entra nella community su Instagram
-                  </span>
-                </div>
-              </a>
+                  <div className="relative z-10 flex w-full flex-col gap-2 p-4">
+                    <div
+                      className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl"
+                      style={{
+                        background:
+                          "radial-gradient(circle at 30% 107%, #fdf497 0%, #fd5949 35%, #d6249f 60%, #285AEB 90%)",
+                      }}
+                    >
+                      <ExternalLink className="h-5 w-5 text-white" />
+                    </div>
+                    <span className="text-base font-bold text-white">Instagram</span>
+                  </div>
+                </a>
+
+                {/* TikTok */}
+                <a
+                  href="https://www.tiktok.com/@sanderbeachvolley"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="relative flex h-40 flex-1 items-end overflow-hidden rounded-2xl"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #020202 0%, #0a2b2b 45%, #2a0a18 100%)",
+                  }}
+                >
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-10">
+                    <Image src="/sander-logo.png" alt="" width={120} height={120} className="object-contain" />
+                  </div>
+                  <div className="relative z-10 flex w-full flex-col gap-2 p-4">
+                    <div
+                      className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #25F4EE 0%, #000 50%, #FE2C55 100%)",
+                      }}
+                    >
+                      <Music2 className="h-5 w-5 text-white" />
+                    </div>
+                    <span className="text-base font-bold text-white">TikTok</span>
+                  </div>
+                </a>
+              </div>
             </div>
 
             {/* ── Sponsor section ───────────────────────────────── */}
