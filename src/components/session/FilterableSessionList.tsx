@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Volleyball, Calendar } from "lucide-react"
+import Link from "next/link"
+import { Volleyball, Calendar, Plus } from "lucide-react"
 import { SessionCard } from "@/components/session/SessionCard"
 import { cn } from "@/lib/utils"
 
@@ -15,9 +16,10 @@ type Session = Parameters<typeof SessionCard>[0]["session"]
 
 interface FilterableSessionListProps {
   sessions: Session[]
+  isLoggedIn?: boolean
 }
 
-export function FilterableSessionList({ sessions }: FilterableSessionListProps) {
+export function FilterableSessionList({ sessions, isLoggedIn = false }: FilterableSessionListProps) {
   const [format, setFormat] = useState("")
 
   const filterFn = (s: Session) => !format || s.format === format
@@ -101,11 +103,30 @@ export function FilterableSessionList({ sessions }: FilterableSessionListProps) 
         )}
 
         {!anyVisible && (
-          <div className="flex flex-col items-center gap-3 pt-16 text-center">
+          <div className="flex flex-col items-center gap-3 px-6 pt-16 text-center">
             <Volleyball className="h-12 w-12 opacity-20" />
-            <p className="text-[var(--muted-text)]">
-              {format ? "Nessuna sessione per questo formato" : "Nessuna sessione ancora"}
-            </p>
+            {format ? (
+              /* Filter returned nothing — not a cold-start, keep it simple */
+              <p className="text-[var(--muted-text)]">Nessuna sessione per questo formato</p>
+            ) : (
+              /* Cold-start: guide the newcomer instead of dead-ending */
+              <>
+                <div>
+                  <p className="font-bold text-white">Ancora nessuna partita</p>
+                  <p className="mt-1 text-sm text-[var(--muted-text)]">
+                    Sii il primo a organizzare una partita nella tua zona 🏐
+                  </p>
+                </div>
+                <Link
+                  href={isLoggedIn ? "/sessions/new" : "/auth/signin?callbackUrl=%2Fsessions%2Fnew&mode=register"}
+                  className="mt-1 flex min-h-[3.25rem] items-center justify-center gap-2 rounded-2xl px-6 font-black text-black"
+                  style={{ background: "var(--accent)" }}
+                >
+                  <Plus className="h-5 w-5" />
+                  {isLoggedIn ? "Crea la prima partita" : "Accedi e crea la prima partita"}
+                </Link>
+              </>
+            )}
           </div>
         )}
       </div>

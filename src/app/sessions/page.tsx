@@ -43,7 +43,7 @@ export default async function SessionsPage() {
         /* Logged-out newcomer: one clear primary action, not the power-user "Segna" */
         <div className="px-4 pb-4">
           <Link
-            href="/auth/signin?callbackUrl=%2Fsessions%2Fnew"
+            href="/auth/signin?callbackUrl=%2Fsessions%2Fnew&mode=register"
             className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-black text-black text-base transition-opacity active:opacity-80"
             style={{ background: "var(--accent)" }}
           >
@@ -56,6 +56,7 @@ export default async function SessionsPage() {
       {/* ── Session list with format filters ─────────────────── */}
       <FilterableSessionList
         sessions={sessions.map((s) => ({ ...s, status: s.status as "OPEN" | "FULL" | "COMPLETED" | "CANCELLED" }))}
+        isLoggedIn={!!currentPlayer}
       />
     </div>
   )

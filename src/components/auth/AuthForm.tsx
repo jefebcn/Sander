@@ -9,15 +9,16 @@ import { registerWithEmail } from "@/actions/auth"
 import { trackEvent } from "@/lib/analytics"
 import { cn } from "@/lib/utils"
 
+type Mode = "login" | "register"
+
 interface AuthFormProps {
   callbackUrl: string
   inviteCode?: string
+  defaultMode?: Mode
 }
 
-type Mode = "login" | "register"
-
-export function AuthForm({ callbackUrl, inviteCode: initialInviteCode }: AuthFormProps) {
-  const [mode, setMode] = useState<Mode>("login")
+export function AuthForm({ callbackUrl, inviteCode: initialInviteCode, defaultMode = "login" }: AuthFormProps) {
+  const [mode, setMode] = useState<Mode>(defaultMode)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirm, setConfirm] = useState("")

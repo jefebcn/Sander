@@ -47,7 +47,7 @@ export default async function TournamentsPage() {
             </p>
           </div>
           <Link
-            href={currentPlayer ? "/tournaments/new" : "/auth/signin?callbackUrl=%2Ftournaments%2Fnew"}
+            href={currentPlayer ? "/tournaments/new" : "/auth/signin?callbackUrl=%2Ftournaments%2Fnew&mode=register"}
             className="flex h-14 items-center gap-2 rounded-2xl bg-[var(--accent)] px-6 font-bold text-black"
           >
             <Plus className="h-5 w-5" />

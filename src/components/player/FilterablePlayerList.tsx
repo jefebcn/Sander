@@ -51,11 +51,28 @@ export function FilterablePlayerList({ players, tab }: Props) {
       {/* Results */}
       <div className="space-y-2 px-4">
         {ranked.length === 0 ? (
-          <div className="flex flex-col items-center gap-4 pt-16 text-center">
+          <div className="flex flex-col items-center gap-4 px-6 pt-16 text-center">
             <Users className="h-12 w-12 opacity-20" />
-            <p className="text-[var(--muted-text)]">
-              {query ? "Nessun risultato" : "Nessun giocatore ancora"}
-            </p>
+            {query ? (
+              <p className="text-[var(--muted-text)]">Nessun risultato</p>
+            ) : (
+              /* Cold-start: invite the newcomer to be the first card */
+              <>
+                <div>
+                  <p className="font-bold text-white">Ancora nessun giocatore</p>
+                  <p className="mt-1 text-sm text-[var(--muted-text)]">
+                    Crea la tua carta e sii il primo della Riviera 🏐
+                  </p>
+                </div>
+                <Link
+                  href="/auth/signin?callbackUrl=%2Fprofile&mode=register"
+                  className="flex min-h-[3.25rem] items-center justify-center gap-2 rounded-2xl px-6 font-black text-black"
+                  style={{ background: "var(--accent)" }}
+                >
+                  Crea la tua carta
+                </Link>
+              </>
+            )}
           </div>
         ) : tab === "ranking" ? (
           ranked.map((player, index) => {
