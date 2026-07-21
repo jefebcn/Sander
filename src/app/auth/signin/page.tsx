@@ -7,10 +7,11 @@ import { BackButton } from "@/components/auth/BackButton"
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ callbackUrl?: string; invite?: string }>
+  searchParams: Promise<{ callbackUrl?: string; invite?: string; mode?: string }>
 }) {
-  const { callbackUrl, invite } = await searchParams
+  const { callbackUrl, invite, mode } = await searchParams
   const resolvedCallback = callbackUrl ?? "/"
+  const defaultMode = mode === "register" ? "register" : "login"
 
   return (
     <div className="relative flex min-h-dvh flex-col overflow-hidden bg-[#0a0a0a] px-6 pb-10">
@@ -71,7 +72,7 @@ export default async function SignInPage({
         </div>
 
         {/* Form */}
-        <AuthForm callbackUrl={resolvedCallback} inviteCode={invite} />
+        <AuthForm callbackUrl={resolvedCallback} inviteCode={invite} defaultMode={defaultMode} />
 
         <p className="text-center text-xs text-[var(--muted-text)]">
           Accedendo accetti i nostri Termini di Servizio

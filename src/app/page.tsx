@@ -722,7 +722,7 @@ export default async function Home() {
             {/* Primary CTAs */}
             <div className="slide-up stagger-3 flex flex-col gap-2.5">
               <Link
-                href="/auth/signin"
+                href="/auth/signin?mode=register"
                 className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl text-lg font-black text-black transition-opacity active:opacity-80"
                 style={{ background: "var(--accent)" }}
               >
