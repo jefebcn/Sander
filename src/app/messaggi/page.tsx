@@ -8,6 +8,7 @@ import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { CompanionsStrip } from "@/components/chat/CompanionsStrip"
 import { NewGroupButton } from "@/components/chat/NewGroupButton"
+import { ChatNotifyPrompt } from "@/components/chat/ChatNotifyPrompt"
 
 function relTime(iso: string | null): string {
   if (!iso) return ""
@@ -32,6 +33,8 @@ export default async function MessagesPage() {
   return (
     <div className="pb-24">
       <PageHeader title="Messaggi" action={<NewGroupButton meId={me.id} />} />
+
+      <ChatNotifyPrompt />
 
       <CompanionsStrip companions={companions} />
 
