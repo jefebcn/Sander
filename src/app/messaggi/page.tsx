@@ -7,6 +7,7 @@ import { getThreads, getChatCompanions } from "@/actions/messages"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { CompanionsStrip } from "@/components/chat/CompanionsStrip"
+import { NewGroupButton } from "@/components/chat/NewGroupButton"
 
 function relTime(iso: string | null): string {
   if (!iso) return ""
@@ -30,7 +31,7 @@ export default async function MessagesPage() {
 
   return (
     <div className="pb-24">
-      <PageHeader title="Messaggi" />
+      <PageHeader title="Messaggi" action={<NewGroupButton meId={me.id} />} />
 
       <CompanionsStrip companions={companions} />
 
@@ -62,7 +63,7 @@ export default async function MessagesPage() {
             >
               {/* Avatar / group icon */}
               <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-3)]">
-                {t.kind === "SESSION" ? (
+                {t.kind !== "DM" ? (
                   <Users className="h-6 w-6 text-[var(--accent)]" />
                 ) : t.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
