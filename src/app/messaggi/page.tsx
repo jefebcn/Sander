@@ -3,9 +3,10 @@ export const dynamic = "force-dynamic"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { MessageCircle, Users, Search } from "lucide-react"
-import { getThreads } from "@/actions/messages"
+import { getThreads, getChatCompanions } from "@/actions/messages"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { PageHeader } from "@/components/layout/PageHeader"
+import { CompanionsStrip } from "@/components/chat/CompanionsStrip"
 
 function relTime(iso: string | null): string {
   if (!iso) return ""
@@ -25,11 +26,13 @@ export default async function MessagesPage() {
   const me = await getCurrentPlayer()
   if (!me) redirect("/auth/signin?callbackUrl=/messaggi")
 
-  const threads = await getThreads()
+  const [threads, companions] = await Promise.all([getThreads(), getChatCompanions()])
 
   return (
     <div className="pb-24">
       <PageHeader title="Messaggi" />
+
+      <CompanionsStrip companions={companions} />
 
       {threads.length === 0 ? (
         <div className="flex flex-col items-center gap-4 px-6 pt-16 text-center">
