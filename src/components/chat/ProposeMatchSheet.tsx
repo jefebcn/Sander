@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { createPortal } from "react-dom"
 import Link from "next/link"
 import { X, MapPin, Calendar, Plus } from "lucide-react"
 import { getMyUpcomingSessions, sendMessage } from "@/actions/messages"
@@ -28,6 +29,9 @@ export function ProposeMatchSheet({
 }) {
   const [sessions, setSessions] = useState<Sess[] | null>(null)
   const [sending, setSending] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => setMounted(true), [])
 
   useEffect(() => {
     getMyUpcomingSessions()
@@ -55,7 +59,9 @@ export function ProposeMatchSheet({
     }
   }
 
-  return (
+  if (!mounted) return null
+
+  return createPortal(
     <div className="fixed inset-0 z-[300] flex flex-col justify-end" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
       <div className="relative z-10 flex max-h-[75dvh] flex-col rounded-t-3xl bg-[var(--surface-1)] pb-6">
@@ -116,6 +122,7 @@ export function ProposeMatchSheet({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
