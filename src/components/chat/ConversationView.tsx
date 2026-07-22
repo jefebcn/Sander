@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { ChevronLeft, Send, Volleyball } from "lucide-react"
 import { getThread, sendMessage, markThreadRead } from "@/actions/messages"
 import { ProposeMatchSheet } from "./ProposeMatchSheet"
+import { GroupInfoSheet } from "./GroupInfoSheet"
 
 type ThreadData = Awaited<ReturnType<typeof getThread>>
 
@@ -42,6 +43,7 @@ export function ConversationView({
   const qc = useQueryClient()
   const [text, setText] = useState("")
   const [proposeOpen, setProposeOpen] = useState(false)
+  const [groupInfoOpen, setGroupInfoOpen] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   const { data } = useQuery({
@@ -100,11 +102,30 @@ export function ConversationView({
             <ChevronLeft className="h-5 w-5" />
           </Link>
         )}
-        <div className="min-w-0">
-          <p className="truncate text-base font-black text-white">{thread.title}</p>
-          <p className="text-xs text-[var(--muted-text)]">{subtitle}</p>
-        </div>
+        {thread.kind === "GROUP" ? (
+          <button onClick={() => setGroupInfoOpen(true)} className="min-w-0 text-left active:opacity-70">
+            <p className="truncate text-base font-black text-white">{thread.title}</p>
+            <p className="text-xs text-[var(--accent)]">
+              {thread.members.length} membri · tocca per info
+            </p>
+          </button>
+        ) : (
+          <div className="min-w-0">
+            <p className="truncate text-base font-black text-white">{thread.title}</p>
+            <p className="text-xs text-[var(--muted-text)]">{subtitle}</p>
+          </div>
+        )}
       </div>
+
+      {groupInfoOpen && thread.kind === "GROUP" && (
+        <GroupInfoSheet
+          threadId={threadId}
+          title={thread.title}
+          members={thread.members}
+          amCreator={thread.amCreator}
+          onClose={() => setGroupInfoOpen(false)}
+        />
+      )}
 
       {/* Messages */}
       <div
