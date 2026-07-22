@@ -26,7 +26,6 @@ export function InstallButton() {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null)
   const [ios, setIos] = useState(false)
   const [standalone, setStandalone] = useState(false)
-  const [showIosHelp, setShowIosHelp] = useState(false)
 
   useEffect(() => {
     setIos(isIOS())
@@ -73,29 +72,46 @@ export function InstallButton() {
         </button>
       )}
 
-      {/* iOS: instructions */}
+      {/* iOS: no native prompt exists — show the "Add to Home" steps, always
+          visible and clear that they only work in Safari (the #1 gotcha). */}
       {ios && (
-        <button
-          onClick={() => {
-            setShowIosHelp((v) => !v)
-            trackEvent("install_click", { platform: "ios" })
-          }}
-          className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-black text-black"
-          style={{ background: "var(--accent)" }}
+        <div
+          className="rounded-2xl p-4"
+          style={{ background: "var(--surface-2)", border: "1px solid rgba(201,243,29,0.3)" }}
         >
-          <Plus className="h-5 w-5" /> Aggiungi alla Home
-        </button>
-      )}
+          <div className="flex items-center gap-3">
+            <div
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+              style={{ background: "rgba(201,243,29,0.14)" }}
+            >
+              <Plus className="h-5 w-5 text-[var(--accent)]" />
+            </div>
+            <p className="text-base font-black text-white">Installa su iPhone</p>
+          </div>
 
-      {ios && showIosHelp && (
-        <div className="rounded-2xl bg-[var(--surface-2)] p-4 text-sm text-white/80 leading-relaxed">
-          <p className="flex items-center gap-2">
-            1. Tocca <Share className="inline h-4 w-4 text-[var(--accent)]" /> Condividi in Safari
+          <p className="mt-3 text-sm leading-relaxed text-white/80">
+            Apri questa pagina in{" "}
+            <span className="font-bold text-[var(--accent)]">Safari</span> (non da Chrome o
+            Instagram), poi:
           </p>
-          <p className="mt-1.5 flex items-center gap-2">
-            2. Scegli <Plus className="inline h-4 w-4 text-[var(--accent)]" /> «Aggiungi alla schermata Home»
-          </p>
-          <p className="mt-1.5">3. Apri SANDER dall&apos;icona come una vera app.</p>
+
+          <ol className="mt-3 space-y-2.5">
+            {[
+              <>Tocca <Share className="inline h-4 w-4 text-[var(--accent)]" /> Condividi, in basso</>,
+              <>Scegli <Plus className="inline h-4 w-4 text-[var(--accent)]" /> «Aggiungi alla schermata Home»</>,
+              <>Apri SANDER dall&apos;icona, come una vera app</>,
+            ].map((step, i) => (
+              <li key={i} className="flex items-start gap-3 text-sm leading-relaxed text-white/85">
+                <span
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-black text-black"
+                  style={{ background: "var(--accent)" }}
+                >
+                  {i + 1}
+                </span>
+                <span className="pt-0.5">{step}</span>
+              </li>
+            ))}
+          </ol>
         </div>
       )}
 
