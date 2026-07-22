@@ -48,7 +48,14 @@ export function MobileNav() {
   // Sync back once real navigation completes
   useEffect(() => { setOptimisticPath(null) }, [pathname])
 
-  if (pathname.startsWith("/auth/") || pathname.startsWith("/onboarding/")) return null
+  // Hide on full-screen overlays: auth, onboarding, and an open conversation
+  // (/messaggi/<id> — but keep it on the /messaggi inbox).
+  if (
+    pathname.startsWith("/auth/") ||
+    pathname.startsWith("/onboarding/") ||
+    pathname.startsWith("/messaggi/")
+  )
+    return null
 
   const displayPath = optimisticPath ?? pathname
 

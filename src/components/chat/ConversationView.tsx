@@ -62,7 +62,7 @@ export function ConversationView({
   }
 
   return (
-    <div className={embedded ? "flex flex-col" : "flex min-h-dvh flex-col"}>
+    <div className={embedded ? "flex flex-col" : "flex h-full flex-col"}>
       {/* Header */}
       <div
         className="flex items-center gap-2 border-b border-[var(--border)] px-3 py-3"
