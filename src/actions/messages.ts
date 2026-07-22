@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
+import { getPartnerStats } from "@/actions/players"
 import { SendMessageSchema } from "@/lib/validators/message.schema"
 
 // Lazy push import keeps web-push out of the SSR/client bundle (mirrors sessions.ts).
@@ -199,7 +200,13 @@ export async function getThread(threadId: string) {
       kind: true,
       sessionId: true,
       session: { select: { id: true, title: true } },
-      participants: { select: { playerId: true, player: { select: { id: true, name: true, firstName: true } } } },
+      participants: {
+        select: {
+          playerId: true,
+          lastReadAt: true,
+          player: { select: { id: true, name: true, firstName: true } },
+        },
+      },
     },
   })
   if (!thread) throw new Error("Conversazione non trovata")
@@ -221,12 +228,16 @@ export async function getThread(threadId: string) {
   })
 
   const isSession = thread.kind === "SESSION"
-  const other = thread.participants.find((pp) => pp.player.id !== me.id)?.player
+  const otherPart = thread.participants.find((pp) => pp.player.id !== me.id)
+  const other = otherPart?.player
+  // Read receipt (DM only): when the other player last read the thread.
+  const otherReadAt = !isSession && otherPart?.lastReadAt ? otherPart.lastReadAt.toISOString() : null
 
   return {
     id: thread.id,
     kind: isSession ? ("SESSION" as const) : ("DM" as const),
     sessionId: thread.sessionId,
+    otherReadAt,
     title: isSession
       ? thread.session?.title ?? "Partita"
       : other
@@ -321,4 +332,46 @@ export async function getUnreadMessageCount(): Promise<number> {
     ),
   )
   return counts.reduce((a, b) => a + b, 0)
+}
+
+// ── V2: companions (players I've played with) for quick-DM ───────────────────
+export async function getChatCompanions() {
+  const me = await getCurrentPlayer()
+  if (!me) return []
+  const partners = await getPartnerStats(me.id)
+  const ids = partners.slice(0, 12).map((p) => p.playerId)
+  if (ids.length === 0) return []
+  const players = await db.player.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, name: true, firstName: true, avatarUrl: true },
+  })
+  const byId = new Map(players.map((p) => [p.id, p]))
+  // preserve partner ordering (most-played first)
+  return ids
+    .map((id) => byId.get(id))
+    .filter((p): p is NonNullable<typeof p> => Boolean(p))
+    .map((p) => ({ id: p.id, name: p.firstName ?? p.name, avatarUrl: p.avatarUrl }))
+}
+
+// ── V2: my upcoming sessions, to propose one inside a chat ───────────────────
+export async function getMyUpcomingSessions() {
+  const me = await getCurrentPlayer()
+  if (!me) return []
+  const now = new Date()
+  const rows = await db.session.findMany({
+    where: {
+      status: { in: ["OPEN", "FULL"] },
+      date: { gte: now },
+      OR: [{ organizerId: me.id }, { participants: { some: { playerId: me.id } } }],
+    },
+    orderBy: { date: "asc" },
+    take: 20,
+    select: { id: true, title: true, location: true, date: true },
+  })
+  return rows.map((r) => ({
+    id: r.id,
+    title: r.title,
+    location: r.location,
+    date: r.date.toISOString(),
+  }))
 }
