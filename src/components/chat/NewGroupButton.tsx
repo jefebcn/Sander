@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { createPortal } from "react-dom"
 import { useRouter } from "next/navigation"
 import { Plus, X, Search, Check } from "lucide-react"
 import { listPlayers } from "@/actions/players"
@@ -31,6 +32,9 @@ function NewGroupSheet({ meId, onClose }: { meId: string; onClose: () => void })
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [name, setName] = useState("")
   const [creating, setCreating] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => setMounted(true), [])
 
   useEffect(() => {
     listPlayers()
@@ -74,7 +78,9 @@ function NewGroupSheet({ meId, onClose }: { meId: string; onClose: () => void })
     }
   }
 
-  return (
+  if (!mounted) return null
+
+  return createPortal(
     <div className="fixed inset-0 z-[300] flex flex-col justify-end" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
       <div className="relative z-10 flex max-h-[85dvh] flex-col rounded-t-3xl bg-[var(--surface-1)]">
@@ -170,6 +176,7 @@ function NewGroupSheet({ meId, onClose }: { meId: string; onClose: () => void })
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
