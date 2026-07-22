@@ -495,6 +495,7 @@ model ChatThread {
   kind          ChatKind  @default(DM)
 
   name          String?   // optional title for GROUP threads
+  createdById   String?   // who created a GROUP (can delete it)
 
   // DM dedup: sorted "playerA:playerB" so a pair always has one thread. Null for SESSION.
   dmKey         String?   @unique

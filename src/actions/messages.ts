@@ -97,11 +97,45 @@ export async function createGroupThread(input: unknown): Promise<string> {
     data: {
       kind: "GROUP",
       name: name?.trim() || null,
+      createdById: me.id,
       participants: { create: memberIds.map((playerId) => ({ playerId })) },
     },
     select: { id: true },
   })
   return thread.id
+}
+
+// ── Leave a group (removes me; deletes the thread if empty) ──────────────────
+export async function leaveGroup(threadId: string) {
+  const me = await getCurrentPlayer()
+  if (!me) throw new Error("Non autenticato")
+  const thread = await db.chatThread.findUnique({
+    where: { id: threadId },
+    select: { kind: true, participants: { select: { playerId: true } } },
+  })
+  if (!thread || thread.kind !== "GROUP") throw new Error("Non è un gruppo")
+  await db.chatParticipant.deleteMany({ where: { threadId, playerId: me.id } })
+  const remaining = thread.participants.filter((p) => p.playerId !== me.id).length
+  if (remaining === 0) {
+    await db.chatThread.delete({ where: { id: threadId } })
+  }
+  revalidatePath("/messaggi")
+  revalidatePath("/")
+}
+
+// ── Delete a group (creator only) ────────────────────────────────────────────
+export async function deleteGroup(threadId: string) {
+  const me = await getCurrentPlayer()
+  if (!me) throw new Error("Non autenticato")
+  const thread = await db.chatThread.findUnique({
+    where: { id: threadId },
+    select: { kind: true, createdById: true },
+  })
+  if (!thread || thread.kind !== "GROUP") throw new Error("Non è un gruppo")
+  if (thread.createdById !== me.id) throw new Error("Solo chi ha creato il gruppo può eliminarlo")
+  await db.chatThread.delete({ where: { id: threadId } })
+  revalidatePath("/messaggi")
+  revalidatePath("/")
 }
 
 // ── Session group chat: open or create the thread for a session ──────────────
@@ -227,13 +261,14 @@ export async function getThread(threadId: string) {
       id: true,
       kind: true,
       name: true,
+      createdById: true,
       sessionId: true,
       session: { select: { id: true, title: true } },
       participants: {
         select: {
           playerId: true,
           lastReadAt: true,
-          player: { select: { id: true, name: true, firstName: true } },
+          player: { select: { id: true, name: true, firstName: true, avatarUrl: true } },
         },
       },
     },
@@ -276,6 +311,12 @@ export async function getThread(threadId: string) {
     otherReadAt,
     title,
     meId: me.id,
+    amCreator: thread.kind === "GROUP" && thread.createdById === me.id,
+    members: thread.participants.map((pp) => ({
+      id: pp.player.id,
+      name: pp.player.firstName ?? pp.player.name,
+      avatarUrl: pp.player.avatarUrl,
+    })),
     messages: rows.map((r) => ({
       id: r.id,
       body: r.body,
