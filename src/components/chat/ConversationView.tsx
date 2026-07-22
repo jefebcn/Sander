@@ -54,7 +54,13 @@ export function ConversationView({
 
   const thread = data ?? initial
   const messages = thread.messages
-  const isGroup = thread.kind === "SESSION"
+  const isGroup = thread.kind !== "DM" // show sender names for SESSION and GROUP
+  const subtitle =
+    thread.kind === "SESSION"
+      ? "Chat della partita"
+      : thread.kind === "GROUP"
+        ? "Gruppo"
+        : "Messaggio diretto"
 
   const send = useMutation({
     mutationFn: (body: string) => sendMessage({ threadId, body }),
@@ -96,9 +102,7 @@ export function ConversationView({
         )}
         <div className="min-w-0">
           <p className="truncate text-base font-black text-white">{thread.title}</p>
-          <p className="text-xs text-[var(--muted-text)]">
-            {isGroup ? "Chat della partita" : "Messaggio diretto"}
-          </p>
+          <p className="text-xs text-[var(--muted-text)]">{subtitle}</p>
         </div>
       </div>
 
@@ -141,8 +145,8 @@ export function ConversationView({
         <div ref={bottomRef} />
       </div>
 
-      {/* Propose a match (DM only) */}
-      {thread.kind === "DM" && (
+      {/* Propose a match (DM + groups, not session threads) */}
+      {thread.kind !== "SESSION" && (
         <button
           onClick={() => setProposeOpen(true)}
           className="flex items-center justify-center gap-2 border-t border-[var(--border)] py-2.5 text-sm font-black text-[var(--accent)] active:opacity-70"

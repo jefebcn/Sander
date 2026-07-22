@@ -485,6 +485,7 @@ model Notification {
 enum ChatKind {
   DM       // 1:1 direct message between two players
   SESSION  // group chat attached to a session (one per session)
+  GROUP    // ad-hoc group chat (not tied to a session)
 }
 
 model ChatThread {
@@ -492,6 +493,8 @@ model ChatThread {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   kind          ChatKind  @default(DM)
+
+  name          String?   // optional title for GROUP threads
 
   // DM dedup: sorted "playerA:playerB" so a pair always has one thread. Null for SESSION.
   dmKey         String?   @unique

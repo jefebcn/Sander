@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { getPartnerStats } from "@/actions/players"
-import { SendMessageSchema } from "@/lib/validators/message.schema"
+import { SendMessageSchema, CreateGroupSchema } from "@/lib/validators/message.schema"
 
 // Lazy push import keeps web-push out of the SSR/client bundle (mirrors sessions.ts).
 async function safeNotifyPlayers(
@@ -79,6 +79,31 @@ export async function getOrCreateDmThread(otherPlayerId: string): Promise<string
   }
 }
 
+// ── Ad-hoc group chat: create a group with 2+ other players ──────────────────
+export async function createGroupThread(input: unknown): Promise<string> {
+  const me = await getCurrentPlayer()
+  if (!me) throw new Error("Non autenticato")
+  const { playerIds, name } = CreateGroupSchema.parse(input)
+
+  const others = Array.from(new Set(playerIds.filter((id) => id && id !== me.id)))
+  if (others.length < 2) throw new Error("Seleziona almeno 2 giocatori")
+
+  const found = await db.player.findMany({ where: { id: { in: others } }, select: { id: true } })
+  const validIds = found.map((f) => f.id)
+  if (validIds.length < 2) throw new Error("Giocatori non validi")
+
+  const memberIds = Array.from(new Set([me.id, ...validIds]))
+  const thread = await db.chatThread.create({
+    data: {
+      kind: "GROUP",
+      name: name?.trim() || null,
+      participants: { create: memberIds.map((playerId) => ({ playerId })) },
+    },
+    select: { id: true },
+  })
+  return thread.id
+}
+
 // ── Session group chat: open or create the thread for a session ──────────────
 export async function getOrCreateSessionThread(sessionId: string): Promise<string> {
   const me = await getCurrentPlayer()
@@ -136,6 +161,7 @@ export async function getThreads() {
         select: {
           id: true,
           kind: true,
+          name: true,
           lastMessageAt: true,
           session: { select: { id: true, title: true } },
           participants: {
@@ -154,8 +180,9 @@ export async function getThreads() {
   const items = await Promise.all(
     parts.map(async (p) => {
       const t = p.thread
-      const isSession = t.kind === "SESSION"
-      const other = t.participants.find((pp) => pp.player.id !== me.id)?.player
+      const isDM = t.kind === "DM"
+      const others = t.participants.filter((pp) => pp.player.id !== me.id).map((pp) => pp.player)
+      const other = others[0]
       const last = t.messages[0]
       const unread = await db.chatMessage.count({
         where: {
@@ -164,19 +191,20 @@ export async function getThreads() {
           ...(p.lastReadAt ? { createdAt: { gt: p.lastReadAt } } : {}),
         },
       })
+      let title: string
+      if (t.kind === "SESSION") title = t.session?.title ?? "Partita"
+      else if (t.kind === "GROUP")
+        title = t.name || others.map((o) => o.firstName ?? o.name).join(", ") || "Gruppo"
+      else title = other ? other.firstName ?? other.name : "Chat"
       return {
         id: t.id,
-        kind: isSession ? "SESSION" : "DM",
-        title: isSession
-          ? t.session?.title ?? "Partita"
-          : other
-            ? other.firstName ?? other.name
-            : "Chat",
-        avatarUrl: isSession ? null : other?.avatarUrl ?? null,
+        kind: t.kind,
+        title,
+        avatarUrl: isDM ? other?.avatarUrl ?? null : null,
         lastMessage: last
-          ? isSession
-            ? `${last.sender.firstName ?? last.sender.name}: ${last.body}`
-            : last.body
+          ? isDM
+            ? last.body
+            : `${last.sender.firstName ?? last.sender.name}: ${last.body}`
           : null,
         lastMessageAt: t.lastMessageAt ? t.lastMessageAt.toISOString() : null,
         unread,
@@ -198,6 +226,7 @@ export async function getThread(threadId: string) {
     select: {
       id: true,
       kind: true,
+      name: true,
       sessionId: true,
       session: { select: { id: true, title: true } },
       participants: {
@@ -227,22 +256,25 @@ export async function getThread(threadId: string) {
     },
   })
 
-  const isSession = thread.kind === "SESSION"
+  const isDM = thread.kind === "DM"
+  const others = thread.participants.filter((pp) => pp.player.id !== me.id).map((pp) => pp.player)
   const otherPart = thread.participants.find((pp) => pp.player.id !== me.id)
   const other = otherPart?.player
   // Read receipt (DM only): when the other player last read the thread.
-  const otherReadAt = !isSession && otherPart?.lastReadAt ? otherPart.lastReadAt.toISOString() : null
+  const otherReadAt = isDM && otherPart?.lastReadAt ? otherPart.lastReadAt.toISOString() : null
+
+  let title: string
+  if (thread.kind === "SESSION") title = thread.session?.title ?? "Partita"
+  else if (thread.kind === "GROUP")
+    title = thread.name || others.map((o) => o.firstName ?? o.name).join(", ") || "Gruppo"
+  else title = other ? other.firstName ?? other.name : "Chat"
 
   return {
     id: thread.id,
-    kind: isSession ? ("SESSION" as const) : ("DM" as const),
+    kind: thread.kind,
     sessionId: thread.sessionId,
     otherReadAt,
-    title: isSession
-      ? thread.session?.title ?? "Partita"
-      : other
-        ? other.firstName ?? other.name
-        : "Chat",
+    title,
     meId: me.id,
     messages: rows.map((r) => ({
       id: r.id,
@@ -265,6 +297,7 @@ export async function sendMessage(input: unknown) {
     where: { id: threadId },
     select: {
       kind: true,
+      name: true,
       sessionId: true,
       participants: { select: { playerId: true } },
       session: { select: { title: true } },
@@ -288,9 +321,13 @@ export async function sendMessage(input: unknown) {
   })
 
   const senderName = me.firstName ?? me.name.split(" ")[0]
-  const isSession = thread.kind === "SESSION"
-  const notifTitle = isSession ? thread.session?.title ?? "Partita" : senderName
-  const notifBody = (isSession ? `${senderName}: ${body}` : body).slice(0, 140)
+  const isDM = thread.kind === "DM"
+  const notifTitle = isDM
+    ? senderName
+    : thread.kind === "SESSION"
+      ? thread.session?.title ?? "Partita"
+      : thread.name || "Gruppo"
+  const notifBody = (isDM ? body : `${senderName}: ${body}`).slice(0, 140)
   await safeNotifyPlayers(others, { title: notifTitle, body: notifBody, url: `/messaggi/${threadId}` })
 
   revalidatePath(`/messaggi/${threadId}`)
