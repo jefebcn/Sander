@@ -12,6 +12,7 @@ import { PartnerStats } from "@/components/player/PartnerStats"
 import { Achievements } from "@/components/player/Achievements"
 import { computeAchievements } from "@/lib/achievements"
 import { PageHeader } from "@/components/layout/PageHeader"
+import { MessageButton } from "@/components/chat/MessageButton"
 import { Users, Swords, Trophy, Volleyball } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -76,6 +77,9 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
       <PageHeader title="SanderCard" backHref="/players" />
       <div className="px-4 pb-6 flex flex-col gap-4">
         <SanderCardFut playerData={playerToCardData(player)} />
+
+        {/* Write to this player (only when a different logged-in player is viewing) */}
+        {showH2H && <MessageButton playerId={id} label="Scrivi a questo giocatore" />}
 
         {/* ── Titoli ──────────────────────────────────────────── */}
         {(tournamentWins.length > 0 || monthlyAwards.length > 0) && (

@@ -11,6 +11,7 @@ import { ShareButton, WhatsAppShareButton } from "@/components/ui/ShareButton"
 import { QRCodeButton } from "@/components/ui/QRCode"
 import { SessionStatusBadge } from "@/components/session/SessionStatusBadge"
 import { ParticipantList } from "@/components/session/ParticipantList"
+import { SessionChat } from "@/components/chat/SessionChat"
 import { SessionMatchRounds } from "@/components/session/SessionMatchRounds"
 import { RematchButton } from "@/components/session/RematchButton"
 import { PageHeader } from "@/components/layout/PageHeader"
@@ -249,6 +250,9 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
           participants={session.participants}
           currentPlayerId={currentPlayer?.id ?? null}
         />
+
+        {/* Group chat — coordinate this game (participants only) */}
+        {isParticipant && <SessionChat sessionId={session.id} />}
 
         {/* Live scoreboard — organizer, standard session, teams assigned */}
         {isOrganizer &&

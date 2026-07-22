@@ -176,6 +176,8 @@ model Player {
   ratingHistory        RatingHistory[]
   invitedUsers         User[]             @relation("PlayerInvites")
   reactions            Reaction[]
+  chatParticipants     ChatParticipant[]
+  sentMessages         ChatMessage[]
 
   @@map("players")
 }
@@ -370,6 +372,7 @@ model Session {
   participants   SessionParticipant[]
   sets           SessionSet[]
   sessionMatches SessionMatch[]
+  chatThread     ChatThread?
 
   @@index([status, date])
   @@map("sessions")
@@ -476,6 +479,65 @@ model Notification {
 
   @@index([playerId, createdAt])
   @@map("notifications")
+}
+
+// ── Chat ──────────────────────────────────────────────────────────────
+enum ChatKind {
+  DM       // 1:1 direct message between two players
+  SESSION  // group chat attached to a session (one per session)
+}
+
+model ChatThread {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  kind          ChatKind  @default(DM)
+
+  // DM dedup: sorted "playerA:playerB" so a pair always has one thread. Null for SESSION.
+  dmKey         String?   @unique
+
+  // SESSION threads link to their session (one per session). Null for DM.
+  sessionId     String?   @unique
+  session       Session?  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  lastMessageAt DateTime? // for inbox sorting
+
+  participants  ChatParticipant[]
+  messages      ChatMessage[]
+
+  @@index([lastMessageAt])
+  @@map("chat_threads")
+}
+
+model ChatParticipant {
+  id         String     @id @default(cuid())
+  createdAt  DateTime   @default(now())
+
+  threadId   String
+  thread     ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  playerId   String
+  player     Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  lastReadAt DateTime?  // for unread badges
+
+  @@unique([threadId, playerId])
+  @@index([playerId])
+  @@map("chat_participants")
+}
+
+model ChatMessage {
+  id        String     @id @default(cuid())
+  createdAt DateTime   @default(now())
+
+  threadId  String
+  thread    ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    Player     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  body      String
+
+  @@index([threadId, createdAt])
+  @@map("chat_messages")
 }
 
 model VideoSubmission {

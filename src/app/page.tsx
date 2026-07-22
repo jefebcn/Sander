@@ -12,7 +12,9 @@ import { formatDate } from "@/lib/utils"
 import { ClientOnlyHomeWidgets } from "@/components/home/ClientOnlyHomeWidgets"
 import { playerToCardData } from "@/components/player/SanderCardFut"
 import { NotificationBell } from "@/components/push/NotificationBell"
+import { MessagesBell } from "@/components/chat/MessagesBell"
 import { getUnreadCount } from "@/actions/notifications"
+import { getUnreadMessageCount } from "@/actions/messages"
 import { WhatsAppAnnouncementBanner } from "@/components/home/WhatsAppAnnouncementBanner"
 import { StatsInfoSheet } from "@/components/home/StatsInfoSheet"
 
@@ -39,8 +41,9 @@ export default async function Home() {
   let upcomingChicece = null
   let unreadCount = 0
   let recentTournament = null
+  let unreadMessages = 0
   if (player) {
-    ;[fullPlayer, recs, upcomingChicece, unreadCount, recentTournament] = await Promise.all([
+    ;[fullPlayer, recs, upcomingChicece, unreadCount, recentTournament, unreadMessages] = await Promise.all([
       db.player.findUnique({
         where: { id: player.id },
         include: { _count: { select: { organizedSessions: true } } },
@@ -83,6 +86,7 @@ export default async function Home() {
           },
         },
       }),
+      getUnreadMessageCount(),
     ])
   }
 
@@ -157,7 +161,12 @@ export default async function Home() {
           <span className="text-base font-semibold tracking-wide text-white/80">
             Get in the game.
           </span>
-          {fullPlayer && <NotificationBell unreadCount={unreadCount} />}
+          {fullPlayer && (
+            <div className="ml-auto flex items-center gap-2">
+              <MessagesBell unreadCount={unreadMessages} />
+              <NotificationBell unreadCount={unreadCount} />
+            </div>
+          )}
         </div>
 
         {fullPlayer ? (

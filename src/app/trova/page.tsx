@@ -7,6 +7,7 @@ import { Users, Swords, Sparkles } from "lucide-react"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { getPlayersAtMyLevel, type MatchMode } from "@/actions/matchmaking"
 import { CompatibilityRing } from "@/components/matchmaking/CompatibilityRing"
+import { MessageButton } from "@/components/chat/MessageButton"
 
 export const metadata: Metadata = {
   title: "Trova giocatori al tuo livello — SANDER",
@@ -105,29 +106,31 @@ export default async function FindPage({ searchParams }: Props) {
       ) : (
         <div className="space-y-2 px-4">
           {candidates.map((c) => (
-            <Link
+            <div
               key={c.id}
-              href={`/players/${c.id}`}
-              className="flex items-center gap-3 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
+              className="flex items-center gap-3 rounded-2xl bg-[var(--surface-2)] px-4 py-3"
             >
-              <Avatar name={c.name} url={c.avatarUrl} />
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-bold text-white">{c.name}</p>
-                <div className="mt-0.5 flex items-center gap-2 text-xs text-[var(--muted-text)]">
-                  <span className="font-bold" style={{ color: c.division.color }}>
-                    {c.division.emoji} {c.division.name}
-                  </span>
-                  <span>{ROLE_LABEL[c.role]}</span>
-                  <span>{c.rating}</span>
+              <Link href={`/players/${c.id}`} className="flex min-w-0 flex-1 items-center gap-3 active:opacity-80">
+                <Avatar name={c.name} url={c.avatarUrl} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-bold text-white">{c.name}</p>
+                  <div className="mt-0.5 flex items-center gap-2 text-xs text-[var(--muted-text)]">
+                    <span className="font-bold" style={{ color: c.division.color }}>
+                      {c.division.emoji} {c.division.name}
+                    </span>
+                    <span>{ROLE_LABEL[c.role]}</span>
+                    <span>{c.rating}</span>
+                  </div>
                 </div>
-              </div>
-              <div className="flex flex-col items-center gap-0.5">
-                <CompatibilityRing value={c.compatibility} />
-                <span className="text-[0.55rem] font-bold uppercase tracking-wider text-[var(--muted-text)]">
-                  match
-                </span>
-              </div>
-            </Link>
+                <div className="flex flex-col items-center gap-0.5">
+                  <CompatibilityRing value={c.compatibility} />
+                  <span className="text-[0.55rem] font-bold uppercase tracking-wider text-[var(--muted-text)]">
+                    match
+                  </span>
+                </div>
+              </Link>
+              <MessageButton playerId={c.id} compact />
+            </div>
           ))}
         </div>
       )}
