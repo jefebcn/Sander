@@ -91,6 +91,17 @@ const carousels = [
       { kind: "cta", big: ["Trova il tuo", "compagno."], hl: ["compagno."], sub: "E costruite la vostra chimica." },
     ],
   },
+  {
+    id: "c8-redeibagni",
+    slides: [
+      { kind: "hook", kicker: "RE DEI BAGNI", big: ["Il tuo bagno", "ha un RE."], hl: ["ha un RE."], sub: "(e forse non sei tu 👑)", emoji: "👑", swipe: true },
+      { kind: "value", kicker: "OGNI ESTATE", big: ["Vai in spiaggia", "convinto di essere", "il migliore del bagno."], hl: ["il migliore del bagno."], emoji: "😎" },
+      { kind: "value", kicker: "PLOT TWIST", big: ["Poi apri", "SANDER."], hl: ["SANDER."], sub: "E scopri che sei terzo in classifica.", emoji: "💀" },
+      { kind: "value", kicker: "COLPO BASSO", big: ["Qualcuno ti ha", "scippato il trono."], hl: ["scippato il trono."], sub: "E manco lo sapevi.", emoji: "🫠" },
+      { kind: "value", kicker: "LA REGOLA", big: ["Vinci sul campo →", "conquisti il bagno."], hl: ["conquisti il bagno."], sub: "Chi vince di più comanda.", emoji: "🏐" },
+      { kind: "cta", big: ["Chi comanda", "sul tuo bagno?"], hl: ["sul tuo bagno?"], sub: "Riprenditi il titolo. Diventa il Re." },
+    ],
+  },
 ]
 
 // ── Slide template ───────────────────────────────────────────────────────────
