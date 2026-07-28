@@ -1,54 +1,88 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { RotateCcw, Undo2, Trophy, X, Loader2, Save, AlertCircle } from "lucide-react"
-import { completeSession } from "@/actions/sessions"
+import { RotateCcw, Undo2, Trophy, X, Loader2, Save, AlertCircle, Cloud } from "lucide-react"
+import { completeSession, saveLiveScore, getLiveScore } from "@/actions/sessions"
 
 /* Courtside live scoreboard — beach volley rules, big touch targets.
    Standalone by default; in "session mode" it saves the final result through
-   the existing completeSession pipeline (ratings, season, feed all update). */
+   the existing completeSession pipeline (ratings, season, feed all update).
+
+   Session mode also persists the in-progress board (auto-save), so you can
+   close the app mid-match and resume, and a second device viewing the same
+   session stays in sync (light polling). The active scorer always wins: a
+   remote update is only applied when this device has been idle for a moment. */
 
 type Team = 0 | 1
 interface HistoryEntry {
   team: Team
 }
 
+interface LiveState {
+  names: [string, string]
+  bestOf: 1 | 3
+  showSetup: boolean
+  scores: [number, number]
+  setsWon: [number, number]
+  setIndex: number
+  history: HistoryEntry[]
+  setResults: [number, number][]
+  matchWinner: Team | null
+}
+
 interface Props {
   /** When set, finishing the match saves the result to this session. */
   session?: { id: string }
   initialNames?: [string, string]
+  /** Persisted in-progress board to resume from (session mode). */
+  initialState?: LiveState | null
 }
 
 const TEAM_COLORS = ["#c9f31d", "#3b82f6"] as const
+const SAVE_DEBOUNCE_MS = 600
+const POLL_MS = 3500
+const IDLE_BEFORE_SYNC_MS = 4000
 
 function setTarget(setIndex: number, bestOf: number): number {
   return bestOf === 3 && setIndex === 2 ? 15 : 21
 }
 
-export function LiveScoreboard({ session, initialNames }: Props) {
+export function LiveScoreboard({ session, initialNames, initialState }: Props) {
   const router = useRouter()
   const sessionMode = Boolean(session)
+  const hs = initialState ?? null
 
-  const [names, setNames] = useState<[string, string]>(initialNames ?? ["Squadra A", "Squadra B"])
-  const [bestOf, setBestOf] = useState<1 | 3>(3)
-  const [showSetup, setShowSetup] = useState(true)
+  const [names, setNames] = useState<[string, string]>(hs?.names ?? initialNames ?? ["Squadra A", "Squadra B"])
+  const [bestOf, setBestOf] = useState<1 | 3>(hs?.bestOf ?? 3)
+  const [showSetup, setShowSetup] = useState(hs ? hs.showSetup : true)
 
-  const [scores, setScores] = useState<[number, number]>([0, 0])
-  const [setsWon, setSetsWon] = useState<[number, number]>([0, 0])
-  const [setIndex, setSetIndex] = useState(0)
-  const [history, setHistory] = useState<HistoryEntry[]>([])
-  const [setResults, setSetResults] = useState<[number, number][]>([])
-  const [matchWinner, setMatchWinner] = useState<Team | null>(null)
+  const [scores, setScores] = useState<[number, number]>(hs?.scores ?? [0, 0])
+  const [setsWon, setSetsWon] = useState<[number, number]>(hs?.setsWon ?? [0, 0])
+  const [setIndex, setSetIndex] = useState(hs?.setIndex ?? 0)
+  const [history, setHistory] = useState<HistoryEntry[]>(hs?.history ?? [])
+  const [setResults, setSetResults] = useState<[number, number][]>(hs?.setResults ?? [])
+  const [matchWinner, setMatchWinner] = useState<Team | null>(hs?.matchWinner ?? null)
 
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [synced, setSynced] = useState(false)
+
+  // Timestamp of the last local interaction — used to let the active scorer win.
+  const lastEditRef = useRef<number>(0)
+  // Serialised snapshot last written/seen, to skip no-op saves and sync loops.
+  const lastSyncedRef = useRef<string>(hs ? JSON.stringify(hs) : "")
 
   const target = setTarget(setIndex, bestOf)
   const setsToWin = bestOf === 3 ? 2 : 1
 
+  const markEdit = () => {
+    lastEditRef.current = Date.now()
+  }
+
   function point(team: Team) {
     if (matchWinner !== null) return
+    markEdit()
     const next: [number, number] = [scores[0], scores[1]]
     next[team] += 1
     setHistory((h) => [...h, { team }])
@@ -76,6 +110,7 @@ export function LiveScoreboard({ session, initialNames }: Props) {
 
   function undo() {
     if (history.length === 0 || matchWinner !== null) return
+    markEdit()
     const last = history[history.length - 1]
     const next: [number, number] = [scores[0], scores[1]]
     next[last.team] = Math.max(0, next[last.team] - 1)
@@ -84,6 +119,7 @@ export function LiveScoreboard({ session, initialNames }: Props) {
   }
 
   function resetMatch() {
+    markEdit()
     setScores([0, 0])
     setSetsWon([0, 0])
     setSetIndex(0)
@@ -93,6 +129,62 @@ export function LiveScoreboard({ session, initialNames }: Props) {
     setSaveError(null)
     setShowSetup(true)
   }
+
+  // Apply a remote snapshot to local state (used by polling sync).
+  const applyState = useCallback((s: LiveState) => {
+    setNames(s.names)
+    setBestOf(s.bestOf)
+    setShowSetup(s.showSetup)
+    setScores(s.scores)
+    setSetsWon(s.setsWon)
+    setSetIndex(s.setIndex)
+    setHistory(s.history)
+    setSetResults(s.setResults)
+    setMatchWinner(s.matchWinner)
+  }, [])
+
+  // ── Auto-save (debounced) ──────────────────────────────────────────────
+  useEffect(() => {
+    if (!sessionMode || !session) return
+    const snapshot: LiveState = {
+      names, bestOf, showSetup, scores, setsWon, setIndex, history, setResults, matchWinner,
+    }
+    const serialised = JSON.stringify(snapshot)
+    if (serialised === lastSyncedRef.current) return
+    const t = setTimeout(async () => {
+      try {
+        setSaving(true)
+        await saveLiveScore(session.id, snapshot)
+        lastSyncedRef.current = serialised
+        setSynced(true)
+      } catch {
+        /* transient — next change retries */
+      } finally {
+        setSaving(false)
+      }
+    }, SAVE_DEBOUNCE_MS)
+    return () => clearTimeout(t)
+  }, [sessionMode, session, names, bestOf, showSetup, scores, setsWon, setIndex, history, setResults, matchWinner])
+
+  // ── Polling sync (second device) ───────────────────────────────────────
+  useEffect(() => {
+    if (!sessionMode || !session) return
+    const id = setInterval(async () => {
+      // Don't stomp on the person actively tapping.
+      if (Date.now() - lastEditRef.current < IDLE_BEFORE_SYNC_MS) return
+      try {
+        const remote = (await getLiveScore(session.id)) as LiveState | null
+        if (!remote) return
+        const serialised = JSON.stringify(remote)
+        if (serialised === lastSyncedRef.current) return
+        lastSyncedRef.current = serialised
+        applyState(remote)
+      } catch {
+        /* ignore transient poll errors */
+      }
+    }, POLL_MS)
+    return () => clearInterval(id)
+  }, [sessionMode, session, applyState])
 
   async function saveResult() {
     if (!session) return
@@ -165,7 +257,10 @@ export function LiveScoreboard({ session, initialNames }: Props) {
         </div>
 
         <button
-          onClick={() => setShowSetup(false)}
+          onClick={() => {
+            markEdit()
+            setShowSetup(false)
+          }}
           className="min-h-[3.5rem] w-full rounded-2xl text-lg font-black text-black"
           style={{ background: "var(--accent)" }}
         >
@@ -184,6 +279,15 @@ export function LiveScoreboard({ session, initialNames }: Props) {
           <RotateCcw className="h-4 w-4" /> Nuovo
         </button>
         <div className="flex items-center gap-2 text-xs font-bold text-[var(--muted-text)]">
+          {sessionMode && (
+            <span title={synced ? "Salvato" : "Salvataggio…"} className="flex items-center">
+              {saving ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Cloud className="h-3.5 w-3.5" style={{ color: synced ? "var(--accent)" : undefined }} />
+              )}
+            </span>
+          )}
           {bestOf === 3 ? `Set ${setIndex + 1} · a ${target}` : `A ${target}`}
         </div>
         <button
