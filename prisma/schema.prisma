@@ -369,6 +369,8 @@ model Session {
   status    SessionStatus @default(OPEN)
   matchMode Boolean       @default(false)
 
+  liveScore Json?         // stato del tabellone dal vivo in corso (auto-save + resume + sync)
+
   participants   SessionParticipant[]
   sets           SessionSet[]
   sessionMatches SessionMatch[]

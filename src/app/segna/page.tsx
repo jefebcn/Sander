@@ -28,20 +28,20 @@ interface Props {
 export default async function ScoreboardPage({ searchParams }: Props) {
   const { session: sessionId } = await searchParams
 
-  // Session mode: only when the current user is the organizer and both teams
-  // have players assigned. Otherwise fall back to the standalone scoreboard.
+  // Session mode: any participant (not just the organizer) can score, and the
+  // board auto-saves + resumes. Requires both teams to have players assigned.
   if (sessionId) {
     const [session, player] = await Promise.all([
       getSession(sessionId).catch(() => null),
       getCurrentPlayer(),
     ])
 
-    if (
-      session &&
-      player &&
-      session.organizerId === player.id &&
-      (session.status === "OPEN" || session.status === "FULL")
-    ) {
+    const isMember =
+      session && player &&
+      (session.organizerId === player.id ||
+        session.participants.some((p) => p.player?.id === player.id))
+
+    if (session && isMember && (session.status === "OPEN" || session.status === "FULL")) {
       const hasA = session.participants.some((p) => p.team === 0)
       const hasB = session.participants.some((p) => p.team === 1)
       if (hasA && hasB) {
@@ -49,6 +49,7 @@ export default async function ScoreboardPage({ searchParams }: Props) {
           <LiveScoreboard
             session={{ id: session.id }}
             initialNames={[teamName(session.participants, 0), teamName(session.participants, 1)]}
+            initialState={(session.liveScore as Parameters<typeof LiveScoreboard>[0]["initialState"]) ?? null}
           />
         )
       }

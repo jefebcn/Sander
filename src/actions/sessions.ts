@@ -126,6 +126,36 @@ export async function getSession(id: string) {
   })
 }
 
+// ── Live scoreboard: auto-save + resume + multi-device sync ──────────────────
+async function isSessionMember(sessionId: string, playerId: string): Promise<boolean> {
+  const s = await db.session.findUnique({
+    where: { id: sessionId },
+    select: { organizerId: true, participants: { select: { playerId: true } } },
+  })
+  if (!s) return false
+  return s.organizerId === playerId || s.participants.some((p) => p.playerId === playerId)
+}
+
+// Persist the in-progress scoreboard state (called after each point, debounced client-side).
+export async function saveLiveScore(sessionId: string, state: unknown) {
+  const player = await getCurrentPlayer()
+  if (!player) throw new Error("Non autenticato")
+  if (state === null || typeof state !== "object") throw new Error("Stato non valido")
+  if (!(await isSessionMember(sessionId, player.id))) throw new Error("Non fai parte di questa partita")
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await db.session.update({ where: { id: sessionId }, data: { liveScore: state as any } })
+  return { ok: true }
+}
+
+// Read the current scoreboard state (for resume on load + polling sync between devices).
+export async function getLiveScore(sessionId: string) {
+  const player = await getCurrentPlayer()
+  if (!player) return null
+  if (!(await isSessionMember(sessionId, player.id))) return null
+  const s = await db.session.findUnique({ where: { id: sessionId }, select: { liveScore: true } })
+  return s?.liveScore ?? null
+}
+
 export async function joinSession(sessionId: string) {
   const player = await getCurrentPlayer()
   if (!player) throw new Error("Non autenticato")
@@ -341,7 +371,11 @@ export async function completeSession(
     where: { id: sessionId },
     include: { participants: { select: { playerId: true, team: true } } },
   })
-  if (session.organizerId !== player.id) throw new Error("Solo l'organizzatore può completare la sessione")
+  // Chi gioca può chiudere la partita, non solo l'organizzatore (beach volley reale).
+  const isParticipant = session.participants.some((p) => p.playerId === player.id)
+  if (session.organizerId !== player.id && !isParticipant) {
+    throw new Error("Solo chi partecipa può completare la partita")
+  }
 
   await db.session.update({ where: { id: sessionId }, data: { status: "COMPLETED" } })
 
