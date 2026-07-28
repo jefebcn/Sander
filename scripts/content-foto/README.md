@@ -31,6 +31,29 @@ Ogni carosello = 5 slide: `{nome}-01` (cover) → `{nome}-05` (CTA).
 2. Carica le 5 slide (in ordine) da `instagram/` o `tiktok/` nel programmatore (es. **Metricool**).
 3. Incolla la didascalia, imposta data/ora, pubblica.
 
+## Meme / hot-take (`meme/`)
+Post pronti (solo testo, dark+lime) per i giorni "meme" del calendario, in `meme/instagram/` (4:5)
+e `meme/tiktok/` (9:16): `meme-punti · meme-wa · meme-rating · meme-vs`.
+
+## Overlay per i reel (`reel-overlay/`)
+PNG **9:16 trasparenti** col testo-gancio, da trascinare **sopra la tua clip** in CapCut/InShot.
+Sono nominati per data del calendario:
+
+| File | Reel del | Testo |
+|------|----------|-------|
+| `rl-04ago.png` | 4 ago | POV: la schiacciata che chiude il set. |
+| `rl-07ago.png` | 7 ago | Il tramonto, la sabbia, la partita. Serve altro? |
+| `rl-11ago.png` | 11 ago | Quando trovi il compagno giusto al primo scambio. |
+| `rl-14ago.png` | 14 ago | Una domenica qualsiasi in Riviera. |
+| `rl-15ago.png` | 15 ago (Ferragosto) | Buon Ferragosto. Il campo è pieno? 🔥 |
+| `rl-18ago.png` | 18 ago | Il meglio della settimana in 15 secondi. |
+| `rl-21ago.png` | 21 ago | Rallenta. Guarda la traiettoria. Questo è beach. |
+| `rl-25ago.png` | 25 ago | La sensazione dopo il punto che vale il set. |
+| `rl-28ago.png` | 28 ago | Weekend = campo. Punto. |
+| `rl-01set.png` | 1 set | 30 giorni di beach. Il prossimo lo giochi con noi? |
+
+Il video resta la **tua clip** (`public/videos/`): metti l'overlay sopra, aggiungi la didascalia dal calendario, pubblica.
+
 ## Foto → carosello
 Le foto reali stanno in `public/`. Mappatura:
 
