@@ -40,8 +40,16 @@ Metti 3–5 `foto-*` + `outro.png`, aggiungi musica di tendenza, e sopra trascin
 del giorno (`reel-overlay/rl-*.png`). Esporta → reel pronto.
 
 ## Meme / hot-take (`meme/`)
-Post pronti (solo testo, dark+lime) per i giorni "meme" del calendario, in `meme/instagram/` (4:5)
-e `meme/tiktok/` (9:16): `meme-punti · meme-wa · meme-rating · meme-vs`.
+Meme **foto reale + battuta** (relatable), in `meme/instagram/` (4:5) e `meme/tiktok/` (9:16).
+Battuta in bianco (setup) + lime (punch), su foto beach con gradiente in alto.
+
+| File | Battuta | Didascalia consigliata |
+|------|---------|------------------------|
+| `guardare` | «Vengo solo a guardare.» *3 set dopo.* | Ci sei cascato anche tu? 😅 Tagga chi non riesce a stare a guardare. #beachvolley #rivieraromagnola |
+| `ultima` | «L'ultima, giuro.» *3 partite fa.* | La partita più lunga è sempre "l'ultima". 🏐 #beachvolley #rimini |
+| `sabbia` | La sabbia in macchina: ancora a dicembre. | Chi gioca capisce. 🚗🏖️ #beachvolley #riccione |
+| `mattina` | Nessuno: — Io alle 8 al campo: 🏐 | Sveglia presto solo per il beach. Tu chi porti? #beachvolley #cervia |
+| `negato` | «Sono negato», dice. Poi ti stende di schiacciata. | Occhio ai "negati". 😏 #beachvolley #rivieraromagnola |
 
 ## Overlay per i reel (`reel-overlay/`)
 PNG **9:16 trasparenti** col testo-gancio, da trascinare **sopra la tua clip** in CapCut/InShot.
