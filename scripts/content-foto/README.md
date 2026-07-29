@@ -31,6 +31,14 @@ Ogni carosello = 5 slide: `{nome}-01` (cover) → `{nome}-05` (CTA).
 2. Carica le 5 slide (in ordine) da `instagram/` o `tiktok/` nel programmatore (es. **Metricool**).
 3. Incolla la didascalia, imposta data/ora, pubblica.
 
+## Slideshow reel senza montaggio (`slideshow/`)
+Non riesci a montare i video? Fai un **reel-slideshow** dalle foto: 7 foto pulite 9:16 (`foto-01…07.png`,
+senza testo) + una slide finale `outro.png` (CTA). Nessun editing.
+
+**Come:** in CapCut usa un **Template "photo slideshow"** (o su Instagram: Reel → galleria → più foto).
+Metti 3–5 `foto-*` + `outro.png`, aggiungi musica di tendenza, e sopra trascini l'**overlay-gancio**
+del giorno (`reel-overlay/rl-*.png`). Esporta → reel pronto.
+
 ## Meme / hot-take (`meme/`)
 Post pronti (solo testo, dark+lime) per i giorni "meme" del calendario, in `meme/instagram/` (4:5)
 e `meme/tiktok/` (9:16): `meme-punti · meme-wa · meme-rating · meme-vs`.
