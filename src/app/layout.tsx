@@ -19,10 +19,26 @@ const barlow = Barlow({
   display: "swap",
 })
 
+const TITLE = "SANDER — Beach volley in Riviera Romagnola"
+const DESCRIPTION =
+  "Trova partite, sfida i giocatori del tuo livello, scala le classifiche dei bagni e organizza tornei di beach volley in Riviera Romagnola (Rimini, Riccione, Cervia, Cesenatico)."
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://sander-two.vercel.app"),
-  title: "Sander - Beach Volley",
-  description: "Beach Volleyball Tournament Manager",
+  metadataBase: new URL("https://www.sanderbv.it"),
+  title: TITLE,
+  description: DESCRIPTION,
+  applicationName: "SANDER",
+  keywords: [
+    "beach volley",
+    "Riviera Romagnola",
+    "Rimini",
+    "Riccione",
+    "Cervia",
+    "Cesenatico",
+    "tornei beach volley",
+    "trova partite beach volley",
+    "classifica beach volley",
+  ],
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -32,15 +48,24 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   openGraph: {
-    title: "Sander - Beach Volley",
-    description: "Beach Volleyball Tournament Manager",
-    images: [{ url: "/icon-512.png", width: 512, height: 512, alt: "Sander" }],
-    siteName: "Sander",
+    type: "website",
+    locale: "it_IT",
+    url: "/",
+    siteName: "SANDER",
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "SANDER — Beach volley in Riviera Romagnola" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+    images: ["/og.png"],
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Sander",
+    title: "SANDER",
   },
 }
 
