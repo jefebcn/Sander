@@ -1,7 +1,9 @@
 {
-  "name": "Sander - Beach Volley",
-  "short_name": "Sander",
-  "description": "Beach Volleyball Tournament Manager",
+  "name": "SANDER — Beach Volley Riviera",
+  "short_name": "SANDER",
+  "description": "Trova partite, classifiche dei bagni e tornei di beach volley in Riviera Romagnola.",
+  "lang": "it",
+  "categories": ["sports", "lifestyle", "social"],
   "start_url": "/",
   "display": "standalone",
   "background_color": "#07090a",
