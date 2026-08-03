@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import { Trophy, Zap, Users, Crown } from "lucide-react"
 import { InstallButton } from "@/components/download/InstallButton"
+import { GooglePlayButton } from "@/components/download/GooglePlayButton"
 
 export const metadata: Metadata = {
   title: "Scarica SANDER — Beach Volley, la tua carta giocatore",
@@ -43,8 +44,9 @@ export default function DownloadPage() {
         </p>
       </div>
 
-      {/* Install CTA */}
-      <div className="mt-8">
+      {/* Install CTA — Android via Google Play (primary), iPhone via PWA */}
+      <div className="mt-8 space-y-3">
+        <GooglePlayButton />
         <InstallButton />
       </div>
 
@@ -70,7 +72,7 @@ export default function DownloadPage() {
       </div>
 
       <p className="mt-8 text-center text-xs text-[var(--muted-text)]">
-        Gratis · Nessun download dallo store necessario · Funziona su iPhone e Android
+        Gratis · Android su Google Play · iPhone come web app
       </p>
     </div>
   )
