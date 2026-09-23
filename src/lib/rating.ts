@@ -1,8 +1,16 @@
-"use server"
-
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { updateRating } from "@/lib/tournament/glicko2"
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  Session Glicko update — INTERNAL only (called from completeSession).       */
+/*                                                                             */
+/*  NOT a "use server" action: every exported async function in a "use server" */
+/*  file is a client-callable RPC endpoint. Exposed, this would let anyone     */
+/*  pass an arbitrary sessionId and re-apply rating deltas in a loop,          */
+/*  corrupting ratings, RatingHistory, divisions and season standings.         */
+/*  Authorisation and idempotency are enforced by the caller.                  */
+/* ────────────────────────────────────────────────────────────────────────── */
 
 /**
  * Dampening factor for friendly sessions vs tournaments.

@@ -8,8 +8,10 @@ import {
   EditSessionSchema,
   AssignTeamSchema,
   SubmitSessionMatchScoreSchema,
+  CompleteSessionSchema,
+  LiveScoreSchema,
 } from "@/lib/validators/session.schema"
-import { updateGlickoAfterSession } from "@/actions/rating"
+import { updateGlickoAfterSession } from "@/lib/rating"
 import { isAdminEmail } from "@/lib/isAdmin"
 import { generateKOTBSchedule, applyMatchResult, rankStandings } from "@/lib/tournament/kotb"
 import type { StandingEntry } from "@/lib/tournament/types"
@@ -140,67 +142,89 @@ async function isSessionMember(sessionId: string, playerId: string): Promise<boo
 export async function saveLiveScore(sessionId: string, state: unknown) {
   const player = await getCurrentPlayer()
   if (!player) throw new Error("Non autenticato")
-  if (state === null || typeof state !== "object") throw new Error("Stato non valido")
+  // Validate the shape, not just "is an object": this row is served to every
+  // polling device, so an arbitrary payload would bloat the row and break the
+  // board that hydrates from it.
+  const parsed = LiveScoreSchema.safeParse(state)
+  if (!parsed.success) throw new Error("Stato del tabellone non valido")
   if (!(await isSessionMember(sessionId, player.id))) throw new Error("Non fai parte di questa partita")
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await db.session.update({ where: { id: sessionId }, data: { liveScore: state as any } })
+  await db.session.update({ where: { id: sessionId }, data: { liveScore: parsed.data } })
   return { ok: true }
 }
 
 // Read the current scoreboard state (for resume on load + polling sync between devices).
+// Returns null on anything that no longer matches the expected shape, so an old or
+// corrupted row can never crash the board.
 export async function getLiveScore(sessionId: string) {
   const player = await getCurrentPlayer()
   if (!player) return null
   if (!(await isSessionMember(sessionId, player.id))) return null
   const s = await db.session.findUnique({ where: { id: sessionId }, select: { liveScore: true } })
-  return s?.liveScore ?? null
+  if (!s?.liveScore) return null
+  const parsed = LiveScoreSchema.safeParse(s.liveScore)
+  return parsed.success ? parsed.data : null
 }
 
 export async function joinSession(sessionId: string) {
   const player = await getCurrentPlayer()
   if (!player) throw new Error("Non autenticato")
 
-  const session = await db.session.findUniqueOrThrow({
-    where: { id: sessionId },
-    include: { _count: { select: { participants: true } } },
-  })
-
-  if (session.status === "COMPLETED" || session.status === "CANCELLED") {
-    throw new Error("La sessione non è aperta")
-  }
-  if (session._count.participants >= session.maxPlayers) {
-    throw new Error("Sessione al completo")
-  }
-
-  // SC payment: atomic conditional deduction (no check-then-write race → no
-  // double-spend if two joins land at once).
-  if (session.paymentType === "SC") {
-    const scCost = session.quotaAmount ?? 0
-    if (scCost > 0) {
-      const paid = await db.player.updateMany({
-        where: { id: player.id, sanderCredits: { gte: scCost } },
-        data: { sanderCredits: { decrement: scCost } },
-      })
-      if (paid.count === 0) {
-        const bal = await db.player.findUnique({
-          where: { id: player.id },
-          select: { sanderCredits: true },
+  // One serialisable transaction around capacity check + payment + seat:
+  // previously the count was read before the insert, so two joins landing at
+  // once could both pass and overflow maxPlayers, and credits were debited
+  // before the insert, so a failed insert lost them with no rollback.
+  try {
+    await db.$transaction(
+      async (tx) => {
+        const session = await tx.session.findUniqueOrThrow({
+          where: { id: sessionId },
+          include: { _count: { select: { participants: true } } },
         })
-        throw new Error(
-          `Crediti insufficienti. Ti servono ${scCost} SC (ne hai ${bal?.sanderCredits ?? 0}).`,
-        )
-      }
+
+        if (session.status === "COMPLETED" || session.status === "CANCELLED") {
+          throw new Error("La sessione non è aperta")
+        }
+        if (session._count.participants >= session.maxPlayers) {
+          throw new Error("Sessione al completo")
+        }
+
+        const scCost = session.paymentType === "SC" ? (session.quotaAmount ?? 0) : 0
+
+        if (scCost > 0) {
+          const paid = await tx.player.updateMany({
+            where: { id: player.id, sanderCredits: { gte: scCost } },
+            data: { sanderCredits: { decrement: scCost } },
+          })
+          if (paid.count === 0) {
+            const bal = await tx.player.findUnique({
+              where: { id: player.id },
+              select: { sanderCredits: true },
+            })
+            throw new Error(
+              `Crediti insufficienti. Ti servono ${scCost} SC (ne hai ${bal?.sanderCredits ?? 0}).`,
+            )
+          }
+        }
+
+        // Record what was actually paid so leaving refunds exactly this amount.
+        await tx.sessionParticipant.create({
+          data: { sessionId, playerId: player.id, paidCredits: scCost },
+        })
+
+        // Flip to FULL if now at capacity
+        if (session._count.participants + 1 >= session.maxPlayers) {
+          await tx.session.update({ where: { id: sessionId }, data: { status: "FULL" } })
+        }
+      },
+      { isolationLevel: "Serializable" },
+    )
+  } catch (e) {
+    // P2034 = write conflict / deadlock: someone took the last seat at the very
+    // same moment. Surface something actionable instead of a database error.
+    if (e && typeof e === "object" && "code" in e && e.code === "P2034") {
+      throw new Error("Posto appena occupato, riprova.")
     }
-  }
-
-  await db.sessionParticipant.create({
-    data: { sessionId, playerId: player.id },
-  })
-
-  // Flip to FULL if now at capacity
-  const newCount = session._count.participants + 1
-  if (newCount >= session.maxPlayers) {
-    await db.session.update({ where: { id: sessionId }, data: { status: "FULL" } })
+    throw e
   }
 
   revalidatePath(`/sessions/${sessionId}`)
@@ -250,30 +274,37 @@ export async function leaveSession(sessionId: string) {
   const player = await getCurrentPlayer()
   if (!player) throw new Error("Non autenticato")
 
-  await db.sessionParticipant.delete({
-    where: { sessionId_playerId: { sessionId, playerId: player.id } },
-  })
+  let wasFull = false
 
-  const session = await db.session.findUnique({
-    where: { id: sessionId },
-    select: { status: true, paymentType: true, quotaAmount: true },
-  })
+  await db.$transaction(async (tx) => {
+    // Delete and read back the amount actually paid in one atomic step: the
+    // delete throws if the row is already gone, so a double leave cannot refund
+    // twice.
+    const participant = await tx.sessionParticipant.delete({
+      where: { sessionId_playerId: { sessionId, playerId: player.id } },
+      select: { paidCredits: true },
+    })
 
-  // Refund SC if session not yet completed
-  if (session?.paymentType === "SC" && session.status !== "COMPLETED") {
-    const scCost = session.quotaAmount ?? 0
-    if (scCost > 0) {
-      await db.player.update({
+    const session = await tx.session.findUnique({
+      where: { id: sessionId },
+      select: { status: true },
+    })
+    wasFull = session?.status === "FULL"
+
+    // Refund exactly what this player paid — never a flat quota, or anyone the
+    // organiser added for free could farm credits by joining and leaving.
+    if (participant.paidCredits > 0 && session?.status !== "COMPLETED") {
+      await tx.player.update({
         where: { id: player.id },
-        data: { sanderCredits: { increment: scCost } },
+        data: { sanderCredits: { increment: participant.paidCredits } },
       })
     }
-  }
 
-  // Re-open if was FULL
-  if (session?.status === "FULL") {
-    await db.session.update({ where: { id: sessionId }, data: { status: "OPEN" } })
-  }
+    // Re-open if was FULL
+    if (wasFull) {
+      await tx.session.update({ where: { id: sessionId }, data: { status: "OPEN" } })
+    }
+  })
 
   revalidatePath(`/sessions/${sessionId}`)
   revalidatePath("/sessions")
@@ -364,6 +395,10 @@ export async function completeSession(
   sessionId: string,
   sets?: { teamAScore: number; teamBScore: number }[]
 ) {
+  // Validate for its side effect: the schema is non-transforming, so the
+  // parameters below stay usable as-is once this call has not thrown.
+  CompleteSessionSchema.parse({ sessionId, sets })
+
   const player = await getCurrentPlayer()
   if (!player) throw new Error("Non autenticato")
 
@@ -377,7 +412,17 @@ export async function completeSession(
     throw new Error("Solo chi partecipa può completare la partita")
   }
 
-  await db.session.update({ where: { id: sessionId }, data: { status: "COMPLETED" } })
+  // Idempotency guard: claim the session atomically. A double tap, a retry, or a
+  // second participant closing the same match must not re-apply sets, career
+  // stats, XP and rating deltas — only the call that flips the status proceeds.
+  const claimed = await db.session.updateMany({
+    where: { id: sessionId, status: { not: "COMPLETED" } },
+    data: { status: "COMPLETED" },
+  })
+  if (claimed.count === 0) {
+    revalidatePath(`/sessions/${sessionId}`)
+    return
+  }
 
   // Multi-match mode: aggregate win/loss from SessionMatch results
   if (session.matchMode) {

@@ -4,6 +4,7 @@ import type { Metadata } from "next"
 import { getSession } from "@/actions/sessions"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { LiveScoreboard } from "@/components/scoreboard/LiveScoreboard"
+import { LiveScoreSchema } from "@/lib/validators/session.schema"
 
 export const metadata: Metadata = {
   title: "Segna dal vivo — SANDER",
@@ -45,11 +46,15 @@ export default async function ScoreboardPage({ searchParams }: Props) {
       const hasA = session.participants.some((p) => p.team === 0)
       const hasB = session.participants.some((p) => p.team === 1)
       if (hasA && hasB) {
+        // Validate the persisted board instead of casting it: a row written by an
+        // older version (or anything malformed) must degrade to a fresh board,
+        // never crash the page.
+        const saved = LiveScoreSchema.safeParse(session.liveScore)
         return (
           <LiveScoreboard
             session={{ id: session.id }}
             initialNames={[teamName(session.participants, 0), teamName(session.participants, 1)]}
-            initialState={(session.liveScore as Parameters<typeof LiveScoreboard>[0]["initialState"]) ?? null}
+            initialState={saved.success ? saved.data : null}
           />
         )
       }
