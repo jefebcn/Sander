@@ -15,12 +15,13 @@ export default async function ProfilePage() {
   const existing = await db.player.findUnique({
     where: { userId: session.user.id },
     select: {
-      firstName:   true,
-      lastName:    true,
-      birthDate:   true,
-      gender:      true,
-      nationality: true,
-      avatarUrl:   true,
+      firstName:     true,
+      lastName:      true,
+      birthDate:     true,
+      gender:        true,
+      nationality:   true,
+      avatarUrl:     true,
+      preferredRole: true,
     },
   })
 
@@ -34,6 +35,9 @@ export default async function ProfilePage() {
         gender:      (existing.gender ?? "") as string,
         nationality: existing.nationality ?? "",
         avatarUrl:   existing.avatarUrl  ?? null,
+        // Without this, editing the profile showed no role selected and the
+        // confirm button stayed disabled until you picked one again.
+        preferredRole: existing.preferredRole,
       }
     : undefined
 

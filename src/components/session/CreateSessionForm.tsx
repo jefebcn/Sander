@@ -32,10 +32,20 @@ interface Presets {
   matchMode: boolean
 }
 
-function nowIso() {
+/**
+ * Default start time for the date picker: the next full hour, in LOCAL time.
+ *
+ * Two bugs used to live here. `toISOString()` converts to UTC, so a
+ * `datetime-local` input was prefilled with the wrong hour for anyone not on
+ * UTC. And defaulting to "now" meant a single tap produced a match that was
+ * already in the past the moment it was saved.
+ */
+function defaultStartIso() {
   const d = new Date()
-  d.setSeconds(0, 0)
-  return d.toISOString().slice(0, 16)
+  d.setMinutes(0, 0, 0)
+  d.setHours(d.getHours() + 1)
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 function formatDateLabel(iso: string) {
@@ -83,7 +93,7 @@ export function CreateSessionForm({ presets }: { presets?: Presets }) {
     (presets?.format as Format | undefined) ?? "TWO_VS_TWO",
   )
   const [location, setLocation] = useState(presets?.location ?? "")
-  const [date, setDate] = useState(nowIso)
+  const [date, setDate] = useState(defaultStartIso)
   const [paymentType, setPaymentType] = useState<PaymentType>(
     (presets?.paymentType as PaymentType | undefined) ?? "FREE",
   )
@@ -354,15 +364,22 @@ export function CreateSessionForm({ presets }: { presets?: Presets }) {
 
       <button
         type="submit"
-        disabled={isPending}
+        disabled={isPending || !location.trim()}
         className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-bold text-black transition-all active:scale-[0.98] disabled:opacity-60"
       >
         {isPending ? (
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent" />
         ) : (
-          <>Crea Sessione <ChevronRight className="h-5 w-5" aria-hidden="true" /></>
+          <>Crea Partita <ChevronRight className="h-5 w-5" aria-hidden="true" /></>
         )}
       </button>
+      {!location.trim() && (
+        /* Without this the form submitted happily with no venue, producing
+           unfindable matches nobody could show up to. */
+        <p className="text-center text-sm text-[var(--muted-text)]">
+          Indica il luogo per creare la partita
+        </p>
+      )}
     </form>
   )
 }

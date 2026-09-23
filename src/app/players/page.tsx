@@ -47,9 +47,32 @@ export default async function PlayersPage({ searchParams }: Props) {
         )}
       </div>
 
-      {/* ── Discover: season + weekly + territories ───────────── */}
+      {/* ── Discover ──────────────────────────────────────────────
+           Order matters: five 150px cards don't fit a phone, so whatever sits
+           last is effectively invisible. "Compagni" and "Feed" — the two
+           community surfaces with no other entry point — come first. */}
       <div className="relative pt-3">
         <div className="flex gap-2 overflow-x-auto px-4" style={{ scrollbarWidth: "none" }}>
+        <Link
+          href="/trova"
+          className="flex w-[150px] shrink-0 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
+        >
+          <UserPlus className="h-5 w-5 text-[var(--live)]" />
+          <div className="min-w-0">
+            <p className="text-sm font-black text-white leading-tight">Compagni</p>
+            <p className="truncate text-[0.65rem] text-[var(--muted-text)]">Al tuo livello</p>
+          </div>
+        </Link>
+        <Link
+          href="/feed"
+          className="flex w-[150px] shrink-0 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
+        >
+          <Activity className="h-5 w-5 text-[var(--accent)]" />
+          <div className="min-w-0">
+            <p className="text-sm font-black text-white leading-tight">Feed</p>
+            <p className="truncate text-[0.65rem] text-[var(--muted-text)]">Attività</p>
+          </div>
+        </Link>
         <Link
           href="/stagione"
           className="flex w-[150px] shrink-0 items-center gap-2 rounded-2xl px-4 py-3 active:opacity-80"
@@ -82,26 +105,6 @@ export default async function PlayersPage({ searchParams }: Props) {
           <div className="min-w-0">
             <p className="text-sm font-black text-white leading-tight">Re dei Bagni</p>
             <p className="truncate text-[0.65rem] text-[var(--muted-text)]">Campi</p>
-          </div>
-        </Link>
-        <Link
-          href="/trova"
-          className="flex w-[150px] shrink-0 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
-        >
-          <UserPlus className="h-5 w-5 text-[var(--live)]" />
-          <div className="min-w-0">
-            <p className="text-sm font-black text-white leading-tight">Compagni</p>
-            <p className="truncate text-[0.65rem] text-[var(--muted-text)]">Al tuo livello</p>
-          </div>
-        </Link>
-        <Link
-          href="/feed"
-          className="flex w-[150px] shrink-0 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
-        >
-          <Activity className="h-5 w-5 text-[var(--accent)]" />
-          <div className="min-w-0">
-            <p className="text-sm font-black text-white leading-tight">Feed</p>
-            <p className="truncate text-[0.65rem] text-[var(--muted-text)]">Attività</p>
           </div>
         </Link>
         </div>

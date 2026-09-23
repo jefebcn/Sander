@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic"
 
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { ArrowUpRight, MapPin, Calendar, Settings, ShieldCheck, Users, Trophy, Pencil } from "lucide-react"
+import { ArrowUpRight, MapPin, Calendar, Settings, ShieldCheck, Users, Trophy, Pencil, MessageCircle } from "lucide-react"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { SanderCardFut, playerToCardData } from "@/components/player/SanderCardFut"
@@ -448,6 +448,15 @@ export default async function ProfilePage({ searchParams }: Props) {
           >
             <ArrowUpRight className="h-4 w-4" />
             Come funzionano i parametri?
+          </Link>
+          {/* Messages were reachable only from the Home bell, so reading a reply
+              meant going back Home from wherever you were. */}
+          <Link
+            href="/messaggi"
+            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-semibold text-[var(--foreground)]"
+          >
+            <MessageCircle className="h-4 w-4 text-[var(--accent)]" />
+            Messaggi
           </Link>
           <Link
             href="/onboarding/profile"

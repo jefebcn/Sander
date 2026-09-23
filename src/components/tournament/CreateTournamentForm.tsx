@@ -429,7 +429,7 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
                   <div className="flex-1">
                     <p className="font-semibold">{player.name}</p>
                     <p className="text-xs text-[var(--muted-text)]">
-                      {player.preferredRole === "BLOCKER" ? "Attaccante" : "Difensore"}
+                      {player.preferredRole === "BLOCKER" ? "Muro" : "Difensore"}
                     </p>
                   </div>
                 </button>

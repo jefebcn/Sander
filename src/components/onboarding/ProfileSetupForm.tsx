@@ -186,7 +186,17 @@ interface InitialData {
   gender:      string
   nationality: string
   avatarUrl:   string | null
+  preferredRole?: Role
 }
+
+type Role = "BLOCKER" | "DEFENDER"
+
+/** One name per role across the whole app. It used to be "Attaccante" in the
+    player form and "Muro" in /trova for the very same value. */
+const ROLES: { value: Role; label: string; hint: string }[] = [
+  { value: "BLOCKER",  label: "Muro",      hint: "A rete, chiudi gli attacchi" },
+  { value: "DEFENDER", label: "Difensore", hint: "Dietro, recuperi tutto" },
+]
 
 export function ProfileSetupForm({ initialData }: { initialData?: InitialData }) {
   const router = useRouter()
@@ -202,6 +212,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
   )
   const [nationality, setNationality] = useState(initialData?.nationality ?? "")
   const [nationalitySearch, setNationalitySearch] = useState("")
+  const [role, setRole] = useState<Role | "">(initialData?.preferredRole ?? "")
   const [error, setError] = useState<string | null>(null)
 
   const [genderOpen, setGenderOpen] = useState(false)
@@ -213,12 +224,9 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
     c.toLowerCase().includes(nationalitySearch.toLowerCase()),
   )
 
-  const isValid =
-    firstName.trim().length >= 1 &&
-    lastName.trim().length >= 1 &&
-    birthDate.length === 10 &&
-    gender !== "" &&
-    nationality !== ""
+  // Only what we genuinely need to create a player card. Date of birth, gender
+  // and nationality used to be mandatory here and cost us newcomers.
+  const isValid = firstName.trim().length >= 1 && role !== ""
 
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -265,10 +273,11 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
         const avatarUrl = await uploadAvatar()
         await saveProfile({
           firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          birthDate,
-          gender: gender as Gender,
-          nationality,
+          preferredRole: role as Role,
+          lastName: lastName.trim() || undefined,
+          birthDate: birthDate || undefined,
+          gender: gender || undefined,
+          nationality: nationality || undefined,
           avatarUrl,
         })
         localStorage.setItem("sander_onboarded", "1")
@@ -285,16 +294,30 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
     <div className="fixed inset-0 z-[200] flex flex-col overflow-y-auto bg-[#181818]">
       {/* Header */}
       <div
-        className="flex items-center px-4 pt-14 pb-2"
+        className="flex items-center gap-3 px-4 pt-14 pb-2"
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 3.5rem)" }}
       >
-        <button
-          onClick={() => initialData ? router.back() : router.push("/auth/signin")}
-          aria-label="Indietro"
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2a2a2a] text-white transition-colors active:bg-[#333]"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
+        {/* Only when editing an existing profile. For a brand-new user this
+            button pushed to /auth/signin — an unlabelled way out of the app. */}
+        {initialData && (
+          <button
+            onClick={() => router.back()}
+            aria-label="Indietro"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#2a2a2a] text-white transition-colors active:bg-[#333]"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+        )}
+        <div className="min-w-0">
+          <h1 className="text-2xl font-black leading-tight text-white">
+            {initialData ? "Il tuo profilo" : "Crea la tua carta"}
+          </h1>
+          <p className="mt-0.5 text-sm text-[var(--muted-text)]">
+            {initialData
+              ? "Aggiorna i tuoi dati quando vuoi."
+              : "Bastano nome e ruolo: 10 secondi e sei in campo."}
+          </p>
+        </div>
       </div>
 
       {/* Avatar */}
@@ -346,34 +369,79 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
             isInput
             onInputChange={setFirstName}
           />
-          <FormRow
-            label="Cognome"
-            value={lastName}
-            placeholder="Inserisci il tuo cognome"
-            isInput
-            onInputChange={setLastName}
-          />
-          <FormRow
-            label="Data di nascita"
-            value={birthDate}
-            placeholder="Scegli la data"
-            isInput
-            inputType="date"
-            onInputChange={setBirthDate}
-          />
-          <FormRow
-            label="Genere"
-            value={gender}
-            placeholder="Seleziona genere"
-            onClick={() => setGenderOpen(true)}
-          />
-          <FormRow
-            label="Nazionalità"
-            value={countryDisplay(nationality)}
-            placeholder="Seleziona nazionalità"
-            onClick={() => setNationalityOpen(true)}
-          />
         </div>
+
+        {/* Role: the whole "complementary role" matching in /trova is built on
+            this, and the main onboarding never asked for it. */}
+        <div className="border-t border-[#2a2a2a] px-5 py-4">
+          <p className="text-base font-bold text-white">In campo come giochi?</p>
+          <p className="mt-0.5 text-sm text-[var(--muted-text)]">
+            Ci serve per trovarti compagni complementari.
+          </p>
+          <div className="mt-3 flex gap-2">
+            {ROLES.map((r) => (
+              <button
+                key={r.value}
+                type="button"
+                onClick={() => setRole(r.value)}
+                aria-pressed={role === r.value}
+                className={cn(
+                  "flex min-h-[3.5rem] flex-1 flex-col items-center justify-center rounded-2xl px-3 transition-colors",
+                  role === r.value
+                    ? "bg-[var(--accent)] text-black"
+                    : "bg-[#2a2a2a] text-white",
+                )}
+              >
+                <span className="text-base font-black">{r.label}</span>
+                <span
+                  className={cn(
+                    "text-[0.7rem]",
+                    role === r.value ? "text-black/70" : "text-[var(--muted-text)]",
+                  )}
+                >
+                  {r.hint}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Everything below was mandatory before showing any content. */}
+        <details className="border-t border-[#2a2a2a]">
+          <summary className="cursor-pointer px-5 py-4 text-base font-bold text-white">
+            Completa il profilo{" "}
+            <span className="font-normal text-[var(--muted-text)]">(opzionale)</span>
+          </summary>
+          <div className="border-t border-[#2a2a2a]">
+            <FormRow
+              label="Cognome"
+              value={lastName}
+              placeholder="Inserisci il tuo cognome"
+              isInput
+              onInputChange={setLastName}
+            />
+            <FormRow
+              label="Data di nascita"
+              value={birthDate}
+              placeholder="Scegli la data"
+              isInput
+              inputType="date"
+              onInputChange={setBirthDate}
+            />
+            <FormRow
+              label="Genere"
+              value={gender}
+              placeholder="Seleziona genere"
+              onClick={() => setGenderOpen(true)}
+            />
+            <FormRow
+              label="Nazionalità"
+              value={countryDisplay(nationality)}
+              placeholder="Seleziona nazionalità"
+              onClick={() => setNationalityOpen(true)}
+            />
+          </div>
+        </details>
 
         {error && (
           <p className="mx-5 mt-4 rounded-xl bg-[var(--danger)]/15 px-4 py-3 text-sm text-[var(--danger)]">

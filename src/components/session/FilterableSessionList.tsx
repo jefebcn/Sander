@@ -61,7 +61,7 @@ export function FilterableSessionList({ sessions, isLoggedIn = false }: Filterab
       {/* Session list */}
       <div className="space-y-5 px-4 flex-1">
         {upcoming.length > 0 && (
-          <section aria-label="Sessioni in programma">
+          <section aria-label="Partite in programma">
             <div className="mb-2 flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5 text-[var(--accent)]" />
               <p className="text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
@@ -77,9 +77,9 @@ export function FilterableSessionList({ sessions, isLoggedIn = false }: Filterab
         )}
 
         {open.length > 0 && (
-          <section aria-label="Sessioni aperte">
+          <section aria-label="Partite da chiudere">
             <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
-              Aperte
+              Da chiudere
             </p>
             <div className="space-y-2">
               {open.map((s) => (
@@ -90,7 +90,7 @@ export function FilterableSessionList({ sessions, isLoggedIn = false }: Filterab
         )}
 
         {completed.length > 0 && (
-          <section aria-label="Sessioni completate">
+          <section aria-label="Partite concluse">
             <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
               Recenti
             </p>
@@ -107,7 +107,7 @@ export function FilterableSessionList({ sessions, isLoggedIn = false }: Filterab
             <Volleyball className="h-12 w-12 opacity-20" />
             {format ? (
               /* Filter returned nothing — not a cold-start, keep it simple */
-              <p className="text-[var(--muted-text)]">Nessuna sessione per questo formato</p>
+              <p className="text-[var(--muted-text)]">Nessuna partita per questo formato</p>
             ) : (
               /* Cold-start: guide the newcomer instead of dead-ending */
               <>

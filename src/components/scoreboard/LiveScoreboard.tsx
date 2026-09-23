@@ -204,7 +204,7 @@ export function LiveScoreboard({ session, initialNames, initialState }: Props) {
           <p className="mt-1 text-sm text-[var(--muted-text)]">
             {sessionMode
               ? "A fine partita salvi il risultato: rating e classifiche si aggiornano da soli."
-              : "Tabellone da campo. Tocca il lato di una squadra per il punto."}
+              : "Tabellone da campo, solo per contare i punti. Il risultato non viene registrato: per farlo apri il tabellone dalla tua partita."}
           </p>
         </div>
 

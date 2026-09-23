@@ -196,26 +196,6 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
           })()}
         </div>
 
-        {/* Share + QR code */}
-        {(session.status === "OPEN" || session.status === "FULL") && (
-          <div className="space-y-2">
-            <ShareButton
-              path={`/sessions/${session.id}`}
-              title={session.title}
-              text={`Unisciti a "${session.title}" su SANDER 🏐`}
-              fullWidth
-            />
-            <WhatsAppShareButton
-              path={`/sessions/${session.id}`}
-              text={`Unisciti a "${session.title}" a ${session.location} su SANDER 🏐`}
-            />
-            <QRCodeButton
-              path={`/sessions/${session.id}`}
-              title={session.title}
-            />
-          </div>
-        )}
-
         {/* CTA per utenti non autenticati */}
         {!currentPlayer && (session.status === "OPEN" || session.status === "FULL") && (
           <Link
@@ -251,11 +231,34 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
           currentPlayerId={currentPlayer?.id ?? null}
         />
 
+        {/* Share + QR — below the join action on purpose: sharing is what the
+            organiser does, while someone arriving from a link wants "Unisciti"
+            first, not three share buttons before it. */}
+        {(session.status === "OPEN" || session.status === "FULL") && (
+          <div className="space-y-2">
+            <ShareButton
+              path={`/sessions/${session.id}`}
+              title={session.title}
+              text={`Unisciti a "${session.title}" su SANDER 🏐`}
+              fullWidth
+            />
+            <WhatsAppShareButton
+              path={`/sessions/${session.id}`}
+              text={`Unisciti a "${session.title}" a ${session.location} su SANDER 🏐`}
+            />
+            <QRCodeButton
+              path={`/sessions/${session.id}`}
+              title={session.title}
+            />
+          </div>
+        )}
+
         {/* Group chat — coordinate this game (participants only) */}
         {isParticipant && <SessionChat sessionId={session.id} />}
 
-        {/* Live scoreboard — organizer, standard session, teams assigned */}
-        {isOrganizer &&
+        {/* Live scoreboard — anyone playing this match (the board itself already
+            accepts any participant, and on the sand whoever is nearest scores) */}
+        {(isOrganizer || isParticipant) &&
           !session.matchMode &&
           (session.status === "OPEN" || session.status === "FULL") &&
           session.participants.some((p) => p.team === 0) &&

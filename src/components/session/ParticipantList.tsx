@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import Link from "next/link"
 import { UserPlus, UserMinus, Search, User, X, UserX } from "lucide-react"
 import { toast } from "sonner"
 import { joinSession, leaveSession, assignTeam, cancelSession, removeGuestFromSession } from "@/actions/sessions"
@@ -52,7 +53,7 @@ export function ParticipantList({ session, participants, currentPlayerId }: Part
     startTransition(async () => {
       try {
         await joinSession(session.id)
-        toast.success("Sei entrato nella sessione!")
+        toast.success("Sei entrato nella partita!")
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Errore")
       }
@@ -63,7 +64,7 @@ export function ParticipantList({ session, participants, currentPlayerId }: Part
     startTransition(async () => {
       try {
         await leaveSession(session.id)
-        toast.success("Hai lasciato la sessione")
+        toast.success("Hai lasciato la partita")
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Errore")
       }
@@ -84,7 +85,7 @@ export function ParticipantList({ session, participants, currentPlayerId }: Part
     startTransition(async () => {
       try {
         await cancelSession(session.id)
-        toast.success("Sessione annullata")
+        toast.success("Partita annullata")
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Errore")
       }
@@ -185,8 +186,26 @@ export function ParticipantList({ session, participants, currentPlayerId }: Part
               className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-semibold text-[var(--muted-text)] transition-all active:scale-[0.98] disabled:opacity-50"
             >
               <UserMinus className="h-5 w-5" aria-hidden="true" />
-              Lascia sessione
+              Lascia partita
             </button>
+          )}
+          {/* Nothing was rendered here before: someone arriving on a full match
+              from a shared link saw no button and no explanation at all. */}
+          {!isParticipant && !canJoin && (
+            <div className="rounded-2xl bg-[var(--surface-2)] px-4 py-4 text-center">
+              <p className="text-base font-bold text-white">Posti esauriti</p>
+              <p className="mt-1 text-sm text-[var(--muted-text)]">
+                Questa partita è al completo.
+              </p>
+              <Link
+                href="/sessions"
+                className="mt-3 flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-black text-black"
+                style={{ background: "var(--accent)" }}
+              >
+                <Search className="h-5 w-5" aria-hidden="true" />
+                Trova un&apos;altra partita
+              </Link>
+            </div>
           )}
         </div>
       )}
@@ -212,7 +231,7 @@ export function ParticipantList({ session, participants, currentPlayerId }: Part
             disabled={isPending}
             className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--danger)]/15 font-semibold text-[var(--danger)] transition-all active:scale-[0.98] disabled:opacity-40"
           >
-            Annulla sessione
+            Annulla partita
           </button>
         </div>
       )}

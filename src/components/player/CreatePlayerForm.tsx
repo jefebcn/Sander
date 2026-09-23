@@ -57,7 +57,7 @@ export function CreatePlayerForm() {
               },
               {
                 value: "BLOCKER" as const,
-                label: "Attaccante",
+                label: "Muro",
                 icon: Swords,
                 color: "blue",
               },

@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic"
 
+import Link from "next/link"
 import { Coins } from "lucide-react"
 import { listPlayers } from "@/actions/players"
 import { PageHeader } from "@/components/layout/PageHeader"
@@ -50,10 +51,21 @@ export default async function NewTournamentPage() {
                 <span className={canAfford ? "font-bold text-[var(--accent)]" : "font-bold text-red-400"}>
                   {credits} SC
                 </span>
-                {!canAfford && " — ricarica dal profilo per continuare"}
               </p>
             </div>
           </div>
+          {/* Before this the page said "ricarica dal profilo" in prose, with no
+              link: you followed the app's own CTA and then had to go hunting. */}
+          {!canAfford && (
+            <Link
+              href="/profile"
+              className="mt-2 flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-black text-black"
+              style={{ background: "var(--accent)" }}
+            >
+              <Coins className="h-5 w-5" aria-hidden="true" />
+              Ricarica i crediti
+            </Link>
+          )}
         </div>
       )}
 

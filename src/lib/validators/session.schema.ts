@@ -2,7 +2,8 @@ import { z } from "zod"
 
 export const CreateSessionSchema = z.object({
   title: z.string().max(80).optional(),
-  location: z.string().max(100).default(""),
+  // Required: a match with no venue cannot be found or shown up to.
+  location: z.string().trim().min(2, "Indica il luogo della partita").max(100),
   date: z.coerce.date(),
   format: z.enum(["TWO_VS_TWO", "THREE_VS_THREE", "FOUR_VS_FOUR"]),
   courtCost: z.number().int().min(0).optional(),
