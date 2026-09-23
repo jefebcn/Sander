@@ -306,6 +306,8 @@ model Match {
   players MatchPlayer[]
 
   @@index([tournamentId])
+  // Podio mensile e raccomandazioni filtrano su questi due, non su tournamentId.
+  @@index([isCompleted, updatedAt])
   @@map("matches")
 }
 
@@ -380,6 +382,7 @@ model Session {
   chatThread     ChatThread?
 
   @@index([status, date])
+  @@index([status, updatedAt])
   @@map("sessions")
 }
 
@@ -397,6 +400,7 @@ model SessionMatch {
   players SessionMatchPlayer[]
 
   @@index([sessionId])
+  @@index([isCompleted, updatedAt])
   @@map("session_matches")
 }
 

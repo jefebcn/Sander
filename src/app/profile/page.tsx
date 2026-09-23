@@ -96,10 +96,12 @@ function buildPromoCode(id: string): string {
   return `${clean.slice(2, 6)}-${clean.slice(6, 10)}`
 }
 
+// Same wording as SessionStatusBadge: "Completa" next to "Completata" read as
+// two ways of saying finished, when one of them means "no seats left".
 const STATUS_LABELS: Record<string, string> = {
   OPEN: "Aperta",
-  FULL: "Completa",
-  COMPLETED: "Completata",
+  FULL: "Posti esauriti",
+  COMPLETED: "Conclusa",
   CANCELLED: "Annullata",
 }
 
@@ -484,7 +486,7 @@ export default async function ProfilePage({ searchParams }: Props) {
               Aiuta a mantenere l&apos;app attiva e a finanziare nuovi tornei e aggiornamenti.
             </p>
             <div
-              className="flex min-h-[2.5rem] w-full items-center justify-center rounded-xl font-bold text-sm text-black"
+              className="flex min-h-[3.5rem] w-full items-center justify-center rounded-xl font-bold text-sm text-black"
               style={{ background: "var(--accent)" }}
             >
               Dona su Ko-fi →
@@ -703,7 +705,7 @@ export default async function ProfilePage({ searchParams }: Props) {
           {/* DB error display */}
           {adminError && (
             <div className="rounded-2xl px-4 py-3 text-xs font-mono break-all"
-              style={{ background: "#ef444420", color: "#ef4444" }}>
+              style={{ background: "color-mix(in srgb, var(--danger) 13%, transparent)", color: "var(--danger)" }}>
               {adminError}
             </div>
           )}

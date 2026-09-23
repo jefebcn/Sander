@@ -213,7 +213,7 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
         {isOrganizer && (session.status === "OPEN" || session.status === "FULL") && (
           <Link
             href={`/sessions/${session.id}/edit`}
-            className="flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-bold text-white transition-opacity active:opacity-80"
+            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-bold text-white transition-opacity active:opacity-80"
           >
             <Pencil className="h-4 w-4 text-[var(--accent)]" />
             Modifica partita

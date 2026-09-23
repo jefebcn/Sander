@@ -75,7 +75,7 @@ export function CompleteSessionForm({ sessionId, participants }: Props) {
         </p>
 
         {unassigned.length > 0 && (
-          <div className="rounded-xl p-3 text-sm" style={{ background: "rgba(239,68,68,0.12)", color: "#ef4444" }}>
+          <div className="rounded-xl p-3 text-sm" style={{ background: "color-mix(in srgb, var(--danger) 12%, transparent)", color: "var(--danger)" }}>
             ⚠ {unassigned.length} giocator{unassigned.length > 1 ? "i" : "e"} senza squadra assegnata —
             i punteggi non aggiorneranno le statistiche.
           </div>
@@ -102,7 +102,7 @@ export function CompleteSessionForm({ sessionId, participants }: Props) {
 
         <button
           onClick={() => setStep("scores")}
-          className="flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-xl font-bold text-sm text-black"
+          className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-xl font-bold text-sm text-black"
           style={{ background: "var(--accent)" }}
         >
           Inserisci punteggio →
@@ -110,7 +110,7 @@ export function CompleteSessionForm({ sessionId, participants }: Props) {
         <button
           onClick={() => handleComplete(false)}
           disabled={loading}
-          className="flex min-h-[2.5rem] w-full items-center justify-center rounded-xl text-sm font-semibold text-[var(--muted-text)]"
+          className="flex min-h-[3.5rem] w-full items-center justify-center rounded-xl text-sm font-semibold text-[var(--muted-text)]"
           style={{ background: "var(--surface-2)" }}
         >
           {loading ? "..." : "Completa senza punteggio"}
@@ -176,7 +176,7 @@ export function CompleteSessionForm({ sessionId, participants }: Props) {
       <button
         onClick={() => handleComplete(true)}
         disabled={loading}
-        className="flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-xl font-bold text-sm text-black"
+        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-xl font-bold text-sm text-black"
         style={{ background: "var(--accent)" }}
       >
         <CheckCircle className="h-4 w-4" />

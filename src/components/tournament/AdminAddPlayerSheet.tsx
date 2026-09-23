@@ -129,7 +129,7 @@ export function AdminAddPlayerSheet({
                     onClick={() => !alreadyIn && handleSelect(p.id)}
                     disabled={isPending || alreadyIn}
                     className={cn(
-                      "flex min-h-[3rem] w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition-all active:scale-[0.99]",
+                      "flex min-h-[3.5rem] w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition-all active:scale-[0.99]",
                       alreadyIn
                         ? "cursor-not-allowed bg-[var(--surface-2)] opacity-40"
                         : "bg-[var(--surface-2)] hover:bg-[var(--surface-3)]",

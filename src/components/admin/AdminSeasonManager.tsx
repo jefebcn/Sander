@@ -109,7 +109,7 @@ export function AdminSeasonManager({ activeSeason }: Props) {
         <button
           onClick={handleCreate}
           disabled={pending || !name || !startsAt || !endsAt}
-          className="flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-xl font-black text-black disabled:opacity-40"
+          className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-xl font-black text-black disabled:opacity-40"
           style={{ background: "var(--accent)" }}
         >
           {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}

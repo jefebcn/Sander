@@ -294,7 +294,7 @@ function PlayerChip({
       onClick={onTap}
       disabled={disabled}
       className={cn(
-        "min-h-[2.75rem] flex-1 rounded-lg px-3 py-2 text-left text-sm font-semibold transition-all duration-150 active:scale-95",
+        "min-h-[3.5rem] flex-1 rounded-lg px-3 py-2 text-left text-sm font-semibold transition-all duration-150 active:scale-95",
         isSelected
           ? "bg-[var(--accent)] text-black ring-2 ring-[var(--accent)]/40"
           : "bg-[var(--surface-3)] text-[var(--foreground)] hover:bg-[var(--surface-4)]",

@@ -108,7 +108,7 @@ export function PlayerPickerSheet({
                   onClick={() => !isTaken && handleSelect(p.id)}
                   disabled={isPending || isTaken}
                   className={cn(
-                    "flex min-h-[3rem] w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition-all duration-150 active:scale-[0.99]",
+                    "flex min-h-[3.5rem] w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition-all duration-150 active:scale-[0.99]",
                     isCurrent
                       ? "bg-[var(--accent)]/15 ring-1 ring-[var(--accent)]"
                       : isTaken

@@ -41,7 +41,7 @@ export function SpectatorButton({ tournamentId, alreadyRegistered, spectatorPric
             else setError(res.error)
           })
         }
-        className="flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] text-sm font-semibold text-[var(--muted-text)] transition-colors hover:text-white disabled:opacity-50"
+        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] text-sm font-semibold text-[var(--muted-text)] transition-colors hover:text-white disabled:opacity-50"
       >
         {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Beer className="h-4 w-4" />}
         {label}

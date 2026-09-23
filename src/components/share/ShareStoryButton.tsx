@@ -114,7 +114,7 @@ export function ShareStoryButton({
         style={{
           background:
             status === "error"
-              ? "rgba(239,68,68,0.1)"
+              ? "color-mix(in srgb, var(--danger) 10%, transparent)"
               : primary
                 ? "var(--accent)"
                 : "rgba(201,243,29,0.08)",

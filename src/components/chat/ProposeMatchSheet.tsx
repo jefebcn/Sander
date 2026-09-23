@@ -87,7 +87,7 @@ export function ProposeMatchSheet({
               <p className="text-sm text-[var(--muted-text)]">Non hai partite in programma.</p>
               <Link
                 href="/sessions/new"
-                className="flex min-h-[3rem] items-center justify-center gap-2 rounded-2xl px-5 font-black text-black"
+                className="flex min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl px-5 font-black text-black"
                 style={{ background: "var(--accent)" }}
               >
                 <Plus className="h-5 w-5" />

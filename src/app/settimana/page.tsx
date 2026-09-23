@@ -64,7 +64,7 @@ export default async function WeeklyPage() {
           </p>
           <Link
             href="/sessions/new"
-            className="mt-4 inline-flex min-h-[3rem] items-center justify-center rounded-2xl px-6 font-black text-black"
+            className="mt-4 inline-flex min-h-[3.5rem] items-center justify-center rounded-2xl px-6 font-black text-black"
             style={{ background: "var(--accent)" }}
           >
             Crea una partita

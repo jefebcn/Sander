@@ -9,6 +9,7 @@ import { db } from "@/lib/db"
 import { canManageTournament } from "@/lib/isAdmin"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
 import { LiveDashboard } from "@/components/tournament/LiveDashboard"
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary"
 import { ConfirmActionButton } from "@/components/tournament/ConfirmActionButton"
 import { ChiceceDashboard } from "@/components/tournament/ChiceceDashboard"
 import { TeamPairingEditor } from "@/components/tournament/TeamPairingEditor"
@@ -671,7 +672,9 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
       )}
 
       {tournament.status === "LIVE" && (
-        <LiveDashboard tournamentId={id} initialData={data} canEditPlayers={!!session?.user?.id} />
+        <ErrorBoundary label="La dashboard dal vivo non si è caricata">
+          <LiveDashboard tournamentId={id} initialData={data} canEditPlayers={!!session?.user?.id} />
+        </ErrorBoundary>
       )}
 
       {tournament.status === "COMPLETED" && (

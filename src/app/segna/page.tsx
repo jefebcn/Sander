@@ -5,6 +5,7 @@ import { getSession } from "@/actions/sessions"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { LiveScoreboard } from "@/components/scoreboard/LiveScoreboard"
 import { LiveScoreSchema } from "@/lib/validators/session.schema"
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary"
 
 export const metadata: Metadata = {
   title: "Segna dal vivo — SANDER",
@@ -51,15 +52,21 @@ export default async function ScoreboardPage({ searchParams }: Props) {
         // never crash the page.
         const saved = LiveScoreSchema.safeParse(session.liveScore)
         return (
-          <LiveScoreboard
-            session={{ id: session.id }}
-            initialNames={[teamName(session.participants, 0), teamName(session.participants, 1)]}
-            initialState={saved.success ? saved.data : null}
-          />
+          <ErrorBoundary label="Il tabellone non si è caricato">
+            <LiveScoreboard
+              session={{ id: session.id }}
+              initialNames={[teamName(session.participants, 0), teamName(session.participants, 1)]}
+              initialState={saved.success ? saved.data : null}
+            />
+          </ErrorBoundary>
         )
       }
     }
   }
 
-  return <LiveScoreboard />
+  return (
+    <ErrorBoundary label="Il tabellone non si è caricato">
+      <LiveScoreboard />
+    </ErrorBoundary>
+  )
 }

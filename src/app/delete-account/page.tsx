@@ -82,7 +82,7 @@ export default function DeleteAccountPage() {
           </p>
           <a
             href="mailto:conti9708@gmail.com?subject=Richiesta eliminazione account SANDER&body=Ciao, richiedo l'eliminazione del mio account SANDER e di tutti i dati associati.%0A%0AEmail account: [la tua email]%0A%0AGrazie"
-            className="flex items-center justify-center gap-2 min-h-[3rem] w-full rounded-2xl font-bold text-black transition-opacity active:opacity-80"
+            className="flex items-center justify-center gap-2 min-h-[3.5rem] w-full rounded-2xl font-bold text-black transition-opacity active:opacity-80"
             style={{ background: "var(--accent)" }}
           >
             <Mail className="h-4 w-4" />

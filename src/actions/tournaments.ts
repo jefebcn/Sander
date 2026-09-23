@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
-import { CreateTournamentSchema } from "@/lib/validators/tournament.schema"
+import {
+  CreateTournamentSchema,
+  UpdateTournamentMetaSchema,
+  UpdateTournamentSettingsSchema,
+} from "@/lib/validators/tournament.schema"
 import type { CreateTournamentInput } from "@/lib/validators/tournament.schema"
 import { generateKOTBSchedule } from "@/lib/tournament/kotb"
 import { generateBracket } from "@/lib/tournament/bracket"
@@ -171,12 +175,14 @@ export async function updateTournamentSettings(
   const ok = await canManageTournament(session?.user?.email, tournamentId)
   if (!ok) throw new Error("Non autorizzato")
 
+  const parsed = UpdateTournamentSettingsSchema.parse(data)
+
   await db.tournament.update({
     where: { id: tournamentId },
     data: {
-      ...(data.isOpenForRegistration !== undefined && { isOpenForRegistration: data.isOpenForRegistration }),
-      ...(data.date !== undefined && { date: data.date }),
-      ...("registrationDeadline" in data && { registrationDeadline: data.registrationDeadline }),
+      ...(parsed.isOpenForRegistration !== undefined && { isOpenForRegistration: parsed.isOpenForRegistration }),
+      ...(parsed.date !== undefined && { date: parsed.date }),
+      ...("registrationDeadline" in parsed && { registrationDeadline: parsed.registrationDeadline }),
     },
   })
 
@@ -201,7 +207,11 @@ export async function updateTournamentMeta(
   const ok = await canManageTournament(session?.user?.email, tournamentId)
   if (!ok) throw new Error("Non autorizzato")
 
-  await db.tournament.update({ where: { id: tournamentId }, data })
+  // Whitelist at runtime: the parameter type below is erased, so without this
+  // any Tournament column could be written through this action.
+  const parsed = UpdateTournamentMetaSchema.parse(data)
+
+  await db.tournament.update({ where: { id: tournamentId }, data: parsed })
   revalidatePath(`/tournaments/${tournamentId}`)
   revalidatePath("/tournaments")
 }

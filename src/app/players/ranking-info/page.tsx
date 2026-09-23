@@ -65,7 +65,7 @@ export default function RankingInfoPage() {
           </div>
 
           <div className="rounded-2xl bg-[var(--surface-2)] p-4 flex items-start gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl" style={{ background: "rgba(239,68,68,0.12)" }}>
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl" style={{ background: "color-mix(in srgb, var(--danger) 12%, transparent)" }}>
               <Shield className="h-4 w-4 text-[var(--danger)]" />
             </div>
             <div>
@@ -76,7 +76,7 @@ export default function RankingInfoPage() {
           </div>
 
           <div className="rounded-2xl bg-[var(--surface-2)] p-4 flex items-start gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl" style={{ background: "rgba(239,68,68,0.2)" }}>
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl" style={{ background: "color-mix(in srgb, var(--danger) 20%, transparent)" }}>
               <Shield className="h-4 w-4 text-[var(--danger)]" />
             </div>
             <div>
