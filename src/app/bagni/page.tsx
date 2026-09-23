@@ -3,8 +3,9 @@ export const dynamic = "force-dynamic"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { Crown } from "lucide-react"
-import { getLocationLeaderboards } from "@/actions/territories"
+import { getLocationLeaderboards, getCityLeaderboards } from "@/actions/territories"
 import { BagniView } from "@/components/territories/BagniView"
+import { CityBoards } from "@/components/territories/CityBoards"
 
 export const metadata: Metadata = {
   title: "Re dei Bagni — SANDER Beach Volley",
@@ -17,7 +18,10 @@ export const metadata: Metadata = {
 }
 
 export default async function TerritoriesPage() {
-  const territories = await getLocationLeaderboards()
+  const [territories, cityBoards] = await Promise.all([
+    getLocationLeaderboards(),
+    getCityLeaderboards(),
+  ])
 
   return (
     <div className="pb-10">
@@ -31,6 +35,8 @@ export default async function TerritoriesPage() {
           Chi vince di più su un bagno lo conquista. Difendi il tuo spot 👑
         </p>
       </div>
+
+      <CityBoards boards={cityBoards} />
 
       <BagniView territories={territories} />
 

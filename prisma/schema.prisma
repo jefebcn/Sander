@@ -175,6 +175,8 @@ model Player {
   videoSubmissions     VideoSubmission[]
   ratingHistory        RatingHistory[]
   invitedUsers         User[]             @relation("PlayerInvites")
+  availability         PlayerAvailability[]
+  sessionWaitlist      SessionWaitlist[]
   reactions            Reaction[]
   chatParticipants     ChatParticipant[]
   sentMessages         ChatMessage[]
@@ -374,6 +376,7 @@ model Session {
   participants   SessionParticipant[]
   sets           SessionSet[]
   sessionMatches SessionMatch[]
+  waitlist       SessionWaitlist[]
   chatThread     ChatThread?
 
   @@index([status, date])
@@ -629,4 +632,43 @@ model Season {
   isActive Boolean  @default(true)
 
   @@map("seasons")
+}
+
+/// When a player is usually free to play. Powers the "Sono libero" board:
+/// until now a match only existed if somebody created one, so a newcomer with
+/// no contacts had nothing to join and never came back.
+model PlayerAvailability {
+  id       String            @id @default(cuid())
+  playerId String
+  weekday  Int // 0=domenica … 6=sabato, come Date.getDay()
+  slot     AvailabilitySlot
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, weekday, slot])
+  @@index([weekday, slot])
+  @@map("player_availability")
+}
+
+enum AvailabilitySlot {
+  MORNING
+  AFTERNOON
+  EVENING
+}
+
+/// Queue on a full session. Someone arriving from a shared link on a full match
+/// had no hook at all and simply left; now they queue and get a push the moment
+/// a seat frees up.
+model SessionWaitlist {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  sessionId String
+  playerId  String
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  player  Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, playerId])
+  @@index([sessionId, createdAt])
+  @@map("session_waitlist")
 }

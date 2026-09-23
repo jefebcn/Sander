@@ -27,6 +27,20 @@ function safeNotifyPlayers(playerIds: string[], payload: PushPayload) {
   import("@/lib/push").then((m) => m.notifyPlayers(playerIds, payload)).catch(() => {})
 }
 
+/**
+ * Awaited variant. The helpers above are fire-and-forget, which on serverless
+ * can be cut short when the invocation ends — the push and its Notification row
+ * then land only sometimes. Use this wherever the notification IS the feature.
+ */
+async function notifyPlayerNow(playerId: string, payload: PushPayload) {
+  try {
+    const m = await import("@/lib/push")
+    await m.notifyPlayer(playerId, payload)
+  } catch {
+    // A failed push must never fail the action that triggered it.
+  }
+}
+
 // ─── Format helpers ────────────────────────────────────────────────────────
 
 const FORMAT_MAX: Record<string, number> = {
@@ -211,6 +225,11 @@ export async function joinSession(sessionId: string) {
           data: { sessionId, playerId: player.id, paidCredits: scCost },
         })
 
+        // Got in, so drop out of the queue for this match.
+        await tx.sessionWaitlist.deleteMany({
+          where: { sessionId, playerId: player.id },
+        })
+
         // Flip to FULL if now at capacity
         if (session._count.participants + 1 >= session.maxPlayers) {
           await tx.session.update({ where: { id: sessionId }, data: { status: "FULL" } })
@@ -270,6 +289,64 @@ export async function editSession(input: unknown): Promise<{ ok: true } | { ok: 
   }
 }
 
+/* ── Waitlist on a full session ───────────────────────────────────────────── */
+
+export async function joinWaitlist(sessionId: string): Promise<{ ok: true; position: number } | { ok: false; error: string }> {
+  const player = await getCurrentPlayer()
+  if (!player) return { ok: false, error: "Non autenticato" }
+
+  const session = await db.session.findUnique({
+    where: { id: sessionId },
+    select: { status: true, participants: { select: { playerId: true } } },
+  })
+  if (!session) return { ok: false, error: "Partita non trovata" }
+  if (session.status === "COMPLETED" || session.status === "CANCELLED") {
+    return { ok: false, error: "Questa partita non è più attiva" }
+  }
+  if (session.participants.some((p) => p.playerId === player.id)) {
+    return { ok: false, error: "Sei già in questa partita" }
+  }
+
+  try {
+    await db.sessionWaitlist.create({ data: { sessionId, playerId: player.id } })
+  } catch {
+    // Unique constraint: already queued. Treat as success and just report where.
+  }
+
+  const position = await waitlistPosition(sessionId, player.id)
+  revalidatePath(`/sessions/${sessionId}`)
+  return { ok: true, position }
+}
+
+export async function leaveWaitlist(sessionId: string): Promise<{ ok: true }> {
+  const player = await getCurrentPlayer()
+  if (!player) throw new Error("Non autenticato")
+  await db.sessionWaitlist.deleteMany({ where: { sessionId, playerId: player.id } })
+  revalidatePath(`/sessions/${sessionId}`)
+  return { ok: true }
+}
+
+async function waitlistPosition(sessionId: string, playerId: string): Promise<number> {
+  const queue = await db.sessionWaitlist.findMany({
+    where: { sessionId },
+    orderBy: { createdAt: "asc" },
+    select: { playerId: true },
+  })
+  return queue.findIndex((q) => q.playerId === playerId) + 1
+}
+
+/** Queue state for the current user, for the session detail page. */
+export async function getWaitlistInfo(sessionId: string): Promise<{ count: number; myPosition: number | null }> {
+  const player = await getCurrentPlayer()
+  const queue = await db.sessionWaitlist.findMany({
+    where: { sessionId },
+    orderBy: { createdAt: "asc" },
+    select: { playerId: true },
+  })
+  const idx = player ? queue.findIndex((q) => q.playerId === player.id) : -1
+  return { count: queue.length, myPosition: idx >= 0 ? idx + 1 : null }
+}
+
 export async function leaveSession(sessionId: string) {
   const player = await getCurrentPlayer()
   if (!player) throw new Error("Non autenticato")
@@ -305,6 +382,24 @@ export async function leaveSession(sessionId: string) {
       await tx.session.update({ where: { id: sessionId }, data: { status: "OPEN" } })
     }
   })
+
+  // A seat just freed up: tell whoever has been waiting longest. Done after the
+  // transaction so we never notify about a rollback, and awaited so the push
+  // isn't dropped when the serverless invocation ends.
+  if (wasFull) {
+    const next = await db.sessionWaitlist.findFirst({
+      where: { sessionId },
+      orderBy: { createdAt: "asc" },
+      select: { playerId: true, session: { select: { title: true, location: true } } },
+    })
+    if (next) {
+      await notifyPlayerNow(next.playerId, {
+        title: "Si è liberato un posto! 🏐",
+        body: `${next.session.title} a ${next.session.location}: corri a prenderlo.`,
+        url: `/sessions/${sessionId}`,
+      })
+    }
+  }
 
   revalidatePath(`/sessions/${sessionId}`)
   revalidatePath("/sessions")

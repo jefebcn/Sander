@@ -4,7 +4,7 @@ import type { Metadata } from "next"
 import { MapPin, Calendar, Euro, FileText, Coins, RefreshCw, Gauge, Pencil } from "lucide-react"
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import { getSession } from "@/actions/sessions"
+import { getSession, getWaitlistInfo } from "@/actions/sessions"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { ShareButton, WhatsAppShareButton } from "@/components/ui/ShareButton"
@@ -95,6 +95,8 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
     : false
 
   const isOrganizer = currentPlayer?.id === session.organizerId
+
+  const waitlist = await getWaitlistInfo(session.id)
 
   return (
     <div className="pb-6">
@@ -229,6 +231,7 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
           }}
           participants={session.participants}
           currentPlayerId={currentPlayer?.id ?? null}
+          myWaitlistPosition={waitlist.myPosition}
         />
 
         {/* Share + QR — below the join action on purpose: sharing is what the
