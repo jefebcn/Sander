@@ -75,6 +75,7 @@ export async function createSession(input: unknown) {
       organizerId: player.id,
       title: autoTitle,
       location: data.location,
+      city: data.city ?? null,
       date: data.date,
       format: data.format,
       maxPlayers,
@@ -275,6 +276,7 @@ export async function editSession(input: unknown): Promise<{ ok: true } | { ok: 
       data: {
         ...(data.title !== undefined ? { title: data.title } : {}),
         location: data.location,
+        ...(data.city !== undefined ? { city: data.city } : {}),
         date: data.date,
         notes: data.notes ?? null,
         ...(maxPlayers ? { maxPlayers } : {}),
@@ -430,6 +432,7 @@ export async function createRematch(sessionId: string): Promise<string> {
       organizerId: player.id,
       title: original.title,
       location: original.location,
+      city: original.city,
       date: rematchDate,
       format: original.format,
       maxPlayers: original.maxPlayers,

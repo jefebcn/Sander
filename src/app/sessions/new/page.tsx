@@ -38,6 +38,7 @@ export default async function NewSessionPage({
   let presets: {
     format: string
     location: string
+    city: string | null
     paymentType: string
     quotaAmount: number | null
     loserPays: string | null
@@ -51,6 +52,7 @@ export default async function NewSessionPage({
         select: {
           format: true,
           location: true,
+          city: true,
           paymentType: true,
           quotaAmount: true,
           loserPays: true,

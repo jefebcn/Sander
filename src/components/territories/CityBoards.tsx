@@ -64,8 +64,7 @@ export function CityBoards({ boards }: { boards: CityLeaderboard[] }) {
       </div>
 
       <p className="mt-2 px-1 text-xs text-[var(--muted-text)]">
-        La città si ricava dal luogo della partita: scrivi il comune (es. «Bagno 26, Riccione»)
-        per comparire in questa classifica.
+        Scegli il comune quando crei la partita per comparire in questa classifica.
       </p>
     </section>
   )

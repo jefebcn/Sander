@@ -61,3 +61,11 @@ export function parseCity(location: string | null | undefined): string | null {
   }
   return null
 }
+
+/** Just the comune names, in the order shown by the picker. */
+export const CITY_NAMES: string[] = CITIES.map((c) => c.name)
+
+/** True when the value is one of the comuni we recognise. */
+export function isKnownCity(value: string | null | undefined): boolean {
+  return !!value && CITY_NAMES.includes(value)
+}

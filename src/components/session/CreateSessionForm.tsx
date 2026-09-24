@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { MapPin, ChevronRight, Banknote, Beer, Gift, Shuffle, Coins, ChevronDown } from "lucide-react"
 import { createSession } from "@/actions/sessions"
 import { POPULAR_BAGNI, bagnoLabel } from "@/lib/bagni"
+import { CITY_NAMES, parseCity } from "@/lib/cities"
 import { cn } from "@/lib/utils"
 
 const FORMATS = [
@@ -26,6 +27,7 @@ const PAYMENT_OPTIONS: { value: PaymentType; label: string; icon: React.ElementT
 interface Presets {
   format: string
   location: string
+  city: string | null
   paymentType: string
   quotaAmount: number | null
   loserPays: string | null
@@ -93,6 +95,10 @@ export function CreateSessionForm({ presets }: { presets?: Presets }) {
     (presets?.format as Format | undefined) ?? "TWO_VS_TWO",
   )
   const [location, setLocation] = useState(presets?.location ?? "")
+  const [city, setCity] = useState(presets?.city ?? "")
+  // Once the organiser picks a comune by hand, stop overwriting their choice
+  // with whatever the location text happens to say.
+  const [cityTouched, setCityTouched] = useState(Boolean(presets?.city))
   const [date, setDate] = useState(defaultStartIso)
   const [paymentType, setPaymentType] = useState<PaymentType>(
     (presets?.paymentType as PaymentType | undefined) ?? "FREE",
@@ -125,6 +131,7 @@ export function CreateSessionForm({ presets }: { presets?: Presets }) {
       try {
         const session = await createSession({
           location,
+          city: city || undefined,
           date: new Date(date),
           format,
           notes: notes || undefined,
@@ -168,13 +175,22 @@ export function CreateSessionForm({ presets }: { presets?: Presets }) {
         ))}
       </div>
 
-      {/* Location — optional */}
+      {/* Location — required */}
       <div className="relative">
         <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-text)]" aria-hidden="true" />
         <input
           type="text"
           value={location}
-          onChange={(e) => setLocation(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value
+            setLocation(value)
+            // Typing "Bagno 26, Riccione" shouldn't also require picking the
+            // comune below by hand.
+            if (!cityTouched) {
+              const detected = parseCity(value)
+              if (detected) setCity(detected)
+            }
+          }}
           placeholder="Bagno o campo (es. Bagno 26)"
           className="w-full rounded-xl bg-[var(--surface-2)] py-3 pl-9 pr-4 text-base text-[var(--foreground)] placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
         />
@@ -222,6 +238,41 @@ export function CreateSessionForm({ presets }: { presets?: Presets }) {
           ))}
         </div>
       )}
+
+      {/* Comune — this is what the town leaderboards count. Reading it out of
+          the location text only worked when people happened to type the town. */}
+      <div>
+        <p className="mb-1.5 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
+          Comune{" "}
+          <span className="font-normal normal-case">
+            {city ? "· conta per le classifiche di città" : "· serve per il Derby della Riviera"}
+          </span>
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {CITY_NAMES.map((name) => {
+            const selected = city === name
+            return (
+              <button
+                key={name}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => {
+                  setCityTouched(true)
+                  setCity(selected ? "" : name)
+                }}
+                className={cn(
+                  "rounded-full border px-3 py-2 text-sm font-bold transition-colors",
+                  selected
+                    ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
+                    : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted-text)]",
+                )}
+              >
+                {name}
+              </button>
+            )
+          })}
+        </div>
+      </div>
 
       {/* Date — styled tap-target over a hidden native input */}
       <div className="relative">

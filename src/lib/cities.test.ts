@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { parseCity } from "./cities"
+import { parseCity, isKnownCity, CITY_NAMES } from "./cities"
 
 describe("parseCity", () => {
   it("riconosce il comune dal nome", () => {
@@ -33,5 +33,28 @@ describe("parseCity", () => {
     expect(parseCity("")).toBeNull()
     expect(parseCity(null)).toBeNull()
     expect(parseCity(undefined)).toBeNull()
+  })
+})
+
+describe("isKnownCity", () => {
+  it("accetta i comuni della lista", () => {
+    expect(isKnownCity("Riccione")).toBe(true)
+    expect(isKnownCity("Bellaria-Igea Marina")).toBe(true)
+  })
+
+  it("rifiuta tutto il resto", () => {
+    // il selettore invia un nome canonico: una frazione o testo libero non
+    // deve poter finire nel campo city
+    expect(isKnownCity("Milano Marittima")).toBe(false)
+    expect(isKnownCity("Bologna")).toBe(false)
+    expect(isKnownCity("")).toBe(false)
+    expect(isKnownCity(null)).toBe(false)
+    expect(isKnownCity(undefined)).toBe(false)
+  })
+
+  it("accetta ogni nome esposto al selettore", () => {
+    // se il picker mostrasse un nome che lo schema rifiuta, il salvataggio
+    // fallirebbe senza motivo apparente
+    for (const name of CITY_NAMES) expect(isKnownCity(name)).toBe(true)
   })
 })
