@@ -116,8 +116,10 @@ export interface CityLeaderboard {
  * Same tallies as the bagni board, but grouped by comune.
  *
  * "Sono 4° a Riccione" motivates far more than "180° in classifica generale",
- * which is where newcomers look, see themselves last, and leave. Matches whose
- * location names no known town are left out rather than filed under a guess.
+ * which is where newcomers look, see themselves last, and leave. The comune is
+ * the one the organiser picked; matches created before that field fall back to
+ * reading it out of the location text, and anything still unrecognised is left
+ * out rather than filed under a guess.
  */
 export async function getCityLeaderboards(): Promise<CityLeaderboard[]> {
   const sessions = await db.session.findMany({
@@ -126,6 +128,7 @@ export async function getCityLeaderboards(): Promise<CityLeaderboard[]> {
     take: 400,
     select: {
       location: true,
+      city: true,
       sets: { select: { teamAScore: true, teamBScore: true } },
       participants: {
         where: { playerId: { not: null } },
@@ -146,7 +149,9 @@ export async function getCityLeaderboards(): Promise<CityLeaderboard[]> {
     if (aWins === bWins) continue
     const winningTeam = aWins > bWins ? 0 : 1
 
-    const city = parseCity(s.location)
+    // The picked comune when there is one; older matches predate the field, so
+    // fall back to reading it out of the location text.
+    const city = s.city ?? parseCity(s.location)
     if (!city) continue
 
     let entry = byCity.get(city)

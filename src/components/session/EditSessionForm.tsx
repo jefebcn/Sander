@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { MapPin, Check, Loader2 } from "lucide-react"
 import { editSession } from "@/actions/sessions"
+import { CITY_NAMES } from "@/lib/cities"
 import { POPULAR_BAGNI, bagnoLabel } from "@/lib/bagni"
 import { cn } from "@/lib/utils"
 
@@ -12,6 +13,7 @@ interface Props {
     id: string
     title: string
     location: string
+    city: string | null
     date: string // ISO
     maxPlayers: number
     notes: string | null
@@ -28,6 +30,7 @@ export function EditSessionForm({ session }: Props) {
   const router = useRouter()
   const [title, setTitle] = useState(session.title)
   const [location, setLocation] = useState(session.location)
+  const [city, setCity] = useState(session.city ?? "")
   const [date, setDate] = useState(toLocalInput(session.date))
   const [maxPlayers, setMaxPlayers] = useState(String(session.maxPlayers))
   const [notes, setNotes] = useState(session.notes ?? "")
@@ -41,6 +44,7 @@ export function EditSessionForm({ session }: Props) {
         sessionId: session.id,
         title: title.trim() || undefined,
         location: location.trim(),
+        city: city || undefined,
         date: new Date(date),
         notes: notes.trim() || undefined,
         maxPlayers: Number(maxPlayers) || undefined,
@@ -97,6 +101,35 @@ export function EditSessionForm({ session }: Props) {
                 )}
               >
                 🏖️ {n}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Comune — lets a wrong pick be corrected instead of the match staying
+          out of the town leaderboards for good. */}
+      <div>
+        <p className="mb-1.5 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
+          Comune
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {CITY_NAMES.map((name) => {
+            const selected = city === name
+            return (
+              <button
+                key={name}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => setCity(selected ? "" : name)}
+                className={cn(
+                  "rounded-full border px-3 py-2 text-sm font-bold transition-colors",
+                  selected
+                    ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
+                    : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted-text)]",
+                )}
+              >
+                {name}
               </button>
             )
           })}

@@ -25,6 +25,7 @@ export default async function EditSessionPage({ params }: { params: Promise<{ id
           id: session.id,
           title: session.title,
           location: session.location,
+          city: session.city ?? null,
           date: session.date.toISOString(),
           maxPlayers: session.maxPlayers,
           notes: session.notes ?? null,

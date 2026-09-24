@@ -1,9 +1,16 @@
 import { z } from "zod"
+import { isKnownCity } from "@/lib/cities"
 
 export const CreateSessionSchema = z.object({
   title: z.string().max(80).optional(),
   // Required: a match with no venue cannot be found or shown up to.
   location: z.string().trim().min(2, "Indica il luogo della partita").max(100),
+  // Optional, but must be a comune we know: an arbitrary string here would be
+  // useless for the town leaderboards, which is the only reason this exists.
+  city: z
+    .string()
+    .refine(isKnownCity, "Comune non riconosciuto")
+    .optional(),
   date: z.coerce.date(),
   format: z.enum(["TWO_VS_TWO", "THREE_VS_THREE", "FOUR_VS_FOUR"]),
   courtCost: z.number().int().min(0).optional(),
@@ -18,6 +25,9 @@ export const EditSessionSchema = z.object({
   sessionId: z.string().min(1),
   title: z.string().max(80).optional(),
   location: z.string().max(100).default(""),
+  // Lets the organiser correct a wrong pick instead of the match staying out
+  // of the town leaderboards for good.
+  city: z.string().refine(isKnownCity, "Comune non riconosciuto").optional(),
   date: z.coerce.date(),
   notes: z.string().max(200).optional(),
   maxPlayers: z.number().int().min(2).max(32).optional(),

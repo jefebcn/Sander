@@ -359,6 +359,10 @@ model Session {
 
   title      String
   location   String
+  // Comune scelto esplicitamente dall'organizzatore. Le classifiche di città
+  // ricavavano il comune dal testo di location, che spesso non lo nomina: qui
+  // il dato è certo. Resta nullable per le partite create prima di questo campo.
+  city       String?
   date       DateTime
   format     SessionFormat @default(TWO_VS_TWO)
   maxPlayers Int
