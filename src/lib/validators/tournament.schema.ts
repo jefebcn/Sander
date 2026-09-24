@@ -41,3 +41,35 @@ export const UpdateTournamentSchema = z.object({
 
 export type CreateTournamentInput = z.infer<typeof CreateTournamentSchema>
 export type UpdateTournamentInput = z.infer<typeof UpdateTournamentSchema>
+
+/**
+ * Tournament metadata edits.
+ *
+ * `.strict()` matters here: the action used to hand `data` straight to
+ * `tournament.update`, and a TypeScript parameter type is erased at runtime,
+ * so any other column — status, price, registration flags — could be written
+ * by anyone able to reach the action.
+ */
+export const UpdateTournamentMetaSchema = z
+  .object({
+    coverUrl:            z.string().url().nullable().optional(),
+    skillLevel:          z.string().max(40).nullable().optional(),
+    gender:              z.string().max(20).nullable().optional(),
+    maxTeams:            z.number().int().min(0).max(512).nullable().optional(),
+    spectatorPriceCents: z.number().int().min(0).max(1_000_000).nullable().optional(),
+    prizePool:           z.string().max(200).nullable().optional(),
+    prize2nd:            z.string().max(200).nullable().optional(),
+    prize3rd:            z.string().max(200).nullable().optional(),
+  })
+  .strict()
+
+export const UpdateTournamentSettingsSchema = z
+  .object({
+    isOpenForRegistration: z.boolean().optional(),
+    date:                  z.coerce.date().optional(),
+    registrationDeadline:  z.coerce.date().nullable().optional(),
+  })
+  .strict()
+
+export type UpdateTournamentMetaInput = z.infer<typeof UpdateTournamentMetaSchema>
+export type UpdateTournamentSettingsInput = z.infer<typeof UpdateTournamentSettingsSchema>

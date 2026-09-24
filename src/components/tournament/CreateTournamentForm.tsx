@@ -219,7 +219,7 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
               type="button"
               onClick={() => setNumCourts(n)}
               className={cn(
-                "flex min-h-[3rem] flex-col items-center justify-center rounded-2xl border-2 text-sm font-bold transition-colors",
+                "flex min-h-[3.5rem] flex-col items-center justify-center rounded-2xl border-2 text-sm font-bold transition-colors",
                 numCourts === n
                   ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
                   : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted-text)]",
@@ -429,7 +429,7 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
                   <div className="flex-1">
                     <p className="font-semibold">{player.name}</p>
                     <p className="text-xs text-[var(--muted-text)]">
-                      {player.preferredRole === "BLOCKER" ? "Attaccante" : "Difensore"}
+                      {player.preferredRole === "BLOCKER" ? "Muro" : "Difensore"}
                     </p>
                   </div>
                 </button>

@@ -3,40 +3,22 @@
 import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { Home, Users, User, Trophy } from "lucide-react"
+import { Home, Users, User, Trophy, Volleyball } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useHaptic } from "@/lib/useHaptic"
 
-function BeachNetIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <line x1="3" y1="3" x2="3" y2="20" />
-      <line x1="21" y1="3" x2="21" y2="20" />
-      <line x1="3" y1="9" x2="21" y2="9" />
-      <line x1="3" y1="15" x2="21" y2="15" />
-      <line x1="8" y1="9" x2="8" y2="15" />
-      <line x1="12" y1="9" x2="12" y2="15" />
-      <line x1="16" y1="9" x2="16" y2="15" />
-      <line x1="1" y1="20" x2="23" y2="20" />
-    </svg>
-  )
-}
-
+/**
+ * Five tabs is the practical maximum for a thumb-reachable bar, so secondary
+ * surfaces don't get their own tab — they light up their parent instead.
+ * Without `matches`, /segna, /feed, /trova and /messaggi highlighted nothing
+ * and the user lost all sense of where they were.
+ */
 const NAV_ITEMS = [
-  { href: "/",            icon: Home,         label: "Home" },
-  { href: "/sessions",    icon: BeachNetIcon,  label: "Partite" },
-  { href: "/tournaments", icon: Trophy,        label: "Tornei" },
-  { href: "/players",     icon: Users,         label: "Giocatori" },
-  { href: "/profile",     icon: User,          label: "Profilo" },
+  { href: "/",            icon: Home,       label: "Home",      matches: ["/feed"] },
+  { href: "/sessions",    icon: Volleyball, label: "Partite",   matches: ["/segna"] },
+  { href: "/tournaments", icon: Trophy,     label: "Tornei",    matches: [] as string[] },
+  { href: "/players",     icon: Users,      label: "Giocatori", matches: ["/trova"] },
+  { href: "/profile",     icon: User,       label: "Profilo",   matches: ["/messaggi"] },
 ]
 
 export function MobileNav() {
@@ -68,8 +50,11 @@ export function MobileNav() {
         className="flex items-start justify-around pt-4"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
       >
-        {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
-          const active = displayPath === href || (href !== "/" && displayPath.startsWith(href))
+        {NAV_ITEMS.map(({ href, icon: Icon, label, matches }) => {
+          const active =
+            displayPath === href ||
+            (href !== "/" && displayPath.startsWith(href)) ||
+            matches.some((m) => displayPath === m || displayPath.startsWith(`${m}/`))
           return (
             <Link
               key={href}

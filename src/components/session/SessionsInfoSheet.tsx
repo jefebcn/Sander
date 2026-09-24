@@ -8,13 +8,13 @@ const ITEMS = [
     icon: <Plus className="h-4 w-4" />,
     label: "Crea una partita",
     description:
-      'Chiunque può creare una sessione di gioco toccando "+ Crea una partita". Scegli il formato (2v2, 3v3, 4v4), il luogo e l\'orario. Una volta creata, la partita è visibile a tutti gli iscritti.',
+      'Chiunque può creare una partita di gioco toccando "+ Crea una partita". Scegli il formato (2v2, 3v3, 4v4), il luogo e l\'orario. Una volta creata, la partita è visibile a tutti gli iscritti.',
   },
   {
     icon: <Eye className="h-4 w-4" />,
     label: "Chi vede i risultati?",
     description:
-      "I punteggi e i dettagli di una partita sono visibili a tutti i giocatori presenti in quella sessione. Se non hai partecipato, vedi solo le informazioni base (luogo, formato, data).",
+      "I punteggi e i dettagli di una partita sono visibili a tutti i giocatori presenti in quella partita. Se non hai partecipato, vedi solo le informazioni base (luogo, formato, data).",
   },
   {
     icon: <BarChart2 className="h-4 w-4" />,
@@ -32,13 +32,13 @@ const ITEMS = [
     icon: <Trophy className="h-4 w-4" />,
     label: "Stato della partita",
     description:
-      '"Aperta" = si può ancora partecipare. "Completa" = tutti i posti occupati. "Completata" = partita finita, i risultati sono stati salvati. "Annullata" = la sessione non si è tenuta.',
+      '"Aperta" = si può ancora partecipare. "Posti esauriti" = non c\'è più posto. "Da chiudere" = l\'orario è passato ma nessuno ha inserito il risultato. "Conclusa" = partita finita e risultati salvati. "Annullata" = non si è tenuta.',
   },
   {
     icon: <span className="text-sm">🍺</span>,
     label: "Il badge Birra",
     description:
-      "Appare quando chi ha organizzato la sessione ha offerto una birra ai partecipanti. È un piccolo riconoscimento per il gesto!",
+      "Appare quando chi ha organizzato la partita ha offerto una birra ai partecipanti. È un piccolo riconoscimento per il gesto!",
   },
 ]
 

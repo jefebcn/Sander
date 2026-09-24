@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { RotateCcw, Undo2, Trophy, X, Loader2, Save, AlertCircle, Cloud } from "lucide-react"
 import { completeSession, saveLiveScore, getLiveScore } from "@/actions/sessions"
+import type { LiveScoreState } from "@/lib/validators/session.schema"
 
 /* Courtside live scoreboard — beach volley rules, big touch targets.
    Standalone by default; in "session mode" it saves the final result through
@@ -19,17 +20,9 @@ interface HistoryEntry {
   team: Team
 }
 
-interface LiveState {
-  names: [string, string]
-  bestOf: 1 | 3
-  showSetup: boolean
-  scores: [number, number]
-  setsWon: [number, number]
-  setIndex: number
-  history: HistoryEntry[]
-  setResults: [number, number][]
-  matchWinner: Team | null
-}
+/** Persisted board shape — the Zod schema is the single source of truth, so the
+    server and this component can never drift apart on what a board looks like. */
+type LiveState = LiveScoreState
 
 interface Props {
   /** When set, finishing the match saves the result to this session. */
@@ -173,7 +166,7 @@ export function LiveScoreboard({ session, initialNames, initialState }: Props) {
       // Don't stomp on the person actively tapping.
       if (Date.now() - lastEditRef.current < IDLE_BEFORE_SYNC_MS) return
       try {
-        const remote = (await getLiveScore(session.id)) as LiveState | null
+        const remote = await getLiveScore(session.id)
         if (!remote) return
         const serialised = JSON.stringify(remote)
         if (serialised === lastSyncedRef.current) return
@@ -211,7 +204,7 @@ export function LiveScoreboard({ session, initialNames, initialState }: Props) {
           <p className="mt-1 text-sm text-[var(--muted-text)]">
             {sessionMode
               ? "A fine partita salvi il risultato: rating e classifiche si aggiornano da soli."
-              : "Tabellone da campo. Tocca il lato di una squadra per il punto."}
+              : "Tabellone da campo, solo per contare i punti. Il risultato non viene registrato: per farlo apri il tabellone dalla tua partita."}
           </p>
         </div>
 

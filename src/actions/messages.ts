@@ -211,20 +211,33 @@ export async function getThreads() {
     },
   })
 
-  const items = await Promise.all(
-    parts.map(async (p) => {
+  // One grouped query for every conversation's unread count, instead of a
+  // separate count per thread inside the map below.
+  const unreadByThread = new Map<string, number>(
+    parts.length === 0
+      ? []
+      : (
+          await db.chatMessage.groupBy({
+            by: ["threadId"],
+            where: {
+              senderId: { not: me.id },
+              OR: parts.map((p) => ({
+                threadId: p.thread.id,
+                ...(p.lastReadAt ? { createdAt: { gt: p.lastReadAt } } : {}),
+              })),
+            },
+            _count: { _all: true },
+          })
+        ).map((g) => [g.threadId, g._count._all] as const),
+  )
+
+  const items = parts.map((p) => {
       const t = p.thread
       const isDM = t.kind === "DM"
       const others = t.participants.filter((pp) => pp.player.id !== me.id).map((pp) => pp.player)
       const other = others[0]
       const last = t.messages[0]
-      const unread = await db.chatMessage.count({
-        where: {
-          threadId: t.id,
-          senderId: { not: me.id },
-          ...(p.lastReadAt ? { createdAt: { gt: p.lastReadAt } } : {}),
-        },
-      })
+      const unread = unreadByThread.get(t.id) ?? 0
       let title: string
       if (t.kind === "SESSION") title = t.session?.title ?? "Partita"
       else if (t.kind === "GROUP")
@@ -243,8 +256,7 @@ export async function getThreads() {
         lastMessageAt: t.lastMessageAt ? t.lastMessageAt.toISOString() : null,
         unread,
       }
-    }),
-  )
+  })
 
   items.sort((a, b) => (b.lastMessageAt ?? "").localeCompare(a.lastMessageAt ?? ""))
   return items
@@ -398,18 +410,19 @@ export async function getUnreadMessageCount(): Promise<number> {
     select: { threadId: true, lastReadAt: true },
   })
   if (parts.length === 0) return 0
-  const counts = await Promise.all(
-    parts.map((p) =>
-      db.chatMessage.count({
-        where: {
-          threadId: p.threadId,
-          senderId: { not: me.id },
-          ...(p.lastReadAt ? { createdAt: { gt: p.lastReadAt } } : {}),
-        },
-      }),
-    ),
-  )
-  return counts.reduce((a, b) => a + b, 0)
+
+  // One query instead of one per conversation. This badge is rendered on
+  // practically every navigation, so 30 conversations used to mean 31 queries
+  // just to draw a number.
+  return db.chatMessage.count({
+    where: {
+      senderId: { not: me.id },
+      OR: parts.map((p) => ({
+        threadId: p.threadId,
+        ...(p.lastReadAt ? { createdAt: { gt: p.lastReadAt } } : {}),
+      })),
+    },
+  })
 }
 
 // ── V2: companions (players I've played with) for quick-DM ───────────────────

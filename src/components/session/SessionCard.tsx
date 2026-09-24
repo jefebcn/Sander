@@ -42,6 +42,9 @@ export function SessionCard({ session }: SessionCardProps) {
   const dateObj = new Date(session.date)
   const timeStr = dateObj.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })
   const dateStr = dateObj.toLocaleDateString("it-IT", { day: "2-digit", month: "short" })
+  // Still OPEN/FULL but the date has passed: it is not joinable, it is waiting
+  // to be closed. The badge must not keep advertising it as open.
+  const isExpired = dateObj <= new Date()
 
   return (
     <Link
@@ -71,9 +74,9 @@ export function SessionCard({ session }: SessionCardProps) {
 
       {/* Right side */}
       <div className="flex shrink-0 flex-col items-end gap-1.5">
-        <SessionStatusBadge status={session.status} />
+        <SessionStatusBadge status={session.status} expired={isExpired} />
         <div className="flex items-center gap-2 text-xs">
-          {session.status === "OPEN" && (
+          {session.status === "OPEN" && !isExpired && (
             <span
               className={cn(
                 "rounded-full px-2 py-0.5 font-semibold",

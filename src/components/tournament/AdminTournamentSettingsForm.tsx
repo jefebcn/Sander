@@ -100,7 +100,7 @@ export function AdminTournamentSettingsForm({
         type="button"
         onClick={handleSave}
         disabled={pending}
-        className={`flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 ${
+        className={`flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 ${
           saved
             ? "bg-[var(--live)] text-black"
             : "bg-[var(--surface-3)] text-white hover:bg-[var(--surface-2)]"

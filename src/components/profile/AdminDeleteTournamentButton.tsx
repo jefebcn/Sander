@@ -30,7 +30,7 @@ export function AdminDeleteTournamentButton({ id }: { id: string }) {
       <button
         onClick={handleDelete}
         className="shrink-0 rounded-lg px-2 py-1 text-xs font-bold text-white"
-        style={{ background: "#ef4444" }}
+        style={{ background: "var(--danger)" }}
       >
         Conferma
       </button>
@@ -41,7 +41,7 @@ export function AdminDeleteTournamentButton({ id }: { id: string }) {
     <button
       onClick={(e) => { e.preventDefault(); setConfirm(true) }}
       className="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold"
-      style={{ background: "#ef444420", color: "#ef4444" }}
+      style={{ background: "color-mix(in srgb, var(--danger) 13%, transparent)", color: "var(--danger)" }}
     >
       Elimina
     </button>

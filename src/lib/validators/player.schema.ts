@@ -25,3 +25,13 @@ export const UpdateStatPctSchema = z.object({
 export type CreatePlayerInput = z.infer<typeof CreatePlayerSchema>
 export type UpdatePlayerInput = z.infer<typeof UpdatePlayerSchema>
 export type UpdateStatPctInput = z.infer<typeof UpdateStatPctSchema>
+
+/**
+ * Admin credit grant. Bounded on purpose: the previous check only required a
+ * positive integer, so a typo could mint an arbitrary fortune in the in-app
+ * currency that pays for tournaments and paid sessions.
+ */
+export const AdminAddCreditsSchema = z.object({
+  playerId: z.string().min(1),
+  amount: z.number().int().min(1).max(10_000),
+})

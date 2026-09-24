@@ -12,7 +12,17 @@ export async function saveProfile(input: unknown) {
 
   const data = SaveProfileSchema.parse(input)
 
-  const fullName = `${data.firstName} ${data.lastName}`
+  // Surname is optional now, so don't glue a trailing space onto the name.
+  const fullName = [data.firstName, data.lastName].filter(Boolean).join(" ")
+
+  // Only write the optional fields that were actually filled in, so editing the
+  // profile later without re-entering them doesn't wipe what's already stored.
+  const optional = {
+    ...(data.lastName ? { lastName: data.lastName } : {}),
+    ...(data.birthDate ? { birthDate: new Date(data.birthDate) } : {}),
+    ...(data.gender ? { gender: data.gender } : {}),
+    ...(data.nationality ? { nationality: data.nationality } : {}),
+  }
 
   const existing = await db.player.findUnique({
     where: { userId: session.user.id },
@@ -22,13 +32,11 @@ export async function saveProfile(input: unknown) {
     await db.player.update({
       where: { id: existing.id },
       data: {
-        name:        fullName,
-        firstName:   data.firstName,
-        lastName:    data.lastName,
-        birthDate:   new Date(data.birthDate),
-        gender:      data.gender,
-        nationality: data.nationality,
-        avatarUrl:   data.avatarUrl ?? existing.avatarUrl,
+        name:          fullName,
+        firstName:     data.firstName,
+        preferredRole: data.preferredRole,
+        ...optional,
+        avatarUrl:     data.avatarUrl ?? existing.avatarUrl,
       },
     })
   } else {
@@ -43,10 +51,8 @@ export async function saveProfile(input: unknown) {
       data: {
         name:          fullName,
         firstName:     data.firstName,
-        lastName:      data.lastName,
-        birthDate:     new Date(data.birthDate),
-        gender:        data.gender,
-        nationality:   data.nationality,
+        preferredRole: data.preferredRole,
+        ...optional,
         avatarUrl:     data.avatarUrl ?? null,
         userId:        session.user.id,
         sanderCredits: invited ? INVITEE_SC : 0,

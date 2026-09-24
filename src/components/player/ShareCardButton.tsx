@@ -53,8 +53,8 @@ export function ShareCardButton({ playerData }: Props) {
         disabled={loading}
         className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-semibold"
         style={{
-          background: error ? "rgba(239,68,68,0.07)" : "rgba(255,255,255,0.04)",
-          border: `1px solid ${error ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.1)"}`,
+          background: error ? "color-mix(in srgb, var(--danger) 7%, transparent)" : "rgba(255,255,255,0.04)",
+          border: `1px solid ${error ? "color-mix(in srgb, var(--danger) 30%, transparent)" : "rgba(255,255,255,0.1)"}`,
           color: error ? "var(--danger)" : "var(--muted-text)",
           opacity: loading ? 0.6 : 1,
           cursor: loading ? "wait" : "pointer",

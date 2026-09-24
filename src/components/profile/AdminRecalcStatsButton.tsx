@@ -47,7 +47,7 @@ export function AdminRecalcStatsButton() {
         <button
           onClick={handleRecalc}
           className="flex-1 min-h-[3.5rem] rounded-2xl text-sm font-black text-white"
-          style={{ background: "#ef4444" }}
+          style={{ background: "var(--danger)" }}
         >
           Sì, resetta tutto
         </button>
@@ -66,7 +66,7 @@ export function AdminRecalcStatsButton() {
     <button
       onClick={() => setConfirm(true)}
       className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl text-sm font-bold"
-      style={{ background: "rgba(239,68,68,0.12)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.25)" }}
+      style={{ background: "color-mix(in srgb, var(--danger) 12%, transparent)", color: "var(--danger)", border: "1px solid color-mix(in srgb, var(--danger) 25%, transparent)" }}
     >
       Ricalcola tutte le statistiche dal 0
     </button>

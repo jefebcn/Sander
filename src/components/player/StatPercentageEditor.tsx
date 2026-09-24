@@ -119,7 +119,7 @@ export function StatPercentageEditor({ initial, glickoRating }: Props) {
       <button
         onClick={handleSave}
         disabled={!isValid || loading}
-        className="flex min-h-[3rem] w-full items-center justify-center rounded-xl font-bold text-sm text-black disabled:opacity-40"
+        className="flex min-h-[3.5rem] w-full items-center justify-center rounded-xl font-bold text-sm text-black disabled:opacity-40"
         style={{ background: "var(--accent)" }}
       >
         {loading ? "..." : saved ? "Salvato ✓" : "Salva distribuzione"}

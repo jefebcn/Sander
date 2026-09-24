@@ -89,7 +89,7 @@ export function LiveDashboard({ tournamentId, initialData, readOnly, canEditPlay
                 aria-selected={isActive}
                 onClick={() => setManualRound(r.round === currentRound ? null : r.round)}
                 className={cn(
-                  "relative shrink-0 rounded-full px-3 py-1.5 text-sm font-bold transition-all duration-150 min-h-[2.25rem]",
+                  "relative shrink-0 rounded-full px-4 py-1.5 text-sm font-bold transition-all duration-150 min-h-[3.5rem]",
                   isActive
                     ? "bg-[var(--accent)] text-black"
                     : isDone

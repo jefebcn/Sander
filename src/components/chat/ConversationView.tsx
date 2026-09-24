@@ -196,7 +196,7 @@ export function ConversationView({
           onChange={(e) => setText(e.target.value)}
           placeholder="Scrivi un messaggio…"
           maxLength={2000}
-          className="min-h-[3rem] flex-1 rounded-2xl bg-[var(--surface-2)] px-4 text-base text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+          className="min-h-[3.5rem] flex-1 rounded-2xl bg-[var(--surface-2)] px-4 text-base text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
         />
         <button
           type="submit"

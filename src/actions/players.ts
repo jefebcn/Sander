@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
-import { CreatePlayerSchema, UpdatePlayerSchema, UpdateStatPctSchema } from "@/lib/validators/player.schema"
-import type { CreatePlayerInput, UpdatePlayerInput, UpdateStatPctInput } from "@/lib/validators/player.schema"
+import { CreatePlayerSchema, UpdateStatPctSchema, AdminAddCreditsSchema } from "@/lib/validators/player.schema"
+import type { CreatePlayerInput, UpdateStatPctInput } from "@/lib/validators/player.schema"
 import { isAdminEmail } from "@/lib/isAdmin"
 
 export async function createPlayer(input: CreatePlayerInput) {
@@ -23,27 +23,6 @@ export async function createPlayer(input: CreatePlayerInput) {
   })
 
   revalidatePath("/players")
-  return player
-}
-
-export async function updatePlayer(id: string, input: UpdatePlayerInput) {
-  const session = await getCurrentSession()
-  if (!session?.user?.id) throw new Error("Non autenticato")
-
-  // Verify the player belongs to the current user (or caller is admin)
-  const target = await db.player.findUnique({ where: { id }, select: { userId: true } })
-  if (!target) throw new Error("Giocatore non trovato")
-
-  const isAdmin = isAdminEmail(session.user.email)
-  if (!isAdmin && target.userId !== session.user.id) {
-    throw new Error("Non autorizzato")
-  }
-
-  const data = UpdatePlayerSchema.parse(input)
-  const player = await db.player.update({ where: { id }, data })
-
-  revalidatePath("/players")
-  revalidatePath(`/players/${id}`)
   return player
 }
 
@@ -119,11 +98,11 @@ export async function createMinimalPlayerForUser(userId: string) {
 export async function adminAddCredits(playerId: string, amount: number) {
   const session = await getCurrentSession()
   if (!isAdminEmail(session?.user?.email)) throw new Error("Non autorizzato")
-  if (!Number.isInteger(amount) || amount <= 0) throw new Error("Importo non valido")
+  const data = AdminAddCreditsSchema.parse({ playerId, amount })
 
   await db.player.update({
-    where: { id: playerId },
-    data: { sanderCredits: { increment: amount } },
+    where: { id: data.playerId },
+    data: { sanderCredits: { increment: data.amount } },
   })
 
   revalidatePath("/profile")

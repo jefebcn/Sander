@@ -158,7 +158,7 @@ export function AddPlayerSheet({
                     onClick={() => !alreadyIn && handleSelectPlayer(p.id)}
                     disabled={isPending || alreadyIn}
                     className={cn(
-                      "flex min-h-[3rem] w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition-all active:scale-[0.99]",
+                      "flex min-h-[3.5rem] w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition-all active:scale-[0.99]",
                       alreadyIn
                         ? "cursor-not-allowed bg-[var(--surface-2)] opacity-40"
                         : "bg-[var(--surface-2)] hover:bg-[var(--surface-3)]",
@@ -194,7 +194,7 @@ export function AddPlayerSheet({
                         type="button"
                         onClick={() => handleSelectUnlinked(u.id)}
                         disabled={isPending}
-                        className="flex min-h-[3rem] w-full items-center gap-3 rounded-xl bg-[var(--surface-2)] px-4 py-3 text-left transition-all hover:bg-[var(--surface-3)] active:scale-[0.99] disabled:opacity-50"
+                        className="flex min-h-[3.5rem] w-full items-center gap-3 rounded-xl bg-[var(--surface-2)] px-4 py-3 text-left transition-all hover:bg-[var(--surface-3)] active:scale-[0.99] disabled:opacity-50"
                       >
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--surface-3)] text-xs font-black text-[var(--muted-text)]">
                           {displayName.slice(0, 2).toUpperCase()}

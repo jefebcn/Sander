@@ -6,6 +6,8 @@ import { redirect } from "next/navigation"
 import { Users, Swords, Sparkles } from "lucide-react"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { getPlayersAtMyLevel, type MatchMode } from "@/actions/matchmaking"
+import { getMyAvailability, getAvailabilityMatches } from "@/actions/availability"
+import { AvailabilityBoard } from "@/components/matchmaking/AvailabilityBoard"
 import { CompatibilityRing } from "@/components/matchmaking/CompatibilityRing"
 import { MessageButton } from "@/components/chat/MessageButton"
 
@@ -40,7 +42,11 @@ export default async function FindPage({ searchParams }: Props) {
   const player = await getCurrentPlayer()
   if (!player) redirect("/auth/signin?callbackUrl=/trova")
 
-  const { me, candidates } = await getPlayersAtMyLevel(player.id, mode)
+  const [{ me, candidates }, myAvailability, availabilityGroups] = await Promise.all([
+    getPlayersAtMyLevel(player.id, mode),
+    getMyAvailability(),
+    getAvailabilityMatches(),
+  ])
 
   return (
     <div className="pb-10">
@@ -83,6 +89,8 @@ export default async function FindPage({ searchParams }: Props) {
           <Swords className="h-4 w-4" /> Avversari
         </Link>
       </div>
+
+      <AvailabilityBoard initial={myAvailability} groups={availabilityGroups} />
 
       {/* Explanation */}
       <div className="mx-4 mb-4 flex items-start gap-2 rounded-2xl bg-[var(--surface-2)] p-3">

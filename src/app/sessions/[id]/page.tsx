@@ -4,7 +4,7 @@ import type { Metadata } from "next"
 import { MapPin, Calendar, Euro, FileText, Coins, RefreshCw, Gauge, Pencil } from "lucide-react"
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import { getSession } from "@/actions/sessions"
+import { getSession, getWaitlistInfo } from "@/actions/sessions"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { ShareButton, WhatsAppShareButton } from "@/components/ui/ShareButton"
@@ -95,6 +95,8 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
     : false
 
   const isOrganizer = currentPlayer?.id === session.organizerId
+
+  const waitlist = await getWaitlistInfo(session.id)
 
   return (
     <div className="pb-6">
@@ -196,7 +198,45 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
           })()}
         </div>
 
-        {/* Share + QR code */}
+        {/* CTA per utenti non autenticati */}
+        {!currentPlayer && (session.status === "OPEN" || session.status === "FULL") && (
+          <Link
+            href={`/auth/signin?callbackUrl=${encodeURIComponent(`/sessions/${session.id}`)}`}
+            className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl font-black text-black text-base"
+            style={{ background: "var(--accent)" }}
+          >
+            Accedi per partecipare
+          </Link>
+        )}
+
+        {/* Organizer: edit the session (fix a typo without cancelling it) */}
+        {isOrganizer && (session.status === "OPEN" || session.status === "FULL") && (
+          <Link
+            href={`/sessions/${session.id}/edit`}
+            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-bold text-white transition-opacity active:opacity-80"
+          >
+            <Pencil className="h-4 w-4 text-[var(--accent)]" />
+            Modifica partita
+          </Link>
+        )}
+
+        {/* Participants + actions */}
+        <ParticipantList
+          session={{
+            id: session.id,
+            organizerId: session.organizerId,
+            status: session.status,
+            maxPlayers: session.maxPlayers,
+            format: session.format,
+          }}
+          participants={session.participants}
+          currentPlayerId={currentPlayer?.id ?? null}
+          myWaitlistPosition={waitlist.myPosition}
+        />
+
+        {/* Share + QR — below the join action on purpose: sharing is what the
+            organiser does, while someone arriving from a link wants "Unisciti"
+            first, not three share buttons before it. */}
         {(session.status === "OPEN" || session.status === "FULL") && (
           <div className="space-y-2">
             <ShareButton
@@ -216,46 +256,12 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
           </div>
         )}
 
-        {/* CTA per utenti non autenticati */}
-        {!currentPlayer && (session.status === "OPEN" || session.status === "FULL") && (
-          <Link
-            href={`/auth/signin?callbackUrl=${encodeURIComponent(`/sessions/${session.id}`)}`}
-            className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl font-black text-black text-base"
-            style={{ background: "var(--accent)" }}
-          >
-            Accedi per partecipare
-          </Link>
-        )}
-
-        {/* Organizer: edit the session (fix a typo without cancelling it) */}
-        {isOrganizer && (session.status === "OPEN" || session.status === "FULL") && (
-          <Link
-            href={`/sessions/${session.id}/edit`}
-            className="flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-bold text-white transition-opacity active:opacity-80"
-          >
-            <Pencil className="h-4 w-4 text-[var(--accent)]" />
-            Modifica partita
-          </Link>
-        )}
-
-        {/* Participants + actions */}
-        <ParticipantList
-          session={{
-            id: session.id,
-            organizerId: session.organizerId,
-            status: session.status,
-            maxPlayers: session.maxPlayers,
-            format: session.format,
-          }}
-          participants={session.participants}
-          currentPlayerId={currentPlayer?.id ?? null}
-        />
-
         {/* Group chat — coordinate this game (participants only) */}
         {isParticipant && <SessionChat sessionId={session.id} />}
 
-        {/* Live scoreboard — organizer, standard session, teams assigned */}
-        {isOrganizer &&
+        {/* Live scoreboard — anyone playing this match (the board itself already
+            accepts any participant, and on the sand whoever is nearest scores) */}
+        {(isOrganizer || isParticipant) &&
           !session.matchMode &&
           (session.status === "OPEN" || session.status === "FULL") &&
           session.participants.some((p) => p.team === 0) &&

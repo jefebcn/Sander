@@ -18,7 +18,12 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
-      bodySizeLimit: "100mb",
+      // Default is 1MB. File uploads go through API routes (/api/avatar,
+      // /api/tournament-cover), which this limit does not apply to, and the
+      // shared images are generated and consumed entirely in the browser — so
+      // nothing here needs the 100MB this used to allow, which just widened the
+      // surface for oversized-payload abuse.
+      bodySizeLimit: "10mb",
     },
   },
   async headers() {

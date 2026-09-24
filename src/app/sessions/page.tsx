@@ -33,10 +33,11 @@ export default async function SessionsPage() {
           </Link>
           <Link
             href="/segna"
+            title="Tabellone libero: conta i punti senza registrare il risultato"
             className="flex min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 font-black text-white transition-opacity active:opacity-80"
           >
             <Gauge className="h-5 w-5 text-[var(--accent)]" />
-            Segna
+            Tabellone
           </Link>
         </div>
       ) : (

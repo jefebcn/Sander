@@ -17,8 +17,7 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.error) {
       return (
         <div
-          className="rounded-2xl px-4 py-3 text-sm font-semibold"
-          style={{ background: "#ef444420", color: "#ef4444" }}
+          className="rounded-2xl bg-[var(--danger)]/15 px-4 py-3 text-sm font-semibold text-[var(--danger)]"
         >
           <p className="font-bold mb-1">{this.props.label ?? "Errore"}</p>
           <p className="text-xs opacity-80 break-all">{this.state.error}</p>

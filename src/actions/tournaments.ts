@@ -3,14 +3,18 @@
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
-import { CreateTournamentSchema } from "@/lib/validators/tournament.schema"
+import {
+  CreateTournamentSchema,
+  UpdateTournamentMetaSchema,
+  UpdateTournamentSettingsSchema,
+} from "@/lib/validators/tournament.schema"
 import type { CreateTournamentInput } from "@/lib/validators/tournament.schema"
 import { generateKOTBSchedule } from "@/lib/tournament/kotb"
 import { generateBracket } from "@/lib/tournament/bracket"
 import { generateRoundRobinSchedule } from "@/lib/tournament/roundRobin"
 import { generateDoubleElimination } from "@/lib/tournament/doubleElim"
 import { assignCourtLabel } from "@/lib/tournament/courtSchedule"
-import { applyTournamentGlicko } from "@/actions/matches"
+import { applyTournamentGlicko } from "@/lib/tournamentRating"
 import { updateRating } from "@/lib/tournament/glicko2"
 import { isAdminEmail, canManageTournament } from "@/lib/isAdmin"
 import { TOURNAMENT_CREATION_SC } from "@/lib/pricing"
@@ -171,12 +175,14 @@ export async function updateTournamentSettings(
   const ok = await canManageTournament(session?.user?.email, tournamentId)
   if (!ok) throw new Error("Non autorizzato")
 
+  const parsed = UpdateTournamentSettingsSchema.parse(data)
+
   await db.tournament.update({
     where: { id: tournamentId },
     data: {
-      ...(data.isOpenForRegistration !== undefined && { isOpenForRegistration: data.isOpenForRegistration }),
-      ...(data.date !== undefined && { date: data.date }),
-      ...("registrationDeadline" in data && { registrationDeadline: data.registrationDeadline }),
+      ...(parsed.isOpenForRegistration !== undefined && { isOpenForRegistration: parsed.isOpenForRegistration }),
+      ...(parsed.date !== undefined && { date: parsed.date }),
+      ...("registrationDeadline" in parsed && { registrationDeadline: parsed.registrationDeadline }),
     },
   })
 
@@ -201,7 +207,11 @@ export async function updateTournamentMeta(
   const ok = await canManageTournament(session?.user?.email, tournamentId)
   if (!ok) throw new Error("Non autorizzato")
 
-  await db.tournament.update({ where: { id: tournamentId }, data })
+  // Whitelist at runtime: the parameter type below is erased, so without this
+  // any Tournament column could be written through this action.
+  const parsed = UpdateTournamentMetaSchema.parse(data)
+
+  await db.tournament.update({ where: { id: tournamentId }, data: parsed })
   revalidatePath(`/tournaments/${tournamentId}`)
   revalidatePath("/tournaments")
 }
@@ -1155,10 +1165,17 @@ export async function submitChiceceFinalScore(
     data: { teamAScore, teamBScore, isCompleted: true },
   })
 
-  await db.tournament.update({
-    where: { id: match.tournamentId },
+  // Idempotency guard: only the call that actually closes the tournament may go
+  // on to apply Glicko, placement bonuses and lifetime career stats. A retry or
+  // a double submit would otherwise double everyone's stats and trophies.
+  const claimedFinal = await db.tournament.updateMany({
+    where: { id: match.tournamentId, status: { not: "COMPLETED" } },
     data: { status: "COMPLETED" },
   })
+  if (claimedFinal.count === 0) {
+    revalidatePath(`/tournaments/${match.tournamentId}`)
+    return
+  }
 
   // Apply per-tournament Glicko-2 update (final match completes the tournament)
   await applyTournamentGlicko(match.tournamentId).catch(() => {})
@@ -1308,10 +1325,17 @@ export async function submitChiceceFinalScore(
 
 export async function completeTournament(tournamentId: string) {
   await requireAdmin()
-  await db.tournament.update({
-    where: { id: tournamentId },
+
+  // Idempotency guard: a second click (or a retry) must not increment career
+  // stats and trophies again for every registered player.
+  const claimed = await db.tournament.updateMany({
+    where: { id: tournamentId, status: { not: "COMPLETED" } },
     data: { status: "COMPLETED" },
   })
+  if (claimed.count === 0) {
+    revalidatePath(`/tournaments/${tournamentId}`)
+    return
+  }
 
   // Aggregate lifetime stats for all registered players
   const standings = await db.tournamentStanding.findMany({

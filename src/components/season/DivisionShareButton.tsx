@@ -75,9 +75,9 @@ export function DivisionShareButton({ playerName, divisionKey, rating, seasonNam
       <button
         onClick={handleShare}
         disabled={status === "loading"}
-        className="flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-2xl text-sm font-black transition-opacity active:opacity-80"
+        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl text-sm font-black transition-opacity active:opacity-80"
         style={{
-          background: status === "error" ? "rgba(239,68,68,0.1)" : "rgba(255,255,255,0.06)",
+          background: status === "error" ? "color-mix(in srgb, var(--danger) 10%, transparent)" : "rgba(255,255,255,0.06)",
           border: "1px solid rgba(255,255,255,0.12)",
           color: status === "error" ? "var(--danger)" : "#fff",
           opacity: status === "loading" ? 0.6 : 1,

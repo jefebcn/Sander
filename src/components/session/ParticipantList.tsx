@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { UserPlus, UserMinus, Search, User, X, UserX } from "lucide-react"
+import Link from "next/link"
+import { UserPlus, UserMinus, Search, User, X, UserX, BellRing } from "lucide-react"
 import { toast } from "sonner"
-import { joinSession, leaveSession, assignTeam, cancelSession, removeGuestFromSession } from "@/actions/sessions"
+import { joinSession, leaveSession, assignTeam, cancelSession, removeGuestFromSession, joinWaitlist, leaveWaitlist } from "@/actions/sessions"
 import { cn } from "@/lib/utils"
 import { CompleteSessionForm } from "./CompleteSessionForm"
 import { AddPlayerSheet } from "./AddPlayerSheet"
@@ -27,6 +28,8 @@ interface ParticipantListProps {
   }
   participants: Participant[]
   currentPlayerId: string | null
+  /** 1-based place in the waitlist, or null when not queued. */
+  myWaitlistPosition?: number | null
 }
 
 const FORMAT_LABEL: Record<string, string> = {
@@ -35,7 +38,7 @@ const FORMAT_LABEL: Record<string, string> = {
   FOUR_VS_FOUR: "4 vs 4",
 }
 
-export function ParticipantList({ session, participants, currentPlayerId }: ParticipantListProps) {
+export function ParticipantList({ session, participants, currentPlayerId, myWaitlistPosition = null }: ParticipantListProps) {
   const [isPending, startTransition] = useTransition()
   const [addPlayerOpen, setAddPlayerOpen] = useState(false)
 
@@ -52,7 +55,26 @@ export function ParticipantList({ session, participants, currentPlayerId }: Part
     startTransition(async () => {
       try {
         await joinSession(session.id)
-        toast.success("Sei entrato nella sessione!")
+        toast.success("Sei entrato nella partita!")
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Errore")
+      }
+    })
+  }
+
+  function handleJoinWaitlist() {
+    startTransition(async () => {
+      const res = await joinWaitlist(session.id)
+      if (res.ok) toast.success(`In lista d'attesa — posizione ${res.position}`)
+      else toast.error(res.error)
+    })
+  }
+
+  function handleLeaveWaitlist() {
+    startTransition(async () => {
+      try {
+        await leaveWaitlist(session.id)
+        toast.success("Uscito dalla lista d'attesa")
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Errore")
       }
@@ -63,7 +85,7 @@ export function ParticipantList({ session, participants, currentPlayerId }: Part
     startTransition(async () => {
       try {
         await leaveSession(session.id)
-        toast.success("Hai lasciato la sessione")
+        toast.success("Hai lasciato la partita")
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Errore")
       }
@@ -84,7 +106,7 @@ export function ParticipantList({ session, participants, currentPlayerId }: Part
     startTransition(async () => {
       try {
         await cancelSession(session.id)
-        toast.success("Sessione annullata")
+        toast.success("Partita annullata")
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Errore")
       }
@@ -185,8 +207,47 @@ export function ParticipantList({ session, participants, currentPlayerId }: Part
               className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-semibold text-[var(--muted-text)] transition-all active:scale-[0.98] disabled:opacity-50"
             >
               <UserMinus className="h-5 w-5" aria-hidden="true" />
-              Lascia sessione
+              Lascia partita
             </button>
+          )}
+          {/* Nothing was rendered here before: someone arriving on a full match
+              from a shared link saw no button and no explanation at all. */}
+          {!isParticipant && !canJoin && (
+            <div className="rounded-2xl bg-[var(--surface-2)] px-4 py-4 text-center">
+              <p className="text-base font-bold text-white">Posti esauriti</p>
+              <p className="mt-1 text-sm text-[var(--muted-text)]">
+                {myWaitlistPosition
+                  ? `Sei in lista d'attesa: posizione ${myWaitlistPosition}. Ti avvisiamo se si libera un posto.`
+                  : "Mettiti in lista: ti avvisiamo appena si libera un posto."}
+              </p>
+              {myWaitlistPosition ? (
+                <button
+                  onClick={handleLeaveWaitlist}
+                  disabled={isPending}
+                  className="mt-3 flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-1)] font-bold text-[var(--muted-text)] disabled:opacity-50"
+                >
+                  <UserMinus className="h-5 w-5" aria-hidden="true" />
+                  Esci dalla lista
+                </button>
+              ) : (
+                <button
+                  onClick={handleJoinWaitlist}
+                  disabled={isPending}
+                  className="mt-3 flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-black text-black disabled:opacity-60"
+                  style={{ background: "var(--accent)" }}
+                >
+                  <BellRing className="h-5 w-5" aria-hidden="true" />
+                  Avvisami se si libera
+                </button>
+              )}
+              <Link
+                href="/sessions"
+                className="mt-2 flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-1)] font-bold text-white"
+              >
+                <Search className="h-5 w-5" aria-hidden="true" />
+                Trova un&apos;altra partita
+              </Link>
+            </div>
           )}
         </div>
       )}
@@ -212,7 +273,7 @@ export function ParticipantList({ session, participants, currentPlayerId }: Part
             disabled={isPending}
             className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--danger)]/15 font-semibold text-[var(--danger)] transition-all active:scale-[0.98] disabled:opacity-40"
           >
-            Annulla sessione
+            Annulla partita
           </button>
         </div>
       )}

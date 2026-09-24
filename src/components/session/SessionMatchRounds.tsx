@@ -98,7 +98,7 @@ export function SessionMatchRounds({ sessionId, matches, isOrganizer, sessionSta
               type="button"
               disabled={pending}
               onClick={handleGenerate}
-              className="flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-2xl font-bold text-black disabled:opacity-50"
+              className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-bold text-black disabled:opacity-50"
               style={{ background: "var(--accent)" }}
             >
               {pending ? (
@@ -112,7 +112,7 @@ export function SessionMatchRounds({ sessionId, matches, isOrganizer, sessionSta
 
         {error && (
           <p className="rounded-xl px-4 py-2.5 text-sm font-medium text-[var(--danger)]"
-            style={{ background: "rgba(239,68,68,0.12)" }}>
+            style={{ background: "color-mix(in srgb, var(--danger) 12%, transparent)" }}>
             {error}
           </p>
         )}
@@ -144,7 +144,7 @@ export function SessionMatchRounds({ sessionId, matches, isOrganizer, sessionSta
 
       {error && (
         <p className="rounded-xl px-4 py-2.5 text-sm font-medium text-[var(--danger)]"
-          style={{ background: "rgba(239,68,68,0.12)" }}>
+          style={{ background: "color-mix(in srgb, var(--danger) 12%, transparent)" }}>
           {error}
         </p>
       )}

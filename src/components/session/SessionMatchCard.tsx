@@ -159,7 +159,7 @@ export function SessionMatchCard({ match, isOrganizer }: Props) {
           type="button"
           disabled={pending}
           onClick={handleSubmit}
-          className="mt-2 flex min-h-[2.5rem] w-full items-center justify-center gap-1.5 rounded-xl text-xs font-bold text-black disabled:opacity-50"
+          className="mt-2 flex min-h-[3.5rem] w-full items-center justify-center gap-1.5 rounded-xl text-sm font-bold text-black disabled:opacity-50"
           style={{ background: "var(--accent)" }}
         >
           {pending ? (

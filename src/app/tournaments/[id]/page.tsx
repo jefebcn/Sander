@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ChevronRight, Play, Trophy, Shuffle, Trash2, LogOut } from "lucide-react"
+import { ChevronRight, ChevronLeft, Play, Trophy, Shuffle, Trash2, LogOut } from "lucide-react"
 import { getTournamentDashboard } from "@/actions/standings"
 import { startTournament, completeTournament, updateTournamentMeta } from "@/actions/tournaments"
 import { cancelRegistration, adminRemoveRegistration } from "@/actions/registration"
@@ -9,6 +9,7 @@ import { db } from "@/lib/db"
 import { canManageTournament } from "@/lib/isAdmin"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
 import { LiveDashboard } from "@/components/tournament/LiveDashboard"
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary"
 import { ConfirmActionButton } from "@/components/tournament/ConfirmActionButton"
 import { ChiceceDashboard } from "@/components/tournament/ChiceceDashboard"
 import { TeamPairingEditor } from "@/components/tournament/TeamPairingEditor"
@@ -113,6 +114,15 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
         )}
         {/* Header */}
         <div className="flex items-start gap-3 px-4 pt-5 pb-3">
+          {/* This is the page people land on from a shared link, and it had no
+              way back into the app. */}
+          <Link
+            href="/tournaments"
+            aria-label="Indietro"
+            className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--muted-text)]"
+          >
+            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+          </Link>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <Shuffle className="h-5 w-5 shrink-0 text-[var(--accent)]" />
@@ -408,6 +418,15 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
       )}
       {/* Header */}
       <div className="flex items-start justify-between gap-3 px-4 pt-5 pb-3">
+        {/* This is the page people land on from a shared link, and it had no
+            way back into the app. */}
+        <Link
+          href="/tournaments"
+          aria-label="Indietro"
+          className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--muted-text)]"
+        >
+          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+        </Link>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h1 className="truncate text-2xl font-black">{tournament.name}</h1>
@@ -632,8 +651,30 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
         </div>
       )}
 
+      {/* A draft with registrations closed, seen by a non-admin, used to render
+          the title, the date and a share button — and literally nothing else. */}
+      {tournament.status === "DRAFT" && !tournament.isOpenForRegistration && !isAdmin && (
+        <div className="mx-4 rounded-2xl bg-[var(--surface-1)] p-5 text-center">
+          <Trophy className="mx-auto mb-2 h-10 w-10 text-[var(--muted-text)]" aria-hidden="true" />
+          <p className="font-bold text-white">Iscrizioni chiuse</p>
+          <p className="mt-1 text-sm text-[var(--muted-text)]">
+            Questo torneo non è ancora iniziato e le iscrizioni non sono aperte.
+            Torna più tardi per seguire i risultati dal vivo.
+          </p>
+          <Link
+            href="/tournaments"
+            className="mt-4 flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl font-black text-black"
+            style={{ background: "var(--accent)" }}
+          >
+            Vedi gli altri tornei
+          </Link>
+        </div>
+      )}
+
       {tournament.status === "LIVE" && (
-        <LiveDashboard tournamentId={id} initialData={data} canEditPlayers={!!session?.user?.id} />
+        <ErrorBoundary label="La dashboard dal vivo non si è caricata">
+          <LiveDashboard tournamentId={id} initialData={data} canEditPlayers={!!session?.user?.id} />
+        </ErrorBoundary>
       )}
 
       {tournament.status === "COMPLETED" && (
