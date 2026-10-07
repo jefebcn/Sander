@@ -31,7 +31,24 @@ export type UpdateStatPctInput = z.infer<typeof UpdateStatPctSchema>
  * positive integer, so a typo could mint an arbitrary fortune in the in-app
  * currency that pays for tournaments and paid sessions.
  */
-export const AdminAddCreditsSchema = z.object({
-  playerId: z.string().min(1),
-  amount: z.number().int().min(1).max(10_000),
-})
+export const TOP_UP_METHODS = ["PAYPAL", "BONIFICO", "CONTANTI", "OMAGGIO"] as const
+
+/**
+ * A SanderCredits top-up together with the money behind it.
+ * Recording the euros is the whole point: without them revenue and average
+ * top-up can't be measured. A gift must carry no money, and a paid top-up must
+ * carry some — otherwise the ledger silently lies in either direction.
+ */
+export const AdminAddCreditsSchema = z
+  .object({
+    playerId: z.string().min(1),
+    credits: z.number().int().min(1).max(10_000),
+    amountCents: z.number().int().min(0).max(1_000_000),
+    method: z.enum(TOP_UP_METHODS),
+    note: z.string().trim().max(200).optional(),
+  })
+  .strict()
+  .refine((d) => (d.method === "OMAGGIO" ? d.amountCents === 0 : d.amountCents > 0), {
+    message: "Importo non valido: un omaggio va a 0 €, una ricarica pagata deve avere un importo",
+    path: ["amountCents"],
+  })

@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic"
 
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { ArrowUpRight, MapPin, Calendar, Settings, ShieldCheck, Users, Trophy, Pencil, MessageCircle } from "lucide-react"
+import { ArrowUpRight, MapPin, Calendar, Settings, ShieldCheck, Users, Trophy, Pencil, MessageCircle, ChartColumn, ChevronRight } from "lucide-react"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { SanderCardFut, playerToCardData } from "@/components/player/SanderCardFut"
@@ -698,6 +698,19 @@ export default async function ProfilePage({ searchParams }: Props) {
               </div>
             ))}
           </div>
+
+          {/* Business metrics */}
+          <Link
+            href="/admin/metriche"
+            className="flex min-h-[3.5rem] items-center gap-3 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:bg-[var(--surface-3)]"
+          >
+            <ChartColumn className="h-5 w-5 shrink-0 text-[var(--accent)]" />
+            <span className="flex-1">
+              <span className="block text-base font-bold text-white">Metriche</span>
+              <span className="block text-sm text-[var(--muted-text)]">Incassi, valori medi, chi torna a giocare</span>
+            </span>
+            <ChevronRight className="h-5 w-5 text-[var(--muted-text)]" />
+          </Link>
 
           {/* Recalc button */}
           <AdminRecalcStatsButton />
