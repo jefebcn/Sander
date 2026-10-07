@@ -180,6 +180,7 @@ model Player {
   reactions            Reaction[]
   chatParticipants     ChatParticipant[]
   sentMessages         ChatMessage[]
+  creditTopUps         CreditTopUp[]
 
   @@map("players")
 }
@@ -679,4 +680,34 @@ model SessionWaitlist {
   @@unique([sessionId, playerId])
   @@index([sessionId, createdAt])
   @@map("session_waitlist")
+}
+
+/// How the euros behind a SanderCredits top-up were received.
+enum TopUpMethod {
+  PAYPAL
+  BONIFICO
+  CONTANTI
+  OMAGGIO // credits given for free — no money received
+}
+
+/// Ledger of SanderCredits top-ups.
+/// Credits are paid outside the app (PayPal, bank transfer, cash) and added by
+/// an admin; without this row the app only knew "+N SC" and never the euros
+/// behind it, so revenue and average top-up were impossible to measure.
+model CreditTopUp {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  playerId String
+  player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  credits     Int
+  amountCents Int // 0 when method = OMAGGIO
+  method      TopUpMethod
+  note        String?
+  createdByEmail String?
+
+  @@index([createdAt])
+  @@index([playerId])
+  @@map("credit_topups")
 }
