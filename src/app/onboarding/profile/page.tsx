@@ -22,6 +22,8 @@ export default async function ProfilePage() {
       nationality:   true,
       avatarUrl:     true,
       preferredRole: true,
+      homeCity:      true,
+      startLevel:    true,
     },
   })
 
@@ -38,6 +40,8 @@ export default async function ProfilePage() {
         // Without this, editing the profile showed no role selected and the
         // confirm button stayed disabled until you picked one again.
         preferredRole: existing.preferredRole,
+        homeCity:      existing.homeCity,
+        startLevel:    existing.startLevel,
       }
     : undefined
 

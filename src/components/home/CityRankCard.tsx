@@ -11,8 +11,38 @@ export interface CityRank {
   king: string | null
 }
 
+/** A town's board for someone who hasn't played there yet. */
+export interface CityPreview {
+  city: string
+  king: string | null
+  players: number
+  matches: number
+}
+
 /** "Sei 4° a Rimini" — local rank motivates far more than a global one. */
-export function CityRankCard({ data }: { data: CityRank | null }) {
+export function CityRankCard({ data, preview }: { data: CityRank | null; preview?: CityPreview | null }) {
+  if (!data && preview) {
+    return (
+      <Link
+        href="/bagni"
+        className="pressable tone-sand flex items-center gap-4 rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-4"
+      >
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--tone-soft)] text-[var(--tone)]">
+          <Crown className="h-6 w-6" aria-hidden="true" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="eyebrow block text-[var(--tone)]">Il tuo comune · {preview.city}</span>
+          <span className="block text-base font-extrabold leading-snug text-white">
+            {preview.king ? `Il Re è ${preview.king}` : "Il trono è libero"}
+          </span>
+          <span className="block text-sm text-[var(--muted-text)]">
+            {preview.players} giocatori · {preview.matches} partite. Gioca la prima per entrare in classifica.
+          </span>
+        </span>
+        <ChevronRight className="h-5 w-5 shrink-0 text-[var(--tone)]" aria-hidden="true" />
+      </Link>
+    )
+  }
   if (!data) {
     return (
       <Link

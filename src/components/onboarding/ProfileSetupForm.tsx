@@ -6,6 +6,8 @@ import { ChevronLeft, Camera, ChevronRight, X } from "lucide-react"
 import { saveProfile } from "@/actions/profile"
 import { capturePhoto, isNativeApp, hapticTap } from "@/lib/native"
 import { cn } from "@/lib/utils"
+import { CITY_NAMES } from "@/lib/cities"
+import { START_LEVELS, type StartLevel } from "@/lib/startLevel"
 
 // ─── Countries list ────────────────────────────────────────────────────────────
 const COUNTRIES = [
@@ -187,6 +189,8 @@ interface InitialData {
   nationality: string
   avatarUrl:   string | null
   preferredRole?: Role
+  homeCity?: string | null
+  startLevel?: string | null
 }
 
 type Role = "BLOCKER" | "DEFENDER"
@@ -213,6 +217,8 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
   const [nationality, setNationality] = useState(initialData?.nationality ?? "")
   const [nationalitySearch, setNationalitySearch] = useState("")
   const [role, setRole] = useState<Role | "">(initialData?.preferredRole ?? "")
+  const [homeCity, setHomeCity] = useState(initialData?.homeCity ?? "")
+  const [startLevel, setStartLevel] = useState<StartLevel | "">((initialData?.startLevel as StartLevel | undefined) ?? "")
   const [error, setError] = useState<string | null>(null)
 
   const [genderOpen, setGenderOpen] = useState(false)
@@ -279,6 +285,8 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
           gender: gender || undefined,
           nationality: nationality || undefined,
           avatarUrl,
+          homeCity: homeCity || undefined,
+          startLevel: startLevel || undefined,
         })
         localStorage.setItem("sander_onboarded", "1")
         localStorage.setItem("sander_has_profile", "1")
@@ -291,7 +299,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
   }
 
   return (
-    <div className="fixed inset-0 z-[200] flex flex-col overflow-y-auto bg-[#181818]">
+    <div className="fixed inset-0 z-[200] flex flex-col overflow-y-auto bg-[var(--surface-1)]">
       {/* Header */}
       <div
         className="flex items-center gap-3 px-4 pt-14 pb-2"
@@ -315,7 +323,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
           <p className="mt-0.5 text-sm text-[var(--muted-text)]">
             {initialData
               ? "Aggiorna i tuoi dati quando vuoi."
-              : "Bastano nome e ruolo: 10 secondi e sei in campo."}
+              : "Bastano nome e ruolo. Comune e livello ti portano subito alle partite giuste."}
           </p>
         </div>
       </div>
@@ -400,6 +408,57 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
                   )}
                 >
                   {r.hint}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Two one-tap questions that make the first home about *your* town
+            and *your* level. Optional, so they never block sign-up. */}
+        <div className="border-t border-[var(--border)] px-5 py-4">
+          <p className="text-base font-bold text-white">Dove giochi di solito?</p>
+          <p className="mt-0.5 text-sm text-[var(--muted-text)]">
+            Ti mostriamo prima le partite e la classifica del tuo comune.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {CITY_NAMES.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setHomeCity(homeCity === c ? "" : c)}
+                aria-pressed={homeCity === c}
+                className={cn(
+                  "min-h-[2.75rem] rounded-full px-4 text-sm font-bold transition-colors",
+                  homeCity === c ? "bg-[var(--accent)] text-black" : "bg-[var(--surface-3)] text-white",
+                )}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="border-t border-[var(--border)] px-5 py-4">
+          <p className="text-base font-bold text-white">Che livello sei?</p>
+          <p className="mt-0.5 text-sm text-[var(--muted-text)]">
+            Per proporti partite giuste per te. Poi conta solo come giochi.
+          </p>
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            {START_LEVELS.map((l) => (
+              <button
+                key={l.id}
+                type="button"
+                onClick={() => setStartLevel(l.id)}
+                aria-pressed={startLevel === l.id}
+                className={cn(
+                  "flex min-h-[3.5rem] flex-col items-center justify-center rounded-2xl px-2 text-center transition-colors",
+                  startLevel === l.id ? "bg-[var(--accent)] text-black" : "bg-[var(--surface-3)] text-white",
+                )}
+              >
+                <span className="text-sm font-black">{l.label}</span>
+                <span className={cn("text-xs leading-tight", startLevel === l.id ? "text-black/70" : "text-[var(--muted-text)]")}>
+                  {l.hint}
                 </span>
               </button>
             ))}

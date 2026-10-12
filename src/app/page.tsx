@@ -20,7 +20,9 @@ import { ClientOnlyHomeWidgets } from "@/components/home/ClientOnlyHomeWidgets"
 import { LevelRing } from "@/components/home/LevelRing"
 import { NextMatchCard, type NextMatch } from "@/components/home/NextMatchCard"
 import { OpenMatchesRail } from "@/components/home/OpenMatchesRail"
-import { CityRankCard, type CityRank } from "@/components/home/CityRankCard"
+import { CityRankCard, type CityRank, type CityPreview } from "@/components/home/CityRankCard"
+import { FirstSteps } from "@/components/home/FirstSteps"
+import { parseCity } from "@/lib/cities"
 import { TournamentSpotlight, type SpotlightTournament } from "@/components/home/TournamentSpotlight"
 import { InviteCard } from "@/components/home/InviteCard"
 import { CommunityStrip } from "@/components/home/CommunityStrip"
@@ -66,8 +68,15 @@ async function getSpotlightTournament(): Promise<SpotlightTournament | null> {
   }
 }
 
-/** Where the player stands in the comune they play in most. */
-async function getMyCityRank(playerId: string): Promise<CityRank | null> {
+/**
+ * Where the player stands in the comune they play in most — or, before their
+ * first game there, a preview of their home comune's board so even a brand-new
+ * account sees a crown to chase.
+ */
+async function getMyCityRank(
+  playerId: string,
+  homeCity: string | null,
+): Promise<{ rank: CityRank | null; preview: CityPreview | null }> {
   try {
     const boards = await getCityLeaderboards()
     let best: CityRank | null = null
@@ -88,9 +97,19 @@ async function getMyCityRank(playerId: string): Promise<CityRank | null> {
         king: b.king && b.king.id !== playerId ? b.king.name : null,
       }
     }
-    return best
+    if (best || !homeCity) return { rank: best, preview: null }
+    const home = boards.find((b) => b.city === homeCity)
+    return {
+      rank: null,
+      preview: {
+        city: homeCity,
+        king: home?.king?.name ?? null,
+        players: home?.standings.length ?? 0,
+        matches: home?.totalMatches ?? 0,
+      },
+    }
   } catch {
-    return null
+    return { rank: null, preview: null }
   }
 }
 
@@ -145,7 +164,7 @@ export default async function Home() {
       getUnreadCount(),
       getUnreadMessageCount(),
       db.user.count({ where: { invitedByPlayerId: player.id } }),
-      getMyCityRank(player.id),
+      getMyCityRank(player.id, player.homeCity),
       db.tournament.findFirst({
         where: { status: "COMPLETED" },
         orderBy: { updatedAt: "desc" },
@@ -175,7 +194,23 @@ export default async function Home() {
         faces: nextMatchRow.participants.map((p) => ({ name: p.player?.name ?? p.guestName ?? "?", avatarUrl: p.player?.avatarUrl })),
       }
     : null
-  const openMatches = recs.suggestedSessions.map((s) => ({
+  // A player with no games yet gets "first steps" instead of a wall of zeros.
+  const isNew = fullPlayer.sessionsPlayed === 0 && totalMatches === 0
+  const homeCity = fullPlayer.homeCity
+  const inHomeCity = (s: { city: string | null; location: string }) =>
+    !!homeCity && (s.city ?? parseCity(s.location)) === homeCity
+  const firstSteps = [
+    { id: "city", title: "Scegli il tuo comune", text: "Partite e classifica di casa tua", href: "/onboarding/profile", done: !!homeCity },
+    { id: "play", title: "Unisciti alla prima partita", text: "Basta un tocco su un posto libero", href: "/sessions", done: !!nextMatchRow || fullPlayer.sessionsPlayed > 0 },
+    { id: "photo", title: "Metti la foto sulla carta", text: "Così ti riconoscono in spiaggia", href: "/onboarding/profile", done: !!fullPlayer.avatarUrl },
+    { id: "invite", title: "Porta un amico", text: "+30 crediti a te, +20 a lui", href: "/profile?tab=invita", done: invited > 0 },
+  ]
+  const showFirstSteps = fullPlayer.sessionsPlayed < 3 && firstSteps.some((s) => !s.done)
+
+  const openMatches = [...recs.suggestedSessions]
+    // Your comune first; the ranking from recommendations is kept otherwise.
+    .sort((a, b) => Number(inHomeCity(b)) - Number(inHomeCity(a)))
+    .map((s) => ({
     id: s.id, title: s.title, location: s.location, date: s.date, spotsLeft: s.spotsLeft, familiar: s.familiarity === "known",
     maxPlayers: s.maxPlayers, players: s.players,
   }))
@@ -215,6 +250,13 @@ export default async function Home() {
             </div>
           </Link>
 
+          {isNew ? (
+            <p className="relative mt-4 rounded-[var(--radius-sm)] bg-black/25 px-3 py-2.5 text-sm text-white/85">
+              Il tuo rating parte da <strong className="text-[var(--accent)]">{rating}</strong>: sale quando vinci,
+              scende quando perdi. Gioca e scopri il tuo vero livello.
+            </p>
+          ) : (
+          <>
           <div className="relative mt-5 grid grid-cols-3 divide-x divide-[var(--border)] rounded-[var(--radius-md)] bg-black/25 py-3">
             <div className="text-center">
               <CountUp value={fullPlayer.sessionsPlayed} className="num block text-3xl leading-none text-white" />
@@ -248,10 +290,19 @@ export default async function Home() {
               {recs.performanceInsight.label}
             </p>
           )}
+          </>
+          )}
         </div>
       </section>
 
+      {showFirstSteps && (
+        <div {...rise()}>
+          <FirstSteps steps={firstSteps} />
+        </div>
+      )}
+
       {/* ── Play ───────────────────────────────────────────────────────── */}
+      {(nextMatch || !isNew) && (
       <div {...rise()}>
         {nextMatch ? (
           <NextMatchCard match={nextMatch} />
@@ -277,15 +328,20 @@ export default async function Home() {
         )}
       </div>
 
+      )}
+
       {openMatches.length > 0 && (
         <div {...rise()}>
-          <OpenMatchesRail matches={openMatches} />
+          <OpenMatchesRail
+            matches={openMatches}
+            title={homeCity && inHomeCity(recs.suggestedSessions.find((m) => m.id === openMatches[0].id)!) ? `A ${homeCity}` : "Partite aperte"}
+          />
         </div>
       )}
 
       {/* ── Compete ────────────────────────────────────────────────────── */}
       <div {...rise()}>
-        <CityRankCard data={cityRank} />
+        <CityRankCard data={cityRank.rank} preview={cityRank.preview} />
       </div>
 
       {tournament && (

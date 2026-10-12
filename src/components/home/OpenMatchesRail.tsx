@@ -17,11 +17,11 @@ export interface OpenMatch {
 }
 
 /** Swipeable strip of joinable matches: see a free spot, tap, you're in. */
-export function OpenMatchesRail({ matches }: { matches: OpenMatch[] }) {
+export function OpenMatchesRail({ matches, title = "Partite aperte" }: { matches: OpenMatch[]; title?: string }) {
   if (matches.length === 0) return null
   return (
     <section className="flex flex-col gap-3">
-      <SectionHeader eyebrow="Posti liberi" title="Partite aperte" tone="play" action={{ href: "/sessions", label: "Tutte" }} />
+      <SectionHeader eyebrow="Posti liberi" title={title} tone="play" action={{ href: "/sessions", label: "Tutte" }} />
       <div className="rail -mx-4 px-4 pb-1" style={{ scrollPaddingInline: "1rem" }}>
         {matches.map((m) => {
           const n = daysFromNow(m.date)

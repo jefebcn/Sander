@@ -86,7 +86,7 @@ function presetsToQuotaDisplay(presets: Presets): string {
   return ""
 }
 
-export function CreateSessionForm({ presets }: { presets?: Presets }) {
+export function CreateSessionForm({ presets, defaultCity }: { presets?: Presets; defaultCity?: string }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -95,7 +95,9 @@ export function CreateSessionForm({ presets }: { presets?: Presets }) {
     (presets?.format as Format | undefined) ?? "TWO_VS_TWO",
   )
   const [location, setLocation] = useState(presets?.location ?? "")
-  const [city, setCity] = useState(presets?.city ?? "")
+  // The player's home comune is the best first guess; typing a location
+  // in another town still switches it automatically until they pick one.
+  const [city, setCity] = useState(presets?.city ?? defaultCity ?? "")
   // Once the organiser picks a comune by hand, stop overwriting their choice
   // with whatever the location text happens to say.
   const [cityTouched, setCityTouched] = useState(Boolean(presets?.city))

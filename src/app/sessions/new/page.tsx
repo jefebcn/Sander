@@ -72,7 +72,7 @@ export default async function NewSessionPage({
           ↩ Precompilato dalla partita precedente
         </p>
       )}
-      <CreateSessionForm presets={presets ?? undefined} />
+      <CreateSessionForm presets={presets ?? undefined} defaultCity={player.homeCity ?? undefined} />
     </div>
   )
 }

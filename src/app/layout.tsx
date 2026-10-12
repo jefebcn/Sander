@@ -30,7 +30,7 @@ const barlowCondensed = Barlow_Condensed({
 
 const TITLE = "SANDER — Beach volley in Riviera Romagnola"
 const DESCRIPTION =
-  "Trova partite, sfida i giocatori del tuo livello, scala le classifiche dei bagni e organizza tornei di beach volley in Riviera Romagnola (Rimini, Riccione, Cervia, Cesenatico)."
+  "Il gruppo WhatsApp del beach volley, ma che si organizza da solo: trova partite in Riviera Romagnola (Rimini, Riccione, Cervia, Cesenatico), vedi i posti liberi, sali nella classifica del tuo bagno e del tuo comune."
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.sanderbv.it"),
