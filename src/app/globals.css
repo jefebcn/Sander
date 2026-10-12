@@ -244,22 +244,31 @@ body[data-bg="sunset"] .app-bg__glow {
 }
 
 /* Direction-aware page transitions (see PageWrapper).
-   forward = going deeper (list → detail), back = going up, tab = switching area. */
+   forward = going deeper (list → detail), back = going up, tab = switching area.
+
+   No transform here, on purpose: any transform on the page wrapper — even a
+   finished one held by fill-mode — makes it the containing block of every
+   position:fixed child, so full-screen forms, bottom sheets and overlays get
+   sized to the page instead of the screen (the onboarding form rendered at
+   0px tall). The slide moves a relatively-positioned wrapper with `left`,
+   which creates no containing block, and `backwards` leaves nothing behind
+   once the animation ends. */
 @keyframes pageForward {
-  from { opacity: 0; transform: translate3d(28px, 0, 0); }
-  to   { opacity: 1; transform: none; }
+  from { opacity: 0; left: 28px; }
+  to   { opacity: 1; left: 0; }
 }
 @keyframes pageBack {
-  from { opacity: 0; transform: translate3d(-28px, 0, 0); }
-  to   { opacity: 1; transform: none; }
+  from { opacity: 0; left: -28px; }
+  to   { opacity: 1; left: 0; }
 }
 @keyframes pageTab {
-  from { opacity: 0; transform: scale(0.985); }
-  to   { opacity: 1; transform: none; }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
-.page-forward { animation: pageForward var(--dur-base) var(--ease-out) both; }
-.page-back    { animation: pageBack var(--dur-base) var(--ease-out) both; }
-.page-tab     { animation: pageTab var(--dur-base) var(--ease-out) both; }
+.page-forward, .page-back { position: relative; }
+.page-forward { animation: pageForward var(--dur-base) var(--ease-out) backwards; }
+.page-back    { animation: pageBack var(--dur-base) var(--ease-out) backwards; }
+.page-tab     { animation: pageTab var(--dur-base) var(--ease-out) backwards; }
 
 /* Entrance used by home sections — staggered with --i (0,1,2…). */
 @keyframes riseIn {
@@ -267,7 +276,7 @@ body[data-bg="sunset"] .app-bg__glow {
   to   { opacity: 1; transform: none; }
 }
 .rise-in {
-  animation: riseIn var(--dur-slow) var(--ease-out) both;
+  animation: riseIn var(--dur-slow) var(--ease-out) backwards;
   animation-delay: calc(var(--i, 0) * 70ms);
 }
 
@@ -321,7 +330,7 @@ body[data-bg="sunset"] .app-bg__glow {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-.sheet-up { animation: sheetUp 320ms var(--ease-out) both; }
+.sheet-up { animation: sheetUp 320ms var(--ease-out) backwards; }
 .fade-in  { animation: fadeIn 200ms ease-out both; }
 
 /* Press feedback for cards and rows. */
@@ -389,7 +398,7 @@ body[data-bg="sunset"] .app-bg__glow {
 }
 
 .pop-in {
-  animation: popIn 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: popIn 320ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
 }
 
 /* ─── Slide-up stagger (feed items, stat rows) ───────────────────────────── */
@@ -399,7 +408,7 @@ body[data-bg="sunset"] .app-bg__glow {
 }
 
 .slide-up {
-  animation: slideUp 240ms ease-out both;
+  animation: slideUp 240ms ease-out backwards;
 }
 
 /* Stagger delays for lists */
@@ -453,7 +462,7 @@ body[data-bg="sunset"] .app-bg__glow {
 }
 
 .celebrate {
-  animation: celebrationPop 480ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: celebrationPop 480ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
 }
 
 /* ─── Smooth interactive button baseline ─────────────────────────────────── */
