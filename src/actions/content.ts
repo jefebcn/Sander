@@ -91,7 +91,7 @@ export async function generateContent(): Promise<number> {
       tournamentDraft({
         id: t.id,
         name: t.name,
-        dateLabel: new Date(t.date).toLocaleDateString("it-IT", {
+        dateLabel: new Date(t.date).toLocaleDateString("it-IT", { timeZone: "Europe/Rome",
           day: "2-digit",
           month: "long",
           year: "numeric",

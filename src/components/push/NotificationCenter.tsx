@@ -156,7 +156,7 @@ export function NotificationCenter({ open, onClose }: NotificationCenterProps) {
                   <p className="text-sm font-bold text-white leading-tight">{n.title}</p>
                   <p className="mt-1 text-xs text-white/60 leading-relaxed">{n.body}</p>
                 </div>
-                <span className="shrink-0 text-[0.65rem] text-white/40 mt-0.5">
+                <span className="shrink-0 text-xs text-white/40 mt-0.5">
                   {relativeTime(n.createdAt)}
                 </span>
               </button>

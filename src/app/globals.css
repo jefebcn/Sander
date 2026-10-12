@@ -50,6 +50,52 @@
 
   /* Touch target minimum */
   --tap-min: 3.5rem;
+
+  /* ── Area colours — "a colour tells you where you are" ───────────────────
+     Every part of the app has one tone, used for its nav highlight, icons,
+     eyebrows and accents. Lime stays the brand and the primary action.
+       play     → partite, crea, gioca            (lime, brand)
+       compete  → tornei, classifiche, podi       (amber gold)
+       social   → amici, inviti, chat, community  (sky)
+       sand     → bagni, comuni, territorio       (warm sand)          */
+  --play: var(--accent);
+  --compete: #f5b83d;
+  --social: #38bdf8;
+  --sand: #e8d3a6;
+
+  /* Soft fills / hairlines derived from a tone (set --tone on a parent). */
+  --tone: var(--accent);
+  --tone-soft: color-mix(in srgb, var(--tone) 14%, transparent);
+  --tone-line: color-mix(in srgb, var(--tone) 32%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+  --accent-line: color-mix(in srgb, var(--accent) 32%, transparent);
+
+  /* Radius & elevation */
+  --radius-sm: 0.75rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.5rem;
+  --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 10px 30px -12px rgb(0 0 0 / 0.6);
+  --shadow-glow: 0 0 0 1px var(--accent-line), 0 12px 32px -10px color-mix(in srgb, var(--accent) 45%, transparent);
+
+  /* Motion — one vocabulary for the whole app */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 120ms;
+  --dur-base: 240ms;
+  --dur-slow: 480ms;
+}
+
+/* Area tones — put one on a page or card; children read var(--tone).
+   The derived fills are re-declared here on purpose: a custom property that
+   references another is resolved where it is declared, so defining them only
+   on :root would freeze them to lime for every area. */
+.tone-play    { --tone: var(--play); }
+.tone-compete { --tone: var(--compete); }
+.tone-social  { --tone: var(--social); }
+.tone-sand    { --tone: var(--sand); }
+.tone-play, .tone-compete, .tone-social, .tone-sand {
+  --tone-soft: color-mix(in srgb, var(--tone) 14%, transparent);
+  --tone-line: color-mix(in srgb, var(--tone) 32%, transparent);
 }
 
 @theme inline {
@@ -72,6 +118,12 @@
   --color-gold: var(--gold);
   --color-silver: var(--silver);
   --color-bronze: var(--bronze);
+  --color-play: var(--play);
+  --color-compete: var(--compete);
+  --color-social: var(--social);
+  --color-sand: var(--sand);
+  --color-tone: var(--tone);
+  --font-display: var(--font-condensed), var(--font-sans), system-ui, sans-serif;
 }
 
 /* ─── Base ────────────────────────────────────────────────────────────────── */
@@ -84,6 +136,36 @@
 
 html {
   color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Keyboard users must always see where they are. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+/* ─── Typography roles ────────────────────────────────────────────────────── */
+/* Display = condensed uppercase, the same voice as the social posts. */
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.005em;
+}
+/* Small all-caps label above a title. 12px floor: never smaller. */
+.eyebrow {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+/* Numbers that must not jiggle when they change (scores, counters). */
+.num {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  letter-spacing: 0;
 }
 
 body {
@@ -103,6 +185,105 @@ body {
 .page-enter {
   animation: fadeUp 220ms ease-out both;
 }
+
+/* Direction-aware page transitions (see PageWrapper).
+   forward = going deeper (list → detail), back = going up, tab = switching area. */
+@keyframes pageForward {
+  from { opacity: 0; transform: translate3d(28px, 0, 0); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes pageBack {
+  from { opacity: 0; transform: translate3d(-28px, 0, 0); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes pageTab {
+  from { opacity: 0; transform: scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+.page-forward { animation: pageForward var(--dur-base) var(--ease-out) both; }
+.page-back    { animation: pageBack var(--dur-base) var(--ease-out) both; }
+.page-tab     { animation: pageTab var(--dur-base) var(--ease-out) both; }
+
+/* Entrance used by home sections — staggered with --i (0,1,2…). */
+@keyframes riseIn {
+  from { opacity: 0; transform: translate3d(0, 14px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+.rise-in {
+  animation: riseIn var(--dur-slow) var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+
+/* Slow drifting sun glow behind the home hero. */
+@keyframes sunDrift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.9; }
+  50%      { transform: translate3d(-6%, 4%, 0) scale(1.08); opacity: 1; }
+}
+.sun-drift { animation: sunDrift 14s ease-in-out infinite; }
+
+/* Ring that draws itself (level progress). Uses --ring-to (0–100). */
+@keyframes ringDraw {
+  from { stroke-dashoffset: 100; }
+}
+.ring-draw {
+  animation: ringDraw 1100ms var(--ease-out) both;
+  animation-delay: 200ms;
+}
+
+/* Gentle float for showcase elements (landing card). */
+@keyframes floatY {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-4deg); }
+  50%      { transform: translate3d(0, -10px, 0) rotate(-2deg); }
+}
+.float-y { animation: floatY 6s ease-in-out infinite; }
+
+/* Count-up integer (see CountUp component). */
+@property --num {
+  syntax: "<integer>";
+  initial-value: 0;
+  inherits: false;
+}
+@keyframes countUp {
+  from { --num: 0; }
+  to   { --num: var(--to); }
+}
+.count-up {
+  --num: var(--to);
+  counter-reset: num var(--num);
+  animation: countUp 1200ms var(--ease-out) both;
+  animation-delay: 150ms;
+}
+.count-up::after { content: counter(num); }
+
+/* Bottom sheet */
+@keyframes sheetUp {
+  from { transform: translate3d(0, 100%, 0); }
+  to   { transform: none; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.sheet-up { animation: sheetUp 320ms var(--ease-out) both; }
+.fade-in  { animation: fadeIn 200ms ease-out both; }
+
+/* Press feedback for cards and rows. */
+.pressable {
+  transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur-fast) ease-out;
+}
+.pressable:active { transform: scale(0.98); }
+
+/* Horizontal snap rail (cards you swipe through). */
+.rail {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.rail::-webkit-scrollbar { display: none; }
+.rail > * { scroll-snap-align: start; flex-shrink: 0; }
 
 /* ─── Skeleton shimmer ───────────────────────────────────────────────────── */
 @keyframes shimmer {
@@ -325,3 +506,16 @@ button, a, [role="button"] {
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--surface-1); }
 ::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 2px; }
+
+/* ─── Reduced motion ──────────────────────────────────────────────────────── */
+/* People with vestibular disorders (or who just turned it off) get the same
+   app, minus the movement: animations finish instantly, nothing loops. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

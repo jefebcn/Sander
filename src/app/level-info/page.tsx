@@ -227,7 +227,7 @@ export default async function LevelInfoPage() {
                   style={{ background: bg }}
                 >
                   <Icon className="h-5 w-5" style={{ color }} />
-                  <span className="text-[0.6rem] font-black mt-0.5" style={{ color }}>
+                  <span className="text-xs font-black mt-0.5" style={{ color }}>
                     Lv{lvl}
                   </span>
                 </div>
@@ -236,7 +236,7 @@ export default async function LevelInfoPage() {
                     <p className="font-black text-sm text-white">{title}</p>
                     {isReached && (
                       <span
-                        className="rounded-full px-1.5 py-0.5 text-[0.6rem] font-black"
+                        className="rounded-full px-1.5 py-0.5 text-xs font-black"
                         style={{ background: "rgba(201,243,29,0.15)", color: "var(--accent)" }}
                       >
                         RAGGIUNTO

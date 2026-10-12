@@ -115,7 +115,7 @@ export function TeamPairingEditor({ tournamentId, registrations }: TeamPairingEd
                         />
                       )}
                       <span
-                        className="text-[0.65rem] font-black uppercase tracking-wider"
+                        className="text-xs font-black uppercase tracking-wider"
                         style={{ color: "var(--accent)" }}
                       >
                         {p1.teamName}
@@ -221,7 +221,7 @@ function TeamInfoPanel({
       style={{ borderColor: "var(--border)", background: "var(--surface-1)" }}
     >
       <div className="flex items-center gap-2">
-        <p className="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--muted-text)] flex-1">
+        <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)] flex-1">
           Nome squadra
         </p>
         {saving && (
@@ -241,7 +241,7 @@ function TeamInfoPanel({
         className="w-full rounded-xl bg-[var(--surface-3)] px-3 py-2 text-sm font-semibold text-white placeholder:text-[var(--muted-text)] outline-none focus:ring-1 focus:ring-[var(--accent)]"
       />
 
-      <p className="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--muted-text)]">
+      <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
         Logo (URL immagine)
       </p>
 
@@ -269,7 +269,7 @@ function TeamInfoPanel({
         />
       </div>
       {logoError && (
-        <p className="text-[0.6rem] text-[var(--danger)]">URL immagine non valido</p>
+        <p className="text-xs text-[var(--danger)]">URL immagine non valido</p>
       )}
     </div>
   )

@@ -11,7 +11,7 @@ import { GroupInfoSheet } from "./GroupInfoSheet"
 type ThreadData = Awaited<ReturnType<typeof getThread>>
 
 function timeLabel(iso: string): string {
-  return new Date(iso).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })
+  return new Date(iso).toLocaleTimeString("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" })
 }
 
 const LINK_RE = /(\/(?:sessions|tournaments)\/[a-zA-Z0-9_-]+)/g
@@ -148,7 +148,7 @@ export function ConversationView({
                   <p className="mb-0.5 text-xs font-black text-[var(--accent)]">{m.senderName}</p>
                 )}
                 <p className="whitespace-pre-wrap break-words text-base leading-snug">{renderBody(m.body)}</p>
-                <p className={`mt-0.5 text-right text-[0.6rem] ${m.mine ? "text-black/50" : "text-white/40"}`}>
+                <p className={`mt-0.5 text-right text-xs ${m.mine ? "text-black/50" : "text-white/40"}`}>
                   {timeLabel(m.createdAt)}
                 </p>
               </div>
@@ -157,7 +157,7 @@ export function ConversationView({
         )}
         {/* Read receipt (DM): status under my last message */}
         {thread.kind === "DM" && messages.length > 0 && messages[messages.length - 1].mine && (
-          <p className="pr-1 text-right text-[0.65rem] text-[var(--muted-text)]">
+          <p className="pr-1 text-right text-xs text-[var(--muted-text)]">
             {thread.otherReadAt && thread.otherReadAt >= messages[messages.length - 1].createdAt
               ? "Letto ✓✓"
               : "Inviato ✓"}

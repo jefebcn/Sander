@@ -60,7 +60,7 @@ export function StatsInfoSheet() {
           <p className="text-base font-black text-white">Cosa significano i dati?</p>
           <button
             onClick={() => setOpen(false)}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-2)]"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-2)]"
           >
             <X className="h-4 w-4 text-white" />
           </button>

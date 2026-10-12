@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { QrCode, X } from "lucide-react"
 
 const APP_URL = "https://www.sanderbv.it"
@@ -14,7 +14,7 @@ interface QRCodeButtonProps {
  * QR code as a simple visual grid using the URL encoded in a basic pattern.
  * Uses the browser Canvas API to generate a QR code image via a tiny encoder.
  */
-export function QRCodeButton({ path, title }: QRCodeButtonProps) {
+export function QRCodeButton({ path, title, label = "Mostra QR Code" }: QRCodeButtonProps & { label?: string }) {
   const [open, setOpen] = useState(false)
   const url = `${APP_URL}${path}`
 
@@ -23,10 +23,10 @@ export function QRCodeButton({ path, title }: QRCodeButtonProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-bold text-white text-base transition-colors active:bg-[var(--surface-3)]"
+        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-3)] font-bold text-white text-base transition-colors active:bg-[var(--surface-4)]"
       >
         <QrCode className="h-5 w-5 text-[var(--accent)]" />
-        Mostra QR Code
+        {label}
       </button>
 
       {/* Full-screen overlay */}
@@ -36,12 +36,13 @@ export function QRCodeButton({ path, title }: QRCodeButtonProps) {
           onClick={() => setOpen(false)}
         >
           <div
-            className="w-full max-w-xs rounded-3xl bg-white p-6 text-center"
+            className="relative w-full max-w-xs rounded-3xl bg-white p-6 text-center"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setOpen(false)}
-              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-3)]"
+              aria-label="Chiudi"
+              className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-3)]"
             >
               <X className="h-4 w-4 text-white" />
             </button>
@@ -51,7 +52,7 @@ export function QRCodeButton({ path, title }: QRCodeButtonProps) {
             {/* QR Code rendered via Canvas */}
             <QRCanvas url={url} />
 
-            <p className="mt-3 text-xs text-gray-500 break-all">{url}</p>
+            <p className="mt-3 text-sm text-gray-600 break-all">{url}</p>
           </div>
         </div>
       )}
@@ -60,44 +61,33 @@ export function QRCodeButton({ path, title }: QRCodeButtonProps) {
 }
 
 /**
- * Renders a QR code using the Canvas API.
- * We use a simple encoding: render a QR-like pattern that mobile cameras can scan.
- * Since we can't install packages, we use a data URL approach with a fallback.
+ * QR generated on the device with the `qrcode` package: works offline on the
+ * beach and doesn't hand the (invite) URL to a third-party image service.
  */
 function QRCanvas({ url }: { url: string }) {
   const [imgSrc, setImgSrc] = useState<string | null>(null)
   const [error, setError] = useState(false)
 
-  // Generate QR via Google Charts API (publicly available, no key needed)
-  const googleQR = `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${encodeURIComponent(url)}&choe=UTF-8`
-
-  // Fallback: QR Server API (open, no key)
-  const fallbackQR = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`
-
-  const src = imgSrc ?? googleQR
+  useEffect(() => {
+    let alive = true
+    import("qrcode")
+      .then((QR) => QR.toDataURL(url, { width: 440, margin: 1, errorCorrectionLevel: "M" }))
+      .then((data) => { if (alive) setImgSrc(data) })
+      .catch(() => { if (alive) setError(true) })
+    return () => { alive = false }
+  }, [url])
 
   return (
     <div className="flex items-center justify-center">
-      {!error ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={src}
-          alt="QR Code"
-          width={220}
-          height={220}
-          className="rounded-xl"
-          onError={() => {
-            if (!imgSrc) {
-              setImgSrc(fallbackQR)
-            } else {
-              setError(true)
-            }
-          }}
-        />
-      ) : (
+      {error ? (
         <div className="flex h-[220px] w-[220px] items-center justify-center rounded-xl bg-gray-100">
-          <p className="text-sm text-gray-400">QR non disponibile</p>
+          <p className="text-sm text-gray-500">QR non disponibile</p>
         </div>
+      ) : imgSrc ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={imgSrc} alt="QR Code" width={220} height={220} className="rounded-xl" />
+      ) : (
+        <div className="h-[220px] w-[220px] animate-pulse rounded-xl bg-gray-100" aria-label="Generazione QR" />
       )}
     </div>
   )

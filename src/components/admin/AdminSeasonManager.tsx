@@ -86,7 +86,7 @@ export function AdminSeasonManager({ activeSeason }: Props) {
         />
         <div className="grid grid-cols-2 gap-2">
           <label className="flex flex-col gap-1">
-            <span className="text-[0.65rem] font-bold text-[var(--muted-text)]">Inizio</span>
+            <span className="text-xs font-bold text-[var(--muted-text)]">Inizio</span>
             <input
               type="datetime-local"
               value={startsAt}
@@ -96,7 +96,7 @@ export function AdminSeasonManager({ activeSeason }: Props) {
             />
           </label>
           <label className="flex flex-col gap-1">
-            <span className="text-[0.65rem] font-bold text-[var(--muted-text)]">Fine</span>
+            <span className="text-xs font-bold text-[var(--muted-text)]">Fine</span>
             <input
               type="datetime-local"
               value={endsAt}

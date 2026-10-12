@@ -2,21 +2,32 @@ export const dynamic = "force-dynamic"
 
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronRight, ExternalLink, Sparkles, MapPin, Trophy, Shuffle, Plus, Music2 } from "lucide-react"
 import { redirect } from "next/navigation"
+import { Plus, Search, TrendingUp, Waves, Activity, Medal, ChevronRight, Trophy } from "lucide-react"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { ratingToDisplayLevel } from "@/lib/tournament/glicko2"
 import { getPersonalizedRecommendations } from "@/actions/recommendations"
-import { formatDate } from "@/lib/utils"
-import { ClientOnlyHomeWidgets } from "@/components/home/ClientOnlyHomeWidgets"
+import { getCityLeaderboards } from "@/actions/territories"
+import { getUnreadCount } from "@/actions/notifications"
+import { getUnreadMessageCount } from "@/actions/messages"
+import { TZ } from "@/lib/datetime"
 import { playerToCardData } from "@/components/player/SanderCardFut"
 import { NotificationBell } from "@/components/push/NotificationBell"
 import { MessagesBell } from "@/components/chat/MessagesBell"
-import { getUnreadCount } from "@/actions/notifications"
-import { getUnreadMessageCount } from "@/actions/messages"
-import { WhatsAppAnnouncementBanner } from "@/components/home/WhatsAppAnnouncementBanner"
 import { StatsInfoSheet } from "@/components/home/StatsInfoSheet"
+import { ClientOnlyHomeWidgets } from "@/components/home/ClientOnlyHomeWidgets"
+import { LevelRing } from "@/components/home/LevelRing"
+import { NextMatchCard, type NextMatch } from "@/components/home/NextMatchCard"
+import { OpenMatchesRail } from "@/components/home/OpenMatchesRail"
+import { CityRankCard, type CityRank } from "@/components/home/CityRankCard"
+import { TournamentSpotlight, type SpotlightTournament } from "@/components/home/TournamentSpotlight"
+import { InviteCard } from "@/components/home/InviteCard"
+import { CommunityStrip } from "@/components/home/CommunityStrip"
+import { GuestLanding } from "@/components/home/GuestLanding"
+import { CountUp } from "@/components/ui/CountUp"
+import { SectionHeader } from "@/components/ui/SectionHeader"
+import { ListRow } from "@/components/ui/ListRow"
 
 function getMilestoneTitle(level: number): string {
   if (level >= 50) return "Sand King"
@@ -25,6 +36,62 @@ function getMilestoneTitle(level: number): string {
   if (level >= 5)  return "Setter"
   if (level >= 2)  return "Sand Digger"
   return "Drop-In"
+}
+
+/** "Buongiorno" / "Buon pomeriggio" / "Buonasera", by Riviera clock. */
+function greeting(now = new Date()): string {
+  const h = Number(new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", hourCycle: "h23" }).format(now))
+  if (h < 5) return "Buonanotte"
+  if (h < 13) return "Buongiorno"
+  if (h < 18) return "Buon pomeriggio"
+  return "Buonasera"
+}
+
+/** The tournament worth putting on the poster: the next one, open ones first. */
+async function getSpotlightTournament(): Promise<SpotlightTournament | null> {
+  const t = await db.tournament.findFirst({
+    where: { status: { in: ["DRAFT", "LIVE"] }, date: { gte: new Date(Date.now() - 6 * 3600_000) } },
+    orderBy: [{ isOpenForRegistration: "desc" }, { date: "asc" }],
+    select: {
+      id: true, name: true, date: true, location: true, priceCents: true, prizePool: true,
+      maxTeams: true, isOpenForRegistration: true,
+      _count: { select: { registrations: { where: { isSpectator: false, paymentStatus: { in: ["FREE", "PAID", "PENDING"] } } } } },
+    },
+  })
+  if (!t) return null
+  return {
+    id: t.id, name: t.name, date: t.date, location: t.location, priceCents: t.priceCents,
+    prizePool: t.prizePool, maxTeams: t.maxTeams, open: t.isOpenForRegistration,
+    registered: t._count.registrations,
+  }
+}
+
+/** Where the player stands in the comune they play in most. */
+async function getMyCityRank(playerId: string): Promise<CityRank | null> {
+  try {
+    const boards = await getCityLeaderboards()
+    let best: CityRank | null = null
+    let bestMatches = 0
+    for (const b of boards) {
+      const i = b.standings.findIndex((p) => p.id === playerId)
+      if (i === -1) continue
+      const me = b.standings[i]
+      if (me.matches <= bestMatches) continue
+      bestMatches = me.matches
+      const third = b.standings[2]
+      best = {
+        city: b.city,
+        rank: i + 1,
+        total: b.standings.length,
+        wins: me.wins,
+        winsToPodium: i < 3 || !third ? 0 : Math.max(1, third.wins - me.wins + 1),
+        king: b.king && b.king.id !== playerId ? b.king.name : null,
+      }
+    }
+    return best
+  } catch {
+    return null
+  }
 }
 
 export default async function Home() {
@@ -36,775 +103,278 @@ export default async function Home() {
     redirect("/onboarding/profile")
   }
 
-  let fullPlayer = null
-  let recs = null
-  let upcomingChicece = null
-  let unreadCount = 0
-  let recentTournament = null
-  let unreadMessages = 0
-  if (player) {
-    ;[fullPlayer, recs, upcomingChicece, unreadCount, recentTournament, unreadMessages] = await Promise.all([
+  /* ── Visitor ─────────────────────────────────────────────────────────── */
+  if (!player) {
+    const [players, matches, tournament] = await Promise.all([
+      db.player.count(),
+      db.session.count({ where: { status: "COMPLETED" } }),
+      getSpotlightTournament(),
+    ])
+    return (
+      <HomeShell>
+        <GuestHeader />
+        <GuestLanding stats={{ players, matches }} tournament={tournament} />
+      </HomeShell>
+    )
+  }
+
+  /* ── Player ──────────────────────────────────────────────────────────── */
+  const now = new Date()
+  const [fullPlayer, recs, nextMatchRow, tournament, unreadCount, unreadMessages, invited, cityRank, recentTournament] =
+    await Promise.all([
       db.player.findUnique({
         where: { id: player.id },
         include: { _count: { select: { organizedSessions: true } } },
       }),
       getPersonalizedRecommendations(player.id),
-      db.tournament.findFirst({
-        where: { type: "CHICECE", status: { in: ["DRAFT", "LIVE"] } },
+      db.session.findFirst({
+        where: {
+          participants: { some: { playerId: player.id } },
+          status: { in: ["OPEN", "FULL"] },
+          // A match that started an hour ago is still "the next one" to open.
+          date: { gte: new Date(now.getTime() - 3600_000) },
+        },
         orderBy: { date: "asc" },
+        select: { id: true, title: true, location: true, date: true, maxPlayers: true, _count: { select: { participants: true } } },
       }),
+      getSpotlightTournament(),
       getUnreadCount(),
+      getUnreadMessageCount(),
+      db.user.count({ where: { invitedByPlayerId: player.id } }),
+      getMyCityRank(player.id),
       db.tournament.findFirst({
         where: { status: "COMPLETED" },
         orderBy: { updatedAt: "desc" },
         select: {
           id: true,
           name: true,
-          // FINAL match → use for Chicece (true winner = team that won the final)
-          matches: {
-            where: { bracketSection: "FINAL", isCompleted: true },
-            take: 1,
-            select: {
-              teamAScore: true,
-              teamBScore: true,
-              players: {
-                select: {
-                  team: true,
-                  player: { select: { name: true, firstName: true, lastName: true } },
-                },
-              },
-            },
-          },
-          // Fallback for non-Chicece tournaments that use standings
-          standings: {
-            orderBy: { rank: "asc" },
-            take: 3,
-            select: {
-              rank: true,
-              player: { select: { name: true, firstName: true, lastName: true } },
-            },
-          },
+          standings: { orderBy: { rank: "asc" }, take: 1, select: { player: { select: { name: true } } } },
         },
       }),
-      getUnreadMessageCount(),
     ])
-  }
 
-  // Social-proof numbers for the logged-out hero
-  let heroStats: { players: number; matches: number } | null = null
-  if (!fullPlayer) {
-    const [players, matches, chicece] = await Promise.all([
-      db.player.count(),
-      db.session.count({ where: { status: "COMPLETED" } }),
-      upcomingChicece
-        ? Promise.resolve(upcomingChicece)
-        : db.tournament.findFirst({
-            where: { type: "CHICECE", status: { in: ["DRAFT", "LIVE"] } },
-            orderBy: { date: "asc" },
-          }),
-    ])
-    heroStats = { players, matches }
-    upcomingChicece = chicece
-  }
+  if (!fullPlayer) redirect("/onboarding/profile")
 
-  const xpCurrent = fullPlayer ? fullPlayer.xp % 100 : 0
+  const firstName = fullPlayer.firstName ?? fullPlayer.name.split(" ")[0]
+  const lastName = fullPlayer.lastName ?? fullPlayer.name.split(" ").slice(1).join(" ")
+  const initials = `${firstName[0] ?? ""}${lastName[0] ?? ""}`.toUpperCase()
+  const xpCurrent = fullPlayer.xp % 100
   const xpToNext = 100 - xpCurrent
-  const xpPct = fullPlayer ? Math.round((xpCurrent / 100) * 100) : 0
-  const nextLevel = fullPlayer ? fullPlayer.level + 1 : 2
-  const totalMatches = fullPlayer
-    ? fullPlayer.matchesWon + fullPlayer.matchesLost
-    : 0
-  const streakPct =
-    totalMatches > 0
-      ? Math.round((fullPlayer!.matchesWon / totalMatches) * 100)
-      : 0
-  const glickoDisplay = ratingToDisplayLevel(fullPlayer?.glickoRating ?? 1500)
+  const totalMatches = fullPlayer.matchesWon + fullPlayer.matchesLost
+  const winPct = totalMatches > 0 ? Math.round((fullPlayer.matchesWon / totalMatches) * 100) : 0
+  const rating = ratingToDisplayLevel(fullPlayer.glickoRating ?? 1500)
+
+  const nextMatch: NextMatch | null = nextMatchRow
+    ? {
+        id: nextMatchRow.id, title: nextMatchRow.title, location: nextMatchRow.location, date: nextMatchRow.date,
+        players: nextMatchRow._count.participants, maxPlayers: nextMatchRow.maxPlayers,
+      }
+    : null
+  const openMatches = recs.suggestedSessions.map((s) => ({
+    id: s.id, title: s.title, location: s.location, date: s.date, spotsLeft: s.spotsLeft, familiar: s.familiarity === "known",
+  }))
+
+  // Sections rise in one after another, top to bottom.
+  let section = 0
+  const rise = () => ({ className: "rise-in", style: { "--i": section++ } as React.CSSProperties })
 
   return (
-    <div
-      className="relative min-h-dvh overflow-x-hidden"
-      style={{
-        background:
-          "radial-gradient(ellipse 75% 45% at 105% 0%, rgba(201,243,29,0.13) 0%, transparent 65%), " +
-          "linear-gradient(175deg, #0d1209 0%, #090b09 40%, #040504 100%)",
-      }}
-    >
-      {/* Large logo — top-right decorative, partially off-screen */}
-      <div
-        className="pointer-events-none fixed top-0 right-0"
-        aria-hidden="true"
-        style={{ transform: "translate(22%, 8%)" }}
-      >
-        <Image
-          src="/sander-logo.png"
-          alt=""
-          width={320}
-          height={320}
-          className="object-contain opacity-[0.13]"
-          priority
-        />
-      </div>
+    <HomeShell>
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <header className="flex items-center gap-3">
+        <Image src="/sander-logo.png" alt="SANDER" width={40} height={40} className="object-contain" priority />
+        <span className="font-display text-xl font-extrabold uppercase tracking-wide text-white">Sander</span>
+        <div className="ml-auto flex items-center gap-2">
+          <MessagesBell unreadCount={unreadMessages} />
+          <NotificationBell unreadCount={unreadCount} />
+        </div>
+      </header>
 
-      <div
-        className="relative z-10 flex flex-col gap-4 px-4 pb-6"
-        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 3rem)" }}
-      >
-        {/* ── Header ──────────────────────────────────────────── */}
-        <div className="flex items-center gap-3 mb-1">
-          <Image
-            src="/sander-logo.png"
-            alt="Sander"
-            width={42}
-            height={42}
-            className="object-contain"
+      {/* ── You ────────────────────────────────────────────────────────── */}
+      <section {...rise()}>
+        <div className="relative overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-5 shadow-[var(--shadow-card)]">
+          <div
+            aria-hidden="true"
+            className="sun-drift pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full"
+            style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--accent) 22%, transparent) 0%, transparent 62%)" }}
           />
-          <span className="text-base font-semibold tracking-wide text-white/80">
-            Get in the game.
-          </span>
-          {fullPlayer && (
-            <div className="ml-auto flex items-center gap-2">
-              <MessagesBell unreadCount={unreadMessages} />
-              <NotificationBell unreadCount={unreadCount} />
+          <Link href="/profile" className="relative flex items-center gap-4">
+            <LevelRing level={fullPlayer.level} pct={xpCurrent} avatarUrl={fullPlayer.avatarUrl} initials={initials} />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-[var(--muted-text)]">{greeting(now)},</p>
+              <p className="truncate font-display text-[2.1rem] font-extrabold uppercase leading-[0.95] text-white">{firstName}</p>
+              <span className="mt-1.5 inline-block rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs font-extrabold uppercase tracking-wider text-[var(--accent)]">
+                {getMilestoneTitle(fullPlayer.level)}
+              </span>
             </div>
+          </Link>
+
+          <div className="relative mt-5 grid grid-cols-3 divide-x divide-[var(--border)] rounded-[var(--radius-md)] bg-black/25 py-3">
+            <div className="text-center">
+              <CountUp value={fullPlayer.sessionsPlayed} className="num block text-3xl leading-none text-white" />
+              <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Partite</p>
+            </div>
+            <div className="text-center">
+              <p className="num text-3xl leading-none text-white">
+                <CountUp value={winPct} />%
+              </p>
+              <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Vinte</p>
+            </div>
+            <div className="text-center">
+              <p className="num text-3xl leading-none text-[var(--accent)]">{rating}</p>
+              <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Rating</p>
+            </div>
+          </div>
+
+          <div className="relative mt-4 flex items-center gap-3">
+            <Link href="/level-info" className="flex min-h-[2.75rem] flex-1 items-center gap-3">
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-[var(--surface-4)]" aria-hidden="true">
+                <div className="xp-bar-fill h-full rounded-full bg-[var(--accent)]" style={{ width: `${Math.max(3, xpCurrent)}%` }} />
+              </div>
+              <span className="shrink-0 text-sm font-bold text-white">
+                {xpToNext} punti al <span className="text-[var(--accent)]">liv {fullPlayer.level + 1}</span>
+              </span>
+            </Link>
+            <StatsInfoSheet />
+          </div>
+          {recs.performanceInsight && (
+            <p className="relative mt-3 rounded-[var(--radius-sm)] bg-[var(--accent-soft)] px-3 py-2 text-sm font-semibold text-[var(--accent)]">
+              {recs.performanceInsight.label}
+            </p>
           )}
         </div>
+      </section>
 
-        {fullPlayer ? (
-          <>
-            {/* ── Profile Card ──────────────────────────────────── */}
-            <div className="slide-up flex items-center gap-4 rounded-2xl bg-[var(--surface-2)] p-5">
-              {/* Avatar */}
-              <div className="h-[4.5rem] w-[4.5rem] flex-shrink-0 overflow-hidden rounded-full bg-[var(--accent)] flex items-center justify-center">
-                {fullPlayer.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={fullPlayer.avatarUrl}
-                    alt={fullPlayer.name}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <svg viewBox="0 0 100 100" className="h-14 w-14" fill="none">
-                    <circle cx="50" cy="38" r="18" fill="rgba(0,0,0,0.3)" />
-                    <ellipse cx="50" cy="80" rx="28" ry="18" fill="rgba(0,0,0,0.3)" />
-                  </svg>
-                )}
-              </div>
-              {/* Name */}
-              <div className="min-w-0 flex-1">
-                <p className="text-2xl font-black leading-tight text-white">
-                  {fullPlayer.firstName ?? fullPlayer.name.split(" ")[0]}
-                </p>
-                <p className="text-2xl font-black leading-tight text-white">
-                  {fullPlayer.lastName ??
-                    fullPlayer.name.split(" ").slice(1).join(" ")}
-                </p>
-                <div className="mt-1 flex items-center gap-1.5">
-                  <span className="text-[0.55rem] font-bold uppercase tracking-wider text-[var(--muted-text)]">Titolo</span>
-                  <span className="inline-block rounded-full px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-wider"
-                    style={{ background: "rgba(201,243,29,0.15)", color: "var(--accent)" }}>
-                    {getMilestoneTitle(fullPlayer.level)}
-                  </span>
-                </div>
-              </div>
-              {/* Level badge — tap to see how XP works (accent = tappable) */}
-              <Link
-                href="/level-info"
-                className="pop-in flex flex-shrink-0 flex-col items-center justify-center rounded-xl bg-[var(--surface-3)] px-4 py-2 active:opacity-70"
-                style={{ border: "1px solid rgba(201,243,29,0.35)" }}
-              >
-                <span className="text-[0.6rem] font-bold uppercase tracking-widest text-[var(--muted-text)]">
-                  LIVELLO
-                </span>
-                <span className="text-3xl font-black leading-tight text-[var(--accent)]">
-                  {fullPlayer.level}
-                </span>
-              </Link>
-            </div>
-
-            {/* ── XP Progress Card ──────────────────────────────── */}
-            <div className="slide-up stagger-2 rounded-2xl bg-[var(--surface-2)] p-5">
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
-                  PROSSIMO LIVELLO{" "}
-                  <span className="text-white">{nextLevel}</span>
-                </p>
-                <p className="text-sm font-black">
-                  <span className="text-[var(--accent)]">{xpCurrent}</span>
-                  <span className="text-[var(--muted-text)]">/100</span>
-                </p>
-              </div>
-              <div className="mb-3 h-1 overflow-hidden rounded-full bg-[var(--surface-3)]">
-                <div
-                  className="xp-bar-fill h-full rounded-full bg-[var(--accent)]"
-                  style={{ width: `${Math.max(2, xpPct)}%` }}
-                />
-              </div>
-              <Link href="/level-info" className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-[var(--accent)] px-2.5 py-0.5 text-xs font-black text-black">
-                    -{xpToNext} punti
-                  </span>
-                  <span className="text-sm text-[var(--muted-text)]">
-                    al prossimo livello 🚀
-                  </span>
-                </div>
-                <ChevronRight className="h-4 w-4 flex-shrink-0 text-[var(--accent)]" />
-              </Link>
-            </div>
-
-            {/* ── Azioni rapide: crea + trova ──────────────────── */}
-            <div className="flex gap-2">
+      {/* ── Play ───────────────────────────────────────────────────────── */}
+      <div {...rise()}>
+        {nextMatch ? (
+          <NextMatchCard match={nextMatch} />
+        ) : (
+          <div className="tone-play rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-5">
+            <p className="eyebrow text-[var(--accent)]">Nessuna partita in programma</p>
+            <p className="mt-1 font-display text-3xl font-extrabold uppercase leading-none text-white">Pronto a giocare?</p>
+            <div className="mt-4 flex gap-2">
               <Link
                 href="/sessions/new"
-                className="flex min-h-[3.5rem] flex-[1.4] items-center justify-center gap-2 rounded-2xl font-black text-black text-base transition-opacity active:opacity-80"
-                style={{ background: "var(--accent)" }}
+                className="pressable flex min-h-[3.5rem] flex-[1.3] items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--accent)] text-base font-extrabold text-black shadow-[var(--shadow-glow)]"
               >
-                <Plus className="h-5 w-5" />
-                Crea partita
+                <Plus className="h-5 w-5" aria-hidden="true" /> Crea partita
               </Link>
               <Link
                 href="/sessions"
-                className="flex min-h-[3.5rem] flex-1 items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-black text-white text-base transition-opacity active:opacity-80"
+                className="pressable flex min-h-[3.5rem] flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--surface-3)] text-base font-extrabold text-white"
               >
-                <MapPin className="h-5 w-5 text-[var(--accent)]" />
-                Vedi
+                <Search className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" /> Trova
               </Link>
             </div>
-
-            {/* ── Stats Card ────────────────────────────────────── */}
-            <div className="slide-up stagger-3 overflow-hidden rounded-2xl bg-[var(--surface-2)]">
-              {/* Top stats row */}
-              <div className="relative grid grid-cols-3 divide-x divide-[var(--border)] pb-3 pt-5">
-                <div className="absolute right-2 top-2">
-                  <StatsInfoSheet />
-                </div>
-                {[
-                  { label: "RATING", value: glickoDisplay },
-                  { label: "PARTITE", value: fullPlayer.sessionsPlayed },
-                  { label: "ORG.", value: fullPlayer._count.organizedSessions },
-                ].map(({ label, value }) => (
-                  <div key={label} className="flex flex-col items-center gap-1 py-1">
-                    <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--muted-text)]">
-                      {label}
-                    </span>
-                    <span className="text-xl font-black text-white">{value}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mx-4 border-t border-[var(--border)]" />
-
-              {/* Win rate row */}
-              <div className="px-5 py-4">
-                {totalMatches === 0 ? (
-                  <div className="mb-3 py-1 text-center">
-                    <p className="text-sm font-bold text-white/70">Nessuna partita ancora</p>
-                    <p className="mt-0.5 text-xs text-[var(--muted-text)]">
-                      Crea o unisciti a una partita per vedere le tue stats
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-3">
-                      <span className="flex-shrink-0 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
-                        WIN RATE
-                      </span>
-                      {/* Colour bar */}
-                      <div className="relative h-2 flex-1 overflow-hidden rounded-full">
-                        <div
-                          className="absolute inset-0 rounded-full"
-                          style={{
-                            background:
-                              "linear-gradient(to right, #ef4444 0%, #f97316 33%, #eab308 66%, #22c55e 100%)",
-                          }}
-                        />
-                        {streakPct < 100 && (
-                          <div
-                            className="absolute inset-y-0 right-0 bg-[var(--surface-2)]"
-                            style={{ left: `${streakPct}%` }}
-                          />
-                        )}
-                        {/* Thumb */}
-                        <div
-                          className="absolute top-1/2 h-4 w-1.5 -translate-y-1/2 rounded-sm bg-white shadow"
-                          style={{ left: `${Math.max(0, Math.min(93, streakPct))}%` }}
-                        />
-                      </div>
-                      <span className="flex-shrink-0 text-xl font-black text-white">
-                        {streakPct}%
-                      </span>
-                    </div>
-                    <p className="mt-1.5 text-xs text-[var(--muted-text)]">
-                      {fullPlayer.matchesWon} vinte · {totalMatches} giocate
-                    </p>
-                  </>
-                )}
-                <Link
-                  href="/sessions"
-                  className="mt-3 flex items-center justify-between"
-                >
-                  <span className="text-sm text-[var(--muted-text)]">
-                    Vai alle partite
-                  </span>
-                  <ChevronRight className="h-4 w-4 flex-shrink-0 text-[var(--accent)]" />
-                </Link>
-              </div>
-            </div>
-
-            {/* ── Video della community (social proof / credibility) ── */}
-            <ClientOnlyHomeWidgets
-              currentLevel={fullPlayer.level}
-              playerName={fullPlayer.name}
-              cardData={playerToCardData(fullPlayer)}
-            />
-
-            {/* ── Per te (Personalised recommendations) ──────── */}
-            {recs && (recs.performanceInsight || recs.suggestedSessions.length > 0 || recs.suggestedTournaments.length > 0) && (
-              <div className="slide-up stagger-4 space-y-3">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-[var(--accent)]" />
-                  <p className="text-sm font-bold text-white/80">Per te</p>
-                </div>
-
-                {/* Recent tournament winners */}
-                {recentTournament && (() => {
-                  const finalMatch = recentTournament.matches[0]
-                  let winnersLine: string | null = null
-
-                  if (finalMatch) {
-                    // Chicece: derive true winner from the final match result
-                    const teamAWon = (finalMatch.teamAScore ?? 0) > (finalMatch.teamBScore ?? 0)
-                    const winTeam = finalMatch.players
-                      .filter((p) => p.team === (teamAWon ? 0 : 1))
-                      .map((p) =>
-                        p.player.firstName && p.player.lastName
-                          ? `${p.player.firstName} ${p.player.lastName}`
-                          : p.player.name,
-                      )
-                    if (winTeam.length > 0) winnersLine = `🏆 ${winTeam.join(" & ")}`
-                  } else if (recentTournament.standings.length > 0) {
-                    winnersLine = recentTournament.standings
-                      .map((s, i) => {
-                        const name =
-                          s.player.firstName && s.player.lastName
-                            ? `${s.player.firstName} ${s.player.lastName}`
-                            : s.player.name
-                        return `${i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"} ${name}`
-                      })
-                      .join("  ")
-                  }
-
-                  if (!winnersLine) return null
-                  return (
-                    <Link
-                      href={`/tournaments/${recentTournament.id}`}
-                      className="flex items-center gap-3 rounded-2xl bg-[var(--surface-2)] p-4"
-                    >
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-3)]">
-                        <Trophy className="h-4 w-4 text-[var(--accent)]" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
-                          Torneo completato
-                        </p>
-                        <p className="truncate text-sm font-bold text-white">{recentTournament.name}</p>
-                        <p className="text-xs text-[var(--muted-text)]">{winnersLine}</p>
-                      </div>
-                      <ChevronRight className="h-4 w-4 shrink-0 text-[var(--accent)]" />
-                    </Link>
-                  )
-                })()}
-
-                {/* Performance insight */}
-                {recs.performanceInsight && (
-                  <div className={`rounded-2xl px-4 py-3 text-sm font-semibold ${
-                    recs.performanceInsight.kind === "streak"
-                      ? "bg-[var(--accent)]/10 text-[var(--accent)]"
-                      : recs.performanceInsight.kind === "inactive"
-                      ? "bg-[var(--surface-2)] text-[var(--muted-text)]"
-                      : "bg-[var(--surface-2)] text-white/80"
-                  }`}>
-                    {recs.performanceInsight.label}
-                  </div>
-                )}
-
-                {/* Suggested sessions */}
-                {recs.suggestedSessions.map((s) => (
-                  <Link
-                    key={s.id}
-                    href={`/sessions/${s.id}`}
-                    className="flex items-center gap-3 rounded-2xl bg-[var(--surface-2)] p-4"
-                  >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-3)]">
-                      <MapPin className="h-4 w-4 text-[var(--accent)]" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-bold text-sm">{s.title}</p>
-                      <p className="text-xs text-[var(--muted-text)]">
-                        {s.location}
-                        {s.familiarity === "known" && " · 📍 posto noto"}
-                        {" · "}
-                        {s.spotsLeft > 0 ? `${s.spotsLeft} posti liberi` : "Completa"}
-                      </p>
-                    </div>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-[var(--accent)]" />
-                  </Link>
-                ))}
-
-                {/* Suggested tournaments */}
-                {recs.suggestedTournaments.map((t) => (
-                  <Link
-                    key={t.id}
-                    href={`/tournaments/${t.id}`}
-                    className="flex items-center gap-3 rounded-2xl bg-[var(--surface-2)] p-4"
-                  >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-3)]">
-                      <Trophy className="h-4 w-4 text-[var(--accent)]" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-bold text-sm">{t.name}</p>
-                      <p className="text-xs text-[var(--muted-text)]">
-                        {t.type === "KING_OF_THE_BEACH" ? "KOTB"
-                          : t.type === "ROUND_ROBIN" ? "Round Robin"
-                          : t.type === "DOUBLE_ELIMINATION" ? "Doppia Elim."
-                          : "Brackets"}
-                        {" · "}
-                        {t.playerCount} iscritti
-                      </p>
-                    </div>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-[var(--accent)]" />
-                  </Link>
-                ))}
-              </div>
-            )}
-
-            {/* ── Scopri (discovery zone) ───────────────────────── */}
-            <div className="flex items-center gap-2 pt-2">
-              <span className="h-px flex-1 bg-[var(--border)]" />
-              <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-text)]">Scopri</p>
-              <span className="h-px flex-1 bg-[var(--border)]" />
-            </div>
-
-            {/* ── Stagione · settimana · bagni ──────────────────── */}
-            <div className="grid grid-cols-3 gap-2">
-              <Link
-                href="/stagione"
-                className="flex flex-col items-center gap-1 rounded-2xl bg-[var(--surface-2)] py-3 active:opacity-80"
-                style={{ border: "1px solid rgba(168,85,247,0.25)" }}
-              >
-                <span className="text-xl">🌊</span>
-                <span className="text-xs font-black text-white">Stagione</span>
-              </Link>
-              <Link
-                href="/settimana"
-                className="flex flex-col items-center gap-1 rounded-2xl bg-[var(--surface-2)] py-3 active:opacity-80"
-              >
-                <span className="text-xl">📈</span>
-                <span className="text-xs font-black text-white">Settimana</span>
-              </Link>
-              <Link
-                href="/bagni"
-                className="flex flex-col items-center gap-1 rounded-2xl bg-[var(--surface-2)] py-3 active:opacity-80"
-              >
-                <span className="text-xl">👑</span>
-                <span className="text-xs font-black text-white">Bagni</span>
-              </Link>
-            </div>
-
-            {/* ── Podio del mese banner ────────────────────────── */}
-            <Link
-              href="/players?tab=podio"
-              className="flex min-h-[3.5rem] items-center gap-3 rounded-2xl p-4 active:opacity-80"
-              style={{
-                background: "linear-gradient(135deg, rgba(255,215,0,0.08) 0%, rgba(201,243,29,0.05) 100%)",
-                border: "1px solid rgba(255,215,0,0.25)",
-                touchAction: "manipulation",
-              }}
-            >
-              <div
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xl"
-                style={{ background: "rgba(255,215,0,0.12)" }}
-              >
-                🏆
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "#FFD700" }}>
-                  Podio del mese
-                </p>
-                <p className="font-bold text-white text-sm">
-                  I migliori giocatori di {new Date().toLocaleDateString("it-IT", { month: "long" })}
-                </p>
-                <p className="text-xs text-white/40">Scopri chi è in vetta questo mese</p>
-              </div>
-              <ChevronRight className="h-4 w-4 shrink-0" style={{ color: "#FFD700" }} />
-            </Link>
-
-            {/* ── Torneo in arrivo: Chicece ─────────────────────── */}
-            {upcomingChicece && (
-              <Link
-                href={`/tournaments/${upcomingChicece.id}`}
-                className="flex items-center gap-3 rounded-2xl p-4 active:opacity-80"
-                style={{
-                  background: "var(--surface-2)",
-                  border: "1px solid rgba(201,243,29,0.3)",
-                }}
-              >
-                <div
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-                  style={{ background: "rgba(201,243,29,0.12)" }}
-                >
-                  <Shuffle className="h-5 w-5 text-[var(--accent)]" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
-                    Torneo in arrivo
-                  </p>
-                  <p className="font-bold text-white truncate">{upcomingChicece.name}</p>
-                  <p className="text-xs text-[var(--muted-text)]">
-                    {formatDate(upcomingChicece.date)} · Chicece
-                  </p>
-                </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--accent)]" />
-              </Link>
-            )}
-
-            {/* ── Community (header) ────────────────────────────── */}
-            <div className="flex items-center gap-2 pt-2">
-              <span className="h-px flex-1 bg-[var(--border)]" />
-              <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-text)]">Community</p>
-              <span className="h-px flex-1 bg-[var(--border)]" />
-            </div>
-
-            {/* ── Gruppo WhatsApp ───────────────────────────────── */}
-            <WhatsAppAnnouncementBanner
-              url="https://chat.whatsapp.com/LnZvWR2ffXgIfzPCUFE7jL?mode=gi_t"
-              title="Gruppo WhatsApp Sander"
-              cta="Entra nel gruppo"
-            />
-
-            {/* ── Social section ────────────────────────────────── */}
-            <div className="mt-1">
-              <p className="mb-3 text-base text-white/70">
-                Segui Sander sui social
-              </p>
-              {/* Two side-by-side cards: Instagram (left) · TikTok (right) */}
-              <div className="flex gap-3">
-                {/* Instagram */}
-                <a
-                  href="https://www.instagram.com/sanderbeachvolley/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="relative flex h-40 flex-1 items-end overflow-hidden rounded-2xl"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #1a0830 0%, #2d1458 50%, #0d1a0d 100%)",
-                  }}
-                >
-                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-10">
-                    <Image src="/sander-logo.png" alt="" width={120} height={120} className="object-contain" />
-                  </div>
-                  <div className="relative z-10 flex w-full flex-col gap-2 p-4">
-                    <div
-                      className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl"
-                      style={{
-                        background:
-                          "radial-gradient(circle at 30% 107%, #fdf497 0%, #fd5949 35%, #d6249f 60%, #285AEB 90%)",
-                      }}
-                    >
-                      <ExternalLink className="h-5 w-5 text-white" />
-                    </div>
-                    <span className="text-base font-bold text-white">Instagram</span>
-                  </div>
-                </a>
-
-                {/* TikTok */}
-                <a
-                  href="https://www.tiktok.com/@sanderbeachvolley"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="relative flex h-40 flex-1 items-end overflow-hidden rounded-2xl"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #020202 0%, #0a2b2b 45%, #2a0a18 100%)",
-                  }}
-                >
-                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-10">
-                    <Image src="/sander-logo.png" alt="" width={120} height={120} className="object-contain" />
-                  </div>
-                  <div className="relative z-10 flex w-full flex-col gap-2 p-4">
-                    <div
-                      className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #25F4EE 0%, #000 50%, #FE2C55 100%)",
-                      }}
-                    >
-                      <Music2 className="h-5 w-5 text-white" />
-                    </div>
-                    <span className="text-base font-bold text-white">TikTok</span>
-                  </div>
-                </a>
-              </div>
-            </div>
-
-            {/* ── Sponsor section ───────────────────────────────── */}
-            <div className="mt-1 pb-6">
-              <p className="mb-3 text-base text-white/70">
-                Sponsor
-              </p>
-              <a
-                href="https://www.pepitoseyewear.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="relative flex h-44 items-end overflow-hidden rounded-2xl"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #0a0a0a 0%, #1c1c1c 40%, #2a1500 100%)",
-                }}
-              >
-                {/* Pepitos logo watermark */}
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                  <Image
-                    src="/sponsors/pepitos-logo.png"
-                    alt=""
-                    width={280}
-                    height={100}
-                    className="object-contain opacity-15"
-                  />
-                </div>
-                {/* Amber glow accent */}
-                <div
-                  className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full opacity-20"
-                  style={{ background: "radial-gradient(circle, var(--accent) 0%, transparent 70%)" }}
-                />
-                <div className="relative z-10 flex w-full items-center justify-between gap-3 p-4">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--accent)]/20"
-                    >
-                      <ExternalLink className="h-5 w-5 text-[var(--accent)]" />
-                    </div>
-                    <div>
-                      <p className="text-base font-black text-white">Pepitos Eyewear</p>
-                      <p className="text-xs text-white/50">pepitoseyewear.com</p>
-                    </div>
-                  </div>
-                  <ExternalLink className="h-4 w-4 flex-shrink-0 text-white/40" />
-                </div>
-              </a>
-            </div>
-          </>
-        ) : (
-          /* ── Logged-out hero — the conversion landing ──────────── */
-          <div className="flex flex-col gap-4">
-            {/* Value prop */}
-            <div className="slide-up pt-2">
-              <h1 className="text-4xl font-black leading-[1.05] text-white">
-                Il beach volley
-                <br />
-                della Riviera.
-              </h1>
-              <p className="mt-3 text-lg text-white/70 leading-snug">
-                Crea la tua <span className="font-bold text-[var(--accent)]">carta giocatore</span>,
-                organizza partite, scala la classifica e conquista i campi.
-              </p>
-            </div>
-
-            {/* Social proof */}
-            {heroStats && (heroStats.players > 0 || heroStats.matches > 0) && (
-              <div className="slide-up stagger-2 flex gap-3">
-                <div className="flex-1 rounded-2xl bg-[var(--surface-2)] p-4 text-center">
-                  <p className="text-3xl font-black text-[var(--accent)]">{heroStats.players}</p>
-                  <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
-                    Giocatori
-                  </p>
-                </div>
-                <div className="flex-1 rounded-2xl bg-[var(--surface-2)] p-4 text-center">
-                  <p className="text-3xl font-black text-[var(--accent)]">{heroStats.matches}</p>
-                  <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
-                    Partite
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Primary CTAs */}
-            <div className="slide-up stagger-3 flex flex-col gap-2.5">
-              <Link
-                href="/auth/signin?mode=register"
-                className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl text-lg font-black text-black transition-opacity active:opacity-80"
-                style={{ background: "var(--accent)" }}
-              >
-                <Sparkles className="h-5 w-5" /> Crea la tua carta
-              </Link>
-              <Link
-                href="/scarica"
-                className="flex min-h-[3.25rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-bold text-white transition-opacity active:opacity-80"
-              >
-                <Plus className="h-5 w-5 text-[var(--accent)]" /> Installa l&apos;app
-              </Link>
-            </div>
-
-            {/* Feature strip */}
-            <div className="slide-up stagger-4 grid grid-cols-2 gap-2 pt-1">
-              {[
-                { emoji: "🃏", title: "La tua carta", sub: "stile FUT, sale di livello" },
-                { emoji: "🏐", title: "Partite", sub: "organizza e gioca" },
-                { emoji: "🏆", title: "Tornei", sub: "iscriviti e vinci" },
-                { emoji: "👑", title: "Re dei Bagni", sub: "conquista i campi" },
-              ].map((f) => (
-                <div key={f.title} className="rounded-2xl bg-[var(--surface-2)] p-4">
-                  <p className="text-2xl">{f.emoji}</p>
-                  <p className="mt-1 font-black text-white">{f.title}</p>
-                  <p className="text-xs text-[var(--muted-text)]">{f.sub}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Live proof: explore without an account */}
-            <div className="slide-up stagger-5 flex flex-col gap-2 pt-1">
-              <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
-                Dai un&apos;occhiata
-              </p>
-              <div className="flex gap-2">
-                <Link
-                  href="/settimana"
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-[var(--surface-2)] py-3 text-sm font-bold text-white active:opacity-80"
-                >
-                  <Trophy className="h-4 w-4 text-[var(--accent)]" /> Classifica
-                </Link>
-                <Link
-                  href="/players"
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-[var(--surface-2)] py-3 text-sm font-bold text-white active:opacity-80"
-                >
-                  <Sparkles className="h-4 w-4 text-[var(--accent)]" /> Giocatori
-                </Link>
-              </div>
-            </div>
-
-            {/* Upcoming Chicece tournament, if any — real activity proof */}
-            {upcomingChicece && (
-              <Link
-                href={`/tournaments/${upcomingChicece.id}`}
-                className="slide-up stagger-5 flex items-center gap-3 rounded-2xl p-4 active:opacity-80"
-                style={{ background: "var(--surface-2)", border: "1px solid rgba(201,243,29,0.3)" }}
-              >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: "rgba(201,243,29,0.12)" }}>
-                  <Shuffle className="h-5 w-5 text-[var(--accent)]" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
-                    Torneo in arrivo
-                  </p>
-                  <p className="truncate font-bold text-white">{upcomingChicece.name}</p>
-                  <p className="text-xs text-[var(--muted-text)]">{formatDate(upcomingChicece.date)} · Chicece</p>
-                </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--accent)]" />
-              </Link>
-            )}
           </div>
         )}
       </div>
+
+      {openMatches.length > 0 && (
+        <div {...rise()}>
+          <OpenMatchesRail matches={openMatches} />
+        </div>
+      )}
+
+      {/* ── Compete ────────────────────────────────────────────────────── */}
+      <div {...rise()}>
+        <CityRankCard data={cityRank} />
+      </div>
+
+      {tournament && (
+        <div {...rise()}>
+          <TournamentSpotlight t={tournament} />
+        </div>
+      )}
+
+      {/* ── Bring friends ──────────────────────────────────────────────── */}
+      <div {...rise()}>
+        <InviteCard invited={invited} />
+      </div>
+
+      {/* ── Discover ───────────────────────────────────────────────────── */}
+      <section {...rise()}>
+        <div className="flex flex-col gap-3">
+          <SectionHeader eyebrow="Classifiche" title="Scopri" tone="compete" />
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { href: "/settimana", icon: TrendingUp, label: "La settimana", sub: "Chi ha giocato di più", tone: "tone-compete" },
+              { href: "/stagione", icon: Waves, label: "Stagione", sub: "Divisioni e promozioni", tone: "tone-compete" },
+              { href: "/players?tab=podio", icon: Medal, label: "Podio del mese", sub: "I migliori di adesso", tone: "tone-compete" },
+              { href: "/feed", icon: Activity, label: "Feed", sub: "Cosa succede ora", tone: "tone-social" },
+            ].map((d) => (
+              <Link
+                key={d.href}
+                href={d.href}
+                className={`pressable ${d.tone} flex min-h-[5.5rem] flex-col justify-between rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-4 active:bg-[var(--surface-3)]`}
+              >
+                <d.icon className="h-6 w-6 text-[var(--tone)]" aria-hidden="true" />
+                <span>
+                  <span className="block text-base font-extrabold leading-tight text-white">{d.label}</span>
+                  <span className="block text-xs text-[var(--muted-text)]">{d.sub}</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+          {recentTournament && recentTournament.standings[0] && (
+            <ListRow
+              href={`/tournaments/${recentTournament.id}`}
+              tone="compete"
+              icon={Trophy}
+              title={recentTournament.name}
+              subtitle={`Vinto da ${recentTournament.standings[0].player.name}`}
+            />
+          )}
+        </div>
+      </section>
+
+      <div {...rise()}>
+        <CommunityStrip />
+      </div>
+
+      <ClientOnlyHomeWidgets
+        currentLevel={fullPlayer.level}
+        playerName={fullPlayer.name}
+        cardData={playerToCardData(fullPlayer)}
+      />
+    </HomeShell>
+  )
+}
+
+function HomeShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative min-h-dvh overflow-x-hidden">
+      {/* Dawn light over the sea, top-right — the only decoration on the page. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[28rem]"
+        style={{
+          background:
+            "radial-gradient(ellipse 80% 60% at 100% 0%, color-mix(in srgb, var(--accent) 12%, transparent) 0%, transparent 70%)",
+        }}
+      />
+      <div
+        className="relative z-10 flex flex-col gap-5 px-4 pb-8"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.25rem)" }}
+      >
+        {children}
+      </div>
     </div>
+  )
+}
+
+function GuestHeader() {
+  return (
+    <header className="flex items-center gap-3">
+      <Image src="/sander-logo.png" alt="SANDER" width={40} height={40} className="object-contain" priority />
+      <span className="font-display text-xl font-extrabold uppercase tracking-wide text-white">Sander</span>
+      <Link
+        href="/auth/signin"
+        className="ml-auto flex min-h-[2.75rem] items-center gap-1 rounded-full bg-[var(--surface-2)] px-4 text-sm font-bold text-white"
+      >
+        Accedi <ChevronRight className="h-4 w-4 text-[var(--accent)]" aria-hidden="true" />
+      </Link>
+    </header>
   )
 }

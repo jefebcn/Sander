@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic"
 
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { ArrowUpRight, MapPin, Calendar, Settings, ShieldCheck, Users, Trophy, Pencil, MessageCircle } from "lucide-react"
+import { ArrowUpRight, MapPin, Calendar, Settings, ShieldCheck, Users, Trophy, Pencil, MessageCircle, ChartColumn, ChevronRight } from "lucide-react"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { SanderCardFut, playerToCardData } from "@/components/player/SanderCardFut"
@@ -14,6 +14,8 @@ import { DuoShareButton } from "@/components/share/DuoShareButton"
 import { getPlayerRecap } from "@/actions/recap"
 import { SignOutButton } from "@/components/auth/SignOutButton"
 import { InviteTab } from "@/components/profile/InviteTab"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { buildPromoCode } from "@/lib/referral"
 import { getReferralLeaderboard } from "@/actions/invite"
 import { APP_VERSION_DISPLAY } from "@/lib/appVersion"
 import { formatDate } from "@/lib/utils"
@@ -91,10 +93,6 @@ const SUPPORTERS: { name: string; image?: string; icon?: string; href: string; t
 
 // ── helpers ──────────────────────────────────────────────────────────
 
-function buildPromoCode(id: string): string {
-  const clean = id.replace(/[^a-z0-9]/gi, "").toUpperCase()
-  return `${clean.slice(2, 6)}-${clean.slice(6, 10)}`
-}
 
 // Same wording as SessionStatusBadge: "Completa" next to "Completata" read as
 // two ways of saying finished, when one of them means "no seats left".
@@ -114,10 +112,10 @@ const STATUS_COLORS: Record<string, string> = {
 
 // ── page ─────────────────────────────────────────────────────────────
 
-interface Props { searchParams: Promise<{ tab?: string }> }
+interface Props { searchParams: Promise<{ tab?: string; topup?: string }> }
 
 export default async function ProfilePage({ searchParams }: Props) {
-  const { tab } = await searchParams
+  const { tab, topup } = await searchParams
   const validTabs = ["profilo", "partite", "organizzate", "invita", "app", "supporter", "admin"]
   const activeTab = validTabs.includes(tab ?? "") ? (tab as string) : "profilo"
 
@@ -245,45 +243,59 @@ export default async function ProfilePage({ searchParams }: Props) {
     { id: "invita",       label: "Invita" },
     { id: "app",          label: "App" },
     { id: "supporter",    label: "Supporter" },
-    ...(isAdmin ? [{ id: "admin", label: "⚙ Admin" }] : []),
+    ...(isAdmin ? [{ id: "admin", label: "Admin" }] : []),
   ]
 
   return (
     <div className="flex flex-col min-h-dvh pb-6">
 
       {/* ── Header ──────────────────────────────────────────── */}
-      <div
-        className="flex items-center justify-between px-4 pt-5 pb-3"
-        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.25rem)" }}
-      >
-        <h1 className="text-2xl font-black text-white">Profilo</h1>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/onboarding/profile"
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface-2)] text-[var(--muted-text)] transition-colors hover:text-[var(--foreground)]"
-          >
-            <Pencil className="h-4 w-4" />
-          </Link>
-          <SignOutButton
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface-2)] text-[var(--muted-text)] transition-colors hover:text-[var(--foreground)]"
-            iconOnly
-          />
-        </div>
-      </div>
+      <PageHeader
+        eyebrow={fullPlayer.firstName ?? fullPlayer.name.split(" ")[0]}
+        tone="social"
+        title="Profilo"
+        action={
+          <div className="flex items-center gap-2">
+            <Link
+              href="/onboarding/profile"
+              aria-label="Modifica profilo"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-2)] text-white"
+            >
+              <Pencil className="h-5 w-5" />
+            </Link>
+            <SignOutButton
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-2)] text-white"
+              iconOnly
+            />
+          </div>
+        }
+      />
+
+      {/* Back from Stripe: say what happened, so nobody pays twice. */}
+      {topup === "ok" && (
+        <p role="status" className="mx-4 mb-3 rounded-[var(--radius-md)] bg-[var(--accent-soft)] px-4 py-3 text-sm font-semibold text-[var(--accent)]">
+          Pagamento ricevuto: i crediti compaiono nel saldo entro pochi secondi.
+        </p>
+      )}
+      {topup === "annullata" && (
+        <p role="status" className="mx-4 mb-3 rounded-[var(--radius-md)] bg-[var(--surface-2)] px-4 py-3 text-sm text-[var(--muted-text)]">
+          Pagamento annullato: non ti è stato addebitato nulla.
+        </p>
+      )}
 
       {/* ── Tab bar (horizontal scroll) ───────────────────── */}
-      <div className="relative pb-3">
-        <div className="flex gap-2 overflow-x-auto px-4 scrollbar-none"
-          style={{ scrollbarWidth: "none" }}>
+      <div className="tone-social relative pb-3">
+        <div className="rail px-4">
           {TABS.map(({ id, label }) => (
             <Link
               key={id}
               href={id === "profilo" ? "/profile" : `/profile?tab=${id}`}
-              className="shrink-0 rounded-xl px-4 py-2 text-sm font-bold transition-colors whitespace-nowrap"
-              style={
-                activeTab === id
-                  ? { background: "var(--accent)", color: "#000" }
-                  : { background: "var(--surface-2)", color: "var(--muted-text)", border: "1px solid rgba(255,255,255,0.08)" }
+              aria-current={activeTab === id ? "page" : undefined}
+              className={
+                "flex min-h-[2.75rem] shrink-0 items-center whitespace-nowrap rounded-full px-4 text-sm font-bold transition-colors " +
+                (activeTab === id
+                  ? "bg-[var(--tone)] text-black"
+                  : "bg-[var(--surface-2)] text-[var(--muted-text)]")
               }
             >
               {label}
@@ -323,17 +335,17 @@ export default async function ProfilePage({ searchParams }: Props) {
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
                   <p className="text-2xl font-black text-white">{playerRecap.matches}</p>
-                  <p className="text-[0.6rem] font-bold uppercase tracking-widest text-[var(--muted-text)]">Partite</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-text)]">Partite</p>
                 </div>
                 <div>
                   <p className="text-2xl font-black text-[var(--accent)]">{playerRecap.wins}</p>
-                  <p className="text-[0.6rem] font-bold uppercase tracking-widest text-[var(--muted-text)]">Vittorie</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-text)]">Vittorie</p>
                 </div>
                 <div>
                   <p className="text-2xl font-black text-white">
                     {playerRecap.ratingDelta >= 0 ? "+" : ""}{playerRecap.ratingDelta}
                   </p>
-                  <p className="text-[0.6rem] font-bold uppercase tracking-widest text-[var(--muted-text)]">Rating</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-text)]">Rating</p>
                 </div>
               </div>
               <WrappedShareButton playerName={fullPlayer.name} recap={playerRecap} />
@@ -370,7 +382,7 @@ export default async function ProfilePage({ searchParams }: Props) {
                         <span className="text-xs font-black leading-tight" style={{ color: "#FFD700" }}>
                           {win.tournamentName}
                         </span>
-                        <span className="text-[0.65rem] text-white/40 leading-tight">
+                        <span className="text-xs text-white/40 leading-tight">
                           {MONTH_NAMES_IT[d.getMonth() + 1]} {d.getFullYear()}
                         </span>
                       </div>
@@ -390,7 +402,7 @@ export default async function ProfilePage({ searchParams }: Props) {
                         <span className="text-xs font-black leading-tight" style={{ color: meta.color }}>
                           {meta.label}
                         </span>
-                        <span className="text-[0.65rem] text-white/40 leading-tight">
+                        <span className="text-xs text-white/40 leading-tight">
                           {MONTH_NAMES_IT[award.month]} {award.year}
                         </span>
                       </div>
@@ -699,6 +711,19 @@ export default async function ProfilePage({ searchParams }: Props) {
             ))}
           </div>
 
+          {/* Business metrics */}
+          <Link
+            href="/admin/metriche"
+            className="flex min-h-[3.5rem] items-center gap-3 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:bg-[var(--surface-3)]"
+          >
+            <ChartColumn className="h-5 w-5 shrink-0 text-[var(--accent)]" />
+            <span className="flex-1">
+              <span className="block text-base font-bold text-white">Metriche</span>
+              <span className="block text-sm text-[var(--muted-text)]">Incassi, valori medi, chi torna a giocare</span>
+            </span>
+            <ChevronRight className="h-5 w-5 text-[var(--muted-text)]" />
+          </Link>
+
           {/* Recalc button */}
           <AdminRecalcStatsButton />
 
@@ -789,7 +814,7 @@ export default async function ProfilePage({ searchParams }: Props) {
                     <div className="flex items-center gap-2">
                       <p className="font-bold text-white text-sm truncate">{p.name}</p>
                       {!p.avatarUrl && (
-                        <span className="text-[0.6rem] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[var(--muted-text)]/20 text-[var(--muted-text)]">
+                        <span className="text-xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[var(--muted-text)]/20 text-[var(--muted-text)]">
                           no foto
                         </span>
                       )}

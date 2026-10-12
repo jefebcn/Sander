@@ -54,9 +54,9 @@ function formatDateLabel(iso: string) {
   const d = new Date(iso)
   const today = new Date()
   const isToday = d.toDateString() === today.toDateString()
-  const time = d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })
+  const time = d.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" })
   if (isToday) return `Oggi, ${time}`
-  return `${d.toLocaleDateString("it-IT", { day: "2-digit", month: "short" })}, ${time}`
+  return `${d.toLocaleDateString("it-IT", { timeZone: "Europe/Rome", day: "2-digit", month: "short" })}, ${time}`
 }
 
 const LOCATIONS_KEY = "sander_locations"
@@ -298,7 +298,7 @@ export function CreateSessionForm({ presets }: { presets?: Presets }) {
             type="button"
             onClick={() => setPaymentType(value)}
             className={cn(
-              "flex flex-col items-center gap-1.5 rounded-xl border-2 py-3 px-1 text-[0.65rem] font-bold transition-colors",
+              "flex flex-col items-center gap-1.5 rounded-xl border-2 py-3 px-1 text-xs font-bold transition-colors",
               paymentType === value
                 ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
                 : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted-text)]",

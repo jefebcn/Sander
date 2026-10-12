@@ -68,7 +68,7 @@ export function TournamentsInfoSheet() {
           <p className="text-base font-black text-white">Come funzionano i Tornei?</p>
           <button
             onClick={() => setOpen(false)}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-2)]"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-2)]"
           >
             <X className="h-4 w-4 text-white" />
           </button>
@@ -93,7 +93,7 @@ export function TournamentsInfoSheet() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--muted-text)] active:opacity-60"
+        className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--muted-text)] active:opacity-60"
         aria-label="Come funzionano i tornei"
       >
         <Info className="h-5 w-5" />

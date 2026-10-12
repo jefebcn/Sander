@@ -78,7 +78,7 @@ export function StatPercentageEditor({ initial, glickoRating }: Props) {
               {/* Stat label */}
               <div className="w-12 shrink-0">
                 <p className="text-xs font-black text-white">{label}</p>
-                <p className="text-[0.6rem] text-[var(--muted-text)]">{desc}</p>
+                <p className="text-xs text-[var(--muted-text)]">{desc}</p>
               </div>
 
               {/* Slider */}

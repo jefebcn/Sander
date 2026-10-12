@@ -95,17 +95,32 @@ export async function createMinimalPlayerForUser(userId: string) {
   return player
 }
 
-export async function adminAddCredits(playerId: string, amount: number) {
+export async function adminAddCredits(input: unknown) {
   const session = await getCurrentSession()
   if (!isAdminEmail(session?.user?.email)) throw new Error("Non autorizzato")
-  const data = AdminAddCreditsSchema.parse({ playerId, amount })
+  const data = AdminAddCreditsSchema.parse(input)
 
-  await db.player.update({
-    where: { id: data.playerId },
-    data: { sanderCredits: { increment: data.amount } },
-  })
+  // Balance and ledger row move together: a credit without its euros (or the
+  // reverse) would make the revenue figures wrong with no way to notice.
+  await db.$transaction([
+    db.player.update({
+      where: { id: data.playerId },
+      data: { sanderCredits: { increment: data.credits } },
+    }),
+    db.creditTopUp.create({
+      data: {
+        playerId: data.playerId,
+        credits: data.credits,
+        amountCents: data.amountCents,
+        method: data.method,
+        note: data.note || null,
+        createdByEmail: session?.user?.email ?? null,
+      },
+    }),
+  ])
 
   revalidatePath("/profile")
+  revalidatePath("/admin/metriche")
 }
 
 export async function getHeadToHeadStats(playerAId: string, playerBId: string) {

@@ -40,8 +40,8 @@ export function SessionCard({ session }: SessionCardProps) {
         : null
 
   const dateObj = new Date(session.date)
-  const timeStr = dateObj.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })
-  const dateStr = dateObj.toLocaleDateString("it-IT", { day: "2-digit", month: "short" })
+  const timeStr = dateObj.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" })
+  const dateStr = dateObj.toLocaleDateString("it-IT", { timeZone: "Europe/Rome", day: "2-digit", month: "short" })
   // Still OPEN/FULL but the date has passed: it is not joinable, it is waiting
   // to be closed. The badge must not keep advertising it as open.
   const isExpired = dateObj <= new Date()
@@ -49,24 +49,24 @@ export function SessionCard({ session }: SessionCardProps) {
   return (
     <Link
       href={`/sessions/${session.id}`}
-      className="flex min-h-[5rem] items-center gap-4 rounded-2xl bg-[var(--surface-1)] px-4 py-3 transition-colors hover:bg-[var(--surface-2)] active:scale-[0.99]"
+      className="pressable flex min-h-[5rem] items-center gap-4 rounded-[var(--radius-lg)] bg-[var(--surface-2)] px-4 py-3 shadow-[var(--shadow-card)] active:bg-[var(--surface-3)]"
     >
       {/* Date column */}
-      <div className="flex w-12 shrink-0 flex-col items-center">
-        <span className="text-lg font-black leading-none text-[var(--accent)]">{timeStr}</span>
-        <span className="text-xs text-[var(--muted-text)]">{dateStr}</span>
+      <div className="flex w-14 shrink-0 flex-col items-center">
+        <span className="num text-2xl leading-none text-white">{timeStr}</span>
+        <span className="mt-0.5 text-xs font-semibold text-[var(--muted-text)]">{dateStr}</span>
       </div>
 
       {/* Info */}
       <div className="min-w-0 flex-1">
-        <p className="truncate font-bold">{session.title}</p>
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-[var(--muted-text)]">
-          <span className="flex items-center gap-1">
-            <MapPin className="h-3 w-3" aria-hidden="true" />
-            {session.location}
+        <p className="truncate text-base font-bold text-white">{session.title}</p>
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-[var(--muted-text)]">
+          <span className="flex min-w-0 items-center gap-1">
+            <MapPin className="h-3.5 w-3.5 shrink-0 text-[var(--accent)]" aria-hidden="true" />
+            <span className="truncate">{session.location}</span>
           </span>
           <span className="flex items-center gap-1">
-            <Users className="h-3 w-3" aria-hidden="true" />
+            <Users className="h-3.5 w-3.5" aria-hidden="true" />
             {FORMAT_LABEL[session.format]}
           </span>
         </div>
@@ -97,7 +97,7 @@ export function SessionCard({ session }: SessionCardProps) {
           )}
           {/* LOSER_PAYS: show beer icon + short text */}
           {paymentType === "LOSER_PAYS" && (
-            <span className="flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold bg-amber-500/15 text-amber-400">
+            <span className="flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold bg-[color-mix(in_srgb,var(--compete)_15%,transparent)] text-[var(--compete)]">
               <Beer className="h-3 w-3" />
               {session.loserPays ? session.loserPays : "Chi perde paga"}
             </span>

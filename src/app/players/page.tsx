@@ -1,13 +1,15 @@
 export const dynamic = "force-dynamic"
 
 import Link from "next/link"
-import { Info, TrendingUp, Crown, Waves, UserPlus, Activity } from "lucide-react"
+import { Info } from "lucide-react"
 import { listPlayers, getMonthlyTopPlayers, awardMonthlyPodium } from "@/actions/players"
 import { FilterablePlayerList } from "@/components/player/FilterablePlayerList"
 import { PodiumSection } from "@/components/home/PodiumSection"
 import type { PodiumPlayer } from "@/components/home/PodiumSection"
 import { playerToCardData } from "@/components/player/SanderCardFut"
 import type { PrismaPlayerLike } from "@/components/player/SanderCardFut"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { SectionTabs, RANK_TABS } from "@/components/layout/SectionTabs"
 
 interface Props {
   searchParams: Promise<{ tab?: string }>
@@ -33,124 +35,45 @@ export default async function PlayersPage({ searchParams }: Props) {
 
   return (
     <div className="pb-6">
-      {/* ── Title row ─────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 pt-5 pb-1">
-        <h1 className="text-2xl font-black text-white">Giocatori</h1>
-        {activeTab === "ranking" && (
+      <PageHeader
+        eyebrow="Classifiche"
+        tone="compete"
+        title="Giocatori"
+        action={
+          activeTab === "ranking" ? (
+            <Link
+              href="/players/ranking-info"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-2)] text-white"
+              aria-label="Come funziona il ranking"
+            >
+              <Info className="h-5 w-5" />
+            </Link>
+          ) : undefined
+        }
+      />
+      <SectionTabs items={RANK_TABS} active="giocatori" tone="compete" className="pb-1" />
+
+      {/* ── View filter: chips, lighter than the section tabs above ── */}
+      <div className="tone-compete flex gap-2 px-4 pt-3 pb-4" role="group" aria-label="Vista">
+        {[
+          { id: "ranking", href: "/players", label: "Ranking" },
+          { id: "podio", href: "/players?tab=podio", label: "Podio del mese" },
+          { id: "lista", href: "/players?tab=lista", label: "Tutti" },
+        ].map((f) => (
           <Link
-            href="/players/ranking-info"
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--muted-text)]"
-            aria-label="Come funziona il ranking"
+            key={f.id}
+            href={f.href}
+            aria-current={activeTab === f.id ? "true" : undefined}
+            className={
+              "flex min-h-[2.75rem] items-center rounded-full px-4 text-sm font-bold transition-colors " +
+              (activeTab === f.id
+                ? "bg-[var(--tone-soft)] text-[var(--tone)] ring-1 ring-[var(--tone-line)]"
+                : "bg-[var(--surface-2)] text-[var(--muted-text)]")
+            }
           >
-            <Info className="h-4 w-4" />
+            {f.label}
           </Link>
-        )}
-      </div>
-
-      {/* ── Discover ──────────────────────────────────────────────
-           Order matters: five 150px cards don't fit a phone, so whatever sits
-           last is effectively invisible. "Compagni" and "Feed" — the two
-           community surfaces with no other entry point — come first. */}
-      <div className="relative pt-3">
-        <div className="flex gap-2 overflow-x-auto px-4" style={{ scrollbarWidth: "none" }}>
-        <Link
-          href="/trova"
-          className="flex w-[150px] shrink-0 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
-        >
-          <UserPlus className="h-5 w-5 text-[var(--live)]" />
-          <div className="min-w-0">
-            <p className="text-sm font-black text-white leading-tight">Compagni</p>
-            <p className="truncate text-[0.65rem] text-[var(--muted-text)]">Al tuo livello</p>
-          </div>
-        </Link>
-        <Link
-          href="/feed"
-          className="flex w-[150px] shrink-0 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
-        >
-          <Activity className="h-5 w-5 text-[var(--accent)]" />
-          <div className="min-w-0">
-            <p className="text-sm font-black text-white leading-tight">Feed</p>
-            <p className="truncate text-[0.65rem] text-[var(--muted-text)]">Attività</p>
-          </div>
-        </Link>
-        <Link
-          href="/stagione"
-          className="flex w-[150px] shrink-0 items-center gap-2 rounded-2xl px-4 py-3 active:opacity-80"
-          style={{
-            background: "linear-gradient(135deg, rgba(168,85,247,0.16), rgba(59,130,246,0.08))",
-            border: "1px solid rgba(168,85,247,0.25)",
-          }}
-        >
-          <Waves className="h-5 w-5" style={{ color: "#a855f7" }} />
-          <div className="min-w-0">
-            <p className="text-sm font-black text-white leading-tight">Stagione</p>
-            <p className="truncate text-[0.65rem] text-[var(--muted-text)]">Divisioni</p>
-          </div>
-        </Link>
-        <Link
-          href="/settimana"
-          className="flex w-[150px] shrink-0 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
-        >
-          <TrendingUp className="h-5 w-5 text-[var(--accent)]" />
-          <div className="min-w-0">
-            <p className="text-sm font-black text-white leading-tight">La settimana</p>
-            <p className="truncate text-[0.65rem] text-[var(--muted-text)]">Movers</p>
-          </div>
-        </Link>
-        <Link
-          href="/bagni"
-          className="flex w-[150px] shrink-0 items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
-        >
-          <Crown className="h-5 w-5 text-[var(--gold)]" />
-          <div className="min-w-0">
-            <p className="text-sm font-black text-white leading-tight">Re dei Bagni</p>
-            <p className="truncate text-[0.65rem] text-[var(--muted-text)]">Campi</p>
-          </div>
-        </Link>
-        </div>
-        {/* right-edge fade — hints that the strip scrolls horizontally */}
-        <div
-          className="pointer-events-none absolute bottom-0 right-0 top-3 w-12"
-          style={{ background: "linear-gradient(to right, transparent, var(--background))" }}
-          aria-hidden="true"
-        />
-      </div>
-
-      {/* ── Tab bar ───────────────────────────────────────────── */}
-      <div className="flex gap-1 px-4 pt-3 pb-4">
-        <Link
-          href="/players"
-          className="flex-1 rounded-xl py-2.5 text-center text-sm font-bold transition-colors"
-          style={
-            activeTab === "ranking"
-              ? { background: "var(--accent)", color: "#000" }
-              : { background: "var(--surface-2)", color: "var(--muted-text)" }
-          }
-        >
-          Ranking
-        </Link>
-        <Link
-          href="/players?tab=lista"
-          className="flex-1 rounded-xl py-2.5 text-center text-sm font-bold transition-colors"
-          style={
-            activeTab === "lista"
-              ? { background: "var(--accent)", color: "#000" }
-              : { background: "var(--surface-2)", color: "var(--muted-text)" }
-          }
-        >
-          Tutti
-        </Link>
-        <Link
-          href="/players?tab=podio"
-          className="flex-1 rounded-xl py-2.5 text-center text-sm font-bold transition-colors"
-          style={
-            activeTab === "podio"
-              ? { background: "var(--accent)", color: "#000" }
-              : { background: "var(--surface-2)", color: "var(--muted-text)" }
-          }
-        >
-          Podio
-        </Link>
+        ))}
       </div>
 
       {/* ── Content ───────────────────────────────────────────── */}

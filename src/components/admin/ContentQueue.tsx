@@ -101,13 +101,13 @@ function Card({
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex items-center gap-2">
             <span
-              className="rounded-full px-2 py-0.5 text-[0.6rem] font-black uppercase tracking-wider"
+              className="rounded-full px-2 py-0.5 text-xs font-black uppercase tracking-wider"
               style={{ background: "rgba(201,243,29,0.15)", color: "var(--accent)" }}
             >
               {KIND_LABEL[item.kind] ?? item.kind}
             </span>
             {item.status === "PUBLISHED" && (
-              <span className="text-[0.6rem] font-bold uppercase tracking-wider text-[var(--live)]">
+              <span className="text-xs font-bold uppercase tracking-wider text-[var(--live)]">
                 Pubblicato
               </span>
             )}
@@ -115,7 +115,7 @@ function Card({
           <p className="line-clamp-3 whitespace-pre-line text-xs text-white/80 leading-snug">
             {item.caption}
           </p>
-          <p className="mt-1 line-clamp-1 text-[0.65rem] text-[var(--accent)]">{item.hashtags}</p>
+          <p className="mt-1 line-clamp-1 text-xs text-[var(--accent)]">{item.hashtags}</p>
         </div>
       </div>
 

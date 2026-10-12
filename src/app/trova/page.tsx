@@ -10,6 +10,8 @@ import { getMyAvailability, getAvailabilityMatches } from "@/actions/availabilit
 import { AvailabilityBoard } from "@/components/matchmaking/AvailabilityBoard"
 import { CompatibilityRing } from "@/components/matchmaking/CompatibilityRing"
 import { MessageButton } from "@/components/chat/MessageButton"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { SectionTabs, PLAY_TABS } from "@/components/layout/SectionTabs"
 
 export const metadata: Metadata = {
   title: "Trova giocatori al tuo livello — SANDER",
@@ -50,19 +52,17 @@ export default async function FindPage({ searchParams }: Props) {
 
   return (
     <div className="pb-10">
-      {/* Header */}
-      <div className="px-4 pt-6 pb-3">
-        <h1 className="text-3xl font-black text-white">Trova giocatori</h1>
-        {me && (
-          <p className="mt-1 text-sm text-[var(--muted-text)]">
-            Sei{" "}
-            <span className="font-bold" style={{ color: me.division.color }}>
-              {me.division.emoji} {me.division.name}
-            </span>{" "}
-            · {me.rating} rating · {ROLE_LABEL[me.role]}
-          </p>
-        )}
-      </div>
+      <PageHeader eyebrow="Gioca" tone="play" title="Compagni" />
+      <SectionTabs items={PLAY_TABS} active="compagni" className="pb-3" />
+      {me && (
+        <p className="px-4 pb-3 text-sm text-[var(--muted-text)]">
+          Sei{" "}
+          <span className="font-bold" style={{ color: me.division.color }}>
+            {me.division.emoji} {me.division.name}
+          </span>{" "}
+          · {me.rating} rating · {ROLE_LABEL[me.role]}
+        </p>
+      )}
 
       {/* Mode toggle */}
       <div className="flex gap-1 px-4 pb-4">
@@ -132,7 +132,7 @@ export default async function FindPage({ searchParams }: Props) {
                 </div>
                 <div className="flex flex-col items-center gap-0.5">
                   <CompatibilityRing value={c.compatibility} />
-                  <span className="text-[0.55rem] font-bold uppercase tracking-wider text-[var(--muted-text)]">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
                     match
                   </span>
                 </div>

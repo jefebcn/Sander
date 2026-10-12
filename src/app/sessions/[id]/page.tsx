@@ -17,6 +17,8 @@ import { RematchButton } from "@/components/session/RematchButton"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { ShareStoryButton } from "@/components/share/ShareStoryButton"
 import { playerToCardData } from "@/components/player/SanderCardFut"
+import { buildPromoCode, cleanInviteCode, INVITEE_SC } from "@/lib/referral"
+import { Pill } from "@/components/ui/Pill"
 
 export async function generateMetadata(
   { params }: { params: Promise<{ id: string }> }
@@ -45,9 +47,24 @@ const FORMAT_LABEL: Record<string, string> = {
   FOUR_VS_FOUR: "4 vs 4",
 }
 
-export default async function SessionPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function SessionPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ invite?: string }>
+}) {
   const { id } = await params
+  // A friend's share link carries their invite code: signing up from here
+  // credits them, so "come play with us" doubles as a referral.
+  const { invite } = await searchParams
+  const inviteCode = cleanInviteCode(invite)
   const [session, currentPlayer] = await Promise.all([getSession(id), getCurrentPlayer()])
+
+  // Shared links carry the sharer's invite code (see `invite` above).
+  const sharePath = currentPlayer
+    ? `/sessions/${id}?invite=${buildPromoCode(currentPlayer.id)}`
+    : `/sessions/${id}`
 
   // Separate sets query — graceful fallback if table doesn't exist yet
   const sets = session.status === "COMPLETED"
@@ -77,13 +94,13 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
       : null
 
   const dateObj = new Date(session.date)
-  const dateStr = dateObj.toLocaleDateString("it-IT", {
+  const dateStr = dateObj.toLocaleDateString("it-IT", { timeZone: "Europe/Rome",
     weekday: "long",
     day: "2-digit",
     month: "long",
     year: "numeric",
   })
-  const timeStr = dateObj.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })
+  const timeStr = dateObj.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" })
 
   const costPerPlayer =
     session.courtCost && session.participants.length > 0
@@ -109,26 +126,39 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
 
       <div className="space-y-4 px-4">
         {/* Details card */}
-        <div className="space-y-3 rounded-2xl bg-[var(--surface-1)] p-4">
-          <div className="flex items-center gap-3 text-sm">
-            <Calendar className="h-4 w-4 shrink-0 text-[var(--accent)]" aria-hidden="true" />
-            <span className="capitalize">{dateStr} — {timeStr}</span>
-          </div>
-          <div className="flex items-center gap-3 text-sm">
-            <MapPin className="h-4 w-4 shrink-0 text-[var(--accent)]" aria-hidden="true" />
-            <span>{session.location}</span>
-          </div>
-          <div className="flex items-center gap-3 text-sm">
-            <span className="flex h-4 w-4 shrink-0 items-center justify-center text-xs font-black text-[var(--accent)]">
-              {FORMAT_LABEL[session.format]}
-            </span>
-          </div>
-          {costPerPlayer && (
-            <div className="flex items-center gap-3 text-sm">
-              <Euro className="h-4 w-4 shrink-0 text-[var(--accent)]" aria-hidden="true" />
-              <span>€{costPerPlayer} a persona</span>
+        <div className="tone-play space-y-4 rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-5 shadow-[var(--shadow-card)]">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="num text-5xl leading-none text-white">{timeStr}</p>
+              <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold capitalize text-[var(--muted-text)]">
+                <Calendar className="h-4 w-4 text-[var(--accent)]" aria-hidden="true" />
+                {dateStr}
+              </p>
             </div>
-          )}
+            <div className="flex flex-wrap justify-end gap-1.5">
+              <Pill tone="play">{FORMAT_LABEL[session.format]}</Pill>
+              {costPerPlayer && (
+                <Pill tone="sand">
+                  <Euro className="h-3.5 w-3.5" aria-hidden="true" />
+                  {costPerPlayer} a testa
+                </Pill>
+              )}
+            </div>
+          </div>
+          {/* Getting there is half the battle: one tap to directions. */}
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(session.location + (session.city ? `, ${session.city}` : ""))}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex min-h-[3.5rem] items-center gap-3 rounded-[var(--radius-md)] bg-black/25 px-4"
+          >
+            <MapPin className="h-5 w-5 shrink-0 text-[var(--accent)]" aria-hidden="true" />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-base font-bold text-white">{session.location}</span>
+              {session.city && <span className="block text-sm text-[var(--muted-text)]">{session.city}</span>}
+            </span>
+            <span className="shrink-0 text-sm font-bold text-[var(--accent)]">Apri in Maps</span>
+          </a>
           {session.paymentType === "SC" && session.quotaAmount && (
             <div className="flex items-center gap-3 text-sm">
               <Coins className="h-4 w-4 shrink-0 text-[var(--accent)]" aria-hidden="true" />
@@ -201,11 +231,11 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
         {/* CTA per utenti non autenticati */}
         {!currentPlayer && (session.status === "OPEN" || session.status === "FULL") && (
           <Link
-            href={`/auth/signin?callbackUrl=${encodeURIComponent(`/sessions/${session.id}`)}`}
+            href={`/auth/signin?mode=register&callbackUrl=${encodeURIComponent(`/sessions/${session.id}`)}${inviteCode ? `&invite=${inviteCode}` : ""}`}
             className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl font-black text-black text-base"
             style={{ background: "var(--accent)" }}
           >
-            Accedi per partecipare
+            {inviteCode ? `Registrati e gioca (+${INVITEE_SC} SC in regalo)` : "Accedi per partecipare"}
           </Link>
         )}
 
@@ -239,20 +269,21 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
             first, not three share buttons before it. */}
         {(session.status === "OPEN" || session.status === "FULL") && (
           <div className="space-y-2">
-            <ShareButton
-              path={`/sessions/${session.id}`}
-              title={session.title}
-              text={`Unisciti a "${session.title}" su SANDER 🏐`}
-              fullWidth
-            />
+            <p className="eyebrow text-[var(--muted-text)]">Porta qualcuno a giocare</p>
             <WhatsAppShareButton
-              path={`/sessions/${session.id}`}
-              text={`Unisciti a "${session.title}" a ${session.location} su SANDER 🏐`}
+              path={sharePath}
+              text={`Ci stai? "${session.title}" a ${session.location} — entra su SANDER 🏐`}
             />
-            <QRCodeButton
-              path={`/sessions/${session.id}`}
-              title={session.title}
-            />
+            <div className="grid grid-cols-2 gap-2">
+              <ShareButton
+                path={sharePath}
+                title={session.title}
+                text={`Unisciti a "${session.title}" su SANDER 🏐`}
+                fullWidth
+                label="Condividi"
+              />
+              <QRCodeButton path={sharePath} title={session.title} label="QR" />
+            </div>
           </div>
         )}
 

@@ -8,6 +8,8 @@ import { getSeasonStandings, getPlayerSeasonInfo } from "@/actions/seasons"
 import { DIVISIONS, getNextDivision, pointsToNext, divisionProgress } from "@/lib/divisions"
 import { DivisionBadge } from "@/components/season/DivisionBadge"
 import { DivisionShareButton } from "@/components/season/DivisionShareButton"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { SectionTabs, RANK_TABS } from "@/components/layout/SectionTabs"
 
 export const metadata: Metadata = {
   title: "Stagione — SANDER Beach Volley",
@@ -51,9 +53,8 @@ export default async function SeasonPage() {
   if (!season) {
     return (
       <div className="pb-10">
-        <div className="px-4 pt-6 pb-4">
-          <h1 className="text-3xl font-black text-white">Stagione</h1>
-        </div>
+        <PageHeader eyebrow="Classifiche" tone="compete" title="Stagione" />
+        <SectionTabs items={RANK_TABS} active="stagione" tone="compete" className="pb-4" />
         <div className="mx-4 rounded-3xl bg-[var(--surface-2)] p-8 text-center">
           <div className="mx-auto mb-4 w-fit">
             <DivisionBadge division={DIVISIONS[2]} size={96} />
@@ -68,7 +69,7 @@ export default async function SeasonPage() {
             {DIVISIONS.map((d) => (
               <div key={d.key} className="flex flex-col items-center gap-1">
                 <span style={{ fontSize: 22 }}>{d.emoji}</span>
-                <span className="text-[0.6rem] font-bold" style={{ color: d.color }}>
+                <span className="text-xs font-bold" style={{ color: d.color }}>
                   {d.name}
                 </span>
               </div>
@@ -86,21 +87,20 @@ export default async function SeasonPage() {
 
   return (
     <div className="pb-10">
-      {/* Header */}
-      <div className="flex items-end justify-between px-4 pt-6 pb-4">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--accent)]">
-            Stagione
-          </p>
-          <h1 className="text-3xl font-black text-white">{season.name}</h1>
-        </div>
-        <div className="flex items-center gap-1.5 rounded-full bg-[var(--surface-2)] px-3 py-1.5">
-          <Clock className="h-3.5 w-3.5 text-[var(--accent)]" />
-          <span className="text-sm font-bold text-white">
-            {remaining} {remaining === 1 ? "giorno" : "giorni"}
-          </span>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Stagione"
+        tone="compete"
+        title={season.name}
+        action={
+          <div className="flex items-center gap-1.5 rounded-full bg-[var(--surface-2)] px-3 py-1.5">
+            <Clock className="h-4 w-4 text-[var(--compete)]" aria-hidden="true" />
+            <span className="text-sm font-bold text-white">
+              {remaining} {remaining === 1 ? "giorno" : "giorni"}
+            </span>
+          </div>
+        }
+      />
+      <SectionTabs items={RANK_TABS} active="stagione" tone="compete" className="pb-4" />
 
       {/* ── Your division hero ─────────────────────────────────────────── */}
       {me && (
@@ -204,7 +204,7 @@ export default async function SeasonPage() {
                 <span className="text-xs font-black" style={{ color: d.color }}>
                   {d.name}
                 </span>
-                <span className="text-[0.6rem] text-[var(--muted-text)]">{d.min}+</span>
+                <span className="text-xs text-[var(--muted-text)]">{d.min}+</span>
               </div>
             )
           })}

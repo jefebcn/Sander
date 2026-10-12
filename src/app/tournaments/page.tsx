@@ -5,6 +5,7 @@ import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { TournamentsInfoSheet } from "@/components/tournament/TournamentsInfoSheet"
 import { TournamentCard } from "@/components/tournament/TournamentCard"
+import { SectionTabs, PLAY_TABS } from "@/components/layout/SectionTabs"
 
 export const dynamic = "force-dynamic"
 
@@ -17,8 +18,10 @@ export default async function TournamentsPage() {
   return (
     <div>
       <PageHeader
+        eyebrow="Gioca"
+        tone="compete"
         title="Tornei"
-        subtitle={`${tournaments.length} torneo${tournaments.length !== 1 ? "i" : ""}`}
+        subtitle={`${tournaments.length} ${tournaments.length === 1 ? "torneo" : "tornei"}`}
         action={
           <div className="flex items-center gap-2">
             <TournamentsInfoSheet />
@@ -27,7 +30,7 @@ export default async function TournamentsPage() {
             {currentPlayer && (
               <Link
                 href="/tournaments/new"
-                className="flex h-11 items-center gap-2 rounded-xl bg-[var(--accent)] px-4 text-sm font-bold text-black"
+                className="flex min-h-[2.75rem] items-center gap-2 rounded-full bg-[var(--accent)] px-4 text-sm font-extrabold text-black"
               >
                 <Plus className="h-5 w-5" />
                 Nuovo
@@ -36,6 +39,7 @@ export default async function TournamentsPage() {
           </div>
         }
       />
+      <SectionTabs items={PLAY_TABS} active="tornei" className="pb-4" />
 
       {tournaments.length === 0 ? (
         <div className="flex flex-col items-center gap-4 px-6 py-20 text-center">

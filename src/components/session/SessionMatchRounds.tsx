@@ -168,7 +168,7 @@ export function SessionMatchRounds({ sessionId, matches, isOrganizer, sessionSta
                 Girone {round}
               </span>
               <span
-                className="rounded-full px-2 py-0.5 text-[0.65rem] font-bold uppercase"
+                className="rounded-full px-2 py-0.5 text-xs font-bold uppercase"
                 style={
                   allDone
                     ? { background: "rgba(201,243,29,0.15)", color: "var(--accent)" }

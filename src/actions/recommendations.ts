@@ -166,13 +166,30 @@ export async function getPersonalizedRecommendations(
 
   let performanceInsight: PerformanceInsight | null = null
 
-  if (recentMatches.length === 0) {
-    // No recent matches in 28 days
-    const lastMatch = await db.matchPlayer.findFirst({
-      where: { playerId, match: { isCompleted: true } },
-      orderBy: { match: { updatedAt: "desc" } },
-    })
-    if (!lastMatch) {
+  // Regular matches count as playing too: checking tournament matches alone
+  // told people with a full season of games that they had "never played".
+  const recentSessionGames =
+    recentMatches.length === 0
+      ? await db.sessionParticipant.count({
+          where: { playerId, session: { status: "COMPLETED", date: { gte: since(28) } } },
+        })
+      : 0
+
+  if (recentMatches.length === 0 && recentSessionGames > 0) {
+    performanceInsight = null
+  } else if (recentMatches.length === 0) {
+    // Nothing at all in 28 days — never played, or been away?
+    const [lastMatch, anySession] = await Promise.all([
+      db.matchPlayer.findFirst({
+        where: { playerId, match: { isCompleted: true } },
+        orderBy: { match: { updatedAt: "desc" } },
+      }),
+      db.sessionParticipant.findFirst({
+        where: { playerId, session: { status: "COMPLETED" } },
+        select: { id: true },
+      }),
+    ])
+    if (!lastMatch && !anySession) {
       performanceInsight = { kind: "inactive", label: "Non hai ancora giocato — salta in campo! 🏐" }
     } else {
       performanceInsight = { kind: "inactive", label: "Nessuna partita nelle ultime 4 settimane — è ora di tornare! 🌟" }

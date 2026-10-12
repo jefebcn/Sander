@@ -28,7 +28,7 @@ export function MatchHistory({ entries }: { entries: MatchHistoryEntry[] }) {
             <Link key={e.id} href={href} className="flex items-center gap-3 px-4 py-3 active:opacity-70">
               {/* Date */}
               <div className="w-10 shrink-0 text-center">
-                <p className="text-[0.65rem] font-bold uppercase text-[var(--muted-text)]">{dateLabel}</p>
+                <p className="text-xs font-bold uppercase text-[var(--muted-text)]">{dateLabel}</p>
               </div>
 
               {/* Result badge */}
@@ -68,7 +68,7 @@ export function MatchHistory({ entries }: { entries: MatchHistoryEntry[] }) {
                   {e.myTeam === 0 ? `${e.scoreA}–${e.scoreB}` : `${e.scoreB}–${e.scoreA}`}
                 </p>
                 {e.isSetScore && (
-                  <p className="text-[0.6rem] text-[var(--muted-text)]">set</p>
+                  <p className="text-xs text-[var(--muted-text)]">set</p>
                 )}
               </div>
             </Link>

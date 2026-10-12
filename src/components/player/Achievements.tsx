@@ -41,11 +41,11 @@ export function Achievements({ achievements }: { achievements: Achievement[] }) 
               {a.name}
             </p>
             {a.unlocked ? (
-              <p className="text-[0.65rem] text-[var(--muted-text)] leading-snug">
+              <p className="text-xs text-[var(--muted-text)] leading-snug">
                 {a.description}
               </p>
             ) : (
-              <p className="text-[0.65rem] text-[var(--muted-text)] leading-snug">
+              <p className="text-xs text-[var(--muted-text)] leading-snug">
                 {a.progress || a.description}
               </p>
             )}
