@@ -149,7 +149,7 @@ function FormRow({
   onInputChange?: (v: string) => void
 }) {
   return (
-    <div className="border-b border-[#2a2a2a]">
+    <div className="border-b border-[var(--border)]">
       {isInput ? (
         <div className="flex min-h-[3.5rem] items-center justify-between px-5">
           <span className="shrink-0 text-base font-medium text-white">{label}</span>
@@ -303,7 +303,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
           <button
             onClick={() => router.back()}
             aria-label="Indietro"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#2a2a2a] text-white transition-colors active:bg-[#333]"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-3)] text-white transition-colors active:bg-[var(--surface-4)]"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -344,7 +344,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
           <button
             type="button"
             onClick={handleAvatarButton}
-            className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full bg-[#2a2a2a] shadow-lg"
+            className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface-3)] shadow-lg"
             aria-label="Carica foto"
           >
             <Camera className="h-4 w-4 text-white" />
@@ -361,7 +361,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
 
       {/* Form rows */}
       <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
-        <div className="border-t border-[#2a2a2a]">
+        <div className="border-t border-[var(--border)]">
           <FormRow
             label="Nome"
             value={firstName}
@@ -373,7 +373,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
 
         {/* Role: the whole "complementary role" matching in /trova is built on
             this, and the main onboarding never asked for it. */}
-        <div className="border-t border-[#2a2a2a] px-5 py-4">
+        <div className="border-t border-[var(--border)] px-5 py-4">
           <p className="text-base font-bold text-white">In campo come giochi?</p>
           <p className="mt-0.5 text-sm text-[var(--muted-text)]">
             Ci serve per trovarti compagni complementari.
@@ -389,7 +389,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
                   "flex min-h-[3.5rem] flex-1 flex-col items-center justify-center rounded-2xl px-3 transition-colors",
                   role === r.value
                     ? "bg-[var(--accent)] text-black"
-                    : "bg-[#2a2a2a] text-white",
+                    : "bg-[var(--surface-3)] text-white",
                 )}
               >
                 <span className="text-base font-black">{r.label}</span>
@@ -407,12 +407,12 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
         </div>
 
         {/* Everything below was mandatory before showing any content. */}
-        <details className="border-t border-[#2a2a2a]">
+        <details className="border-t border-[var(--border)]">
           <summary className="cursor-pointer px-5 py-4 text-base font-bold text-white">
             Completa il profilo{" "}
             <span className="font-normal text-[var(--muted-text)]">(opzionale)</span>
           </summary>
-          <div className="border-t border-[#2a2a2a]">
+          <div className="border-t border-[var(--border)]">
             <FormRow
               label="Cognome"
               value={lastName}
@@ -489,7 +489,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
                 setGender(g)
                 setGenderOpen(false)
               }}
-              className="flex min-h-[3.5rem] w-full items-center justify-between border-b border-[#2a2a2a] px-5 active:bg-white/5"
+              className="flex min-h-[3.5rem] w-full items-center justify-between border-b border-[var(--border)] px-5 active:bg-white/5"
             >
               <span className="text-base text-white">{g}</span>
               {gender === g && (
@@ -516,7 +516,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
             value={nationalitySearch}
             onChange={(e) => setNationalitySearch(e.target.value)}
             placeholder="Cerca paese..."
-            className="w-full rounded-xl bg-[#2a2a2a] px-4 py-2.5 text-base text-white placeholder:text-[var(--muted-text)] focus:outline-none"
+            className="w-full rounded-xl bg-[var(--surface-3)] px-4 py-2.5 text-base text-white placeholder:text-[var(--muted-text)] focus:outline-none"
             autoFocus={nationalityOpen}
           />
         </div>
@@ -530,7 +530,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
                 setNationalityOpen(false)
                 setNationalitySearch("")
               }}
-              className="flex min-h-[3.5rem] w-full items-center justify-between border-b border-[#2a2a2a] px-5 active:bg-white/5"
+              className="flex min-h-[3.5rem] w-full items-center justify-between border-b border-[var(--border)] px-5 active:bg-white/5"
             >
               <span className="text-base text-white">{countryDisplay(country)}</span>
               {nationality === country && (

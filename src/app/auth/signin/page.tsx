@@ -14,7 +14,7 @@ export default async function SignInPage({
   const defaultMode = mode === "register" ? "register" : "login"
 
   return (
-    <div className="relative flex min-h-dvh flex-col overflow-hidden bg-[#0a0a0a] px-6 pb-10">
+    <div className="relative flex min-h-dvh flex-col overflow-hidden bg-[var(--background)] px-6 pb-10">
       {/* Background video (muted, looping) — falls back to the dark bg if it fails */}
       <video
         autoPlay

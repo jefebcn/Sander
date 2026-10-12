@@ -135,7 +135,11 @@ export default async function Home() {
           date: { gte: new Date(now.getTime() - 3600_000) },
         },
         orderBy: { date: "asc" },
-        select: { id: true, title: true, location: true, date: true, maxPlayers: true, _count: { select: { participants: true } } },
+        select: {
+          id: true, title: true, location: true, date: true, maxPlayers: true,
+          _count: { select: { participants: true } },
+          participants: { take: 8, select: { guestName: true, player: { select: { name: true, avatarUrl: true } } } },
+        },
       }),
       getSpotlightTournament(),
       getUnreadCount(),
@@ -168,10 +172,12 @@ export default async function Home() {
     ? {
         id: nextMatchRow.id, title: nextMatchRow.title, location: nextMatchRow.location, date: nextMatchRow.date,
         players: nextMatchRow._count.participants, maxPlayers: nextMatchRow.maxPlayers,
+        faces: nextMatchRow.participants.map((p) => ({ name: p.player?.name ?? p.guestName ?? "?", avatarUrl: p.player?.avatarUrl })),
       }
     : null
   const openMatches = recs.suggestedSessions.map((s) => ({
     id: s.id, title: s.title, location: s.location, date: s.date, spotsLeft: s.spotsLeft, familiar: s.familiarity === "known",
+    maxPlayers: s.maxPlayers, players: s.players,
   }))
 
   // Sections rise in one after another, top to bottom.
@@ -192,7 +198,7 @@ export default async function Home() {
 
       {/* ── You ────────────────────────────────────────────────────────── */}
       <section {...rise()}>
-        <div className="relative overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-5 shadow-[var(--shadow-card)]">
+        <div className={`relative overflow-hidden rounded-[var(--radius-lg)] p-5 ${HOME_HERO_PHOTO ? "glass" : "bg-[var(--surface-2)] shadow-[var(--shadow-card)]"}`}>
           <div
             aria-hidden="true"
             className="sun-drift pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full"
@@ -342,18 +348,35 @@ export default async function Home() {
   )
 }
 
+/**
+ * Hero photo behind the top of the home: an empty court at sunset, the moment
+ * people actually play. It fades into the page so cards stay readable.
+ */
+const HOME_HERO_PHOTO = true
+
 function HomeShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative min-h-dvh overflow-x-hidden">
-      {/* Dawn light over the sea, top-right — the only decoration on the page. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-[28rem]"
-        style={{
-          background:
-            "radial-gradient(ellipse 80% 60% at 100% 0%, color-mix(in srgb, var(--accent) 12%, transparent) 0%, transparent 70%)",
-        }}
-      />
+      {HOME_HERO_PHOTO && (
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[30rem] overflow-hidden">
+          <Image
+            src="/shea-rouda-YCJoGdoQTgQ-unsplash.jpg"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-[50%_62%] opacity-80"
+          />
+          {/* Darken the top for the header, fade the bottom into the page. */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(180deg, color-mix(in srgb, var(--background) 55%, transparent) 0%, color-mix(in srgb, var(--background) 15%, transparent) 35%, color-mix(in srgb, var(--background) 70%, transparent) 75%, var(--background) 100%)",
+            }}
+          />
+        </div>
+      )}
       <div
         className="relative z-10 flex flex-col gap-5 px-4 pb-8"
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.25rem)" }}

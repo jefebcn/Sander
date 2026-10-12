@@ -14,7 +14,7 @@ export default async function ResetPasswordPage({ searchParams }: Props) {
   if (!token) redirect("/auth/forgot-password")
 
   return (
-    <div className="relative flex min-h-dvh flex-col bg-[#0a0a0a] px-6 pb-10">
+    <div className="relative flex min-h-dvh flex-col bg-[var(--background)] px-6 pb-10">
       {/* Glow */}
       <div
         className="pointer-events-none absolute inset-0"

@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { MapPin, Users, Euro, Beer } from "lucide-react"
 import { SessionStatusBadge } from "./SessionStatusBadge"
+import { PlayerSlots } from "@/components/ui/PlayerSlots"
 import { cn } from "@/lib/utils"
 
 const FORMAT_LABEL: Record<string, string> = {
@@ -24,6 +25,7 @@ interface SessionCardProps {
     status: "OPEN" | "FULL" | "COMPLETED" | "CANCELLED"
     organizer: { name: string }
     _count: { participants: number }
+    participants?: { guestName: string | null; player: { name: string; avatarUrl: string | null } | null }[]
   }
 }
 
@@ -75,8 +77,16 @@ export function SessionCard({ session }: SessionCardProps) {
       {/* Right side */}
       <div className="flex shrink-0 flex-col items-end gap-1.5">
         <SessionStatusBadge status={session.status} expired={isExpired} />
+        {session.participants && (session.status === "OPEN" || session.status === "FULL") && !isExpired && (
+          <PlayerSlots
+            size="sm"
+            total={session.maxPlayers}
+            players={session.participants.map((p) => ({ name: p.player?.name ?? p.guestName ?? "?", avatarUrl: p.player?.avatarUrl }))}
+          />
+        )}
         <div className="flex items-center gap-2 text-xs">
-          {session.status === "OPEN" && !isExpired && (
+          {/* The seat circles already show free spots; the count is the fallback. */}
+          {session.status === "OPEN" && !isExpired && !session.participants && (
             <span
               className={cn(
                 "rounded-full px-2 py-0.5 font-semibold",

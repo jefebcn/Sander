@@ -24,6 +24,8 @@ export interface SuggestedSession {
   maxPlayers: number
   format: string
   familiarity: "known" | "new"  // "known" = player has been to this location
+  /** Who's already in, for the seat circles. */
+  players: { name: string; avatarUrl: string | null }[]
 }
 
 export interface SuggestedTournament {
@@ -104,6 +106,10 @@ export async function getPersonalizedRecommendations(
         format: true,
         maxPlayers: true,
         _count: { select: { participants: true } },
+        participants: {
+          take: 8,
+          select: { guestName: true, player: { select: { name: true, avatarUrl: true } } },
+        },
       },
       orderBy: { date: "asc" },
       take: 20,
@@ -120,7 +126,8 @@ export async function getPersonalizedRecommendations(
         ? "known"
         : "new"
       return { id: s.id, title: s.title, location: s.location, date: s.date,
-               spotsLeft, maxPlayers: s.maxPlayers, format: s.format, familiarity }
+               spotsLeft, maxPlayers: s.maxPlayers, format: s.format, familiarity,
+               players: s.participants.map((p) => ({ name: p.player?.name ?? p.guestName ?? "?", avatarUrl: p.player?.avatarUrl ?? null })) }
     })
     // Rank: known > preferred format > open spots > date
     .sort((a, b) => {

@@ -21,7 +21,7 @@ export default async function AdminPaymentsPage() {
         <Link
           href="/profile"
           aria-label="Indietro"
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2a2a2a] text-white active:bg-[#333]"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-3)] text-white active:bg-[var(--surface-4)]"
         >
           <ChevronLeft className="h-5 w-5" />
         </Link>

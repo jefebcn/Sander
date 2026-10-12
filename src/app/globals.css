@@ -63,6 +63,12 @@
   --social: #38bdf8;
   --sand: #e8d3a6;
 
+  /* Atmosphere: Adriatic at dusk (AppBackground). */
+  --sea-deep: #0b1220;
+  --sea-night: #090d14;
+  --sunset: #ff8a4c;
+  --sunset-deep: #ff5e3a;
+
   /* Soft fills / hairlines derived from a tone (set --tone on a parent). */
   --tone: var(--accent);
   --tone-soft: color-mix(in srgb, var(--tone) 14%, transparent);
@@ -174,6 +180,57 @@ body {
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   min-height: 100dvh;
+}
+
+/* ─── App background (see AppBackground) ─────────────────────────────────── */
+.app-bg { background: var(--background); }
+.app-bg__glow, .app-bg__grain { position: absolute; inset: 0; }
+
+/* Night: today's near-black, lit only by a faint lime haze. */
+.app-bg--night .app-bg__glow {
+  background: radial-gradient(ellipse 90% 45% at 85% -5%, color-mix(in srgb, var(--accent) 9%, transparent) 0%, transparent 70%);
+}
+
+/* Sunset: deep sea-blue base, the warm last light on the horizon at the top. */
+.app-bg--sunset {
+  background: linear-gradient(180deg, var(--sea-deep) 0%, var(--sea-night) 38%, var(--background) 72%);
+}
+.app-bg--sunset .app-bg__glow {
+  background:
+    radial-gradient(ellipse 120% 38% at 50% -6%, color-mix(in srgb, var(--sunset) 20%, transparent) 0%, color-mix(in srgb, var(--sunset-deep) 8%, transparent) 40%, transparent 72%),
+    radial-gradient(ellipse 70% 30% at 100% 0%, color-mix(in srgb, var(--accent) 7%, transparent) 0%, transparent 70%);
+}
+
+/* Sunset theme: surfaces turn cool slate so cards sit on the sea instead of
+   floating as green-black slabs on a blue sky. Lime stays the brand. */
+body[data-bg="sunset"] {
+  --surface-1: #0d121a;
+  --surface-2: #121924;
+  --surface-3: #18212e;
+  --surface-4: #1f2a39;
+  --border: #1b2431;
+  --muted: #26303f;
+  --muted-text: #a6afbd;
+}
+body[data-bg="sunset"] .app-bg__glow {
+  background:
+    radial-gradient(ellipse 130% 42% at 50% -8%, color-mix(in srgb, var(--sunset) 34%, transparent) 0%, color-mix(in srgb, var(--sunset-deep) 14%, transparent) 38%, transparent 70%),
+    radial-gradient(ellipse 60% 26% at 100% 0%, color-mix(in srgb, var(--accent) 8%, transparent) 0%, transparent 70%);
+}
+
+/* Frosted card for content that sits on a photo or on the sunset. */
+.glass {
+  background: color-mix(in srgb, var(--surface-2) 72%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.07), var(--shadow-card);
+}
+
+/* Sand grain — static SVG noise, barely there. */
+.app-bg__grain {
+  opacity: 0.07;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 0.95  0 0 0 0 0.85  0 0 0 0.9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
 
 /* ─── Page fade-in ────────────────────────────────────────────────────────── */
