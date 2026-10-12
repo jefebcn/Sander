@@ -2,6 +2,7 @@ import { NextRequest } from "next/server"
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { stripe } from "@/lib/stripe"
+import { grantStripeTopUp } from "@/lib/creditTopUp"
 import type Stripe from "stripe"
 
 export const runtime = "nodejs"
@@ -65,6 +66,25 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session
+
+        // SanderCredits pack bought in the app.
+        if (session.metadata?.kind === "sc_topup") {
+          if (session.payment_status !== "paid") break
+          const result = await grantStripeTopUp({
+            stripeSessionId: session.id,
+            playerId: session.metadata.playerId ?? "",
+            packId: session.metadata.packId ?? "",
+            amountCents: session.amount_total ?? null,
+          })
+          if (result === "invalid") {
+            // eslint-disable-next-line no-console
+            console.error("[stripe webhook] sc_topup with invalid metadata", session.id)
+          }
+          revalidatePath("/profile")
+          revalidatePath("/admin/metriche")
+          break
+        }
+
         const registrationId = session.metadata?.registrationId
         const tournamentId   = session.metadata?.tournamentId
 

@@ -688,6 +688,7 @@ enum TopUpMethod {
   BONIFICO
   CONTANTI
   OMAGGIO // credits given for free — no money received
+  STRIPE  // bought in-app through Stripe Checkout, credited by the webhook
 }
 
 /// Ledger of SanderCredits top-ups.
@@ -706,6 +707,8 @@ model CreditTopUp {
   method      TopUpMethod
   note        String?
   createdByEmail String?
+  /// Set for STRIPE top-ups; unique so a replayed webhook can't credit twice.
+  stripeSessionId String? @unique
 
   @@index([createdAt])
   @@index([playerId])

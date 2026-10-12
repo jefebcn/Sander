@@ -14,6 +14,7 @@ import { DuoShareButton } from "@/components/share/DuoShareButton"
 import { getPlayerRecap } from "@/actions/recap"
 import { SignOutButton } from "@/components/auth/SignOutButton"
 import { InviteTab } from "@/components/profile/InviteTab"
+import { PageHeader } from "@/components/layout/PageHeader"
 import { buildPromoCode } from "@/lib/referral"
 import { getReferralLeaderboard } from "@/actions/invite"
 import { APP_VERSION_DISPLAY } from "@/lib/appVersion"
@@ -111,10 +112,10 @@ const STATUS_COLORS: Record<string, string> = {
 
 // ── page ─────────────────────────────────────────────────────────────
 
-interface Props { searchParams: Promise<{ tab?: string }> }
+interface Props { searchParams: Promise<{ tab?: string; topup?: string }> }
 
 export default async function ProfilePage({ searchParams }: Props) {
-  const { tab } = await searchParams
+  const { tab, topup } = await searchParams
   const validTabs = ["profilo", "partite", "organizzate", "invita", "app", "supporter", "admin"]
   const activeTab = validTabs.includes(tab ?? "") ? (tab as string) : "profilo"
 
@@ -242,45 +243,59 @@ export default async function ProfilePage({ searchParams }: Props) {
     { id: "invita",       label: "Invita" },
     { id: "app",          label: "App" },
     { id: "supporter",    label: "Supporter" },
-    ...(isAdmin ? [{ id: "admin", label: "⚙ Admin" }] : []),
+    ...(isAdmin ? [{ id: "admin", label: "Admin" }] : []),
   ]
 
   return (
     <div className="flex flex-col min-h-dvh pb-6">
 
       {/* ── Header ──────────────────────────────────────────── */}
-      <div
-        className="flex items-center justify-between px-4 pt-5 pb-3"
-        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.25rem)" }}
-      >
-        <h1 className="text-2xl font-black text-white">Profilo</h1>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/onboarding/profile"
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface-2)] text-[var(--muted-text)] transition-colors hover:text-[var(--foreground)]"
-          >
-            <Pencil className="h-4 w-4" />
-          </Link>
-          <SignOutButton
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface-2)] text-[var(--muted-text)] transition-colors hover:text-[var(--foreground)]"
-            iconOnly
-          />
-        </div>
-      </div>
+      <PageHeader
+        eyebrow={fullPlayer.firstName ?? fullPlayer.name.split(" ")[0]}
+        tone="social"
+        title="Profilo"
+        action={
+          <div className="flex items-center gap-2">
+            <Link
+              href="/onboarding/profile"
+              aria-label="Modifica profilo"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-2)] text-white"
+            >
+              <Pencil className="h-5 w-5" />
+            </Link>
+            <SignOutButton
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-2)] text-white"
+              iconOnly
+            />
+          </div>
+        }
+      />
+
+      {/* Back from Stripe: say what happened, so nobody pays twice. */}
+      {topup === "ok" && (
+        <p role="status" className="mx-4 mb-3 rounded-[var(--radius-md)] bg-[var(--accent-soft)] px-4 py-3 text-sm font-semibold text-[var(--accent)]">
+          Pagamento ricevuto: i crediti compaiono nel saldo entro pochi secondi.
+        </p>
+      )}
+      {topup === "annullata" && (
+        <p role="status" className="mx-4 mb-3 rounded-[var(--radius-md)] bg-[var(--surface-2)] px-4 py-3 text-sm text-[var(--muted-text)]">
+          Pagamento annullato: non ti è stato addebitato nulla.
+        </p>
+      )}
 
       {/* ── Tab bar (horizontal scroll) ───────────────────── */}
-      <div className="relative pb-3">
-        <div className="flex gap-2 overflow-x-auto px-4 scrollbar-none"
-          style={{ scrollbarWidth: "none" }}>
+      <div className="tone-social relative pb-3">
+        <div className="rail px-4">
           {TABS.map(({ id, label }) => (
             <Link
               key={id}
               href={id === "profilo" ? "/profile" : `/profile?tab=${id}`}
-              className="shrink-0 rounded-xl px-4 py-2 text-sm font-bold transition-colors whitespace-nowrap"
-              style={
-                activeTab === id
-                  ? { background: "var(--accent)", color: "#000" }
-                  : { background: "var(--surface-2)", color: "var(--muted-text)", border: "1px solid rgba(255,255,255,0.08)" }
+              aria-current={activeTab === id ? "page" : undefined}
+              className={
+                "flex min-h-[2.75rem] shrink-0 items-center whitespace-nowrap rounded-full px-4 text-sm font-bold transition-colors " +
+                (activeTab === id
+                  ? "bg-[var(--tone)] text-black"
+                  : "bg-[var(--surface-2)] text-[var(--muted-text)]")
               }
             >
               {label}
