@@ -98,6 +98,11 @@ export async function getSessions(playerId?: string) {
   const include = {
     organizer: { select: { id: true, name: true } },
     _count: { select: { participants: true } },
+    // Faces for the seat circles on the card (8 = largest format).
+    participants: {
+      take: 8,
+      select: { guestName: true, player: { select: { name: true, avatarUrl: true } } },
+    },
   } as const
 
   const [openSessions, completedSessions] = await Promise.all([

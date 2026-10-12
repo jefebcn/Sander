@@ -10,6 +10,7 @@ import { ClientOnlyBanners } from "@/components/layout/ClientOnlyBanners"
 import { SwRegistrar } from "@/components/push/SwRegistrar"
 import { PageWrapper } from "@/components/layout/PageWrapper"
 import { RefTracker } from "@/components/analytics/RefTracker"
+import { AppBackground, type BackgroundVariant } from "@/components/layout/AppBackground"
 
 const barlow = Barlow({
   variable: "--font-sans",
@@ -80,11 +81,14 @@ export const metadata: Metadata = {
 // Pinch-zoom stays enabled: blocking it locks out anyone who needs larger text
 // (WCAG 1.4.4). Inputs are ≥16px, so iOS doesn't auto-zoom on focus anyway.
 export const viewport: Viewport = {
-  themeColor: "#07090a",
+  themeColor: "#0b1220",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
 }
+
+/** App-wide background: "sunset" (sea at dusk) or "night" (near-black). */
+const BG: BackgroundVariant = "sunset"
 
 export default function RootLayout({
   children,
@@ -93,7 +97,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="it" className={`${barlow.variable} ${barlowCondensed.variable} h-full`}>
-      <body className="min-h-dvh flex flex-col bg-[var(--background)] text-[var(--foreground)]">
+      <body data-bg={BG} className="min-h-dvh flex flex-col bg-[var(--background)] text-[var(--foreground)]">
+        <AppBackground variant={BG} />
         <Providers>
           <OnboardingGate />
           <SwRegistrar />

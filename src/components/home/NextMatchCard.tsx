@@ -1,7 +1,8 @@
 import Link from "next/link"
-import { MapPin, Users, ChevronRight } from "lucide-react"
+import { MapPin, ChevronRight } from "lucide-react"
 import { formatTime, formatDayShort, relativeDay, daysFromNow } from "@/lib/datetime"
 import { Pill } from "@/components/ui/Pill"
+import { PlayerSlots, type SlotPlayer } from "@/components/ui/PlayerSlots"
 
 export interface NextMatch {
   id: string
@@ -10,6 +11,7 @@ export interface NextMatch {
   date: Date
   players: number
   maxPlayers: number
+  faces: SlotPlayer[]
 }
 
 /** The match you already said yes to — the most useful thing on the screen. */
@@ -44,10 +46,11 @@ export function NextMatchCard({ match }: { match: NextMatch }) {
         </div>
       </div>
       <div className="relative mt-4 flex items-center justify-between border-t border-[var(--border)] pt-3">
-        <span className="flex items-center gap-1.5 text-sm font-bold text-white">
-          <Users className="h-4 w-4 text-[var(--accent)]" aria-hidden="true" />
-          {match.players}/{match.maxPlayers} giocatori
-          {missing > 0 && <span className="font-semibold text-[var(--muted-text)]">· ne mancano {missing}</span>}
+        <span className="flex items-center gap-3">
+          <PlayerSlots players={match.faces} total={match.maxPlayers} />
+          <span className="text-sm font-bold text-white">
+            {missing > 0 ? `Ne mancano ${missing}` : "Al completo"}
+          </span>
         </span>
         <ChevronRight className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />
       </div>

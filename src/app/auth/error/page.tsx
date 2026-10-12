@@ -31,7 +31,7 @@ export default async function AuthErrorPage({
     (error && ERROR_MESSAGES[error]) ?? ERROR_MESSAGES.Default
 
   return (
-    <div className="relative flex min-h-dvh flex-col bg-[#0a0a0a] px-6 pb-10">
+    <div className="relative flex min-h-dvh flex-col bg-[var(--background)] px-6 pb-10">
       {/* Glow */}
       <div
         className="pointer-events-none absolute inset-0"

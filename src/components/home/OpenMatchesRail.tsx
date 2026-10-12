@@ -3,6 +3,7 @@ import { MapPin } from "lucide-react"
 import { formatTime, formatDayShort, daysFromNow } from "@/lib/datetime"
 import { Pill } from "@/components/ui/Pill"
 import { SectionHeader } from "@/components/ui/SectionHeader"
+import { PlayerSlots, type SlotPlayer } from "@/components/ui/PlayerSlots"
 
 export interface OpenMatch {
   id: string
@@ -10,6 +11,8 @@ export interface OpenMatch {
   location: string
   date: Date
   spotsLeft: number
+  maxPlayers: number
+  players: SlotPlayer[]
   familiar?: boolean
 }
 
@@ -40,6 +43,7 @@ export function OpenMatchesRail({ matches }: { matches: OpenMatch[] }) {
                 )}
               </div>
               <p className="num text-4xl leading-none text-white">{formatTime(m.date)}</p>
+              <PlayerSlots players={m.players} total={m.maxPlayers} />
               <div className="min-w-0">
                 <p className="truncate text-base font-extrabold text-white">{m.title}</p>
                 <p className="flex items-center gap-1 truncate text-sm text-[var(--muted-text)]">

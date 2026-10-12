@@ -28,7 +28,7 @@ function Row({
   value: React.ReactNode
 }) {
   return (
-    <div className="flex items-start gap-3 border-b border-[#2a2a2a] px-5 py-4 last:border-b-0">
+    <div className="flex items-start gap-3 border-b border-[var(--border)] px-5 py-4 last:border-b-0">
       <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center text-[var(--accent)]">
         {icon}
       </div>
