@@ -7,7 +7,7 @@ export function MessagesBell({ unreadCount }: { unreadCount: number }) {
     <Link
       href="/messaggi"
       aria-label="Messaggi"
-      className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-2)]"
+      className="relative flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-2)]"
     >
       <MessageCircle className="h-5 w-5 text-white" />
       {unreadCount > 0 && (

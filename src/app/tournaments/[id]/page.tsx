@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ChevronRight, ChevronLeft, Play, Trophy, Shuffle, Trash2, LogOut } from "lucide-react"
+import { ChevronRight, Play, Trophy, Shuffle, Trash2, LogOut } from "lucide-react"
 import { getTournamentDashboard } from "@/actions/standings"
 import { startTournament, completeTournament, updateTournamentMeta } from "@/actions/tournaments"
 import { cancelRegistration, adminRemoveRegistration } from "@/actions/registration"
@@ -25,6 +25,7 @@ import { AdminSpectatorPriceForm } from "@/components/tournament/AdminSpectatorP
 import { AdminAddPlayerButton } from "@/components/tournament/AdminAddPlayerButton"
 import { formatDate, formatPrice } from "@/lib/utils"
 import { redirect } from "next/navigation"
+import { BackButton } from "@/components/layout/PageHeader"
 
 export const dynamic = "force-dynamic"
 
@@ -113,27 +114,24 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
           </div>
         )}
         {/* Header */}
-        <div className="flex items-start gap-3 px-4 pt-5 pb-3">
+        <div className="tone-compete px-4 pt-4 pb-4">
           {/* This is the page people land on from a shared link, and it had no
               way back into the app. */}
-          <Link
-            href="/tournaments"
-            aria-label="Indietro"
-            className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--muted-text)]"
-          >
-            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-          </Link>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <Shuffle className="h-5 w-5 shrink-0 text-[var(--accent)]" />
-              <h1 className="truncate text-2xl font-black">{tournament.name}</h1>
-              <StatusBadge status={tournament.status} />
-            </div>
-            <p className="mt-0.5 text-sm text-[var(--muted-text)]">
-              {formatDate(tournament.date)} · {typeLabel} · {registrations.length} giocatori
-            </p>
+          <div className="flex items-center justify-between">
+            <BackButton href="/tournaments" />
+            <ShareButton path={`/tournaments/${id}`} title={tournament.name} text={`Unisciti al torneo "${tournament.name}" su SANDER 🏐`} />
           </div>
-          <ShareButton path={`/tournaments/${id}`} title={tournament.name} text={`Unisciti al torneo "${tournament.name}" su SANDER 🏐`} />
+          <div className="mt-2 flex items-center gap-2">
+            <p className="eyebrow flex items-center gap-1.5 text-[var(--tone)]">
+              <Shuffle className="h-4 w-4" aria-hidden="true" /> {typeLabel}
+            </p>
+            <StatusBadge status={tournament.status} />
+          </div>
+          {/* Wraps instead of truncating: the name is the poster. */}
+          <h1 className="mt-1 font-display text-[2.1rem] font-extrabold uppercase leading-[0.95] text-white">{tournament.name}</h1>
+          <p className="mt-1 text-sm text-[var(--muted-text)]">
+            {formatDate(tournament.date)} · {registrations.length} giocatori
+          </p>
         </div>
 
         {/* Participant lists: always for admin, or when open for registration in draft */}
@@ -417,35 +415,29 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
         </div>
       )}
       {/* Header */}
-      <div className="flex items-start justify-between gap-3 px-4 pt-5 pb-3">
+      <div className="tone-compete px-4 pt-4 pb-4">
         {/* This is the page people land on from a shared link, and it had no
             way back into the app. */}
-        <Link
-          href="/tournaments"
-          aria-label="Indietro"
-          className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--muted-text)]"
-        >
-          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-        </Link>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h1 className="truncate text-2xl font-black">{tournament.name}</h1>
-            <StatusBadge status={tournament.status} />
-          </div>
-          <p className="mt-0.5 text-sm text-[var(--muted-text)]">
-            {formatDate(tournament.date)} ·{" "}
+        <div className="flex items-center justify-between">
+          <BackButton href="/tournaments" />
+          <ShareButton path={`/tournaments/${id}`} title={tournament.name} text={`Unisciti al torneo "${tournament.name}" su SANDER 🏐`} />
+        </div>
+        <div className="mt-2 flex items-center gap-2">
+          <p className="eyebrow text-[var(--tone)]">
             {tournament.type === "KING_OF_THE_BEACH"
               ? "King of the Beach"
               : tournament.type === "ROUND_ROBIN"
               ? "Round Robin"
               : tournament.type === "DOUBLE_ELIMINATION"
               ? "Doppia Eliminazione"
-              : "Classico"}{" "}
-            ·{" "}
-            {tournament.registrations.length} giocatori
+              : "Classico"}
           </p>
+          <StatusBadge status={tournament.status} />
         </div>
-        <ShareButton path={`/tournaments/${id}`} title={tournament.name} text={`Unisciti al torneo "${tournament.name}" su SANDER 🏐`} />
+        <h1 className="mt-1 font-display text-[2.1rem] font-extrabold uppercase leading-[0.95] text-white">{tournament.name}</h1>
+        <p className="mt-1 text-sm text-[var(--muted-text)]">
+          {formatDate(tournament.date)} · {tournament.registrations.length} giocatori
+        </p>
       </div>
 
       {/* Participant lists: always for admin, or when open for registration in draft */}

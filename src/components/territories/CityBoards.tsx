@@ -12,8 +12,8 @@ export function CityBoards({ boards }: { boards: CityLeaderboard[] }) {
   return (
     <section className="px-4 pb-6">
       <div className="mb-2 flex items-center gap-1.5">
-        <MapPin className="h-4 w-4 text-[var(--accent)]" aria-hidden="true" />
-        <h2 className="text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
+        <MapPin className="h-4 w-4 text-[var(--sand)]" aria-hidden="true" />
+        <h2 className="eyebrow text-[var(--sand)]">
           Derby della Riviera
         </h2>
       </div>
