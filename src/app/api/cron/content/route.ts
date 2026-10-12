@@ -4,6 +4,7 @@ import { generateContent } from "@/actions/content"
 import { db } from "@/lib/db"
 import { notifyPlayer } from "@/lib/push"
 import { isAdminEmail } from "@/lib/isAdmin"
+import { nudgeSweep } from "@/lib/nudges"
 
 export const runtime = "nodejs"
 
@@ -38,5 +39,9 @@ export async function GET(req: NextRequest) {
     )
   }
 
-  return NextResponse.json({ ok: true, created })
+  // Same morning run: today's and tomorrow's matches still missing players.
+  // Kept in this cron instead of a new one so the Vercel cron count is unchanged.
+  const nudged = await nudgeSweep().catch(() => 0)
+
+  return NextResponse.json({ ok: true, created, nudged })
 }

@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db"
 import { auth } from "@/lib/auth"
-import { SaveProfileSchema } from "@/lib/validators/profile.schema"
+import { SaveProfileSchema, NudgePrefSchema } from "@/lib/validators/profile.schema"
 import { INVITEE_SC } from "@/lib/referral"
 import { canSeedRating, startingRating } from "@/lib/startLevel"
 import { revalidatePath } from "next/cache"
@@ -77,4 +77,13 @@ export async function saveProfile(input: unknown) {
   revalidatePath("/")
   revalidatePath("/sessions")
   revalidatePath("/players")
+}
+
+/** Turn "manca un giocatore" pushes on or off for the signed-in player. */
+export async function setNudgesOptOut(input: unknown) {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error("Non autenticato")
+  const { optOut } = NudgePrefSchema.parse(input)
+  await db.player.update({ where: { userId: session.user.id }, data: { nudgesOptOut: optOut } })
+  revalidatePath("/profile")
 }

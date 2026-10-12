@@ -15,6 +15,8 @@ import { updateGlickoAfterSession } from "@/lib/rating"
 import { isAdminEmail } from "@/lib/isAdmin"
 import { generateKOTBSchedule, applyMatchResult, rankStandings } from "@/lib/tournament/kotb"
 import type { StandingEntry } from "@/lib/tournament/types"
+import { after } from "next/server"
+import { nudgeForSession } from "@/lib/nudges"
 // ─── Push helpers (dynamic import — keeps web-push out of SSR bundle) ────────
 
 type PushPayload = { title: string; body: string; url: string }
@@ -87,6 +89,12 @@ export async function createSession(input: unknown) {
       matchMode: data.format === "TWO_VS_TWO" ? (data.matchMode ?? false) : false,
     },
   })
+
+  // Tell nearby free players about it once the response is sent. Only for the
+  // coming week: a match a month out is noise today.
+  if (session.date.getTime() - Date.now() < 7 * 24 * 3600_000) {
+    after(() => nudgeForSession(session.id, "new").catch(() => {}))
+  }
 
   revalidatePath("/sessions")
   return session
@@ -405,7 +413,12 @@ export async function leaveSession(sessionId: string) {
         body: `${next.session.title} a ${next.session.location}: corri a prenderlo.`,
         url: `/sessions/${sessionId}`,
       })
+    } else {
+      // Nobody queued: offer the seat to free players nearby instead.
+      after(() => nudgeForSession(sessionId, "freed").catch(() => {}))
     }
+  } else {
+    after(() => nudgeForSession(sessionId, "freed").catch(() => {}))
   }
 
   revalidatePath(`/sessions/${sessionId}`)
