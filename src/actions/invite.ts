@@ -3,11 +3,7 @@
 import { db } from "@/lib/db"
 import { auth } from "@/lib/auth"
 
-// Must match the buildPromoCode function in profile/page.tsx
-function buildPromoCode(id: string): string {
-  const clean = id.replace(/[^a-z0-9]/gi, "").toUpperCase()
-  return `${clean.slice(2, 6)}-${clean.slice(6, 10)}`
-}
+import { buildPromoCode } from "@/lib/referral"
 
 /**
  * Given an invite code (e.g. "ABCD-EFGH"), find the Player whose ID maps to it.

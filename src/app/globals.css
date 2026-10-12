@@ -85,11 +85,18 @@
   --dur-slow: 480ms;
 }
 
-/* Area tones — put one on a page or card; children read var(--tone). */
+/* Area tones — put one on a page or card; children read var(--tone).
+   The derived fills are re-declared here on purpose: a custom property that
+   references another is resolved where it is declared, so defining them only
+   on :root would freeze them to lime for every area. */
 .tone-play    { --tone: var(--play); }
 .tone-compete { --tone: var(--compete); }
 .tone-social  { --tone: var(--social); }
 .tone-sand    { --tone: var(--sand); }
+.tone-play, .tone-compete, .tone-social, .tone-sand {
+  --tone-soft: color-mix(in srgb, var(--tone) 14%, transparent);
+  --tone-line: color-mix(in srgb, var(--tone) 32%, transparent);
+}
 
 @theme inline {
   --color-background: var(--background);

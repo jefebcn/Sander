@@ -14,6 +14,7 @@ import { DuoShareButton } from "@/components/share/DuoShareButton"
 import { getPlayerRecap } from "@/actions/recap"
 import { SignOutButton } from "@/components/auth/SignOutButton"
 import { InviteTab } from "@/components/profile/InviteTab"
+import { buildPromoCode } from "@/lib/referral"
 import { getReferralLeaderboard } from "@/actions/invite"
 import { APP_VERSION_DISPLAY } from "@/lib/appVersion"
 import { formatDate } from "@/lib/utils"
@@ -91,10 +92,6 @@ const SUPPORTERS: { name: string; image?: string; icon?: string; href: string; t
 
 // ── helpers ──────────────────────────────────────────────────────────
 
-function buildPromoCode(id: string): string {
-  const clean = id.replace(/[^a-z0-9]/gi, "").toUpperCase()
-  return `${clean.slice(2, 6)}-${clean.slice(6, 10)}`
-}
 
 // Same wording as SessionStatusBadge: "Completa" next to "Completata" read as
 // two ways of saying finished, when one of them means "no seats left".

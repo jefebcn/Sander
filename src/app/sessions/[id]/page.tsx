@@ -17,6 +17,7 @@ import { RematchButton } from "@/components/session/RematchButton"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { ShareStoryButton } from "@/components/share/ShareStoryButton"
 import { playerToCardData } from "@/components/player/SanderCardFut"
+import { buildPromoCode, cleanInviteCode, INVITEE_SC } from "@/lib/referral"
 
 export async function generateMetadata(
   { params }: { params: Promise<{ id: string }> }
@@ -45,9 +46,24 @@ const FORMAT_LABEL: Record<string, string> = {
   FOUR_VS_FOUR: "4 vs 4",
 }
 
-export default async function SessionPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function SessionPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ invite?: string }>
+}) {
   const { id } = await params
+  // A friend's share link carries their invite code: signing up from here
+  // credits them, so "come play with us" doubles as a referral.
+  const { invite } = await searchParams
+  const inviteCode = cleanInviteCode(invite)
   const [session, currentPlayer] = await Promise.all([getSession(id), getCurrentPlayer()])
+
+  // Shared links carry the sharer's invite code (see `invite` above).
+  const sharePath = currentPlayer
+    ? `/sessions/${id}?invite=${buildPromoCode(currentPlayer.id)}`
+    : `/sessions/${id}`
 
   // Separate sets query — graceful fallback if table doesn't exist yet
   const sets = session.status === "COMPLETED"
@@ -201,11 +217,11 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
         {/* CTA per utenti non autenticati */}
         {!currentPlayer && (session.status === "OPEN" || session.status === "FULL") && (
           <Link
-            href={`/auth/signin?callbackUrl=${encodeURIComponent(`/sessions/${session.id}`)}`}
+            href={`/auth/signin?mode=register&callbackUrl=${encodeURIComponent(`/sessions/${session.id}`)}${inviteCode ? `&invite=${inviteCode}` : ""}`}
             className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl font-black text-black text-base"
             style={{ background: "var(--accent)" }}
           >
-            Accedi per partecipare
+            {inviteCode ? `Registrati e gioca (+${INVITEE_SC} SC in regalo)` : "Accedi per partecipare"}
           </Link>
         )}
 
@@ -240,13 +256,13 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
         {(session.status === "OPEN" || session.status === "FULL") && (
           <div className="space-y-2">
             <ShareButton
-              path={`/sessions/${session.id}`}
+              path={sharePath}
               title={session.title}
               text={`Unisciti a "${session.title}" su SANDER 🏐`}
               fullWidth
             />
             <WhatsAppShareButton
-              path={`/sessions/${session.id}`}
+              path={sharePath}
               text={`Unisciti a "${session.title}" a ${session.location} su SANDER 🏐`}
             />
             <QRCodeButton
