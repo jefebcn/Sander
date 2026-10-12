@@ -40,8 +40,8 @@ export function SessionCard({ session }: SessionCardProps) {
         : null
 
   const dateObj = new Date(session.date)
-  const timeStr = dateObj.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })
-  const dateStr = dateObj.toLocaleDateString("it-IT", { day: "2-digit", month: "short" })
+  const timeStr = dateObj.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" })
+  const dateStr = dateObj.toLocaleDateString("it-IT", { timeZone: "Europe/Rome", day: "2-digit", month: "short" })
   // Still OPEN/FULL but the date has passed: it is not joinable, it is waiting
   // to be closed. The badge must not keep advertising it as open.
   const isExpired = dateObj <= new Date()

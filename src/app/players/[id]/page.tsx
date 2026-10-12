@@ -101,7 +101,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
                       <span className="text-xs font-black leading-tight" style={{ color: "#FFD700" }}>
                         {win.tournamentName}
                       </span>
-                      <span className="text-[0.65rem] text-white/40 leading-tight">
+                      <span className="text-xs text-white/40 leading-tight">
                         {MONTH_NAMES_IT[d.getMonth() + 1]} {d.getFullYear()}
                       </span>
                     </div>
@@ -121,7 +121,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
                       <span className="text-xs font-black leading-tight" style={{ color: meta.color }}>
                         {meta.label}
                       </span>
-                      <span className="text-[0.65rem] text-white/40 leading-tight">
+                      <span className="text-xs text-white/40 leading-tight">
                         {MONTH_NAMES_IT[award.month]} {award.year}
                       </span>
                     </div>
@@ -188,7 +188,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
                     </div>
                     <span className="text-3xl font-black text-white w-8 text-center">{h2h.versus.lost}</span>
                   </div>
-                  <div className="flex justify-between text-[0.6rem] font-bold uppercase tracking-wider text-[var(--muted-text)] -mt-3">
+                  <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-[var(--muted-text)] -mt-3">
                     <span>Tu</span>
                     <span>{opponentName}</span>
                   </div>
@@ -201,7 +201,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
                       { label: "Set persi", value: h2h.versus.setsLost, color: "text-[var(--danger)]" },
                     ].map(({ label, value, color }) => (
                       <div key={label} className="flex flex-col items-center gap-0.5">
-                        <span className="text-[0.6rem] font-bold uppercase tracking-wider text-[var(--muted-text)]">{label}</span>
+                        <span className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">{label}</span>
                         <span className={`text-xl font-black ${color}`}>{value}</span>
                       </div>
                     ))}
@@ -232,7 +232,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
                       {pct(h2h.together.won, h2h.together.played)}
                     </span>
                   </div>
-                  <div className="flex justify-between text-[0.6rem] font-bold uppercase tracking-wider text-[var(--muted-text)] -mt-3">
+                  <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-[var(--muted-text)] -mt-3">
                     <span>Vittorie</span>
                     <span>Win%</span>
                   </div>
@@ -245,7 +245,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
                       { label: "Set persi", value: h2h.together.setsLost, color: "text-[var(--muted-text)]" },
                     ].map(({ label, value, color }) => (
                       <div key={label} className="flex flex-col items-center gap-0.5">
-                        <span className="text-[0.6rem] font-bold uppercase tracking-wider text-[var(--muted-text)]">{label}</span>
+                        <span className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">{label}</span>
                         <span className={`text-xl font-black ${color}`}>{value}</span>
                       </div>
                     ))}
@@ -266,7 +266,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
                     return (
                       <Link key={e.id} href={href} className="flex items-center gap-3 px-4 py-3 active:opacity-70">
                         <div className="w-10 shrink-0 text-center">
-                          <p className="text-[0.65rem] font-bold uppercase text-[var(--muted-text)]">{dateLabel}</p>
+                          <p className="text-xs font-bold uppercase text-[var(--muted-text)]">{dateLabel}</p>
                         </div>
                         <div className={cn(
                           "w-7 h-7 shrink-0 flex items-center justify-center rounded-lg text-xs font-black",
@@ -296,7 +296,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
                           <p className={cn("text-sm font-black", won ? "text-[var(--live)]" : "text-[var(--danger)]")}>
                             {myScore}–{oppScore}
                           </p>
-                          {e.isSetScore && <p className="text-[0.6rem] text-[var(--muted-text)]">set</p>}
+                          {e.isSetScore && <p className="text-xs text-[var(--muted-text)]">set</p>}
                         </div>
                       </Link>
                     )

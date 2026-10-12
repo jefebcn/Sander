@@ -54,7 +54,7 @@ export function SessionMatchCard({ match, isOrganizer }: Props) {
       className="rounded-2xl p-3"
       style={{ background: "var(--surface-2)" }}
     >
-      <p className="mb-2 text-[0.65rem] font-bold uppercase tracking-wider text-[var(--muted-text)]">
+      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
         Partita {match.matchNumber}
       </p>
 

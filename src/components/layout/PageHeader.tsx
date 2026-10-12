@@ -1,34 +1,47 @@
 import Link from "next/link"
 import { ChevronLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { toneOf, type Tone } from "@/components/ui/Card"
 
 interface PageHeaderProps {
   title: string
   subtitle?: string
+  /** Small coloured label above the title — names the area you're in. */
+  eyebrow?: string
+  tone?: Tone
   action?: React.ReactNode
   backHref?: string
   className?: string
 }
 
-export function PageHeader({ title, subtitle, action, backHref, className }: PageHeaderProps) {
+/** 56px tap area around a 44px visible circle. */
+export function BackButton({ href, className }: { href: string; className?: string }) {
   return (
-    <header className={cn("flex items-start gap-3 px-4 py-5", className)}>
-      {backHref && (
-        <Link
-          href={backHref}
-          aria-label="Indietro"
-          className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--muted-text)] transition-colors hover:bg-[var(--surface-3)] hover:text-[var(--foreground)]"
-        >
-          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-        </Link>
-      )}
-      <div className="flex-1 min-w-0">
-        <h1 className="text-2xl font-black tracking-tight text-[var(--foreground)] leading-tight">
+    <Link
+      href={href}
+      aria-label="Indietro"
+      className={cn("-ml-1.5 flex h-14 w-14 shrink-0 items-center justify-center", className)}
+    >
+      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-2)] text-white transition-colors active:bg-[var(--surface-3)]">
+        <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+      </span>
+    </Link>
+  )
+}
+
+export function PageHeader({ title, subtitle, eyebrow, tone, action, backHref, className }: PageHeaderProps) {
+  return (
+    <header
+      className={cn("flex items-center gap-2 px-4 pb-4", toneOf(tone), className)}
+      style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}
+    >
+      {backHref && <BackButton href={backHref} />}
+      <div className="min-w-0 flex-1">
+        {eyebrow && <p className="eyebrow text-[var(--tone)]">{eyebrow}</p>}
+        <h1 className="font-display text-[2rem] font-extrabold uppercase leading-[0.95] tracking-tight text-white">
           {title}
         </h1>
-        {subtitle && (
-          <p className="mt-0.5 text-sm text-[var(--muted-text)] truncate">{subtitle}</p>
-        )}
+        {subtitle && <p className="mt-1 truncate text-sm text-[var(--muted-text)]">{subtitle}</p>}
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </header>

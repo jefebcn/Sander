@@ -134,7 +134,7 @@ export function FilterablePlayerList({ players, tab }: Props) {
                   >
                     {Math.round(player.glickoRating)}
                   </p>
-                  <p className="text-[0.6rem] font-bold uppercase tracking-widest text-[var(--muted-text)]">
+                  <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-text)]">
                     GLK
                   </p>
                 </div>

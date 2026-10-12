@@ -21,7 +21,7 @@ function relTime(iso: string | null): string {
   if (h < 24) return `${h}h`
   const days = Math.floor(h / 24)
   if (days < 7) return `${days}g`
-  return d.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" })
+  return d.toLocaleDateString("it-IT", { timeZone: "Europe/Rome", day: "2-digit", month: "2-digit" })
 }
 
 export default async function MessagesPage() {

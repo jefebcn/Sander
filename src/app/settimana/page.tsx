@@ -5,6 +5,8 @@ import Link from "next/link"
 import { TrendingUp, Flame, Trophy, ArrowUpRight, Medal } from "lucide-react"
 import { getWeeklyRecap } from "@/actions/recap"
 import { ShareButton } from "@/components/ui/ShareButton"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { SectionTabs, RANK_TABS } from "@/components/layout/SectionTabs"
 
 export const metadata: Metadata = {
   title: "La settimana su SANDER — Classifica Beach Volley",
@@ -18,7 +20,7 @@ export const metadata: Metadata = {
 }
 
 function fmt(iso: string) {
-  return new Date(iso).toLocaleDateString("it-IT", { day: "2-digit", month: "short" })
+  return new Date(iso).toLocaleDateString("it-IT", { timeZone: "Europe/Rome", day: "2-digit", month: "short" })
 }
 
 function Avatar({ name, url, size = 44 }: { name: string; url: string | null; size?: number }) {
@@ -43,17 +45,13 @@ export default async function WeeklyPage() {
 
   return (
     <div className="pb-10">
-      {/* Header */}
-      <div className="px-4 pt-6 pb-4">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--accent)]">
-          {fmt(recap.weekStart)} – {fmt(recap.weekEnd)}
-        </p>
-        <h1 className="mt-1 text-3xl font-black text-white">La settimana</h1>
-        <p className="mt-1 text-sm text-[var(--muted-text)]">
-          {recap.totalEvents} {recap.totalEvents === 1 ? "partita" : "partite"} ·{" "}
-          {recap.activePlayers} {recap.activePlayers === 1 ? "giocatore attivo" : "giocatori attivi"}
-        </p>
-      </div>
+      <PageHeader
+        eyebrow={`${fmt(recap.weekStart)} – ${fmt(recap.weekEnd)}`}
+        tone="compete"
+        title="La settimana"
+        subtitle={`${recap.totalEvents} ${recap.totalEvents === 1 ? "partita" : "partite"} · ${recap.activePlayers} ${recap.activePlayers === 1 ? "giocatore attivo" : "giocatori attivi"}`}
+      />
+      <SectionTabs items={RANK_TABS} active="settimana" tone="compete" className="pb-4" />
 
       {recap.activePlayers === 0 ? (
         <div className="mx-4 rounded-2xl bg-[var(--surface-2)] p-8 text-center">
@@ -103,7 +101,7 @@ export default async function WeeklyPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-black text-[var(--live)]">+{potw.ratingDelta}</p>
-                  <p className="text-[0.6rem] font-bold uppercase tracking-widest text-[var(--muted-text)]">
+                  <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-text)]">
                     rating
                   </p>
                 </div>

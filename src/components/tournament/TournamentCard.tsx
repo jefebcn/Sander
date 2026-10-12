@@ -64,12 +64,12 @@ interface TournamentCardProps {
 
 export function TournamentCard({ tournament: t }: TournamentCardProps) {
   const date = new Date(t.date)
-  const dateStr = date.toLocaleDateString("it-IT", { day: "2-digit", month: "short", year: "numeric" })
-  const timeStr = date.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })
+  const dateStr = date.toLocaleDateString("it-IT", { timeZone: "Europe/Rome", day: "2-digit", month: "short", year: "numeric" })
+  const timeStr = date.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" })
 
   const deadline = t.registrationDeadline ? new Date(t.registrationDeadline) : null
   const deadlineStr = deadline
-    ? `${deadline.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })} - ${deadline.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`
+    ? `${deadline.toLocaleDateString("it-IT", { timeZone: "Europe/Rome", day: "2-digit", month: "2-digit", year: "numeric" })} - ${deadline.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" })}`
     : null
 
   const formula = [TYPE_LABEL[t.type] ?? t.type, t.gender].filter(Boolean).join(" · ")
@@ -135,7 +135,7 @@ export function TournamentCard({ tournament: t }: TournamentCardProps) {
         <div className="grid grid-cols-2 gap-2">
           {/* Participants */}
           <div className="rounded-xl bg-[var(--surface-2)] px-3 py-2.5 flex flex-col gap-0.5">
-            <div className="flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-wider text-[var(--muted-text)]">
+            <div className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
               <Users className="h-3 w-3" />
               Partecipanti
             </div>
@@ -146,7 +146,7 @@ export function TournamentCard({ tournament: t }: TournamentCardProps) {
 
           {/* Deadline */}
           <div className="rounded-xl bg-[var(--surface-2)] px-3 py-2.5 flex flex-col gap-0.5">
-            <p className="text-[0.6rem] font-bold uppercase tracking-wider text-[var(--muted-text)]">
+            <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
               {deadlineStr ? "Termine iscrizioni" : "Prezzo iscrizione"}
             </p>
             {deadlineStr ? (
@@ -158,13 +158,13 @@ export function TournamentCard({ tournament: t }: TournamentCardProps) {
 
           {/* Formula */}
           <div className="rounded-xl bg-[var(--surface-2)] px-3 py-2.5 flex flex-col gap-0.5">
-            <p className="text-[0.6rem] font-bold uppercase tracking-wider text-[var(--muted-text)]">Formula</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Formula</p>
             <p className="text-xs font-black text-white leading-tight">{formula}</p>
           </div>
 
           {/* Level */}
           <div className="rounded-xl bg-[var(--surface-2)] px-3 py-2.5 flex flex-col gap-0.5">
-            <p className="text-[0.6rem] font-bold uppercase tracking-wider text-[var(--muted-text)]">Livello</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Livello</p>
             {t.skillLevel ? (
               <LevelBar level={t.skillLevel} />
             ) : (

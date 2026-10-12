@@ -153,7 +153,7 @@ export default function StatsGuidePage() {
               style={{ background: "rgba(255,255,255,0.04)" }}
             >
               <p className="text-xs font-bold text-white">Giocatore bilanciato</p>
-              <p className="text-[0.65rem] text-[var(--muted-text)]">17–17–17–17–16–16</p>
+              <p className="text-xs text-[var(--muted-text)]">17–17–17–17–16–16</p>
               <p className="text-xs text-[var(--muted-text)]">Tutte le stat uguali. Nessun punto debole evidente.</p>
             </div>
             <div
@@ -161,7 +161,7 @@ export default function StatsGuidePage() {
               style={{ background: "rgba(255,255,255,0.04)" }}
             >
               <p className="text-xs font-bold text-white">Specialista attacco</p>
-              <p className="text-[0.65rem] text-[var(--muted-text)]">35–10–15–15–15–10</p>
+              <p className="text-xs text-[var(--muted-text)]">35–10–15–15–15–10</p>
               <p className="text-xs text-[var(--muted-text)]">ATT molto alto, DIF e STA sacrificate.</p>
             </div>
           </div>

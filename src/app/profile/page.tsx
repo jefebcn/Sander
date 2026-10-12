@@ -323,17 +323,17 @@ export default async function ProfilePage({ searchParams }: Props) {
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
                   <p className="text-2xl font-black text-white">{playerRecap.matches}</p>
-                  <p className="text-[0.6rem] font-bold uppercase tracking-widest text-[var(--muted-text)]">Partite</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-text)]">Partite</p>
                 </div>
                 <div>
                   <p className="text-2xl font-black text-[var(--accent)]">{playerRecap.wins}</p>
-                  <p className="text-[0.6rem] font-bold uppercase tracking-widest text-[var(--muted-text)]">Vittorie</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-text)]">Vittorie</p>
                 </div>
                 <div>
                   <p className="text-2xl font-black text-white">
                     {playerRecap.ratingDelta >= 0 ? "+" : ""}{playerRecap.ratingDelta}
                   </p>
-                  <p className="text-[0.6rem] font-bold uppercase tracking-widest text-[var(--muted-text)]">Rating</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-text)]">Rating</p>
                 </div>
               </div>
               <WrappedShareButton playerName={fullPlayer.name} recap={playerRecap} />
@@ -370,7 +370,7 @@ export default async function ProfilePage({ searchParams }: Props) {
                         <span className="text-xs font-black leading-tight" style={{ color: "#FFD700" }}>
                           {win.tournamentName}
                         </span>
-                        <span className="text-[0.65rem] text-white/40 leading-tight">
+                        <span className="text-xs text-white/40 leading-tight">
                           {MONTH_NAMES_IT[d.getMonth() + 1]} {d.getFullYear()}
                         </span>
                       </div>
@@ -390,7 +390,7 @@ export default async function ProfilePage({ searchParams }: Props) {
                         <span className="text-xs font-black leading-tight" style={{ color: meta.color }}>
                           {meta.label}
                         </span>
-                        <span className="text-[0.65rem] text-white/40 leading-tight">
+                        <span className="text-xs text-white/40 leading-tight">
                           {MONTH_NAMES_IT[award.month]} {award.year}
                         </span>
                       </div>
@@ -802,7 +802,7 @@ export default async function ProfilePage({ searchParams }: Props) {
                     <div className="flex items-center gap-2">
                       <p className="font-bold text-white text-sm truncate">{p.name}</p>
                       {!p.avatarUrl && (
-                        <span className="text-[0.6rem] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[var(--muted-text)]/20 text-[var(--muted-text)]">
+                        <span className="text-xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[var(--muted-text)]/20 text-[var(--muted-text)]">
                           no foto
                         </span>
                       )}

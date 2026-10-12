@@ -112,7 +112,7 @@ export function AvailabilityBoard({ initial, groups }: Props) {
                     >
                       {p.name}
                       {p.complementary && (
-                        <span className="text-[0.65rem] font-black text-[var(--accent)]">
+                        <span className="text-xs font-black text-[var(--accent)]">
                           ideale
                         </span>
                       )}

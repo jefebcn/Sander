@@ -96,7 +96,7 @@ export function PWAInstallBanner() {
           <p className="flex-1 min-w-0 text-xs font-semibold text-white/80">
             Installa l&apos;app SANDER
           </p>
-          <span className="shrink-0 rounded-lg px-2.5 py-1 text-[0.65rem] font-black text-black" style={{ background: "var(--accent)" }}>
+          <span className="shrink-0 rounded-lg px-2.5 py-1 text-xs font-black text-black" style={{ background: "var(--accent)" }}>
             Installa
           </span>
           <button

@@ -6,6 +6,8 @@ import { getSessions } from "@/actions/sessions"
 import { FilterableSessionList } from "@/components/session/FilterableSessionList"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { SessionsInfoSheet } from "@/components/session/SessionsInfoSheet"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { SectionTabs, PLAY_TABS } from "@/components/layout/SectionTabs"
 
 export default async function SessionsPage() {
   const currentPlayer = await getCurrentPlayer()
@@ -14,11 +16,8 @@ export default async function SessionsPage() {
   return (
     <div className="flex flex-col pb-6">
 
-      {/* ── Page title ────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 pt-5 pb-3">
-        <h1 className="text-2xl font-black text-white">Partite</h1>
-        <SessionsInfoSheet />
-      </div>
+      <PageHeader eyebrow="Gioca" title="Partite" tone="play" action={<SessionsInfoSheet />} />
+      <SectionTabs items={PLAY_TABS} active="partite" className="pb-4" />
 
       {/* ── CTA ───────────────────────────────────────────────── */}
       {currentPlayer ? (

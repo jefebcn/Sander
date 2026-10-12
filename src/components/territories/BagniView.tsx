@@ -8,7 +8,7 @@ import type { Territory } from "@/actions/territories"
 
 function KingAvatar({ name, url }: { name: string; url: string | null }) {
   return (
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-1)] text-[0.65rem] font-black text-[var(--muted-text)]">
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-1)] text-xs font-black text-[var(--muted-text)]">
       {url ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={url} alt={name} className="h-full w-full object-cover" />
@@ -41,7 +41,7 @@ function TerritoryRow({ t, bagno, muted }: { t?: Territory; bagno?: number; mute
         {num !== null ? (
           <>
             <span className="text-base font-black leading-none text-white">{num}</span>
-            <span className="text-[0.5rem] font-bold uppercase tracking-wider text-[var(--muted-text)]">
+            <span className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
               bagno
             </span>
           </>
@@ -67,7 +67,7 @@ function TerritoryRow({ t, bagno, muted }: { t?: Territory; bagno?: number; mute
       {t?.king && (
         <div className="shrink-0 text-right">
           <p className="text-lg font-black text-[var(--gold)]">{t.king.wins}</p>
-          <p className="text-[0.55rem] font-bold uppercase tracking-widest text-[var(--muted-text)]">
+          <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-text)]">
             vittorie
           </p>
         </div>
@@ -153,7 +153,7 @@ export function BagniView({ territories }: { territories: Territory[] }) {
       {/* Free-text courts — de-emphasised, not real classified bagni */}
       {freeCampi.length > 0 && (
         <section className="px-4">
-          <p className="mb-2 text-[0.65rem] font-bold uppercase tracking-wider text-[var(--muted-text)]/70">
+          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]/70">
             Altri campi
           </p>
           <div className="space-y-1.5">

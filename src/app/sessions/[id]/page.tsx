@@ -77,13 +77,13 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
       : null
 
   const dateObj = new Date(session.date)
-  const dateStr = dateObj.toLocaleDateString("it-IT", {
+  const dateStr = dateObj.toLocaleDateString("it-IT", { timeZone: "Europe/Rome",
     weekday: "long",
     day: "2-digit",
     month: "long",
     year: "numeric",
   })
-  const timeStr = dateObj.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })
+  const timeStr = dateObj.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" })
 
   const costPerPlayer =
     session.courtCost && session.participants.length > 0

@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
 
   const name = t?.name ?? "Torneo SANDER"
   const dateLabel = t
-    ? new Date(t.date).toLocaleDateString("it-IT", { day: "2-digit", month: "long", year: "numeric" })
+    ? new Date(t.date).toLocaleDateString("it-IT", { timeZone: "Europe/Rome", day: "2-digit", month: "long", year: "numeric" })
     : ""
   const location = t?.location ?? ""
   const typeLabel = t ? (TYPE_LABEL[t.type] ?? t.type) : ""

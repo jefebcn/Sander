@@ -2,10 +2,11 @@ export const dynamic = "force-dynamic"
 
 import type { Metadata } from "next"
 import Link from "next/link"
-import { Crown } from "lucide-react"
 import { getLocationLeaderboards, getCityLeaderboards } from "@/actions/territories"
 import { BagniView } from "@/components/territories/BagniView"
 import { CityBoards } from "@/components/territories/CityBoards"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { SectionTabs, RANK_TABS } from "@/components/layout/SectionTabs"
 
 export const metadata: Metadata = {
   title: "Re dei Bagni — SANDER Beach Volley",
@@ -25,16 +26,13 @@ export default async function TerritoriesPage() {
 
   return (
     <div className="pb-10">
-      {/* Header */}
-      <div className="px-4 pt-6 pb-4">
-        <div className="flex items-center gap-2">
-          <Crown className="h-6 w-6 text-[var(--accent)]" />
-          <h1 className="text-3xl font-black text-white">Re dei Bagni</h1>
-        </div>
-        <p className="mt-1 text-sm text-[var(--muted-text)]">
-          Chi vince di più su un bagno lo conquista. Difendi il tuo spot 👑
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Classifiche"
+        tone="sand"
+        title="Re dei Bagni"
+        subtitle="Chi vince di più su un bagno lo conquista"
+      />
+      <SectionTabs items={RANK_TABS} active="bagni" tone="compete" className="pb-4" />
 
       <CityBoards boards={cityBoards} />
 

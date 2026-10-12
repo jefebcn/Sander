@@ -182,7 +182,7 @@ export function PlayerStats({ player, communityAvg, tournamentsByType }: PlayerS
             <div key={label} className="flex flex-col items-center gap-1 text-center">
               <Icon className="h-4 w-4" style={{ color }} />
               <span className="text-lg font-black text-white">{value}</span>
-              <span className="text-[0.55rem] text-[var(--muted-text)] leading-tight">{label}</span>
+              <span className="text-xs text-[var(--muted-text)] leading-tight">{label}</span>
             </div>
           ))}
         </div>
@@ -199,11 +199,11 @@ export function PlayerStats({ player, communityAvg, tournamentsByType }: PlayerS
         <div className="flex items-center justify-center gap-4 mt-1">
           <div className="flex items-center gap-1.5">
             <div className="h-2 w-2 rounded-full bg-[var(--accent)]" />
-            <span className="text-[0.6rem] text-[var(--muted-text)]">Tu</span>
+            <span className="text-xs text-[var(--muted-text)]">Tu</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="h-2 w-2 rounded-full bg-white/20" />
-            <span className="text-[0.6rem] text-[var(--muted-text)]">Media community</span>
+            <span className="text-xs text-[var(--muted-text)]">Media community</span>
           </div>
         </div>
       </div>

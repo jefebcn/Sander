@@ -395,7 +395,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
                 <span className="text-base font-black">{r.label}</span>
                 <span
                   className={cn(
-                    "text-[0.7rem]",
+                    "text-xs",
                     role === r.value ? "text-black/70" : "text-[var(--muted-text)]",
                   )}
                 >

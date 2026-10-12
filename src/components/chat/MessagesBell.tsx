@@ -12,7 +12,7 @@ export function MessagesBell({ unreadCount }: { unreadCount: number }) {
       <MessageCircle className="h-5 w-5 text-white" />
       {unreadCount > 0 && (
         <span
-          className="absolute -right-0.5 -top-0.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[0.65rem] font-black text-black"
+          className="absolute -right-0.5 -top-0.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1 text-xs font-black text-black"
           style={{ background: "var(--accent)" }}
         >
           {unreadCount > 9 ? "9+" : unreadCount}

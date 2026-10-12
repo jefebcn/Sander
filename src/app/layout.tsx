@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next"
-import Image from "next/image"
 import { Analytics } from "@vercel/analytics/next"
-import { Barlow } from "next/font/google"
+import { Barlow, Barlow_Condensed } from "next/font/google"
 import "./globals.css"
 import { Providers } from "@/lib/providers"
 import { MobileNav } from "@/components/layout/MobileNav"
@@ -16,6 +15,15 @@ const barlow = Barlow({
   variable: "--font-sans",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800", "900"],
+  display: "swap",
+})
+
+// Display face for titles and big numbers — the same condensed uppercase voice
+// as the social posts, so app and Instagram feel like one brand.
+const barlowCondensed = Barlow_Condensed({
+  variable: "--font-condensed",
+  subsets: ["latin"],
+  weight: ["600", "700", "800", "900"],
   display: "swap",
 })
 
@@ -69,12 +77,13 @@ export const metadata: Metadata = {
   },
 }
 
+// Pinch-zoom stays enabled: blocking it locks out anyone who needs larger text
+// (WCAG 1.4.4). Inputs are ≥16px, so iOS doesn't auto-zoom on focus anyway.
 export const viewport: Viewport = {
-  themeColor: "#0d1a0d",
+  themeColor: "#07090a",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  viewportFit: "cover",
 }
 
 export default function RootLayout({
@@ -83,19 +92,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="it" className={`${barlow.variable} h-full`}>
+    <html lang="it" className={`${barlow.variable} ${barlowCondensed.variable} h-full`}>
       <body className="min-h-dvh flex flex-col bg-[var(--background)] text-[var(--foreground)]">
-        {/* SANDER logo watermark — fixed behind all content */}
-        <Image
-          src="/sander-logo.png"
-          alt=""
-          aria-hidden="true"
-          width={400}
-          height={400}
-          loading="lazy"
-          className="pointer-events-none fixed left-1/2 top-1/2 z-0 w-[75vw] max-w-xs -translate-x-1/2 -translate-y-1/2 select-none opacity-[0.05]"
-          style={{ filter: "blur(2px)" }}
-        />
         <Providers>
           <OnboardingGate />
           <SwRegistrar />

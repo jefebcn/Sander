@@ -182,7 +182,7 @@ export function AddPlayerSheet({
               {filteredUnlinked.length > 0 && (
                 <>
                   {filteredPlayers.length > 0 && (
-                    <p className="px-1 pt-3 pb-1 text-[0.65rem] font-bold uppercase tracking-wider text-[var(--muted-text)]">
+                    <p className="px-1 pt-3 pb-1 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
                       Profilo da completare
                     </p>
                   )}
@@ -201,7 +201,7 @@ export function AddPlayerSheet({
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-[var(--muted-text)]">{displayName}</p>
-                          <p className="text-[0.65rem] text-[var(--accent)]/70">Profilo incompleto</p>
+                          <p className="text-xs text-[var(--accent)]/70">Profilo incompleto</p>
                         </div>
                         <UserPlus className="h-4 w-4 shrink-0 text-[var(--accent)]/60" aria-hidden="true" />
                       </button>

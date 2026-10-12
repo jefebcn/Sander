@@ -9,7 +9,7 @@ import { getMyUpcomingSessions, sendMessage } from "@/actions/messages"
 type Sess = Awaited<ReturnType<typeof getMyUpcomingSessions>>[number]
 
 function dateLabel(iso: string): string {
-  return new Date(iso).toLocaleString("it-IT", {
+  return new Date(iso).toLocaleString("it-IT", { timeZone: "Europe/Rome",
     weekday: "short",
     day: "2-digit",
     month: "short",

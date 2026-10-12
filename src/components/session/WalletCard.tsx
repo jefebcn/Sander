@@ -55,7 +55,7 @@ export function WalletCard({ credits, playerName }: WalletCardProps) {
           {/* What are SC */}
           <div className="rounded-xl bg-[var(--surface-3)] px-4 py-3 flex flex-col gap-1">
             <p className="text-xs font-bold text-white">Cosa sono i SanderCredits?</p>
-            <p className="text-[0.65rem] text-[var(--muted-text)] leading-snug">
+            <p className="text-xs text-[var(--muted-text)] leading-snug">
               I SC sono la valuta interna di Sander. Puoi usarli per partecipare alle sessioni
               a pagamento create da altri giocatori. Ricarichi mandando denaro all&apos;admin,
               che ti accredita i crediti manualmente.
@@ -111,7 +111,7 @@ export function WalletCard({ credits, playerName }: WalletCardProps) {
             <p className="text-sm font-black text-[var(--accent)]">SC - {playerName}</p>
           </div>
 
-          <p className="text-[0.65rem] text-[var(--muted-text)] leading-snug text-center">
+          <p className="text-xs text-[var(--muted-text)] leading-snug text-center">
             Dopo il pagamento contatta l&apos;admin per l&apos;accredito dei crediti.
           </p>
         </div>

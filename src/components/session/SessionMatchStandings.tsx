@@ -77,7 +77,7 @@ export function SessionMatchStandings({ playerNames, completedMatches }: Props) 
         ))}
       </div>
 
-      <p className="px-4 py-1.5 text-[0.6rem] text-[var(--muted-text)]">
+      <p className="px-4 py-1.5 text-xs text-[var(--muted-text)]">
         V = vittorie · S = sconfitte · punti: V=3, S=1
       </p>
     </div>
