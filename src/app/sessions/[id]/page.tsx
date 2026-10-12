@@ -19,6 +19,11 @@ import { ShareStoryButton } from "@/components/share/ShareStoryButton"
 import { playerToCardData } from "@/components/player/SanderCardFut"
 import { buildPromoCode, cleanInviteCode, INVITEE_SC } from "@/lib/referral"
 import { Pill } from "@/components/ui/Pill"
+import { MatchRecap, type MatchRecapData } from "@/components/session/MatchRecap"
+import { ratingDeltaFor } from "@/lib/matchRecap"
+import { startingRating, type StartLevel } from "@/lib/startLevel"
+import { getCityLeaderboards } from "@/actions/territories"
+import { parseCity } from "@/lib/cities"
 
 export async function generateMetadata(
   { params }: { params: Promise<{ id: string }> }
@@ -115,6 +120,34 @@ export default async function SessionPage({
 
   const waitlist = await getWaitlistInfo(session.id)
 
+  // Post-match recap for someone who played: result, rating moved, town rank.
+  let recap: MatchRecapData | null = null
+  if (session.status === "COMPLETED" && currentPlayer && isParticipant && sets.length > 0) {
+    const aWins = sets.filter((s) => s.teamAScore > s.teamBScore).length
+    const bWins = sets.filter((s) => s.teamBScore > s.teamAScore).length
+    const myTeam = session.participants.find((p) => p.player?.id === currentPlayer.id)?.team
+    if (myTeam === 0 || myTeam === 1) {
+      const [history, boards] = await Promise.all([
+        db.ratingHistory.findMany({
+          where: { playerId: currentPlayer.id },
+          select: { rating: true, sourceId: true, createdAt: true },
+        }),
+        getCityLeaderboards().catch(() => []),
+      ])
+      const baseline = currentPlayer.startLevel
+        ? startingRating(currentPlayer.startLevel as StartLevel)
+        : 1500
+      const cityName = session.city ?? parseCity(session.location)
+      const board = cityName ? boards.find((b) => b.city === cityName) : undefined
+      const myIndex = board ? board.standings.findIndex((p) => p.id === currentPlayer.id) : -1
+      recap = {
+        won: (myTeam === 0 && aWins > bWins) || (myTeam === 1 && bWins > aWins),
+        delta: ratingDeltaFor(history, session.id, baseline),
+        city: board && myIndex >= 0 ? { name: board.city, rank: myIndex + 1, total: board.standings.length } : null,
+      }
+    }
+  }
+
   return (
     <div className="pb-6">
       <PageHeader
@@ -125,6 +158,8 @@ export default async function SessionPage({
       />
 
       <div className="space-y-4 px-4">
+        {recap && <MatchRecap data={recap} />}
+
         {/* Details card */}
         <div className="tone-play space-y-4 rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-5 shadow-[var(--shadow-card)]">
           <div className="flex items-end justify-between gap-4">
@@ -193,25 +228,32 @@ export default async function SessionPage({
               (myTeam === 1 && teamBWins > teamAWins)
             return (
               <>
-                <div className="mt-1 rounded-xl bg-[var(--surface-2)] p-3">
+                <div className="mt-1 rounded-xl bg-black/25 p-3">
                   <div className="mb-2 flex items-center justify-between">
-                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Risultato</p>
-                    <p className="text-xs font-bold text-[var(--accent)]">{teamAWins} — {teamBWins}</p>
+                    <p className="eyebrow text-[var(--muted-text)]">Risultato</p>
+                    <p className="num text-lg text-[var(--accent)]">{teamAWins} — {teamBWins}</p>
                   </div>
-                  <div className="grid grid-cols-[4rem_repeat(auto-fill,_2rem)] gap-1 items-center">
-                    <p className="text-xs font-bold text-[var(--accent)]">Team A</p>
-                    {sets.map((s) => (
-                      <p key={s.id} className={`text-center text-sm font-bold ${s.teamAScore > s.teamBScore ? "text-white" : "text-[var(--muted-text)]"}`}>
-                        {s.teamAScore}
-                      </p>
-                    ))}
-                    <p className="text-xs font-bold text-[var(--muted-text)]">Team B</p>
-                    {sets.map((s) => (
-                      <p key={s.id} className={`text-center text-sm font-bold ${s.teamBScore > s.teamAScore ? "text-white" : "text-[var(--muted-text)]"}`}>
-                        {s.teamBScore}
-                      </p>
-                    ))}
-                  </div>
+                  {/* One row per team, one column per set: reads like a scoreboard. */}
+                  <table className="w-full text-base">
+                    <tbody>
+                      {([0, 1] as const).map((team) => (
+                        <tr key={team}>
+                          <th scope="row" className={`py-1 pr-3 text-left text-sm font-bold ${team === myTeam ? "text-[var(--accent)]" : "text-[var(--muted-text)]"}`}>
+                            {team === 0 ? "Team A" : "Team B"}
+                          </th>
+                          {sets.map((s) => {
+                            const mine = team === 0 ? s.teamAScore : s.teamBScore
+                            const theirs = team === 0 ? s.teamBScore : s.teamAScore
+                            return (
+                              <td key={s.id} className={`num w-10 py-1 text-center text-lg ${mine > theirs ? "text-white" : "text-[var(--muted-text)]"}`}>
+                                {mine}
+                              </td>
+                            )
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
                 {/* Viral moment: winner can share the victory as a Story */}
                 {didWin && currentPlayer && (

@@ -66,8 +66,8 @@ export function RatingChart({ history, currentRating }: RatingChartProps) {
         </p>
         <p className="text-lg font-black text-[var(--accent)]">
           {Math.round(currentRating)}
-          <span className="text-[0.6rem] font-bold uppercase tracking-widest text-[var(--muted-text)] ml-1">
-            GLK
+          <span className="text-xs font-bold uppercase tracking-widest text-[var(--muted-text)] ml-1">
+            punti
           </span>
         </p>
       </div>

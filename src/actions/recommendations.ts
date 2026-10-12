@@ -24,6 +24,7 @@ export interface SuggestedSession {
   maxPlayers: number
   format: string
   familiarity: "known" | "new"  // "known" = player has been to this location
+  city: string | null
   /** Who's already in, for the seat circles. */
   players: { name: string; avatarUrl: string | null }[]
 }
@@ -102,6 +103,7 @@ export async function getPersonalizedRecommendations(
         id: true,
         title: true,
         location: true,
+        city: true,
         date: true,
         format: true,
         maxPlayers: true,
@@ -125,7 +127,7 @@ export async function getPersonalizedRecommendations(
       const familiarity: "known" | "new" = knownLocations.has(s.location.toLowerCase())
         ? "known"
         : "new"
-      return { id: s.id, title: s.title, location: s.location, date: s.date,
+      return { id: s.id, title: s.title, location: s.location, city: s.city, date: s.date,
                spotsLeft, maxPlayers: s.maxPlayers, format: s.format, familiarity,
                players: s.participants.map((p) => ({ name: p.player?.name ?? p.guestName ?? "?", avatarUrl: p.player?.avatarUrl ?? null })) }
     })

@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { IdCard, Volleyball, Crown, Sparkles, ChevronRight, Download } from "lucide-react"
+import { Users, BellRing, Crown, Sparkles, ChevronRight, Download } from "lucide-react"
 import { SanderCardFut, type PlayerCardData } from "@/components/player/SanderCardFut"
 import { CountUp } from "@/components/ui/CountUp"
 import { CITY_NAMES } from "@/lib/cities"
@@ -13,10 +13,13 @@ const DEMO_CARD: PlayerCardData = {
   stats: { att: 78, dif: 84, ric: 81, mur: 62, alz: 74, sta: 80 },
 }
 
-const STEPS = [
-  { icon: IdCard, title: "Crea la tua carta", text: "Stile FUT: il tuo rating sale a ogni vittoria." },
-  { icon: Volleyball, title: "Trova chi gioca", text: "Partite aperte al tuo livello, nel tuo bagno." },
-  { icon: Crown, title: "Conquista la Riviera", text: "Classifiche per bagno e per comune. Diventa Re." },
+/**
+ * The real competitor is the beach's WhatsApp group, so say what it can't do.
+ */
+const WHY = [
+  { icon: Users, title: "Vedi chi c'è e quanti posti mancano", text: "Niente più \"chi viene?\" scritto 40 volte nel gruppo." },
+  { icon: BellRing, title: "Se qualcuno dà buca, il posto si riempie", text: "Entra il primo in lista d'attesa e gli arriva la notifica." },
+  { icon: Crown, title: "Ogni partita conta", text: "Il tuo rating sale, e c'è una classifica per ogni bagno e ogni comune." },
 ]
 
 /** Landing for visitors: one promise, one proof, one button. */
@@ -40,8 +43,9 @@ export function GuestLanding({
             <br />
             <span className="text-[var(--accent)]">Riviera.</span>
           </h1>
-          <p className="mt-4 max-w-[20rem] text-lg leading-snug text-white/75">
-            Trova partite, sfida chi è al tuo livello e prenditi il tuo bagno.
+          <p className="mt-4 max-w-[21rem] text-lg leading-snug text-white/80">
+            Il gruppo WhatsApp del beach volley, ma che si organizza da solo: trovi la partita, ti unisci in un
+            tocco, e ogni vittoria ti fa salire in classifica.
           </p>
         </div>
       </section>
@@ -98,25 +102,31 @@ export function GuestLanding({
         ))}
       </div>
 
-      {/* How it works */}
+      {/* Why not just the WhatsApp group? */}
       <section className="flex flex-col gap-3">
-        <h2 className="font-display text-2xl font-extrabold uppercase text-white">Come funziona</h2>
-        <ol className="flex flex-col gap-2">
-          {STEPS.map((s, i) => (
+        <div>
+          <p className="eyebrow text-[var(--accent)]">Perché SANDER</p>
+          <h2 className="font-display text-2xl font-extrabold uppercase leading-none text-white">
+            Più del solito gruppo WhatsApp
+          </h2>
+        </div>
+        <ul className="flex flex-col gap-2">
+          {WHY.map((w, i) => (
             <li
-              key={s.title}
-              className="rise-in flex items-center gap-4 rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-4"
+              key={w.title}
+              className="rise-in flex items-start gap-4 rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-4"
               style={{ "--i": i + 4 } as React.CSSProperties}
             >
-              <span className="num w-6 text-2xl text-[var(--accent)]">{i + 1}</span>
-              <s.icon className="h-6 w-6 shrink-0 text-white" aria-hidden="true" />
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--accent-soft)]">
+                <w.icon className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />
+              </span>
               <span className="min-w-0">
-                <span className="block text-base font-extrabold text-white">{s.title}</span>
-                <span className="block text-sm text-[var(--muted-text)]">{s.text}</span>
+                <span className="block text-base font-extrabold leading-snug text-white">{w.title}</span>
+                <span className="block text-sm text-[var(--muted-text)]">{w.text}</span>
               </span>
             </li>
           ))}
-        </ol>
+        </ul>
       </section>
 
       {tournament && <TournamentSpotlight t={tournament} />}

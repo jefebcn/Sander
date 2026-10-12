@@ -145,6 +145,12 @@ model Player {
   // In-app currency
   sanderCredits Int @default(0)
 
+  /// Comune where the player usually plays (one of lib/cities CITY_NAMES).
+  /// Personalises the home: matches, leaderboard and "your town" card.
+  homeCity   String?
+  /// Level declared at sign-up (lib/startLevel), used to seed the rating.
+  startLevel String?
+
   // Glicko-2 skill rating (initial values per algorithm spec)
   glickoRating     Float @default(1500)
   glickoRD         Float @default(350)

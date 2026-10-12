@@ -11,8 +11,12 @@ export function CookieBanner() {
   const pathname = usePathname()
 
   useEffect(() => {
-    // Never show on auth pages
-    if (pathname.startsWith("/auth/") || pathname === "/auth") return
+    // Never on sign-up/sign-in or the profile step: it sat on top of their
+    // main button ("Conferma") at the exact moment people are signing up.
+    if (pathname.startsWith("/auth") || pathname.startsWith("/onboarding")) {
+      setVisible(false)
+      return
+    }
     if (!localStorage.getItem(STORAGE_KEY)) {
       const t = setTimeout(() => setVisible(true), 800)
       return () => clearTimeout(t)
@@ -36,10 +40,10 @@ export function CookieBanner() {
       <div
         className="flex items-center gap-3 rounded-2xl px-4 py-2.5"
         style={{
-          background: "rgba(18,21,18,0.97)",
-          border: "1px solid rgba(255,255,255,0.08)",
+          background: "color-mix(in srgb, var(--surface-2) 96%, transparent)",
+          border: "1px solid var(--border)",
           backdropFilter: "blur(12px)",
-          boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
+          boxShadow: "var(--shadow-card)",
         }}
       >
         <span className="text-base leading-none" aria-hidden="true">🍪</span>
@@ -48,7 +52,7 @@ export function CookieBanner() {
         </p>
         <button
           onClick={accept}
-          className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-black text-black transition-opacity active:opacity-80"
+          className="min-h-[2.75rem] shrink-0 rounded-xl px-4 text-sm font-black text-black transition-opacity active:opacity-80"
           style={{ background: "var(--accent)" }}
         >
           OK
@@ -56,9 +60,9 @@ export function CookieBanner() {
         <button
           onClick={reject}
           aria-label="Rifiuta"
-          className="shrink-0 text-[var(--muted-text)] hover:text-white transition-colors"
+          className="flex h-11 w-11 shrink-0 items-center justify-center text-[var(--muted-text)] hover:text-white transition-colors"
         >
-          <X className="h-3.5 w-3.5" />
+          <X className="h-4 w-4" />
         </button>
       </div>
     </div>
