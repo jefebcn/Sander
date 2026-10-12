@@ -15,6 +15,7 @@ import { getPlayerRecap } from "@/actions/recap"
 import { SignOutButton } from "@/components/auth/SignOutButton"
 import { InviteTab } from "@/components/profile/InviteTab"
 import { PageHeader } from "@/components/layout/PageHeader"
+import { NudgeToggle } from "@/components/profile/NudgeToggle"
 import { buildPromoCode } from "@/lib/referral"
 import { getReferralLeaderboard } from "@/actions/invite"
 import { APP_VERSION_DISPLAY } from "@/lib/appVersion"
@@ -606,6 +607,9 @@ export default async function ProfilePage({ searchParams }: Props) {
       {/* ══ App tab ═══════════════════════════════════════════ */}
       {activeTab === "app" && (
         <div className="px-4 space-y-1 pt-2">
+          <div className="pb-3">
+            <NudgeToggle initialOptOut={fullPlayer.nudgesOptOut} />
+          </div>
           {[
             { label: "Chiedi aiuto o segnala un problema", href: "mailto:support@sander.app" },
             { label: "Termini del servizio", href: "/terms" },

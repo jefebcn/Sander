@@ -150,6 +150,8 @@ model Player {
   homeCity   String?
   /// Level declared at sign-up (lib/startLevel), used to seed the rating.
   startLevel String?
+  /// Turned off "manca un giocatore" pushes from the profile.
+  nudgesOptOut Boolean @default(false)
 
   // Glicko-2 skill rating (initial values per algorithm spec)
   glickoRating     Float @default(1500)
@@ -183,6 +185,7 @@ model Player {
   invitedUsers         User[]             @relation("PlayerInvites")
   availability         PlayerAvailability[]
   sessionWaitlist      SessionWaitlist[]
+  sessionNudges        SessionNudge[]
   reactions            Reaction[]
   chatParticipants     ChatParticipant[]
   sentMessages         ChatMessage[]
@@ -390,6 +393,7 @@ model Session {
   sets           SessionSet[]
   sessionMatches SessionMatch[]
   waitlist       SessionWaitlist[]
+  nudges         SessionNudge[]
   chatThread     ChatThread?
 
   @@index([status, date])
@@ -669,6 +673,22 @@ enum AvailabilitySlot {
   MORNING
   AFTERNOON
   EVENING
+}
+
+/// "Manca un giocatore" pushes already sent. Unique per session+player so
+/// nobody is pinged twice about the same match; also the daily cooldown.
+model SessionNudge {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  sessionId String
+  playerId  String
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  player  Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, playerId])
+  @@index([playerId, createdAt])
+  @@map("session_nudges")
 }
 
 /// Queue on a full session. Someone arriving from a shared link on a full match

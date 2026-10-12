@@ -29,3 +29,5 @@ export const SaveProfileSchema = z.object({
 })
 
 export type SaveProfileInput = z.infer<typeof SaveProfileSchema>
+
+export const NudgePrefSchema = z.object({ optOut: z.boolean() }).strict()
