@@ -89,7 +89,7 @@ export function MobileNav() {
           overlay opened inside a page always covers the bar. On wide screens
           the same bar is shown, centred under the phone-width app column. */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-[560px] border-t border-[var(--border)] bg-[var(--surface-1)]/92 backdrop-blur-xl md:rounded-t-2xl md:border-x"
+        className="fixed inset-x-0 bottom-0 z-30 mx-auto border-t border-[var(--border)] bg-[var(--surface-1)]/92 backdrop-blur-xl md:max-w-[560px] md:rounded-t-2xl md:border-x"
         aria-label="Navigazione principale"
       >
         <div

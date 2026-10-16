@@ -114,7 +114,7 @@ export default function RootLayout({
           </main>
           <MobileNav />
           {/* Banners stacked just above the navbar — client-only, lazy loaded */}
-          <div className="fixed bottom-[4.5rem] left-0 right-0 z-30 mx-auto flex max-w-[560px] flex-col gap-2 pointer-events-none [&>*]:pointer-events-auto">
+          <div className="fixed bottom-[4.5rem] left-0 right-0 z-30 mx-auto flex flex-col md:max-w-[560px] gap-2 pointer-events-none [&>*]:pointer-events-auto">
             <ClientOnlyBanners />
           </div>
           <Toaster />
