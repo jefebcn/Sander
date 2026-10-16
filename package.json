@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "prisma db push && prisma generate && next build",
     "start": "next start",
+    "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
     "db:generate": "prisma generate",
@@ -71,6 +72,8 @@
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.2",
     "playwright": "^1.60.0",
     "tailwindcss": "^4",
     "typescript": "^5"
