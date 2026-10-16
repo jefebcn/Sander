@@ -24,14 +24,14 @@ export function UserMenu({ session, playerName }: UserMenuProps) {
     <div className="flex items-center gap-2">
       <Link
         href="/players"
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-xs font-black text-black"
+        className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--accent)] text-sm font-black text-black"
         aria-label="Profilo giocatore"
       >
         {initials}
       </Link>
       <button
         onClick={() => signOut()}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-2)] text-[var(--muted-text)] transition-colors hover:bg-[var(--surface-3)]"
+        className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-2)] text-[var(--muted-text)] transition-colors hover:bg-[var(--surface-3)]"
         aria-label="Esci"
       >
         <LogOut className="h-4 w-4" aria-hidden="true" />

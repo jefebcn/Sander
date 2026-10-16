@@ -66,28 +66,36 @@ export function ResetPasswordForm({ token }: Props) {
       </p>
 
       <div className="relative">
+        <label htmlFor="reset-password" className="sr-only">Nuova password (min. 8 caratteri)</label>
         <input
+          id="reset-password"
           type={showPwd ? "text" : "password"}
           required
+          autoComplete="new-password"
           minLength={8}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Nuova password (min. 8 caratteri)"
-          className="w-full rounded-2xl bg-[var(--surface-2)] px-4 py-3.5 pr-12 text-base text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+          className="w-full rounded-2xl bg-[var(--surface-2)] px-4 py-3.5 pr-14 text-base text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
         />
         <button
           type="button"
           onClick={() => setShowPwd((v) => !v)}
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--muted-text)]"
-          tabIndex={-1}
+          aria-label={showPwd ? "Nascondi password" : "Mostra password"}
+          aria-pressed={showPwd}
+          aria-controls="reset-password"
+          className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-xl text-[var(--muted-text)] active:text-white"
         >
-          {showPwd ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          {showPwd ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
         </button>
       </div>
 
+      <label htmlFor="reset-confirm" className="sr-only">Conferma nuova password</label>
       <input
+        id="reset-confirm"
         type={showPwd ? "text" : "password"}
         required
+        autoComplete="new-password"
         value={confirm}
         onChange={(e) => setConfirm(e.target.value)}
         placeholder="Conferma nuova password"
@@ -114,7 +122,7 @@ export function ResetPasswordForm({ token }: Props) {
 
       <Link
         href="/auth/signin"
-        className="flex items-center justify-center text-sm text-[var(--muted-text)]"
+        className="flex min-h-[2.75rem] items-center justify-center text-base text-[var(--muted-text)]"
       >
         Torna al login
       </Link>

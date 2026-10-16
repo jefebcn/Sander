@@ -20,7 +20,7 @@ export default function ForgotPasswordPage() {
         <Link
           href="/auth/signin"
           aria-label="Indietro"
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--muted-text)] transition-colors active:bg-[var(--surface-3)]"
+          className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--muted-text)] transition-colors active:bg-[var(--surface-3)]"
         >
           <ChevronLeft className="h-5 w-5" aria-hidden="true" />
         </Link>

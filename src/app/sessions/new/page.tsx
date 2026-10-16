@@ -1,6 +1,8 @@
 export const dynamic = "force-dynamic"
 
+import Link from "next/link"
 import { redirect } from "next/navigation"
+import { Sparkles } from "lucide-react"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { CreateSessionForm } from "@/components/session/CreateSessionForm"
@@ -23,9 +25,25 @@ export default async function NewSessionPage({
     return (
       <div className="px-4 pt-8">
         <PageHeader title="Nuova Partita" backHref="/sessions" />
-        <div className="space-y-4 rounded-2xl bg-[var(--surface-1)] p-6 text-center">
-          <p className="text-[var(--muted-text)]">Effettua l&apos;accesso per creare una partita.</p>
-          <SignInButton callbackUrl="/sessions/new" />
+        {/* Same choices as the landing: email sign-up/login, plus Google. */}
+        <div className="space-y-3 rounded-2xl bg-[var(--surface-1)] p-6 text-center">
+          <p className="text-base text-[var(--muted-text)]">Entra in SANDER per creare una partita.</p>
+          <Link
+            href={`/auth/signin?mode=register&callbackUrl=${encodeURIComponent("/sessions/new")}`}
+            className="flex min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] text-base font-bold text-black"
+          >
+            <Sparkles className="h-5 w-5" aria-hidden="true" /> Crea un account gratis
+          </Link>
+          <Link
+            href={`/auth/signin?callbackUrl=${encodeURIComponent("/sessions/new")}`}
+            className="flex min-h-[3.5rem] items-center justify-center rounded-2xl bg-[var(--surface-2)] text-base font-bold text-white"
+          >
+            Ho già un account
+          </Link>
+          <SignInButton
+            callbackUrl="/sessions/new"
+            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] text-base font-semibold text-white"
+          />
         </div>
       </div>
     )

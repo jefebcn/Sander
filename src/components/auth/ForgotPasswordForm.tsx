@@ -57,9 +57,12 @@ export function ForgotPasswordForm() {
         Inserisci la tua email e ti invieremo un link per reimpostare la password.
       </p>
 
+      <label htmlFor="forgot-email" className="sr-only">Email</label>
       <input
+        id="forgot-email"
         type="email"
         required
+        autoComplete="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="La tua email"
@@ -67,7 +70,7 @@ export function ForgotPasswordForm() {
       />
 
       {error && (
-        <p className="rounded-xl bg-[var(--danger)]/15 px-4 py-2.5 text-sm text-[var(--danger)]">
+        <p role="alert" className="rounded-xl bg-[var(--danger)]/15 px-4 py-2.5 text-sm text-[var(--danger)]">
           {error}
         </p>
       )}
@@ -86,9 +89,9 @@ export function ForgotPasswordForm() {
 
       <Link
         href="/auth/signin"
-        className="flex items-center justify-center gap-1.5 text-sm text-[var(--muted-text)]"
+        className="flex min-h-[2.75rem] items-center justify-center gap-1.5 text-base text-[var(--muted-text)]"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         Torna al login
       </Link>
     </form>
