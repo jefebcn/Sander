@@ -4,7 +4,6 @@ import {
   joinWindowOpen,
   completionError,
   countsForProgress,
-  visibleInPublicList,
   isStale,
 } from "./sessionRules"
 
@@ -64,11 +63,7 @@ describe("countsForProgress", () => {
   })
 })
 
-describe("visibility and staleness", () => {
-  it("keeps recent past matches visible for 3 hours", () => {
-    expect(visibleInPublicList(min(-120), now)).toBe(true)
-    expect(visibleInPublicList(min(-240), now)).toBe(false)
-  })
+describe("staleness", () => {
   it("marks matches older than a week as stale", () => {
     expect(isStale(new Date(now.getTime() - 8 * 86400_000), now)).toBe(true)
     expect(isStale(new Date(now.getTime() - 6 * 86400_000), now)).toBe(false)

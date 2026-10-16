@@ -14,8 +14,6 @@ export const CREATE_PAST_TOLERANCE_MS = 5 * MIN
 export const COMPLETE_EARLY_MS = 15 * MIN
 /** Open matches this old that nobody closed are cancelled and refunded. */
 export const STALE_SESSION_MS = 7 * DAY
-/** Past matches stay in public lists this long (people closing them late). */
-export const PUBLIC_LIST_PAST_MS = 3 * HOUR
 
 export type SessionStatusLike = "OPEN" | "FULL" | "COMPLETED" | "CANCELLED"
 
@@ -60,11 +58,6 @@ export function completionError({ status, date, now = new Date(), participants, 
 /** XP and "partite giocate" only count when at least two real accounts played. */
 export function countsForProgress(participants: { playerId: string | null }[]): boolean {
   return participants.filter((p) => p.playerId).length >= 2
-}
-
-/** Should this match still appear in public lists? (participants always see theirs) */
-export function visibleInPublicList(date: Date, now: Date = new Date()): boolean {
-  return date.getTime() >= now.getTime() - PUBLIC_LIST_PAST_MS
 }
 
 export function isStale(date: Date, now: Date = new Date()): boolean {

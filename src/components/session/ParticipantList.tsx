@@ -150,7 +150,8 @@ export function ParticipantList({ session, participants, currentPlayerId, myWait
 
       {/* Teams (if any assigned) */}
       {(teamA.length > 0 || teamB.length > 0) && (
-        <div className="grid grid-cols-2 gap-3">
+        // The organiser's rows carry A/B/remove buttons: stack the teams so they fit.
+        <div className={cn("grid gap-3", isOrganizer ? "grid-cols-1" : "grid-cols-2")}>
           {[
             { label: "Team A", members: teamA },
             { label: "Team B", members: teamB },
@@ -225,7 +226,7 @@ export function ParticipantList({ session, participants, currentPlayerId, myWait
               {armed === "leave" ? "Tocca di nuovo per lasciare" : "Lascia partita"}
             </button>
           )}
-          {started && !isParticipant && session.status === "OPEN" && (
+          {started && !isParticipant && !isOrganizer && session.status === "OPEN" && (
             <div className="rounded-2xl bg-[var(--surface-2)] px-4 py-4 text-center">
               <p className="text-base font-bold text-white">Partita già iniziata</p>
               <Link
@@ -239,7 +240,7 @@ export function ParticipantList({ session, participants, currentPlayerId, myWait
           )}
           {/* Nothing was rendered here before: someone arriving on a full match
               from a shared link saw no button and no explanation at all. */}
-          {!isParticipant && !canJoin && !started && (
+          {!isParticipant && !isOrganizer && !canJoin && !started && (
             <div className="rounded-2xl bg-[var(--surface-2)] px-4 py-4 text-center">
               <p className="text-base font-bold text-white">Posti esauriti</p>
               <p className="mt-1 text-sm text-[var(--muted-text)]">
@@ -339,7 +340,7 @@ function PlayerRow({
   const name = isGuest ? participant.guestName : participant.player!.name
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex min-w-0 items-center gap-2">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-3)] text-xs font-black">
         {isGuest ? (
           <User className="h-4 w-4 text-[var(--muted-text)]" aria-hidden="true" />
@@ -355,7 +356,7 @@ function PlayerRow({
           )}
         </p>
         {!isGuest && (
-          <p className="text-xs text-[var(--muted-text)]">Lv.{participant.player!.level}</p>
+          <p className="text-xs text-[var(--muted-text)]">Liv. {participant.player!.level}</p>
         )}
       </div>
       {isOrganizer && (

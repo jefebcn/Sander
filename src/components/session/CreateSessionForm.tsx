@@ -52,8 +52,9 @@ function defaultStartIso() {
 
 function formatDateLabel(iso: string) {
   const d = new Date(iso)
-  const today = new Date()
-  const isToday = d.toDateString() === today.toDateString()
+  // "Today" in Riviera time, whatever zone the phone is set to.
+  const romeDay = (x: Date) => x.toLocaleDateString("en-CA", { timeZone: "Europe/Rome" })
+  const isToday = romeDay(d) === romeDay(new Date())
   const time = d.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" })
   if (isToday) return `Oggi, ${time}`
   return `${d.toLocaleDateString("it-IT", { timeZone: "Europe/Rome", day: "2-digit", month: "short" })}, ${time}`

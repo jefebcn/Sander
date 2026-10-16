@@ -122,12 +122,14 @@ interface Props { searchParams: Promise<{ tab?: string; topup?: string }> }
 export default async function ProfilePage({ searchParams }: Props) {
   const { tab, topup } = await searchParams
   const validTabs = ["profilo", "partite", "organizzate", "invita", "app", "supporter", "admin"]
-  const activeTab = validTabs.includes(tab ?? "") ? (tab as string) : "profilo"
+  const requestedTab = validTabs.includes(tab ?? "") ? (tab as string) : "profilo"
 
   const [player, session] = await Promise.all([getCurrentPlayer(), getCurrentSession()])
   if (!player) redirect("/auth/signin?callbackUrl=/profile")
 
   const isAdmin = isAdminEmail(session?.user?.email)
+  // The admin tab doesn't exist for everyone else: show the profile instead of a blank page.
+  const activeTab = requestedTab === "admin" && !isAdmin ? "profilo" : requestedTab
 
   // Always fetch core player data
   const [fullPlayer, streak, monthlyAwards, tournamentWins] = await Promise.all([

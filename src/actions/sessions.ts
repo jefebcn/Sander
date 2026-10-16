@@ -20,7 +20,7 @@ import {
   completionError,
   countsForProgress,
   isActiveStatus,
-  PUBLIC_LIST_PAST_MS,
+  JOIN_GRACE_MS,
 } from "@/lib/sessionRules"
 import { rewardInvitesAfterMatch } from "@/lib/referralRedeem"
 import { refundSessionCredits } from "@/lib/sessionRefunds"
@@ -131,8 +131,8 @@ export async function getSessions(playerId?: string) {
   } as const
 
   // Matches whose time has passed stay listed only for the people in them (to
-  // close them with the score); for everyone else the list shows what's ahead.
-  const publicFrom = new Date(Date.now() - PUBLIC_LIST_PAST_MS)
+  // close them with the score); everyone else sees only what they can still join.
+  const publicFrom = new Date(Date.now() - JOIN_GRACE_MS)
   const [openSessions, completedSessions] = await Promise.all([
     db.session.findMany({
       where: {
