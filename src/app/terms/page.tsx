@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { ChevronLeft } from "lucide-react"
+import { LEGAL_EMAIL } from "@/lib/legal"
 
 export const metadata = { title: "Termini di servizio — SANDER" }
 
@@ -11,10 +12,10 @@ export default function TermsPage() {
       <header className="flex items-center gap-3 px-4 py-5">
         <Link
           href="/profile?tab=app"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--muted-text)]"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--muted-text)]"
           aria-label="Indietro"
         >
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
         </Link>
         <div>
           <h1 className="text-2xl font-black text-white">Termini di servizio</h1>
@@ -125,8 +126,8 @@ export default function TermsPage() {
         <Section title="10. Contatti">
           <p>
             Per qualsiasi domanda relativa ai presenti Termini di Servizio puoi contattarci all&apos;indirizzo:{" "}
-            <a href="mailto:legal@sander.app" className="text-[var(--accent)] underline">
-              legal@sander.app
+            <a href={`mailto:${LEGAL_EMAIL}`} className="text-[var(--accent)] underline">
+              {LEGAL_EMAIL}
             </a>
           </p>
         </Section>

@@ -16,9 +16,10 @@ export default function StatsGuidePage() {
       >
         <Link
           href="/profile"
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-2)] text-white"
+          aria-label="Indietro al profilo"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--surface-2)] text-white"
         >
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
         </Link>
         <div>
           <h1 className="text-xl font-black text-white leading-tight">Guida ai parametri</h1>
