@@ -9,7 +9,7 @@ const LEVEL_MILESTONES = [
   {
     level: 1,
     title: "Drop-In",
-    description: "First time on the sand. The journey starts here.",
+    description: "Le prime volte sulla sabbia. Il viaggio comincia qui.",
     icon: Star,
     color: "#94a3b8",
     bg: "rgba(148,163,184,0.12)",
@@ -17,7 +17,7 @@ const LEVEL_MILESTONES = [
   {
     level: 2,
     title: "Sand Digger",
-    description: "You're diving for every ball. Keep grinding.",
+    description: "Ti tuffi su ogni palla. Continua così.",
     icon: Zap,
     color: "var(--accent)",
     bg: "rgba(201,243,29,0.1)",
@@ -25,7 +25,7 @@ const LEVEL_MILESTONES = [
   {
     level: 5,
     title: "Setter",
-    description: "You read the game and set up the play. The team trusts you.",
+    description: "Leggi il gioco e costruisci l'azione. La squadra si fida di te.",
     icon: ShieldCheck,
     color: "#38bdf8",
     bg: "rgba(56,189,248,0.1)",
@@ -33,7 +33,7 @@ const LEVEL_MILESTONES = [
   {
     level: 10,
     title: "Spiker",
-    description: "Your attacks hit hard. Opponents fear the net approach.",
+    description: "I tuoi attacchi fanno male. Gli avversari temono quando sali a rete.",
     icon: Flame,
     color: "#f97316",
     bg: "rgba(249,115,22,0.1)",
@@ -41,7 +41,7 @@ const LEVEL_MILESTONES = [
   {
     level: 20,
     title: "Ace",
-    description: "Unreturnable serves. Unstoppable on the sand.",
+    description: "Battute imprendibili. Inarrestabile sulla sabbia.",
     icon: Swords,
     color: "#a855f7",
     bg: "rgba(168,85,247,0.1)",
@@ -49,7 +49,7 @@ const LEVEL_MILESTONES = [
   {
     level: 50,
     title: "Sand King",
-    description: "The court is yours. Everyone knows your name on the beach.",
+    description: "Il campo è tuo. In spiaggia tutti conoscono il tuo nome.",
     icon: Crown,
     color: "#f59e0b",
     bg: "rgba(245,158,11,0.1)",
@@ -123,7 +123,7 @@ export default async function LevelInfoPage() {
       <header className="flex items-center gap-3 px-4 py-5">
         <Link
           href="/"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--muted-text)]"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--muted-text)]"
           aria-label="Indietro"
         >
           <ChevronLeft className="h-5 w-5" />
@@ -168,6 +168,21 @@ export default async function LevelInfoPage() {
             </div>
           </div>
         )}
+
+        {/* Level is not the rating */}
+        <div className="rounded-2xl bg-[var(--surface-2)] p-4 slide-up stagger-1">
+          <p className="text-sm text-white/80 leading-relaxed">
+            Il <strong className="text-white">livello</strong> misura quanto giochi e non scende mai.
+            Quanto sei forte lo dicono i <strong className="text-[var(--accent)]">punti</strong> (es. 1378),
+            che decidono classifiche e divisione.
+          </p>
+          <Link
+            href="/players/ranking-info"
+            className="mt-1 inline-flex min-h-[2.75rem] items-center text-sm font-bold text-[var(--accent)]"
+          >
+            Come funzionano i punti
+          </Link>
+        </div>
 
         {/* Formula */}
         <div
@@ -228,7 +243,7 @@ export default async function LevelInfoPage() {
                 >
                   <Icon className="h-5 w-5" style={{ color }} />
                   <span className="text-xs font-black mt-0.5" style={{ color }}>
-                    Lv{lvl}
+                    Liv. {lvl}
                   </span>
                 </div>
                 <div className="min-w-0 flex-1">
@@ -247,7 +262,7 @@ export default async function LevelInfoPage() {
                 </div>
                 {!isReached && player && (
                   <span className="shrink-0 text-xs font-bold text-[var(--muted-text)]">
-                    Lv{lvl}
+                    Liv. {lvl}
                   </span>
                 )}
               </div>

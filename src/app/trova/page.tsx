@@ -16,7 +16,7 @@ import { SectionTabs, PLAY_TABS } from "@/components/layout/SectionTabs"
 
 export const metadata: Metadata = {
   title: "Trova giocatori al tuo livello — SANDER",
-  description: "Trova compagni ideali e avversari alla pari in base al tuo rating.",
+  description: "Trova compagni ideali e avversari alla pari in base ai tuoi punti.",
 }
 
 const ROLE_LABEL: Record<string, string> = { BLOCKER: "Muro", DEFENDER: "Difensore" }
@@ -109,7 +109,7 @@ export default async function FindPage({ searchParams }: Props) {
           <Users className="mx-auto mb-3 h-10 w-10 text-[var(--muted-text)] opacity-40" />
           <p className="font-bold text-white">Nessuno nel tuo range al momento</p>
           <p className="mt-1 text-sm text-[var(--muted-text)]">
-            Gioca qualche partita: più giochi, più il tuo rating si affina e il match migliora.
+            Gioca qualche partita: più giochi, più i tuoi punti si affinano e il match migliora.
           </p>
         </div>
       ) : (

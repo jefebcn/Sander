@@ -29,7 +29,7 @@ export function RatingChart({ history, currentRating }: RatingChartProps) {
     return (
       <div className="rounded-2xl bg-[var(--surface-2)] p-4 text-center">
         <p className="text-sm text-[var(--muted-text)]">
-          Non ci sono ancora abbastanza dati per il grafico rating.
+          Non ci sono ancora abbastanza dati per il grafico dei punti.
         </p>
       </div>
     )
@@ -76,7 +76,7 @@ export function RatingChart({ history, currentRating }: RatingChartProps) {
         viewBox={`0 0 ${W} ${H}`}
         className="w-full"
         style={{ height: "auto", maxHeight: 160 }}
-        aria-label="Grafico storico rating"
+        aria-label="Grafico storico dei punti"
       >
         {/* Grid lines */}
         {yTicks.map((tick) => (

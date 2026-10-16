@@ -6,7 +6,6 @@ import { redirect } from "next/navigation"
 import { Plus, Search, TrendingUp, Waves, Activity, Medal, ChevronRight, Trophy } from "lucide-react"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
-import { ratingToDisplayLevel } from "@/lib/tournament/glicko2"
 import { getPersonalizedRecommendations } from "@/actions/recommendations"
 import { getCityLeaderboards } from "@/actions/territories"
 import { getUnreadCount } from "@/actions/notifications"
@@ -185,7 +184,8 @@ export default async function Home() {
   const xpToNext = 100 - xpCurrent
   const totalMatches = fullPlayer.matchesWon + fullPlayer.matchesLost
   const winPct = totalMatches > 0 ? Math.round((fullPlayer.matchesWon / totalMatches) * 100) : 0
-  const rating = ratingToDisplayLevel(fullPlayer.glickoRating ?? 1500)
+  // One rating scale across the app: Glicko points (1378), as on every board.
+  const rating = Math.round(fullPlayer.glickoRating ?? 1500)
 
   const nextMatch: NextMatch | null = nextMatchRow
     ? {
@@ -252,8 +252,8 @@ export default async function Home() {
 
           {isNew ? (
             <p className="relative mt-4 rounded-[var(--radius-sm)] bg-black/25 px-3 py-2.5 text-sm text-white/85">
-              Il tuo rating parte da <strong className="text-[var(--accent)]">{rating}</strong>: sale quando vinci,
-              scende quando perdi. Gioca e scopri il tuo vero livello.
+              Parti da <strong className="text-[var(--accent)]">{rating} punti</strong>: salgono quando vinci,
+              scendono quando perdi. Gioca e scopri il tuo vero livello.
             </p>
           ) : (
           <>
@@ -270,7 +270,7 @@ export default async function Home() {
             </div>
             <div className="text-center">
               <p className="num text-3xl leading-none text-[var(--accent)]">{rating}</p>
-              <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Rating</p>
+              <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Punti</p>
             </div>
           </div>
 
@@ -280,7 +280,7 @@ export default async function Home() {
                 <div className="xp-bar-fill h-full rounded-full bg-[var(--accent)]" style={{ width: `${Math.max(3, xpCurrent)}%` }} />
               </div>
               <span className="shrink-0 text-sm font-bold text-white">
-                {xpToNext} punti al <span className="text-[var(--accent)]">liv {fullPlayer.level + 1}</span>
+                {xpToNext} XP al <span className="text-[var(--accent)]">liv. {fullPlayer.level + 1}</span>
               </span>
             </Link>
             <StatsInfoSheet />
