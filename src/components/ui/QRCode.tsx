@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useId, useState } from "react"
+import { createPortal } from "react-dom"
 import { QrCode, X } from "lucide-react"
 
 const APP_URL = "https://www.sanderbv.it"
@@ -17,6 +18,14 @@ interface QRCodeButtonProps {
 export function QRCodeButton({ path, title, label = "Mostra QR Code" }: QRCodeButtonProps & { label?: string }) {
   const [open, setOpen] = useState(false)
   const url = `${APP_URL}${path}`
+  const titleId = useId()
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false) }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [open])
 
   return (
     <>
@@ -25,36 +34,48 @@ export function QRCodeButton({ path, title, label = "Mostra QR Code" }: QRCodeBu
         onClick={() => setOpen(true)}
         className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-3)] font-bold text-white text-base transition-colors active:bg-[var(--surface-4)]"
       >
-        <QrCode className="h-5 w-5 text-[var(--accent)]" />
+        <QrCode className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />
         {label}
       </button>
 
-      {/* Full-screen overlay */}
-      {open && (
+      {/* Full-screen overlay, portalled to <body> so no ancestor (a transformed
+          card, an animated wrapper) can trap it; z-[200] covers the navbar. */}
+      {open && createPortal(
         <div
           className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black/80 px-6"
           onClick={() => setOpen(false)}
         >
           <div
-            className="relative w-full max-w-xs rounded-3xl bg-white p-6 text-center"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            className="relative w-full max-w-xs rounded-3xl bg-white p-6 pt-4 text-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              onClick={() => setOpen(false)}
-              aria-label="Chiudi"
-              className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-3)]"
-            >
-              <X className="h-4 w-4 text-white" />
-            </button>
-
-            <p className="mb-4 text-lg font-black text-black">{title}</p>
+            {/* Title and close share one row, so a long title never runs under the X. */}
+            <div className="mb-4 flex items-start gap-2">
+              <span className="w-11 shrink-0" aria-hidden="true" />
+              <p id={titleId} className="min-w-0 flex-1 pt-2 text-lg font-black leading-tight text-black">
+                {title}
+              </p>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Chiudi"
+                autoFocus
+                className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--surface-3)]"
+              >
+                <X className="h-5 w-5 text-white" aria-hidden="true" />
+              </button>
+            </div>
 
             {/* QR Code rendered via Canvas */}
             <QRCanvas url={url} />
 
             <p className="mt-3 text-sm text-gray-600 break-all">{url}</p>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   )

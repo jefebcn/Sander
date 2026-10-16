@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils"
 import { PlayerPhoto } from "@/components/player/PlayerPhoto"
+import { FlagImage } from "@/components/ui/FlagImage"
 
 /* ──────────────────────────────────────────────────────────────────────────── */
 /*  Types                                                                      */
@@ -8,6 +9,7 @@ import { PlayerPhoto } from "@/components/player/PlayerPhoto"
 export interface PlayerCardData {
   name: string
   glicko2: number
+  /** ISO 3166-1 alpha-2, or "" when unknown (no flag is shown). */
   nationalityCode: string
   role: string
   stats: {
@@ -61,17 +63,8 @@ function getFrameTemplate(glicko2: number): string {
 /* ──────────────────────────────────────────────────────────────────────────── */
 
 function FlagIcon({ code }: { code: string }) {
-  const iso = code.toLowerCase()
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={`https://flagcdn.com/w80/${iso}.png`}
-      alt={code}
-      crossOrigin="anonymous"
-      className="h-full w-full object-cover"
-      loading="eager"
-    />
-  )
+  // Hidden when the code is missing or the image fails (FlagImage handles both).
+  return <FlagImage code={code} className="h-full w-full object-cover" />
 }
 
 /* ──────────────────────────────────────────────────────────────────────────── */
@@ -305,10 +298,11 @@ const COUNTRY_ISO: Record<string, string> = {
   "Arabia Saudita":"SA","Arabia saudita":"SA",
 }
 
+/** "" when unknown: nationality is optional, so don't pretend everyone is Italian. */
 function resolveNationalityCode(raw: string | null | undefined): string {
-  if (!raw) return "IT"
+  if (!raw) return ""
   if (raw.length === 2 && raw === raw.toUpperCase()) return raw
-  return COUNTRY_ISO[raw] ?? COUNTRY_ISO[raw.charAt(0).toUpperCase() + raw.slice(1)] ?? "IT"
+  return COUNTRY_ISO[raw] ?? COUNTRY_ISO[raw.charAt(0).toUpperCase() + raw.slice(1)] ?? ""
 }
 
 export function playerToCardData(player: PrismaPlayerLike): PlayerCardData {
