@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Shield, Hand, TrendingUp } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { Player } from "@/generated/prisma/client"
+import type { PublicPlayer as Player } from "@/lib/publicPlayer"
 
 interface SanderCardMiniProps {
   player: Player
@@ -35,7 +35,7 @@ export function SanderCardMini({ player }: SanderCardMiniProps) {
         <div className="flex items-center gap-1.5">
           <p className="font-bold">{player.name}</p>
           <span className="rounded-full bg-[var(--surface-3)] px-1.5 py-0.5 text-[10px] font-black text-[var(--muted-text)]">
-            Lv.{player.level}
+            Liv. {player.level}
           </span>
         </div>
         <div className="flex items-center gap-3 text-xs text-[var(--muted-text)]">

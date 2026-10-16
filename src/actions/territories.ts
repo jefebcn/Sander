@@ -3,6 +3,8 @@
 import { db } from "@/lib/db"
 import { canonicalLocation, parseBagno } from "@/lib/bagni"
 import { parseCity } from "@/lib/cities"
+import { NOT_DELETED_PLAYER } from "@/lib/publicPlayer"
+import { orderLeaderboard, ratedGames, rankStatus } from "@/lib/rankingEligibility"
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  "Re dei Bagni" — hyper-local territory leaderboards.                       */
@@ -21,6 +23,48 @@ export interface TerritoryPlayer {
   wins: number
   matches: number
   winRate: number
+  /** Decided games on record overall (lib/rankingEligibility). */
+  games: number
+  /** Fewer than PROVISIONAL_GAMES games overall: listed after established players. */
+  provisional: boolean
+}
+
+type TallyPlayer = { id: string; name: string; avatarUrl: string | null; matchesWon: number; matchesLost: number }
+type Tally = { player: TallyPlayer; wins: number; matches: number }
+
+const PARTICIPANT_SELECT = {
+  where: { playerId: { not: null }, player: NOT_DELETED_PLAYER },
+  select: {
+    team: true,
+    player: { select: { id: true, name: true, avatarUrl: true, matchesWon: true, matchesLost: true } },
+  },
+} as const
+
+/**
+ * Most wins, then best win rate, then most matches — with the shared board
+ * rule: players still "in valutazione" (fewer than 5 games overall) come after
+ * the established ones, so one lucky evening doesn't crown a newcomer.
+ */
+function rankTallies(players: Iterable<Tally>): TerritoryPlayer[] {
+  const rows: TerritoryPlayer[] = [...players].map((t) => {
+    // Everyone here has played at this spot: never drop them for a stale counter.
+    const games = Math.max(1, ratedGames(t.player))
+    return {
+      id: t.player.id,
+      name: t.player.name,
+      avatarUrl: t.player.avatarUrl,
+      wins: t.wins,
+      matches: t.matches,
+      winRate: t.matches > 0 ? Math.round((t.wins / t.matches) * 100) : 0,
+      games,
+      provisional: rankStatus(games) !== "established",
+    }
+  })
+  return orderLeaderboard(
+    rows,
+    (r) => r.games,
+    (a, b) => b.wins - a.wins || b.winRate - a.winRate || b.matches - a.matches,
+  )
 }
 
 export interface Territory {
@@ -39,18 +83,11 @@ export async function getLocationLeaderboards(): Promise<Territory[]> {
     select: {
       location: true,
       sets: { select: { teamAScore: true, teamBScore: true } },
-      participants: {
-        where: { playerId: { not: null } },
-        select: {
-          team: true,
-          player: { select: { id: true, name: true, avatarUrl: true } },
-        },
-      },
+      participants: PARTICIPANT_SELECT,
     },
   })
 
   // location → playerId → tallies
-  type Tally = { player: { id: string; name: string; avatarUrl: string | null }; wins: number; matches: number }
   const byLocation = new Map<string, Map<string, Tally>>()
 
   for (const s of sessions) {
@@ -78,17 +115,8 @@ export async function getLocationLeaderboards(): Promise<Territory[]> {
 
   const territories: Territory[] = []
   for (const [location, players] of byLocation.entries()) {
-    const standings: TerritoryPlayer[] = [...players.values()]
-      .map((t) => ({
-        id: t.player.id,
-        name: t.player.name,
-        avatarUrl: t.player.avatarUrl,
-        wins: t.wins,
-        matches: t.matches,
-        winRate: t.matches > 0 ? Math.round((t.wins / t.matches) * 100) : 0,
-      }))
-      // King = most wins, then best win-rate, then most matches
-      .sort((a, b) => b.wins - a.wins || b.winRate - a.winRate || b.matches - a.matches)
+    // King = most wins, then best win-rate, then most matches (established first)
+    const standings = rankTallies(players.values())
 
     territories.push({
       location,
@@ -130,17 +158,10 @@ export async function getCityLeaderboards(): Promise<CityLeaderboard[]> {
       location: true,
       city: true,
       sets: { select: { teamAScore: true, teamBScore: true } },
-      participants: {
-        where: { playerId: { not: null } },
-        select: {
-          team: true,
-          player: { select: { id: true, name: true, avatarUrl: true } },
-        },
-      },
+      participants: PARTICIPANT_SELECT,
     },
   })
 
-  type Tally = { player: { id: string; name: string; avatarUrl: string | null }; wins: number; matches: number }
   const byCity = new Map<string, { players: Map<string, Tally>; venues: Set<string> }>()
 
   for (const s of sessions) {
@@ -172,16 +193,7 @@ export async function getCityLeaderboards(): Promise<CityLeaderboard[]> {
 
   const boards: CityLeaderboard[] = []
   for (const [city, { players, venues }] of byCity.entries()) {
-    const standings: TerritoryPlayer[] = [...players.values()]
-      .map((t) => ({
-        id: t.player.id,
-        name: t.player.name,
-        avatarUrl: t.player.avatarUrl,
-        wins: t.wins,
-        matches: t.matches,
-        winRate: t.matches > 0 ? Math.round((t.wins / t.matches) * 100) : 0,
-      }))
-      .sort((a, b) => b.wins - a.wins || b.winRate - a.winRate || b.matches - a.matches)
+    const standings = rankTallies(players.values())
 
     boards.push({
       city,

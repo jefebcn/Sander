@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { MapPin, Crown } from "lucide-react"
+import { MapPin, Crown, Hourglass } from "lucide-react"
 import type { CityLeaderboard } from "@/actions/territories"
 
 /**
@@ -36,6 +36,12 @@ export function CityBoards({ boards }: { boards: CityLeaderboard[] }) {
               >
                 <Crown className="h-4 w-4 shrink-0 text-[var(--gold)]" aria-hidden="true" />
                 <span className="truncate text-sm font-bold text-white">{b.king.name}</span>
+                {b.king.provisional && (
+                  <Hourglass
+                    className="h-3.5 w-3.5 shrink-0 text-[var(--warning)]"
+                    aria-label="In valutazione: meno di 5 partite"
+                  />
+                )}
                 <span className="ml-auto shrink-0 text-xs text-[var(--muted-text)]">
                   {b.king.wins} vittorie · {b.king.winRate}%
                 </span>
@@ -52,6 +58,12 @@ export function CityBoards({ boards }: { boards: CityLeaderboard[] }) {
                     <Link href={`/players/${p.id}`} className="truncate text-white">
                       {p.name}
                     </Link>
+                    {p.provisional && (
+                      <Hourglass
+                        className="h-3.5 w-3.5 shrink-0 text-[var(--warning)]"
+                        aria-label="In valutazione: meno di 5 partite"
+                      />
+                    )}
                     <span className="ml-auto shrink-0 text-xs text-[var(--muted-text)]">
                       {p.wins}
                     </span>
@@ -64,7 +76,9 @@ export function CityBoards({ boards }: { boards: CityLeaderboard[] }) {
       </div>
 
       <p className="mt-2 px-1 text-xs text-[var(--muted-text)]">
-        Scegli il comune quando crei la partita per comparire in questa classifica.
+        Scegli il comune quando crei la partita per comparire in questa classifica. Chi ha giocato
+        meno di 5 partite (<Hourglass className="inline h-3 w-3 text-[var(--warning)]" aria-hidden="true" />)
+        è in valutazione e viene dopo gli altri.
       </p>
     </section>
   )

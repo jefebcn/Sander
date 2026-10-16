@@ -4,7 +4,10 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { Clock, Trophy, ChevronUp, Medal, Swords } from "lucide-react"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
-import { getSeasonStandings, getPlayerSeasonInfo } from "@/actions/seasons"
+import { getSeasonStandings, getPlayerSeasonInfo, type SeasonStanding } from "@/actions/seasons"
+import { db } from "@/lib/db"
+import { splitLeaderboard, ratedGames, isProvisional } from "@/lib/rankingEligibility"
+import { ProvisionalBadge, ProvisionalSectionHeading } from "@/components/player/ProvisionalBadge"
 import { DIVISIONS, getNextDivision, pointsToNext, divisionProgress } from "@/lib/divisions"
 import { DivisionBadge } from "@/components/season/DivisionBadge"
 import { DivisionShareButton } from "@/components/season/DivisionShareButton"
@@ -47,7 +50,29 @@ export default async function SeasonPage() {
     getSeasonStandings(),
   ])
 
-  const me = player ? await getPlayerSeasonInfo(player.id, { season, standings }) : null
+  const [me, gamesRows] = await Promise.all([
+    player ? getPlayerSeasonInfo(player.id, { season, standings }) : null,
+    standings.length
+      ? db.player.findMany({
+          where: { id: { in: standings.map((s) => s.id) } },
+          select: { id: true, matchesWon: true, matchesLost: true },
+        })
+      : [],
+  ])
+
+  // Same rule as every board (lib/rankingEligibility): a season gain built on
+  // one or two games is mostly Glicko deviation, so those players are listed
+  // after the established ones, without a position.
+  const gamesById = new Map(gamesRows.map((r) => [r.id, ratedGames(r)]))
+  const board = splitLeaderboard(
+    standings,
+    (s) => gamesById.get(s.id) ?? 0,
+    (a, b) => b.seasonPoints - a.seasonPoints || b.rating - a.rating,
+  )
+  const myIdx = player ? board.established.findIndex((s) => s.id === player.id) : -1
+  const myRank = myIdx >= 0 ? myIdx + 1 : null
+  const myGames = player ? gamesById.get(player.id) : undefined
+  const meProvisional = myGames !== undefined && isProvisional(myGames)
 
   // ── No active season ──────────────────────────────────────────────────
   if (!season) {
@@ -125,11 +150,13 @@ export default async function SeasonPage() {
                   {me.division.name}
                 </p>
                 <div className="mt-1 flex items-center gap-3 text-sm text-[var(--muted-text)]">
-                  {me.rank && (
+                  {myRank ? (
                     <span className="flex items-center gap-1">
-                      <Trophy className="h-3.5 w-3.5 text-[var(--accent)]" />#{me.rank}
+                      <Trophy className="h-3.5 w-3.5 text-[var(--accent)]" />#{myRank}
                     </span>
-                  )}
+                  ) : meProvisional && myGames !== undefined ? (
+                    <ProvisionalBadge games={myGames} />
+                  ) : null}
                   <span className="font-bold text-[var(--live)]">
                     {me.seasonPoints >= 0 ? "+" : ""}
                     {me.seasonPoints} pt
@@ -146,7 +173,7 @@ export default async function SeasonPage() {
                     Promozione a {next.emoji} {next.name}
                   </span>
                   <span className="flex items-center gap-1 font-black" style={{ color: next.color }}>
-                    <ChevronUp className="h-3.5 w-3.5" />+{toNext} rating
+                    <ChevronUp className="h-3.5 w-3.5" />+{toNext} punti
                   </span>
                 </div>
                 <div className="h-2.5 w-full overflow-hidden rounded-full bg-[var(--surface-1)]">
@@ -175,7 +202,7 @@ export default async function SeasonPage() {
                   divisionKey={me.division.key}
                   rating={me.rating}
                   seasonName={season.name}
-                  rank={me.rank}
+                  rank={myRank}
                 />
               </div>
             )}
@@ -204,7 +231,7 @@ export default async function SeasonPage() {
                 <span className="text-xs font-black" style={{ color: d.color }}>
                   {d.name}
                 </span>
-                <span className="text-xs text-[var(--muted-text)]">{d.min}+</span>
+                <span className="text-xs text-[var(--muted-text)]">{d.min > 0 ? `${d.min}+ pt` : `<${DIVISIONS[1].min} pt`}</span>
               </div>
             )
           })}
@@ -220,54 +247,84 @@ export default async function SeasonPage() {
           </p>
         </div>
 
-        {standings.length === 0 ? (
+        {board.established.length === 0 && board.provisional.length === 0 ? (
           <div className="rounded-2xl bg-[var(--surface-2)] p-6 text-center text-sm text-[var(--muted-text)]">
             Nessun punto ancora. Gioca una partita per aprire la classifica!
           </div>
         ) : (
           <div className="space-y-2">
-            {standings.slice(0, 20).map((s, i) => {
-              const isMe = player?.id === s.id
-              return (
-                <Link
-                  key={s.id}
-                  href={`/players/${s.id}`}
-                  className="flex items-center gap-3 rounded-2xl px-4 py-3 active:opacity-80"
-                  style={{
-                    background: isMe ? "rgba(201,243,29,0.08)" : "var(--surface-2)",
-                    border: isMe ? "1px solid rgba(201,243,29,0.3)" : "1px solid transparent",
-                  }}
-                >
-                  <span className="w-6 text-center">
-                    {i < 3 ? (
-                      <Medal
-                        className="mx-auto h-4 w-4"
-                        style={{
-                          color:
-                            i === 0 ? "var(--gold)" : i === 1 ? "var(--silver)" : "var(--bronze)",
-                        }}
-                      />
-                    ) : (
-                      <span className="text-sm font-bold text-[var(--muted-text)]">{i + 1}</span>
-                    )}
-                  </span>
-                  <Avatar name={s.name} url={s.avatarUrl} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-bold text-white">{s.name}</p>
-                    <p className="text-xs font-bold" style={{ color: s.division.color }}>
-                      {s.division.emoji} {s.division.name}
-                    </p>
-                  </div>
-                  <span className="text-lg font-black text-[var(--live)]">
-                    {s.seasonPoints >= 0 ? "+" : ""}
-                    {s.seasonPoints}
-                  </span>
-                </Link>
-              )
-            })}
+            {board.established.slice(0, 20).map((s, i) => (
+              <SeasonRow key={s.id} s={s} pos={i + 1} isMe={player?.id === s.id} />
+            ))}
+            {board.provisional.length > 0 && (
+              <>
+                <ProvisionalSectionHeading className={board.established.length > 0 ? "pt-3 pb-1" : "pb-1"} />
+                {board.provisional.slice(0, 10).map((s) => (
+                  <SeasonRow
+                    key={s.id}
+                    s={s}
+                    pos={null}
+                    games={gamesById.get(s.id) ?? 0}
+                    isMe={player?.id === s.id}
+                  />
+                ))}
+              </>
+            )}
           </div>
         )}
       </div>
     </div>
+  )
+}
+
+/** One season row; `pos` is null for players still "in valutazione". */
+function SeasonRow({
+  s,
+  pos,
+  games,
+  isMe,
+}: {
+  s: SeasonStanding
+  pos: number | null
+  games?: number
+  isMe: boolean
+}) {
+  return (
+    <Link
+      href={`/players/${s.id}`}
+      className="flex min-h-[3.5rem] items-center gap-3 rounded-2xl px-4 py-3 active:opacity-80"
+      style={{
+        background: isMe ? "rgba(201,243,29,0.08)" : "var(--surface-2)",
+        border: isMe ? "1px solid rgba(201,243,29,0.3)" : "1px solid transparent",
+      }}
+    >
+      <span className="w-6 text-center">
+        {pos !== null && pos <= 3 ? (
+          <Medal
+            className="mx-auto h-4 w-4"
+            style={{
+              color: pos === 1 ? "var(--gold)" : pos === 2 ? "var(--silver)" : "var(--bronze)",
+            }}
+          />
+        ) : (
+          <span className="text-sm font-bold text-[var(--muted-text)]">{pos ?? "–"}</span>
+        )}
+      </span>
+      <Avatar name={s.name} url={s.avatarUrl} />
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-bold text-white">{s.name}</p>
+        {pos === null && games !== undefined ? (
+          <ProvisionalBadge games={games} />
+        ) : (
+          <p className="text-xs font-bold" style={{ color: s.division.color }}>
+            {s.division.emoji} {s.division.name} · {s.rating} punti
+          </p>
+        )}
+      </div>
+      <span className="text-lg font-black text-[var(--live)]">
+        {s.seasonPoints >= 0 ? "+" : ""}
+        {s.seasonPoints}
+      </span>
+    </Link>
   )
 }

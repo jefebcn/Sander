@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { ChevronRight, Check, Trophy, Crown, Users, RotateCcw, Swords, Shuffle } from "lucide-react"
 import { createTournament } from "@/actions/tournaments"
 import { cn } from "@/lib/utils"
-import type { Player } from "@/generated/prisma/client"
+import type { PublicPlayer as Player } from "@/lib/publicPlayer"
 import { TournamentCoverUpload } from "@/components/tournament/TournamentCoverUpload"
 
 interface CreateTournamentFormProps {

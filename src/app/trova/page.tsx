@@ -10,12 +10,13 @@ import { getMyAvailability, getAvailabilityMatches } from "@/actions/availabilit
 import { AvailabilityBoard } from "@/components/matchmaking/AvailabilityBoard"
 import { CompatibilityRing } from "@/components/matchmaking/CompatibilityRing"
 import { MessageButton } from "@/components/chat/MessageButton"
+import { ProvisionalBadge } from "@/components/player/ProvisionalBadge"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { SectionTabs, PLAY_TABS } from "@/components/layout/SectionTabs"
 
 export const metadata: Metadata = {
   title: "Trova giocatori al tuo livello — SANDER",
-  description: "Trova compagni ideali e avversari alla pari in base al tuo rating.",
+  description: "Trova compagni ideali e avversari alla pari in base ai tuoi punti.",
 }
 
 const ROLE_LABEL: Record<string, string> = { BLOCKER: "Muro", DEFENDER: "Difensore" }
@@ -60,7 +61,7 @@ export default async function FindPage({ searchParams }: Props) {
           <span className="font-bold" style={{ color: me.division.color }}>
             {me.division.emoji} {me.division.name}
           </span>{" "}
-          · {me.rating} rating · {ROLE_LABEL[me.role]}
+          · {me.rating} punti · {ROLE_LABEL[me.role]}
         </p>
       )}
 
@@ -68,7 +69,7 @@ export default async function FindPage({ searchParams }: Props) {
       <div className="flex gap-1 px-4 pb-4">
         <Link
           href="/trova"
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-colors"
+          className="flex min-h-[2.75rem] flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-colors"
           style={
             mode === "partner"
               ? { background: "var(--accent)", color: "#000" }
@@ -79,7 +80,7 @@ export default async function FindPage({ searchParams }: Props) {
         </Link>
         <Link
           href="/trova?mode=opponent"
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-colors"
+          className="flex min-h-[2.75rem] flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-colors"
           style={
             mode === "opponent"
               ? { background: "var(--accent)", color: "#000" }
@@ -97,8 +98,8 @@ export default async function FindPage({ searchParams }: Props) {
         <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]" />
         <p className="text-xs text-[var(--muted-text)]">
           {mode === "partner"
-            ? "Compagni ideali: livello simile e ruolo complementare (muro + difensore) per una coppia equilibrata."
-            : "Avversari alla pari: giocatori vicini al tuo rating per partite tirate e combattute."}
+            ? "Compagni ideali: livello simile e ruolo complementare (muro + difensore). Il ruolo pesa quanto il livello: chi ha il tuo stesso ruolo non supera il 60%. Chi ha giocato meno di 5 partite ha un punteggio ancora provvisorio e scende in lista."
+            : "Avversari alla pari: giocatori vicini ai tuoi punti per partite tirate. Chi ha giocato meno di 5 partite ha un punteggio ancora provvisorio e scende in lista."}
         </p>
       </div>
 
@@ -108,7 +109,7 @@ export default async function FindPage({ searchParams }: Props) {
           <Users className="mx-auto mb-3 h-10 w-10 text-[var(--muted-text)] opacity-40" />
           <p className="font-bold text-white">Nessuno nel tuo range al momento</p>
           <p className="mt-1 text-sm text-[var(--muted-text)]">
-            Gioca qualche partita: più giochi, più il tuo rating si affina e il match migliora.
+            Gioca qualche partita: più giochi, più i tuoi punti si affinano e il match migliora.
           </p>
         </div>
       ) : (
@@ -127,8 +128,13 @@ export default async function FindPage({ searchParams }: Props) {
                       {c.division.emoji} {c.division.name}
                     </span>
                     <span>{ROLE_LABEL[c.role]}</span>
-                    <span>{c.rating}</span>
+                    <span>{c.rating} pt</span>
                   </div>
+                  {c.provisional && (
+                    <div className="mt-1">
+                      <ProvisionalBadge games={c.games} />
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-col items-center gap-0.5">
                   <CompatibilityRing value={c.compatibility} />

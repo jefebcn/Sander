@@ -1,6 +1,8 @@
 "use server"
 
 import { db } from "@/lib/db"
+import { NOT_DELETED_PLAYER } from "@/lib/publicPlayer"
+import { orderLeaderboard, ratedGames, rankStatus } from "@/lib/rankingEligibility"
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  Weekly recap — computes the last-7-days movers from RatingHistory.         */
@@ -19,6 +21,10 @@ export interface RecapPlayer {
   level: number
   ratingDelta: number
   matches: number
+  /** Decided games on record (lib/rankingEligibility). */
+  games: number
+  /** Fewer than PROVISIONAL_GAMES games: rating still being assessed. */
+  provisional: boolean
 }
 
 export interface WeeklyRecap {
@@ -38,11 +44,19 @@ export async function getWeeklyRecap(referenceDate?: Date): Promise<WeeklyRecap>
   const weekStart = new Date(now.getTime() - WEEK_MS)
 
   const inWindow = await db.ratingHistory.findMany({
-    where: { createdAt: { gte: weekStart, lte: now } },
+    where: { createdAt: { gte: weekStart, lte: now }, player: NOT_DELETED_PLAYER },
     orderBy: { createdAt: "asc" },
     include: {
       player: {
-        select: { id: true, name: true, avatarUrl: true, glickoRating: true, level: true },
+        select: {
+          id: true,
+          name: true,
+          avatarUrl: true,
+          glickoRating: true,
+          level: true,
+          matchesWon: true,
+          matchesLost: true,
+        },
       },
     },
   })
@@ -55,40 +69,58 @@ export async function getWeeklyRecap(referenceDate?: Date): Promise<WeeklyRecap>
     else byPlayer.set(h.playerId, [h])
   }
 
-  // For each active player, find the rating just BEFORE the window for an
-  // accurate weekly delta (fallback: first in-window value).
-  const results = await Promise.all(
-    [...byPlayer.entries()].map(async ([pid, entries]) => {
-      const pre = await db.ratingHistory.findFirst({
-        where: { playerId: pid, createdAt: { lt: weekStart } },
+  // The rating just BEFORE the window gives an accurate weekly delta (fallback:
+  // first in-window value). One query for every active player — this used to be
+  // a findFirst per player, an N+1 on every /settimana view. Rows come newest
+  // first, so the first one seen per player is their last pre-window rating.
+  const activeIds = [...byPlayer.keys()]
+  const preRows = activeIds.length
+    ? await db.ratingHistory.findMany({
+        where: { playerId: { in: activeIds }, createdAt: { lt: weekStart } },
         orderBy: { createdAt: "desc" },
-        select: { rating: true },
+        select: { playerId: true, rating: true },
       })
-      const startRating = pre?.rating ?? entries[0].rating
-      const endRating = entries[entries.length - 1].rating
-      const p = entries[0].player
-      return {
-        id: pid,
-        name: p.name,
-        avatarUrl: p.avatarUrl,
-        glickoRating: p.glickoRating,
-        level: p.level,
-        ratingDelta: Math.round(endRating - startRating),
-        matches: entries.length,
-      } satisfies RecapPlayer
-    }),
-  )
+    : []
+  const preByPlayer = new Map<string, number>()
+  for (const r of preRows) if (!preByPlayer.has(r.playerId)) preByPlayer.set(r.playerId, r.rating)
 
-  const movers = [...results].sort((a, b) => b.ratingDelta - a.ratingDelta)
+  const results: RecapPlayer[] = [...byPlayer.entries()].map(([pid, entries]) => {
+    const startRating = preByPlayer.get(pid) ?? entries[0].rating
+    const endRating = entries[entries.length - 1].rating
+    const p = entries[0].player
+    const games = ratedGames(p)
+    return {
+      id: pid,
+      name: p.name,
+      avatarUrl: p.avatarUrl,
+      glickoRating: p.glickoRating,
+      level: p.level,
+      ratingDelta: Math.round(endRating - startRating),
+      matches: entries.length,
+      games,
+      provisional: rankStatus(games) !== "established",
+    }
+  })
+
+  // A player's first games swing the rating the most (wide Glicko deviation):
+  // they would top "in salita" every week. Same rule as every other board —
+  // established players first, the ones still "in valutazione" after.
+  const movers = orderLeaderboard(
+    results,
+    // Anyone with rated rows this week has played; never drop them here.
+    (r) => Math.max(1, r.games),
+    (a, b) => b.ratingDelta - a.ratingDelta,
+  )
   const mostActive = [...results].sort((a, b) => b.matches - a.matches)
   const totalEvents = new Set(inWindow.map((h) => h.sourceId)).size
+  const potw = movers.find((m) => !m.provisional && m.ratingDelta > 0) ?? null
 
   return {
     weekStart: weekStart.toISOString(),
     weekEnd: now.toISOString(),
     movers: movers.slice(0, 10),
     mostActive: mostActive.slice(0, 5),
-    playerOfWeek: movers.length > 0 && movers[0].ratingDelta > 0 ? movers[0] : null,
+    playerOfWeek: potw,
     totalEvents,
     activePlayers: results.length,
   }

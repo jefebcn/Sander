@@ -5,7 +5,7 @@ import { Search, X, UserCheck } from "lucide-react"
 import { listPlayers } from "@/actions/players"
 import { replaceMatchPlayer } from "@/actions/matches"
 import { cn } from "@/lib/utils"
-import type { Player } from "@/generated/prisma/client"
+import type { PublicPlayer as Player } from "@/lib/publicPlayer"
 
 interface PlayerPickerSheetProps {
   matchId: string

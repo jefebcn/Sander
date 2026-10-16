@@ -60,12 +60,17 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
     ? await Promise.all([getHeadToHeadStats(me.id, id), getH2HMatchHistory(me.id, id)])
     : [null, null]
 
+  // Titles listed below come from getTournamentWins (standings + Chicece finals);
+  // the stored tournamentsWon counter can lag behind it (a KOTB title showed next
+  // to "Tornei vinti 0"). Count from the same source the titles use.
+  const tournamentsWon = tournamentWins.length
+
   const achievements = computeAchievements({
     matchesWon: player.matchesWon,
     matchesLost: player.matchesLost,
     winRatePct: player.winRatePct,
     sessionsPlayed: player.sessionsPlayed,
-    tournamentsWon: player.tournamentsWon,
+    tournamentsWon,
     glickoRating: player.glickoRating,
     level: player.level,
     streak,
@@ -144,7 +149,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
 
         {/* ── Advanced stats ──────────────────────────────────── */}
         <PlayerStats
-          player={player}
+          player={{ ...player, tournamentsWon }}
           communityAvg={advancedStats.communityAvg}
           tournamentsByType={advancedStats.tournamentsByType}
         />

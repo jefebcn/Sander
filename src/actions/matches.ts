@@ -7,6 +7,8 @@ import type { SubmitScoreInput } from "@/lib/validators/match.schema"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
 
 import { isAdminEmail, canManageTournament } from "@/lib/isAdmin"
+import { PUBLIC_PLAYER_SELECT } from "@/lib/publicPlayer"
+import { z } from "zod"
 
 export async function submitScore(input: SubmitScoreInput) {
   // Must be authenticated
@@ -207,12 +209,19 @@ export async function replaceMatchPlayer(
   revalidatePath(`/tournaments/${match.tournamentId}`)
 }
 
+const MatchesForRoundSchema = z.object({
+  tournamentId: z.string().trim().min(1).max(64),
+  round: z.number().int().min(0).max(1000),
+})
+
 export async function getMatchesForRound(tournamentId: string, round: number) {
+  const data = MatchesForRoundSchema.parse({ tournamentId, round })
   return db.match.findMany({
-    where: { tournamentId, round },
+    where: { tournamentId: data.tournamentId, round: data.round },
     include: {
       players: {
-        include: { player: true },
+        // Public fields only: this is callable by anyone.
+        include: { player: { select: PUBLIC_PLAYER_SELECT } },
       },
     },
     orderBy: { matchNumber: "asc" },
