@@ -104,15 +104,38 @@ export async function createTournament(input: CreateTournamentInput): Promise<{ 
           createdByPlayerId:     creatorPlayer?.id ?? null,
 
           registrations: {
-            create: data.playerIds.map((playerId, i) => ({
-              playerId,
-              seedPosition: i + 1,
-              // Admin-created registrations are considered pre-paid / free
-              paymentStatus: (data.priceCents ?? 0) > 0 ? "PAID" : "FREE",
-              paymentMethod: (data.priceCents ?? 0) > 0 ? "CASH" : "FREE",
-              paidAt: (data.priceCents ?? 0) > 0 ? new Date() : null,
-              amountPaidCents: data.priceCents ?? null,
-            })),
+            create: data.playerIds.map((playerId, i) =>
+              (data.priceCents ?? 0) === 0
+                ? {
+                    playerId,
+                    seedPosition: i + 1,
+                    paymentStatus: "FREE" as const,
+                    paymentMethod: "FREE",
+                    paidAt: null,
+                    amountPaidCents: data.priceCents ?? null,
+                  }
+                : isAdmin
+                  ? {
+                      // Admin-created registrations are considered pre-paid (cash)
+                      playerId,
+                      seedPosition: i + 1,
+                      paymentStatus: "PAID" as const,
+                      paymentMethod: "CASH",
+                      paidAt: new Date(),
+                      amountPaidCents: data.priceCents ?? null,
+                    }
+                  : {
+                      // A non-admin creator can't declare money they haven't
+                      // collected: players join as "registered, not paid" and
+                      // pay (or get confirmed) through the normal flow.
+                      playerId,
+                      seedPosition: i + 1,
+                      paymentStatus: "PENDING" as const,
+                      paymentMethod: null,
+                      paidAt: null,
+                      amountPaidCents: null,
+                    },
+            ),
           },
         },
         select: { id: true },
@@ -127,7 +150,9 @@ export async function createTournament(input: CreateTournamentInput): Promise<{ 
       import("@/lib/push").then(({ notifyPlayers }) =>
         notifyPlayers(data.playerIds, {
           title: `🏐 Sei iscritto a ${data.name}!`,
-          body: `Hai un posto nel torneo. Ti avviseremo quando inizia.`,
+          body: !isAdmin && (data.priceCents ?? 0) > 0
+            ? `Sei in lista. Completa il pagamento per confermare il posto.`
+            : `Hai un posto nel torneo. Ti avviseremo quando inizia.`,
           url: `/tournaments/${tournament.id}`,
         }),
       ).catch(() => {})
@@ -415,13 +440,16 @@ async function startKOTBTournament(
       skipDuplicates: true,
     })
 
-    await tx.tournament.update({
-      where: { id: tournament.id },
+    // Atomic DRAFT→LIVE claim: a double tap on "Avvia" rolls back instead
+    // of generating a second set of matches.
+    const started = await tx.tournament.updateMany({
+      where: { id: tournament.id, status: "DRAFT" },
       data: {
         status: "LIVE",
         kotbTotalRounds: schedule.totalRounds,
       },
     })
+    if (started.count === 0) throw new Error("Il torneo è già stato avviato")
   })
 }
 
@@ -484,10 +512,13 @@ async function startRoundRobinTournament(
       skipDuplicates: true,
     })
 
-    await tx.tournament.update({
-      where: { id: tournament.id },
+    // Atomic DRAFT→LIVE claim: a double tap on "Avvia" rolls back instead
+    // of generating a second set of matches.
+    const started = await tx.tournament.updateMany({
+      where: { id: tournament.id, status: "DRAFT" },
       data: { status: "LIVE" },
     })
+    if (started.count === 0) throw new Error("Il torneo è già stato avviato")
   })
 }
 
@@ -605,10 +636,13 @@ async function startDoubleEliminationTournament(
       skipDuplicates: true,
     })
 
-    await tx.tournament.update({
-      where: { id: tournament.id },
+    // Atomic DRAFT→LIVE claim: a double tap on "Avvia" rolls back instead
+    // of generating a second set of matches.
+    const started = await tx.tournament.updateMany({
+      where: { id: tournament.id, status: "DRAFT" },
       data: { status: "LIVE" },
     })
+    if (started.count === 0) throw new Error("Il torneo è già stato avviato")
   })
 }
 
@@ -698,10 +732,13 @@ async function startBracketTournament(
       skipDuplicates: true,
     })
 
-    await tx.tournament.update({
-      where: { id: tournament.id },
+    // Atomic DRAFT→LIVE claim: a double tap on "Avvia" rolls back instead
+    // of generating a second set of matches.
+    const started = await tx.tournament.updateMany({
+      where: { id: tournament.id, status: "DRAFT" },
       data: { status: "LIVE" },
     })
+    if (started.count === 0) throw new Error("Il torneo è già stato avviato")
   })
 }
 
@@ -852,10 +889,13 @@ async function startChiceceTournament(
       ),
     })
 
-    await tx.tournament.update({
-      where: { id: tournament.id },
+    // Atomic DRAFT→LIVE claim: a double tap on "Avvia" rolls back instead
+    // of generating a second set of matches.
+    const started = await tx.tournament.updateMany({
+      where: { id: tournament.id, status: "DRAFT" },
       data: { status: "LIVE", chicecePhase: "GROUP" },
     })
+    if (started.count === 0) throw new Error("Il torneo è già stato avviato")
   })
 }
 
@@ -884,10 +924,13 @@ export async function submitChiceceGroupMatchScore(
   const teamBPlayerIds = match.players.filter((p) => p.team === 1).map((p) => p.playerId)
 
   await db.$transaction(async (tx) => {
-    await tx.match.update({
-      where: { id: matchId },
+    // Atomic claim: only the request that flips isCompleted false→true may
+    // apply the +/- points (a double tap used to apply them twice).
+    const claimed = await tx.match.updateMany({
+      where: { id: matchId, isCompleted: false },
       data: { teamAScore, teamBScore, isCompleted: true },
     })
+    if (claimed.count === 0) throw new Error("Partita già completata")
 
     for (const playerId of teamAPlayerIds) {
       await tx.tournamentRegistration.update({
@@ -971,6 +1014,13 @@ export async function advanceChiceceToFinals(
   if (new Set(partnerIds).size !== 4) throw new Error("Ogni finalista deve avere un partner diverso")
 
   await db.$transaction(async (tx) => {
+    // Atomic phase claim first: a double tap must not create two sets of semis.
+    const claimed = await tx.tournament.updateMany({
+      where: { id: tournamentId, chicecePhase: "GROUP" },
+      data: { chicecePhase: "FINAL" },
+    })
+    if (claimed.count === 0) throw new Error("Non in fase gironi")
+
     // Semifinal 1: 1° + partner vs 4° + partner
     await tx.match.create({
       data: {
@@ -1008,10 +1058,7 @@ export async function advanceChiceceToFinals(
     })
 
     // FINAL is not created here — it is auto-created when both semis complete
-    await tx.tournament.update({
-      where: { id: tournamentId },
-      data: { chicecePhase: "FINAL" },
-    })
+    // (chicecePhase already switched to "FINAL" by the claim above).
   })
 
   revalidatePath(`/tournaments/${tournamentId}`)
@@ -1087,10 +1134,16 @@ export async function submitChiceceFinalScore(
     const otherSection = match.bracketSection === "SEMI1" ? "SEMI2" : "SEMI1"
 
     await db.$transaction(async (tx) => {
-      await tx.match.update({
-        where: { id: matchId },
+      // Serialize the two semifinals of this tournament: otherwise two
+      // concurrent submissions each miss the other's result and no FINAL is
+      // created (or both see it and two FINALs are created).
+      await tx.$queryRaw`SELECT id FROM "tournaments" WHERE id = ${match.tournamentId} FOR UPDATE`
+
+      const claimed = await tx.match.updateMany({
+        where: { id: matchId, isCompleted: false },
         data: { teamAScore, teamBScore, isCompleted: true },
       })
+      if (claimed.count === 0) throw new Error("Partita già completata")
 
       // Check if the other semi is already done
       const otherSemi = await tx.match.findFirst({
@@ -1151,19 +1204,23 @@ export async function submitChiceceFinalScore(
 
   // ── Old-format SEMI (backward compat) ────────────────────────────────────
   if (match.bracketSection === "SEMI") {
-    await db.match.update({
-      where: { id: matchId },
+    const claimed = await db.match.updateMany({
+      where: { id: matchId, isCompleted: false },
       data: { teamAScore, teamBScore, isCompleted: true },
     })
+    if (claimed.count === 0) throw new Error("Partita già completata")
     revalidatePath(`/tournaments/${match.tournamentId}`)
     return
   }
 
   // ── FINAL ────────────────────────────────────────────────────────────────
-  await db.match.update({
-    where: { id: matchId },
+  // Atomic claim: a second submit must not overwrite the result the first one
+  // used for standings and bonuses.
+  const claimedMatch = await db.match.updateMany({
+    where: { id: matchId, isCompleted: false },
     data: { teamAScore, teamBScore, isCompleted: true },
   })
+  if (claimedMatch.count === 0) throw new Error("Partita già completata")
 
   // Idempotency guard: only the call that actually closes the tournament may go
   // on to apply Glicko, placement bonuses and lifetime career stats. A retry or
