@@ -49,10 +49,11 @@ export function ShareButton({ path, title, text, fullWidth, label }: ShareButton
   return (
     <button
       onClick={handleShare}
-      className="flex items-center gap-1.5 text-sm font-medium"
+      type="button"
+      className="flex min-h-[2.75rem] items-center gap-1.5 text-sm font-medium"
       style={{ color: copied ? "var(--live)" : "var(--muted-text)" }}
     >
-      {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+      {copied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Share2 className="h-4 w-4" aria-hidden="true" />}
       {copied ? "Copiato!" : "Condividi"}
     </button>
   )

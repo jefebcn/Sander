@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { ChevronLeft } from "lucide-react"
+import { LEGAL_EMAIL } from "@/lib/legal"
 
 export const metadata = { title: "Privacy Policy — SANDER" }
 
@@ -11,10 +12,10 @@ export default function PrivacyPage() {
       <header className="flex items-center gap-3 px-4 py-5">
         <Link
           href="/profile?tab=app"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--muted-text)]"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--muted-text)]"
           aria-label="Indietro"
         >
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
         </Link>
         <div>
           <h1 className="text-2xl font-black text-white">Privacy Policy</h1>
@@ -28,8 +29,8 @@ export default function PrivacyPage() {
           <p>
             Il titolare del trattamento dei dati personali è <strong className="text-white">SANDER</strong>.
             Per qualsiasi richiesta relativa alla privacy puoi contattarci a{" "}
-            <a href="mailto:conti9708@gmail.com" className="text-[var(--accent)] underline">
-              conti9708@gmail.com
+            <a href={`mailto:${LEGAL_EMAIL}`} className="text-[var(--accent)] underline">
+              {LEGAL_EMAIL}
             </a>
           </p>
         </Section>
@@ -153,8 +154,8 @@ export default function PrivacyPage() {
           </ul>
           <p className="mt-2">
             Per esercitare i tuoi diritti scrivi a{" "}
-            <a href="mailto:conti9708@gmail.com" className="text-[var(--accent)] underline">
-              conti9708@gmail.com
+            <a href={`mailto:${LEGAL_EMAIL}`} className="text-[var(--accent)] underline">
+              {LEGAL_EMAIL}
             </a>
             . Risponderemo entro 30 giorni. Hai inoltre il diritto di presentare reclamo al Garante
             per la Protezione dei Dati Personali (

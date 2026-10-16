@@ -3,6 +3,11 @@
  * the sunset at the top, and a whisper of sand grain so surfaces don't feel
  * like flat plastic. Fixed and non-interactive; content sits above it.
  *
+ * Layering: this is z-0 and comes first in <body>; <main> is position:relative
+ * with NO z-index and comes after it, so page content paints on top by DOM
+ * order. Don't give <main> a z-index: it would become a stacking context and
+ * trap every fixed sheet/dialog inside a page beneath the navbar.
+ *
  * Variants exist so the look can be compared and switched in one place.
  */
 export type BackgroundVariant = "night" | "sunset"
