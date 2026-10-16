@@ -1,9 +1,9 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ChevronRight, Play, Trophy, Shuffle, Trash2, LogOut } from "lucide-react"
+import { ChevronRight, Play, Trophy, Shuffle, Trash2 } from "lucide-react"
 import { getTournamentDashboard } from "@/actions/standings"
-import { startTournament, completeTournament, updateTournamentMeta } from "@/actions/tournaments"
-import { cancelRegistration, adminRemoveRegistration } from "@/actions/registration"
+import { startTournament, completeTournament } from "@/actions/tournaments"
+import { adminRemoveRegistration } from "@/actions/registration"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { canManageTournament } from "@/lib/isAdmin"
@@ -15,8 +15,9 @@ import { ChiceceDashboard } from "@/components/tournament/ChiceceDashboard"
 import { TeamPairingEditor } from "@/components/tournament/TeamPairingEditor"
 import { AdminChiceceCompletedActions } from "@/components/tournament/AdminChiceceCompletedActions"
 import { AdminTournamentSettingsForm } from "@/components/tournament/AdminTournamentSettingsForm"
-import { ShareButton, WhatsAppShareButton } from "@/components/ui/ShareButton"
-import { TournamentPriceBadge } from "@/components/tournament/TournamentPriceBadge"
+import { ShareButton } from "@/components/ui/ShareButton"
+import { TournamentInfoCard } from "@/components/tournament/TournamentInfoCard"
+import { LeaveRegistrationButton } from "@/components/tournament/LeaveRegistrationButton"
 import { TournamentPaymentsList } from "@/components/tournament/TournamentPaymentsList"
 import { PaymentCtaButton } from "@/components/tournament/PaymentCtaButton"
 import { TournamentCoverEdit } from "@/components/tournament/TournamentCoverEdit"
@@ -24,6 +25,7 @@ import { SpectatorButton } from "@/components/tournament/SpectatorButton"
 import { AdminSpectatorPriceForm } from "@/components/tournament/AdminSpectatorPriceForm"
 import { AdminAddPlayerButton } from "@/components/tournament/AdminAddPlayerButton"
 import { formatDate, formatPrice } from "@/lib/utils"
+import { deriveRegistrationStatus } from "@/lib/tournament/registrationPayment"
 import { redirect } from "next/navigation"
 import { BackButton } from "@/components/layout/PageHeader"
 
@@ -85,19 +87,15 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
     const myReg = currentPlayer && tournament.isOpenForRegistration
       ? await db.tournamentRegistration.findUnique({
           where: { tournamentId_playerId: { tournamentId: id, playerId: currentPlayer.id } },
-          select: { paymentStatus: true, paymentMethod: true, skillLevel: true, isSpectator: true },
+          select: { id: true, paymentStatus: true, paymentMethod: true, skillLevel: true, isSpectator: true },
         })
       : null
     const myChiceceReg = myReg && !myReg.isSpectator ? myReg : null
     const alreadySpectator = myReg?.isSpectator ?? false
-    const csReg = myChiceceReg
-    const chiceceRegStatus =
-      !csReg ? "NOT_REGISTERED" as const
-      : csReg.paymentStatus === "PAID" || csReg.paymentStatus === "FREE" ? "PAID" as const
-      : csReg.paymentStatus === "PENDING" && csReg.paymentMethod === "STRIPE" ? "PENDING_STRIPE" as const
-      : csReg.paymentStatus === "PENDING" && csReg.paymentMethod === "CASH" ? "PENDING_CASH" as const
-      : csReg.paymentStatus === "PENDING" && !csReg.paymentMethod ? "REGISTERED_UNPAID" as const
-      : "NOT_REGISTERED" as const
+    const chiceceRegStatus = deriveRegistrationStatus(myChiceceReg)
+    const registrationOpen =
+      tournament.isOpenForRegistration &&
+      !(tournament.registrationDeadline && tournament.registrationDeadline.getTime() < Date.now())
 
     const playerRegs = registrations.filter(r => !r.isSpectator)
     const spectatorRegs = registrations.filter(r => r.isSpectator)
@@ -125,14 +123,20 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             <p className="eyebrow flex items-center gap-1.5 text-[var(--tone)]">
               <Shuffle className="h-4 w-4" aria-hidden="true" /> {typeLabel}
             </p>
-            <StatusBadge status={tournament.status} />
+            <StatusBadge status={tournament.status} registrationOpen={registrationOpen} />
           </div>
           {/* Wraps instead of truncating: the name is the poster. */}
           <h1 className="mt-1 font-display text-[2.1rem] font-extrabold uppercase leading-[0.95] text-white">{tournament.name}</h1>
           <p className="mt-1 text-sm text-[var(--muted-text)]">
-            {formatDate(tournament.date)} · {registrations.length} giocatori
+            {formatDate(tournament.date)} · {playerRegs.length} giocatori
           </p>
         </div>
+
+        {/* Before the start the details are what people come for; once live
+            the dashboard comes first and the details move to the bottom. */}
+        {tournament.status === "DRAFT" && (
+          <TournamentInfoCard tournament={tournament} playerCount={playerRegs.length} />
+        )}
 
         {/* Participant lists: always for admin, or when open for registration in draft */}
         {(isAdmin || (tournament.status === "DRAFT" && tournament.isOpenForRegistration)) && (
@@ -153,7 +157,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 <div className="pb-1">
                   {playerRegs.map((r) => {
                     const isMe = currentPlayer?.id === r.player.id
-                    const canCancel = isMe
+                    const canCancel = isMe && !(r.paymentStatus === "PAID" && r.paymentMethod !== "FREE")
                     return (
                       <div key={r.id} className="flex items-center gap-3 px-4 py-2">
                         <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${
@@ -162,14 +166,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                         }`} />
                         <span className="flex-1 truncate text-sm font-medium">{r.player.name}</span>
                         {canCancel && (
-                          <form action={async () => {
-                            "use server"
-                            await cancelRegistration({ registrationId: r.id })
-                          }}>
-                            <button type="submit" title="Disiscriviti" className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--muted-text)] transition-colors hover:bg-red-500/15 hover:text-red-400">
-                              <LogOut className="h-3.5 w-3.5" />
-                            </button>
-                          </form>
+                          <LeaveRegistrationButton registrationId={r.id} label="Disiscriviti" />
                         )}
                         {isAdmin && !isMe && (
                           <form action={async () => {
@@ -192,10 +189,11 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               <PaymentCtaButton
                 tournamentId={id}
                 isFree={!tournament.priceCents || tournament.priceCents === 0}
-                status={chiceceRegStatus}
+                status={!registrationOpen && chiceceRegStatus === "NOT_REGISTERED" ? "CLOSED" : chiceceRegStatus}
                 isAuthed={!!currentPlayer}
                 inline
                 currentSkillLevel={myChiceceReg?.skillLevel ?? null}
+                registrationId={myChiceceReg?.id ?? null}
               />
             )}
             {/* Spectators list */}
@@ -207,20 +205,13 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 <div className="pb-1">
                   {spectatorRegs.map((r) => {
                     const isMe = currentPlayer?.id === r.player.id
-                    const canCancel = isMe
+                    const canCancel = isMe && !(r.paymentStatus === "PAID" && r.paymentMethod !== "FREE")
                     return (
                       <div key={r.id} className="flex items-center gap-3 px-4 py-2">
                         <span className="text-base">🍺</span>
                         <span className="flex-1 truncate text-sm font-medium">{r.player.name}</span>
                         {canCancel && (
-                          <form action={async () => {
-                            "use server"
-                            await cancelRegistration({ registrationId: r.id })
-                          }}>
-                            <button type="submit" title="Annulla iscrizione" className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--muted-text)] transition-colors hover:bg-red-500/15 hover:text-red-400">
-                              <LogOut className="h-3.5 w-3.5" />
-                            </button>
-                          </form>
+                          <LeaveRegistrationButton registrationId={r.id} label="Annulla iscrizione" />
                         )}
                       </div>
                     )
@@ -371,6 +362,12 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
         {isAdmin && tournament.status === "COMPLETED" && (
           <AdminChiceceCompletedActions tournamentId={id} />
         )}
+
+        {tournament.status !== "DRAFT" && (
+          <div className="mt-4">
+            <TournamentInfoCard tournament={tournament} playerCount={playerRegs.length} />
+          </div>
+        )}
       </div>
     )
   }
@@ -383,22 +380,16 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   const myRegRaw = currentPlayer && tournament.isOpenForRegistration
     ? await db.tournamentRegistration.findUnique({
         where: { tournamentId_playerId: { tournamentId: id, playerId: currentPlayer.id } },
-        select: { paymentStatus: true, paymentMethod: true, skillLevel: true, isSpectator: true },
+        select: { id: true, paymentStatus: true, paymentMethod: true, skillLevel: true, isSpectator: true },
       })
     : null
   const myRegistration = myRegRaw && !myRegRaw.isSpectator ? myRegRaw : null
   const alreadySpectator = myRegRaw?.isSpectator ?? false
 
-  function getRegStatus() {
-    if (!myRegistration) return "NOT_REGISTERED" as const
-    const { paymentStatus, paymentMethod } = myRegistration
-    if (paymentStatus === "PAID" || paymentStatus === "FREE") return "PAID" as const
-    if (paymentStatus === "PENDING" && paymentMethod === "STRIPE") return "PENDING_STRIPE" as const
-    if (paymentStatus === "PENDING" && paymentMethod === "CASH") return "PENDING_CASH" as const
-    if (paymentStatus === "PENDING" && !paymentMethod) return "REGISTERED_UNPAID" as const
-    return "NOT_REGISTERED" as const
-  }
-  const regStatus = getRegStatus()
+  const regStatus = deriveRegistrationStatus(myRegistration)
+  const registrationOpen =
+    tournament.isOpenForRegistration &&
+    !(tournament.registrationDeadline && tournament.registrationDeadline.getTime() < Date.now())
 
   const playerRegs = tournament.registrations.filter(r => !r.isSpectator)
   const spectatorRegs = tournament.registrations.filter(r => r.isSpectator)
@@ -432,13 +423,19 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               ? "Doppia Eliminazione"
               : "Classico"}
           </p>
-          <StatusBadge status={tournament.status} />
+          <StatusBadge status={tournament.status} registrationOpen={registrationOpen} />
         </div>
         <h1 className="mt-1 font-display text-[2.1rem] font-extrabold uppercase leading-[0.95] text-white">{tournament.name}</h1>
         <p className="mt-1 text-sm text-[var(--muted-text)]">
-          {formatDate(tournament.date)} · {tournament.registrations.length} giocatori
+          {formatDate(tournament.date)} · {playerRegs.length} giocatori
         </p>
       </div>
+
+      {/* Before the start the details are what people come for; once live
+          the dashboard comes first and the details move to the bottom. */}
+      {tournament.status === "DRAFT" && (
+        <TournamentInfoCard tournament={tournament} playerCount={playerRegs.length} />
+      )}
 
       {/* Participant lists: always for admin, or when open for registration in draft */}
       {(isAdmin || (tournament.status === "DRAFT" && tournament.isOpenForRegistration)) && (
@@ -459,7 +456,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               <div className="pb-1">
                 {playerRegs.map((r) => {
                   const isMe = currentPlayer?.id === r.player.id
-                  const canCancel = isMe && r.paymentStatus !== "PAID"
+                  const canCancel = isMe && !(r.paymentStatus === "PAID" && r.paymentMethod !== "FREE")
                   return (
                     <div key={r.id} className="flex items-center gap-3 px-4 py-2">
                       <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${
@@ -468,14 +465,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                       }`} />
                       <span className="flex-1 truncate text-sm font-medium">{r.player.name}</span>
                       {canCancel && (
-                        <form action={async () => {
-                          "use server"
-                          await cancelRegistration({ registrationId: r.id })
-                        }}>
-                          <button type="submit" title="Disiscriviti" className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--muted-text)] transition-colors hover:bg-red-500/15 hover:text-red-400">
-                            <LogOut className="h-3.5 w-3.5" />
-                          </button>
-                        </form>
+                        <LeaveRegistrationButton registrationId={r.id} label="Disiscriviti" />
                       )}
                       {isAdmin && !isMe && (
                         <form action={async () => {
@@ -498,10 +488,11 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             <PaymentCtaButton
               tournamentId={id}
               isFree={!tournament.priceCents || tournament.priceCents === 0}
-              status={regStatus}
+              status={!registrationOpen && regStatus === "NOT_REGISTERED" ? "CLOSED" : regStatus}
               isAuthed={!!currentPlayer}
               inline
               currentSkillLevel={myRegistration?.skillLevel ?? null}
+              registrationId={myRegistration?.id ?? null}
             />
           )}
           {/* Spectators list */}
@@ -513,20 +504,13 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               <div className="pb-1">
                 {spectatorRegs.map((r) => {
                   const isMe = currentPlayer?.id === r.player.id
-                  const canCancel = isMe && r.paymentStatus !== "PAID"
+                  const canCancel = isMe && !(r.paymentStatus === "PAID" && r.paymentMethod !== "FREE")
                   return (
                     <div key={r.id} className="flex items-center gap-3 px-4 py-2">
                       <span className="text-base">🍺</span>
                       <span className="flex-1 truncate text-sm font-medium">{r.player.name}</span>
                       {canCancel && (
-                        <form action={async () => {
-                          "use server"
-                          await cancelRegistration({ registrationId: r.id })
-                        }}>
-                          <button type="submit" title="Annulla iscrizione" className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--muted-text)] transition-colors hover:bg-red-500/15 hover:text-red-400">
-                            <LogOut className="h-3.5 w-3.5" />
-                          </button>
-                        </form>
+                        <LeaveRegistrationButton registrationId={r.id} label="Annulla iscrizione" />
                       )}
                     </div>
                   )
@@ -728,6 +712,12 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               description="Questa azione è irreversibile. Il torneo verrà chiuso e le statistiche aggiornate."
             />
           )}
+        </div>
+      )}
+
+      {tournament.status !== "DRAFT" && (
+        <div className="mt-4">
+          <TournamentInfoCard tournament={tournament} playerCount={playerRegs.length} />
         </div>
       )}
     </div>
