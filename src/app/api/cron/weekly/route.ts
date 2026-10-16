@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
+import { cronAuthorized } from "@/lib/cronAuth"
 import { getWeeklyRecap } from "@/actions/recap"
 import { db } from "@/lib/db"
 import { notifyPlayers } from "@/lib/push"
@@ -11,15 +12,11 @@ export const runtime = "nodejs"
  *
  * Computes the weekly recap and pushes a notification to every player with a
  * linked account, deep-linking to /settimana. Vercel automatically attaches
- * `Authorization: Bearer $CRON_SECRET`; we verify it when the secret is set.
+ * `Authorization: Bearer $CRON_SECRET`; see cronAuthorized().
  */
 export async function GET(req: NextRequest) {
-  const secret = process.env.CRON_SECRET
-  if (secret) {
-    const auth = req.headers.get("authorization")
-    if (auth !== `Bearer ${secret}`) {
-      return new NextResponse("Unauthorized", { status: 401 })
-    }
+  if (!cronAuthorized(req.headers.get("authorization"))) {
+    return new NextResponse("Unauthorized", { status: 401 })
   }
 
   const recap = await getWeeklyRecap()

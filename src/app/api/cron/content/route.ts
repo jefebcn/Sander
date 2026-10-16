@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { generateContent } from "@/actions/content"
+import { cronAuthorized } from "@/lib/cronAuth"
+import { generateContent } from "@/lib/content/generate"
 import { db } from "@/lib/db"
 import { notifyPlayer } from "@/lib/push"
 import { isAdminEmail } from "@/lib/isAdmin"
 import { nudgeSweep } from "@/lib/nudges"
+import { cancelStaleSessions } from "@/lib/sessionRefunds"
 
 export const runtime = "nodejs"
 
@@ -13,10 +15,8 @@ export const runtime = "nodejs"
  * social content and pings the admin(s) so they can publish in one tap.
  */
 export async function GET(req: NextRequest) {
-  const secret = process.env.CRON_SECRET
-  if (secret) {
-    const auth = req.headers.get("authorization")
-    if (auth !== `Bearer ${secret}`) return new NextResponse("Unauthorized", { status: 401 })
+  if (!cronAuthorized(req.headers.get("authorization"))) {
+    return new NextResponse("Unauthorized", { status: 401 })
   }
 
   const created = await generateContent()
@@ -43,5 +43,12 @@ export async function GET(req: NextRequest) {
   // Kept in this cron instead of a new one so the Vercel cron count is unchanged.
   const nudged = await nudgeSweep().catch(() => 0)
 
-  return NextResponse.json({ ok: true, created, nudged })
+  // Matches nobody closed a week after their date: cancel and refund credits,
+  // so lists don't fill up with dead "Aperta" matches.
+  const staleCancelled = await cancelStaleSessions().catch((e) => {
+    console.error("[cron] stale session sweep failed", e)
+    return 0
+  })
+
+  return NextResponse.json({ ok: true, created, nudged, staleCancelled })
 }

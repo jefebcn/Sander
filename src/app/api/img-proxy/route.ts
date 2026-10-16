@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { isSafeImageType } from "@/lib/imageUpload"
 
 const ALLOWED_HOSTNAMES = [
   "flagcdn.com",
@@ -25,12 +26,18 @@ export async function GET(req: Request) {
   try {
     const res = await fetch(url, { next: { revalidate: 86400 } })
     if (!res.ok) return NextResponse.json({ error: "Upstream error" }, { status: 502 })
+    // Only raster images go out from our origin: an uploaded SVG or HTML file
+    // served here would run its scripts as if it were part of SANDER.
+    const type = res.headers.get("Content-Type")
+    if (!isSafeImageType(type)) return NextResponse.json({ error: "Unsupported type" }, { status: 415 })
     const blob = await res.blob()
     return new NextResponse(blob, {
       headers: {
-        "Content-Type": res.headers.get("Content-Type") ?? "image/png",
+        "Content-Type": type!,
         "Cache-Control": "public, max-age=86400, immutable",
         "Access-Control-Allow-Origin": "*",
+        "X-Content-Type-Options": "nosniff",
+        "Content-Security-Policy": "default-src 'none'; sandbox",
       },
     })
   } catch {

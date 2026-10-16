@@ -2,7 +2,6 @@ export const dynamic = "force-dynamic"
 
 import type { Metadata } from "next"
 import { MapPin, Calendar, Euro, FileText, Coins, RefreshCw, Gauge, Pencil } from "lucide-react"
-import { notFound } from "next/navigation"
 import Link from "next/link"
 import { getSession, getWaitlistInfo } from "@/actions/sessions"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
@@ -84,12 +83,6 @@ export default async function SessionPage({
         orderBy: [{ round: "asc" }, { matchNumber: "asc" }],
       }).catch(() => [])
     : []
-
-  // Completed sessions are private — only participants can view them
-  if (session.status === "COMPLETED") {
-    const isParticipant = session.participants.some((p) => p.player?.id === currentPlayer?.id)
-    if (!isParticipant) notFound()
-  }
 
   // Fetch SC balance if this session costs SanderCredits
   const currentPlayerCredits =
@@ -277,7 +270,7 @@ export default async function SessionPage({
             className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl font-black text-black text-base"
             style={{ background: "var(--accent)" }}
           >
-            {inviteCode ? `Registrati e gioca (+${INVITEE_SC} SC in regalo)` : "Accedi per partecipare"}
+            {inviteCode ? `Registrati e gioca: +${INVITEE_SC} SC alla prima partita` : "Accedi per partecipare"}
           </Link>
         )}
 
@@ -300,11 +293,16 @@ export default async function SessionPage({
             status: session.status,
             maxPlayers: session.maxPlayers,
             format: session.format,
+            date: session.date.toISOString(),
           }}
           participants={session.participants}
           currentPlayerId={currentPlayer?.id ?? null}
           myWaitlistPosition={waitlist.myPosition}
         />
+
+        {/* Group chat — coordinate this game (participants only). Right under
+            the line-up: it's what players open most before a match. */}
+        {isParticipant && <SessionChat sessionId={session.id} />}
 
         {/* Share + QR — below the join action on purpose: sharing is what the
             organiser does, while someone arriving from a link wants "Unisciti"
@@ -328,9 +326,6 @@ export default async function SessionPage({
             </div>
           </div>
         )}
-
-        {/* Group chat — coordinate this game (participants only) */}
-        {isParticipant && <SessionChat sessionId={session.id} />}
 
         {/* Live scoreboard — anyone playing this match (the board itself already
             accepts any participant, and on the sand whoever is nearest scores) */}

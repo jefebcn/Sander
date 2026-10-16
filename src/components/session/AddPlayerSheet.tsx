@@ -5,7 +5,6 @@ import { Search, X, UserCheck, UserPlus } from "lucide-react"
 import { listPlayers, listUsersWithoutProfile, createMinimalPlayerForUser } from "@/actions/players"
 import { addPlayerToSession } from "@/actions/sessions"
 import { cn } from "@/lib/utils"
-import type { Player } from "@/generated/prisma/client"
 
 interface UnlinkedUser {
   id: string
@@ -26,8 +25,9 @@ export function AddPlayerSheet({
   onClose,
   onDone,
 }: AddPlayerSheetProps) {
-  const [players, setPlayers] = useState<Player[]>([])
+  const [players, setPlayers] = useState<Awaited<ReturnType<typeof listPlayers>>>([])
   const [unlinked, setUnlinked] = useState<UnlinkedUser[]>([])
+  const [loaded, setLoaded] = useState(false)
   const [search, setSearch] = useState("")
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -40,10 +40,14 @@ export function AddPlayerSheet({
     }
   }, [])
 
+  // Each list loads on its own: the "profile to complete" list is admin-only,
+  // and when it failed for everyone else Promise.all left the sheet spinning.
   useEffect(() => {
-    Promise.all([listPlayers(), listUsersWithoutProfile()]).then(([p, u]) => {
-      setPlayers(p)
-      setUnlinked(u)
+    Promise.allSettled([listPlayers(), listUsersWithoutProfile()]).then(([p, u]) => {
+      if (p.status === "fulfilled") setPlayers(p.value)
+      else setError("Impossibile caricare i giocatori. Riprova.")
+      if (u.status === "fulfilled") setUnlinked(u.value)
+      setLoaded(true)
     })
   }, [])
 
@@ -83,20 +87,20 @@ export function AddPlayerSheet({
     })
   }
 
-  const isLoading = players.length === 0 && unlinked.length === 0
+  const isLoading = !loaded
 
   return (
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-black/70"
+        className="fixed inset-0 z-[60] bg-black/70"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Bottom sheet */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-50 flex max-h-[75dvh] flex-col rounded-t-3xl bg-[var(--surface-1)]"
+        className="fixed bottom-0 left-0 right-0 z-[70] mx-auto flex max-h-[80dvh] max-w-[560px] flex-col rounded-t-3xl bg-[var(--surface-1)] pb-[env(safe-area-inset-bottom)]"
         role="dialog"
         aria-modal="true"
         aria-label="Aggiungi giocatore"
@@ -113,7 +117,7 @@ export function AddPlayerSheet({
             type="button"
             onClick={onClose}
             aria-label="Chiudi"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-2)] text-[var(--muted-text)] transition-colors hover:bg-[var(--surface-3)]"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-2)] text-[var(--muted-text)] transition-colors hover:bg-[var(--surface-3)]"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -124,12 +128,13 @@ export function AddPlayerSheet({
           <div className="flex items-center gap-2 rounded-xl bg-[var(--surface-2)] px-3 py-2.5">
             <Search className="h-4 w-4 shrink-0 text-[var(--muted-text)]" aria-hidden="true" />
             <input
-              type="text"
+              type="search"
+              aria-label="Cerca un giocatore per nome"
               autoFocus
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cerca per nome..."
-              className="flex-1 bg-transparent text-sm text-[var(--foreground)] outline-none placeholder:text-[var(--muted-text)]"
+              className="min-h-[2rem] flex-1 bg-transparent text-base text-[var(--foreground)] outline-none placeholder:text-[var(--muted-text)]"
             />
           </div>
         </div>

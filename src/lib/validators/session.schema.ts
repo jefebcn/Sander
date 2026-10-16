@@ -16,10 +16,14 @@ export const CreateSessionSchema = z.object({
   courtCost: z.number().int().min(0).optional(),
   notes: z.string().max(200).optional(),
   paymentType: z.enum(["FREE", "QUOTA", "LOSER_PAYS", "SC"]).default("FREE"),
-  quotaAmount: z.number().int().min(0).optional(),
+  quotaAmount: z.number().int().min(0).max(1000).optional(),
   loserPays: z.string().max(60).optional(),
   matchMode: z.boolean().optional().default(false),
-})
+}).refine(
+  // A credits match with no price would let everyone in for free.
+  (d) => d.paymentType !== "SC" || (d.quotaAmount ?? 0) >= 1,
+  { message: "Indica quanti SanderCredits costa la partita", path: ["quotaAmount"] },
+)
 
 export const EditSessionSchema = z.object({
   sessionId: z.string().min(1),
@@ -96,3 +100,15 @@ export type AssignTeamInput = z.infer<typeof AssignTeamSchema>
 export type SubmitSessionMatchScoreInput = z.infer<typeof SubmitSessionMatchScoreSchema>
 export type CompleteSessionInput = z.infer<typeof CompleteSessionSchema>
 export type LiveScoreState = z.infer<typeof LiveScoreSchema>
+
+export const AddPlayerToSessionSchema = z.object({
+  sessionId: z.string().min(1),
+  playerId: z.string().min(1),
+})
+
+export const AddGuestSchema = z.object({
+  sessionId: z.string().min(1),
+  guestName: z.string().trim().min(1, "Nome ospite non valido").max(40, "Nome troppo lungo"),
+})
+
+export const SessionIdSchema = z.string().min(1).max(64)

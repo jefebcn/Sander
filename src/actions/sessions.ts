@@ -10,7 +10,20 @@ import {
   SubmitSessionMatchScoreSchema,
   CompleteSessionSchema,
   LiveScoreSchema,
+  AddPlayerToSessionSchema,
+  AddGuestSchema,
+  SessionIdSchema,
 } from "@/lib/validators/session.schema"
+import {
+  sessionDateError,
+  joinWindowOpen,
+  completionError,
+  countsForProgress,
+  isActiveStatus,
+  PUBLIC_LIST_PAST_MS,
+} from "@/lib/sessionRules"
+import { rewardInvitesAfterMatch } from "@/lib/referralRedeem"
+import { refundSessionCredits } from "@/lib/sessionRefunds"
 import { updateGlickoAfterSession } from "@/lib/rating"
 import { isAdminEmail } from "@/lib/isAdmin"
 import { generateKOTBSchedule, applyMatchResult, rankStandings } from "@/lib/tournament/kotb"
@@ -62,6 +75,8 @@ export async function createSession(input: unknown) {
   if (!player) throw new Error("Non autenticato")
 
   const data = CreateSessionSchema.parse(input)
+  const dateError = sessionDateError(data.date)
+  if (dateError) throw new Error(dateError)
   const maxPlayers = FORMAT_MAX[data.format]
 
   const FORMAT_LABEL: Record<string, string> = {
@@ -84,7 +99,9 @@ export async function createSession(input: unknown) {
       courtCost: data.courtCost ?? null,
       notes: data.notes ?? null,
       paymentType: data.paymentType ?? "FREE",
-      quotaAmount: data.paymentType === "QUOTA" ? (data.quotaAmount ?? null) : null,
+      // SC matches charge quotaAmount credits on join: dropping it here made
+      // every credits match free.
+      quotaAmount: data.paymentType === "QUOTA" || data.paymentType === "SC" ? (data.quotaAmount ?? null) : null,
       loserPays: data.paymentType === "LOSER_PAYS" ? (data.loserPays ?? null) : null,
       matchMode: data.format === "TWO_VS_TWO" ? (data.matchMode ?? false) : false,
     },
@@ -113,9 +130,18 @@ export async function getSessions(playerId?: string) {
     },
   } as const
 
+  // Matches whose time has passed stay listed only for the people in them (to
+  // close them with the score); for everyone else the list shows what's ahead.
+  const publicFrom = new Date(Date.now() - PUBLIC_LIST_PAST_MS)
   const [openSessions, completedSessions] = await Promise.all([
     db.session.findMany({
-      where: { status: { in: ["OPEN", "FULL"] } },
+      where: {
+        status: { in: ["OPEN", "FULL"] },
+        OR: [
+          { date: { gte: publicFrom } },
+          ...(playerId ? [{ organizerId: playerId }, { participants: { some: { playerId } } }] : []),
+        ],
+      },
       include,
       orderBy: [{ status: "asc" }, { date: "asc" }],
     }),
@@ -138,7 +164,13 @@ export async function getSessions(playerId?: string) {
 export async function adminDeleteSession(id: string) {
   const authSession = await getCurrentSession()
   if (!isAdminEmail(authSession?.user?.email)) throw new Error("Non autorizzato")
-  await db.session.delete({ where: { id } })
+  SessionIdSchema.parse(id)
+  // Give back what players paid before the cascade deletes their seats.
+  await db.$transaction(async (tx) => {
+    const s = await tx.session.findUnique({ where: { id }, select: { status: true } })
+    if (s && s.status !== "COMPLETED") await refundSessionCredits(tx, id)
+    await tx.session.delete({ where: { id } })
+  })
   revalidatePath("/sessions")
   revalidatePath("/profile")
 }
@@ -212,6 +244,9 @@ export async function joinSession(sessionId: string) {
         if (session.status === "COMPLETED" || session.status === "CANCELLED") {
           throw new Error("La sessione non è aperta")
         }
+        if (!joinWindowOpen(session.date)) {
+          throw new Error("Questa partita è già iniziata")
+        }
         if (session._count.participants >= session.maxPlayers) {
           throw new Error("Sessione al completo")
         }
@@ -272,13 +307,17 @@ export async function editSession(input: unknown): Promise<{ ok: true } | { ok: 
 
     const session = await db.session.findUniqueOrThrow({
       where: { id: data.sessionId },
-      select: { organizerId: true, status: true, _count: { select: { participants: true } } },
+      select: { organizerId: true, status: true, date: true, _count: { select: { participants: true } } },
     })
     if (session.organizerId !== player.id) {
       return { ok: false, error: "Solo l'organizzatore può modificare la partita." }
     }
     if (session.status === "COMPLETED" || session.status === "CANCELLED") {
       return { ok: false, error: "Questa partita non è più modificabile." }
+    }
+    if (data.date.getTime() !== session.date.getTime()) {
+      const dateError = sessionDateError(data.date)
+      if (dateError) return { ok: false, error: dateError }
     }
     // Don't shrink capacity below the players already in.
     const maxPlayers =
@@ -312,10 +351,10 @@ export async function joinWaitlist(sessionId: string): Promise<{ ok: true; posit
 
   const session = await db.session.findUnique({
     where: { id: sessionId },
-    select: { status: true, participants: { select: { playerId: true } } },
+    select: { status: true, date: true, participants: { select: { playerId: true } } },
   })
   if (!session) return { ok: false, error: "Partita non trovata" }
-  if (session.status === "COMPLETED" || session.status === "CANCELLED") {
+  if (session.status === "COMPLETED" || session.status === "CANCELLED" || !joinWindowOpen(session.date)) {
     return { ok: false, error: "Questa partita non è più attiva" }
   }
   if (session.participants.some((p) => p.playerId === player.id)) {
@@ -402,21 +441,8 @@ export async function leaveSession(sessionId: string) {
   // transaction so we never notify about a rollback, and awaited so the push
   // isn't dropped when the serverless invocation ends.
   if (wasFull) {
-    const next = await db.sessionWaitlist.findFirst({
-      where: { sessionId },
-      orderBy: { createdAt: "asc" },
-      select: { playerId: true, session: { select: { title: true, location: true } } },
-    })
-    if (next) {
-      await notifyPlayerNow(next.playerId, {
-        title: "Si è liberato un posto! 🏐",
-        body: `${next.session.title} a ${next.session.location}: corri a prenderlo.`,
-        url: `/sessions/${sessionId}`,
-      })
-    } else {
-      // Nobody queued: offer the seat to free players nearby instead.
-      after(() => nudgeForSession(sessionId, "freed").catch(() => {}))
-    }
+    // Tell whoever has queued longest, or nearby free players if nobody queued.
+    await notifyWaitlistHead(sessionId)
   } else {
     after(() => nudgeForSession(sessionId, "freed").catch(() => {}))
   }
@@ -441,9 +467,18 @@ export async function createRematch(sessionId: string): Promise<string> {
   const isParticipant = original.participants.some((p) => p.playerId === player.id)
   if (!isParticipant) throw new Error("Non sei partecipante di questa sessione")
 
-  // Schedule rematch for the next day at the same time
+  // Schedule rematch for the next day at the same time (or tomorrow at that
+  // time if the original is older than a day).
   const rematchDate = new Date(original.date)
   rematchDate.setDate(rematchDate.getDate() + 1)
+  while (rematchDate.getTime() < Date.now()) rematchDate.setDate(rematchDate.getDate() + 1)
+
+  // A credits match must be paid on join, so nobody is seated for free: the
+  // others get a push to join. Free matches keep the same line-up (swapped sides).
+  const copyLineUp = original.paymentType !== "SC"
+  const others = original.participants
+    .map((p) => p.playerId)
+    .filter((id): id is string => !!id && id !== player.id)
 
   const newSession = await db.session.create({
     data: {
@@ -460,13 +495,25 @@ export async function createRematch(sessionId: string): Promise<string> {
       quotaAmount: original.quotaAmount,
       loserPays: original.loserPays,
       matchMode: original.matchMode,
-      participants: {
-        create: original.participants.map((p) => ({
-          playerId: p.playerId,
-          team: p.team === 0 ? 1 : p.team === 1 ? 0 : null,
-        })),
-      },
+      ...(copyLineUp
+        ? {
+            participants: {
+              create: original.participants.map((p) => ({
+                playerId: p.playerId,
+                team: p.team === 0 ? 1 : p.team === 1 ? 0 : null,
+              })),
+            },
+          }
+        : {}),
     },
+  })
+
+  safeNotifyPlayers(others, {
+    title: "Rivincita! 🔁",
+    body: copyLineUp
+      ? `${player.name} ha fissato la rivincita: ci sei già dentro.`
+      : `${player.name} ha fissato la rivincita: entra per tenerti il posto.`,
+    url: `/sessions/${newSession.id}`,
   })
 
   revalidatePath("/sessions")
@@ -484,6 +531,14 @@ export async function assignTeam(input: unknown) {
     select: { organizerId: true },
   })
   if (session.organizerId !== player.id) throw new Error("Solo l'organizzatore può assegnare le squadre")
+
+  // The seat must belong to this match: otherwise an organiser of any match
+  // could move players around in someone else's.
+  const owned = await db.sessionParticipant.findFirst({
+    where: { id: data.participantId, sessionId: data.sessionId },
+    select: { id: true },
+  })
+  if (!owned) throw new Error("Giocatore non trovato in questa partita")
 
   const participant = await db.sessionParticipant.update({
     where: { id: data.participantId },
@@ -527,12 +582,26 @@ export async function completeSession(
   if (session.organizerId !== player.id && !isParticipant) {
     throw new Error("Solo chi partecipa può completare la partita")
   }
+  if (session.status === "COMPLETED") {
+    revalidatePath(`/sessions/${sessionId}`)
+    return
+  }
+  // Not before it starts, not with an empty side, not a cancelled match: those
+  // were free wins, XP and rating for whoever closed them.
+  const ruleError = completionError({
+    status: session.status,
+    date: session.date,
+    participants: session.participants,
+    withScore: !!sets && sets.length > 0,
+  })
+  if (ruleError) throw new Error(ruleError)
 
   // Idempotency guard: claim the session atomically. A double tap, a retry, or a
   // second participant closing the same match must not re-apply sets, career
   // stats, XP and rating deltas — only the call that flips the status proceeds.
+  // Only an active match can be claimed, so a cancelled one stays cancelled.
   const claimed = await db.session.updateMany({
-    where: { id: sessionId, status: { not: "COMPLETED" } },
+    where: { id: sessionId, status: { in: ["OPEN", "FULL"] } },
     data: { status: "COMPLETED" },
   })
   if (claimed.count === 0) {
@@ -637,9 +706,11 @@ export async function completeSession(
     console.error("Glicko update failed for session", sessionId, e)
   }
 
-  // Update sessionsPlayed + XP for every participant (skip guests)
+  // Update sessionsPlayed + XP for every participant (skip guests). A "match"
+  // with a single real account earns nothing, or anyone could farm XP alone.
+  const progress = countsForProgress(session.participants)
   for (const p of session.participants) {
-    if (!p.playerId) continue  // skip guests
+    if (!p.playerId || !progress) continue  // skip guests
     const current = await db.player.findUniqueOrThrow({
       where: { id: p.playerId },
       select: { xp: true, sessionsPlayed: true },
@@ -655,6 +726,13 @@ export async function completeSession(
     })
   }
 
+  // First real match for an invited friend: pay both referral rewards.
+  if (progress) {
+    await rewardInvitesAfterMatch(
+      session.participants.map((p) => p.playerId).filter((id): id is string => !!id),
+    ).catch((e) => console.error("Referral reward failed for session", sessionId, e))
+  }
+
   revalidatePath(`/sessions/${sessionId}`)
   revalidatePath("/sessions")
 }
@@ -662,37 +740,11 @@ export async function completeSession(
 export async function addPlayerToSession(sessionId: string, playerId: string) {
   const organizer = await getCurrentPlayer()
   if (!organizer) throw new Error("Non autenticato")
+  AddPlayerToSessionSchema.parse({ sessionId, playerId })
 
-  const session = await db.session.findUniqueOrThrow({
-    where: { id: sessionId },
-    select: {
-      organizerId: true,
-      status: true,
-      maxPlayers: true,
-      title: true,
-      location: true,
-      _count: { select: { participants: true } },
-    },
-  })
-
-  if (session.organizerId !== organizer.id) {
-    throw new Error("Solo l'organizzatore può aggiungere giocatori")
-  }
-  if (session.status === "COMPLETED" || session.status === "CANCELLED") {
-    throw new Error("La sessione non è più aperta")
-  }
-  if (session._count.participants >= session.maxPlayers) {
-    throw new Error("Sessione al completo")
-  }
-
-  await db.sessionParticipant.create({
-    data: { sessionId, playerId },
-  })
-
-  const newCount = session._count.participants + 1
-  if (newCount >= session.maxPlayers) {
-    await db.session.update({ where: { id: sessionId }, data: { status: "FULL" } })
-  }
+  const session = await seatTransaction(sessionId, organizer.id, (tx) =>
+    tx.sessionParticipant.create({ data: { sessionId, playerId } }),
+  )
 
   // Notify the added player
   safeNotifyPlayer(playerId, {
@@ -708,50 +760,162 @@ export async function addPlayerToSession(sessionId: string, playerId: string) {
 export async function addGuestToSession(sessionId: string, guestName: string) {
   const player = await getCurrentPlayer()
   if (!player) throw new Error("Non autenticato")
-  const trimmed = guestName.trim()
-  if (!trimmed) throw new Error("Nome ospite non valido")
+  const data = AddGuestSchema.parse({ sessionId, guestName })
 
-  const session = await db.session.findUniqueOrThrow({
-    where: { id: sessionId },
-    select: { organizerId: true, maxPlayers: true, _count: { select: { participants: true } } },
-  })
-  if (session.organizerId !== player.id) throw new Error("Solo l'organizzatore può aggiungere ospiti")
-  if (session._count.participants >= session.maxPlayers) throw new Error("Sessione al completo")
-
-  await db.sessionParticipant.create({
-    data: { sessionId, guestName: trimmed },
-  })
+  await seatTransaction(sessionId, player.id, (tx) =>
+    tx.sessionParticipant.create({ data: { sessionId, guestName: data.guestName } }),
+  )
   revalidatePath(`/sessions/${sessionId}`)
+  revalidatePath("/sessions")
   return { ok: true as const }
 }
 
-export async function removeGuestFromSession(participantId: string) {
+/**
+ * Seat someone on the organiser's behalf: capacity check, insert and the FULL
+ * flip happen in one serialisable transaction, like joinSession, so two adds at
+ * once can't overflow the match.
+ */
+async function seatTransaction(
+  sessionId: string,
+  organizerId: string,
+  insert: (tx: Parameters<Parameters<typeof db.$transaction>[0]>[0]) => Promise<unknown>,
+) {
+  try {
+    return await db.$transaction(
+      async (tx) => {
+        const session = await tx.session.findUniqueOrThrow({
+          where: { id: sessionId },
+          select: {
+            organizerId: true,
+            status: true,
+            date: true,
+            maxPlayers: true,
+            title: true,
+            location: true,
+            _count: { select: { participants: true } },
+          },
+        })
+        if (session.organizerId !== organizerId) throw new Error("Solo l'organizzatore può aggiungere giocatori")
+        if (!isActiveStatus(session.status)) throw new Error("La sessione non è più aperta")
+        if (session._count.participants >= session.maxPlayers) throw new Error("Sessione al completo")
+
+        await insert(tx)
+        if (session._count.participants + 1 >= session.maxPlayers) {
+          await tx.session.update({ where: { id: sessionId }, data: { status: "FULL" } })
+        }
+        return session
+      },
+      { isolationLevel: "Serializable" },
+    )
+  } catch (e) {
+    if (e && typeof e === "object" && "code" in e) {
+      if (e.code === "P2034") throw new Error("Posto appena occupato, riprova.")
+      if (e.code === "P2002") throw new Error("È già in questa partita")
+    }
+    throw e
+  }
+}
+
+/** Organiser removes a seat (guest or registered player). Paid credits go back. */
+export async function removeParticipantFromSession(participantId: string) {
   const player = await getCurrentPlayer()
   if (!player) throw new Error("Non autenticato")
+  SessionIdSchema.parse(participantId)
 
   const participant = await db.sessionParticipant.findUniqueOrThrow({
     where: { id: participantId },
-    include: { session: { select: { organizerId: true, id: true } } },
+    include: { session: { select: { organizerId: true, id: true, status: true, title: true } } },
   })
-  if (participant.session.organizerId !== player.id) throw new Error("Solo l'organizzatore può rimuovere ospiti")
-  if (participant.playerId !== null) throw new Error("Usa l'azione di rimozione normale per i giocatori")
+  if (participant.session.organizerId !== player.id) throw new Error("Solo l'organizzatore può rimuovere giocatori")
+  if (!isActiveStatus(participant.session.status)) throw new Error("La partita non è più modificabile")
+  const sessionId = participant.session.id
 
-  await db.sessionParticipant.delete({ where: { id: participantId } })
-  revalidatePath(`/sessions/${participant.session.id}`)
+  let wasFull = false
+  await db.$transaction(async (tx) => {
+    const removed = await tx.sessionParticipant.delete({
+      where: { id: participantId },
+      select: { paidCredits: true, playerId: true },
+    })
+    if (removed.playerId && removed.paidCredits > 0) {
+      await tx.player.update({
+        where: { id: removed.playerId },
+        data: { sanderCredits: { increment: removed.paidCredits } },
+      })
+    }
+    const reopened = await tx.session.updateMany({
+      where: { id: sessionId, status: "FULL" },
+      data: { status: "OPEN" },
+    })
+    wasFull = reopened.count > 0
+  })
+
+  if (participant.playerId) {
+    await notifyPlayerNow(participant.playerId, {
+      title: "Sei stato tolto da una partita",
+      body: `${participant.session.title}${participant.paidCredits > 0 ? `: ti abbiamo restituito ${participant.paidCredits} SC.` : "."}`,
+      url: "/sessions",
+    })
+  }
+  if (wasFull) await notifyWaitlistHead(sessionId)
+
+  revalidatePath(`/sessions/${sessionId}`)
+  revalidatePath("/sessions")
   return { ok: true as const }
+}
+
+/** Kept for existing callers: removing a guest is removing a seat. */
+export async function removeGuestFromSession(participantId: string) {
+  return removeParticipantFromSession(participantId)
+}
+
+async function notifyWaitlistHead(sessionId: string) {
+  const next = await db.sessionWaitlist.findFirst({
+    where: { sessionId },
+    orderBy: { createdAt: "asc" },
+    select: { playerId: true, session: { select: { title: true, location: true } } },
+  })
+  if (next) {
+    await notifyPlayerNow(next.playerId, {
+      title: "Si è liberato un posto! 🏐",
+      body: `${next.session.title} a ${next.session.location}: corri a prenderlo.`,
+      url: `/sessions/${sessionId}`,
+    })
+  } else {
+    after(() => nudgeForSession(sessionId, "freed").catch(() => {}))
+  }
 }
 
 export async function cancelSession(sessionId: string) {
   const player = await getCurrentPlayer()
   if (!player) throw new Error("Non autenticato")
+  SessionIdSchema.parse(sessionId)
 
   const session = await db.session.findUniqueOrThrow({
     where: { id: sessionId },
-    select: { organizerId: true },
+    select: { organizerId: true, title: true },
   })
   if (session.organizerId !== player.id) throw new Error("Solo l'organizzatore può cancellare la sessione")
 
-  await db.session.update({ where: { id: sessionId }, data: { status: "CANCELLED" } })
+  // Cancel and refund in one step: players who paid in credits get them back.
+  const notify = await db.$transaction(async (tx) => {
+    const claimed = await tx.session.updateMany({
+      where: { id: sessionId, status: { in: ["OPEN", "FULL"] } },
+      data: { status: "CANCELLED" },
+    })
+    if (claimed.count === 0) throw new Error("La partita non è più attiva")
+    await refundSessionCredits(tx, sessionId)
+    const seats = await tx.sessionParticipant.findMany({
+      where: { sessionId, playerId: { not: null } },
+      select: { playerId: true },
+    })
+    return seats.map((p) => p.playerId!).filter((id) => id !== player.id)
+  })
+
+  safeNotifyPlayers(notify, {
+    title: "Partita annullata",
+    body: `${session.title} è stata annullata dall'organizzatore. Eventuali crediti ti sono stati restituiti.`,
+    url: `/sessions/${sessionId}`,
+  })
 
   revalidatePath(`/sessions/${sessionId}`)
   revalidatePath("/sessions")

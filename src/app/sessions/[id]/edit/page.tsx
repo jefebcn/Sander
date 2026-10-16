@@ -19,7 +19,7 @@ export default async function EditSessionPage({ params }: { params: Promise<{ id
 
   return (
     <div>
-      <PageHeader title="Modifica partita" />
+      <PageHeader title="Modifica partita" backHref={`/sessions/${id}`} />
       <EditSessionForm
         session={{
           id: session.id,

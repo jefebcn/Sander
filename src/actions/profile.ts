@@ -3,7 +3,6 @@
 import { db } from "@/lib/db"
 import { auth } from "@/lib/auth"
 import { SaveProfileSchema, NudgePrefSchema } from "@/lib/validators/profile.schema"
-import { INVITEE_SC } from "@/lib/referral"
 import { canSeedRating, startingRating } from "@/lib/startLevel"
 import { revalidatePath } from "next/cache"
 
@@ -53,13 +52,6 @@ export async function saveProfile(input: unknown) {
       },
     })
   } else {
-    // Was this user invited by someone? Grant a welcome SanderCredits bonus.
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-      select: { invitedByPlayerId: true },
-    })
-    const invited = Boolean(user?.invitedByPlayerId)
-
     await db.player.create({
       data: {
         name:          fullName,
@@ -69,7 +61,6 @@ export async function saveProfile(input: unknown) {
         ...(data.startLevel ? { glickoRating: startingRating(data.startLevel) } : {}),
         avatarUrl:     data.avatarUrl ?? null,
         userId:        session.user.id,
-        sanderCredits: invited ? INVITEE_SC : 0,
       },
     })
   }

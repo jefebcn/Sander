@@ -82,6 +82,7 @@ export function EditSessionForm({ session }: Props) {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="Bagno o campo (es. Bagno 26)"
+            aria-label="Luogo della partita"
             className="w-full rounded-xl bg-[var(--surface-2)] py-3 pl-9 pr-4 text-base text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           />
         </div>
@@ -94,7 +95,7 @@ export function EditSessionForm({ session }: Props) {
                 type="button"
                 onClick={() => setLocation(label)}
                 className={cn(
-                  "rounded-full border px-3 py-1 text-xs font-bold transition-colors",
+                  "min-h-[2.75rem] rounded-full border px-4 text-sm font-bold transition-colors",
                   location === label
                     ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
                     : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted-text)]",
@@ -123,7 +124,7 @@ export function EditSessionForm({ session }: Props) {
                 aria-pressed={selected}
                 onClick={() => setCity(selected ? "" : name)}
                 className={cn(
-                  "rounded-full border px-3 py-2 text-sm font-bold transition-colors",
+                  "min-h-[2.75rem] rounded-full border px-4 text-sm font-bold transition-colors",
                   selected
                     ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
                     : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted-text)]",
@@ -175,6 +176,7 @@ export function EditSessionForm({ session }: Props) {
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Note (opzionale)"
+            aria-label="Note"
           className="w-full rounded-xl bg-[var(--surface-2)] px-4 py-3 text-base text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
         />
       </div>

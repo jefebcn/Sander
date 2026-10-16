@@ -2,6 +2,7 @@ import { put } from "@vercel/blob"
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { isAdminEmail, canManageTournament } from "@/lib/isAdmin"
+import { isSafeImageType, imageExtension } from "@/lib/imageUpload"
 
 export async function POST(req: Request) {
   try {
@@ -33,24 +34,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Nessun file" }, { status: 400 })
     }
 
-    if (!file.type.startsWith("image/")) {
-      return NextResponse.json({ error: "Formato non supportato" }, { status: 400 })
+    if (!isSafeImageType(file.type)) {
+      return NextResponse.json({ error: "Formato non supportato: usa JPG, PNG o WebP" }, { status: 400 })
     }
 
     if (file.size > 8 * 1024 * 1024) {
       return NextResponse.json({ error: "File troppo grande (max 8 MB)" }, { status: 400 })
     }
 
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_")
-    const blob = await put(`tournament-covers/${Date.now()}-${safeName}`, file, {
+    // Name and content type come from the checked type, never from the client's
+    // file name, so a "cover.html" can't be served as a page.
+    const blob = await put(`tournament-covers/${Date.now()}.${imageExtension(file.type)}`, file, {
       access: "public",
+      contentType: file.type,
     })
 
     return NextResponse.json({ url: blob.url })
   } catch (err) {
     console.error("[tournament-cover upload]", err)
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Errore durante l'upload" },
+      { error: "Errore durante l'upload. Riprova." },
       { status: 500 },
     )
   }

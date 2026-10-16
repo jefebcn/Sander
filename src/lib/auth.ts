@@ -4,6 +4,7 @@ import Credentials from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import bcrypt from "bcryptjs"
 import { db } from "@/lib/db"
+import { findUserByEmail } from "@/lib/userByEmail"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
@@ -20,9 +21,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
         try {
-          const user = await db.user.findUnique({
-            where: { email: credentials.email as string },
-          })
+          const user = await findUserByEmail(credentials.email as string)
           if (!user?.password) return null
           const ok = await bcrypt.compare(
             credentials.password as string,
@@ -36,6 +35,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   pages: { signIn: "/auth/signin", error: "/auth/error" },
+  events: {
+    // Google proves the address belongs to whoever signs in. If an email+password
+    // account with that address was never verified, it may have been registered
+    // by someone else in advance: drop that password so only the real owner keeps
+    // access (they can set a new one with "password dimenticata").
+    async linkAccount({ user, account }) {
+      if (account.provider !== "google" || !user.id) return
+      const row = await db.user.findUnique({
+        where: { id: user.id },
+        select: { emailVerified: true, password: true },
+      })
+      if (!row || row.emailVerified) return
+      await db.user.update({
+        where: { id: user.id },
+        data: { emailVerified: new Date(), ...(row.password ? { password: null } : {}) },
+      })
+    },
+  },
   callbacks: {
     async jwt({ token, user, account }) {
       if (user) token.id = user.id
