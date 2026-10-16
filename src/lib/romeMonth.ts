@@ -60,3 +60,19 @@ export function romeMonthRange(
   const m = (index % 12) + 1
   return { start: romeMonthStart(y, m), end: romeMonthStart(y, m + 1), year: y, month: m }
 }
+
+/** The instant of 00:00 Rome time on `year-month-day` (day may overflow). */
+function romeMidnight(year: number, month: number, day: number): Date {
+  const guess = Date.UTC(year, month - 1, day)
+  let t = guess - romeOffsetMs(guess)
+  t = guess - romeOffsetMs(t)
+  return new Date(t)
+}
+
+/** Monday 00:00 Rome time of the week containing `now` (Italian weeks start on Monday). */
+export function romeWeekStart(now: Date = new Date()): Date {
+  const [y, m, d] = dayKey(now).split("-").map(Number)
+  const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay() // 0 = Sunday
+  const back = (dow + 6) % 7
+  return romeMidnight(y, m, d - back)
+}

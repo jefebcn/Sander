@@ -1,161 +1,97 @@
+import Image from "next/image"
 import Link from "next/link"
-import { Users, BellRing, Crown, Sparkles, ChevronRight, Download } from "lucide-react"
-import { SanderCardFut, type PlayerCardData } from "@/components/player/SanderCardFut"
-import { CountUp } from "@/components/ui/CountUp"
-import { CITY_NAMES } from "@/lib/cities"
+import { ArrowRight, Check, Users, Trophy, type LucideIcon } from "lucide-react"
 import { TournamentSpotlight, type SpotlightTournament } from "./TournamentSpotlight"
 
-const DEMO_CARD: PlayerCardData = {
-  name: "Il tuo nome",
-  glicko2: 1620,
-  nationalityCode: "IT",
-  role: "DEFENDER",
-  stats: { att: 78, dif: 84, ric: 81, mur: 62, alz: 74, sta: 80 },
-}
-
-/**
- * The real competitor is the beach's WhatsApp group, so say what it can't do.
- */
-const WHY = [
-  { icon: Users, title: "Vedi chi c'è e quanti posti mancano", text: "Niente più \"chi viene?\" scritto 40 volte nel gruppo." },
-  { icon: BellRing, title: "Se qualcuno dà buca, il posto si riempie", text: "Entra il primo in lista d'attesa e gli arriva la notifica." },
-  { icon: Crown, title: "Ogni partita conta", text: "Il tuo rating sale, e c'è una classifica per ogni bagno e ogni comune." },
+/** Three reasons, in the words people use on the beach. */
+const WHY: { icon: LucideIcon; text: string; tone: string }[] = [
+  { icon: Check, text: "Entri in una partita con 2 tocchi", tone: "var(--accent)" },
+  { icon: Users, text: "Ti avvisiamo quando manca un giocatore", tone: "var(--social)" },
+  { icon: Trophy, text: "Sali in classifica nel tuo comune", tone: "var(--compete)" },
 ]
 
-/** Landing for visitors: one promise, one proof, one button. */
+/** Landing for visitors: one promise, three reasons, one button. */
 export function GuestLanding({
-  stats,
+  todayOpen,
   tournament,
 }: {
-  stats: { players: number; matches: number }
+  todayOpen: number
   tournament: SpotlightTournament | null
 }) {
   return (
-    <div className="flex flex-col gap-8">
-      {/* Hero */}
-      <section className="relative">
-        <div className="rise-in" style={{ "--i": 0 } as React.CSSProperties}>
-          <p className="eyebrow text-[var(--accent)]">Rimini · Riccione · Cervia · Cesenatico</p>
-          <h1 className="mt-2 font-display text-[3.4rem] font-black uppercase leading-[0.86] tracking-tight text-white">
-            Il beach
-            <br />
-            volley della
-            <br />
-            <span className="text-[var(--accent)]">Riviera.</span>
-          </h1>
-          <p className="mt-4 max-w-[21rem] text-lg leading-snug text-white/80">
-            Il gruppo WhatsApp del beach volley, ma che si organizza da solo: trovi la partita, ti unisci in un
-            tocco, e ogni vittoria ti fa salire in classifica.
-          </p>
-        </div>
-      </section>
-
-      {/* CTAs */}
-      <div className="rise-in flex flex-col gap-2.5" style={{ "--i": 1 } as React.CSSProperties}>
-        <Link
-          href="/auth/signin?mode=register"
-          className="pressable flex min-h-[3.75rem] items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--accent)] text-lg font-extrabold text-black shadow-[var(--shadow-glow)]"
-        >
-          <Sparkles className="h-5 w-5" aria-hidden="true" /> Crea la tua carta gratis
-        </Link>
+    <div className="flex flex-col gap-6">
+      <header className="flex min-h-[3rem] items-center gap-2.5">
+        <Image src="/sander-logo.png" alt="" width={36} height={36} className="object-contain" priority />
+        <span className="font-display text-[1.75rem] font-extrabold uppercase tracking-wide text-white">Sander</span>
         <Link
           href="/auth/signin"
-          className="flex min-h-[3.5rem] items-center justify-center rounded-[var(--radius-md)] bg-[var(--surface-2)] text-base font-bold text-white"
+          className="ml-auto flex min-h-[2.75rem] items-center rounded-full bg-white/10 px-4 text-base font-bold text-white"
         >
-          Ho già un account
+          Accedi
         </Link>
-      </div>
+      </header>
 
-      {/* The card is the hook: give it room instead of squeezing it beside the headline. */}
-      <section
-        className="rise-in relative flex items-center gap-5 overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-5"
-        style={{ "--i": 2 } as React.CSSProperties}
-      >
+      {/* Sunset over the sea: the moment people actually play. */}
+      <div aria-hidden="true" className="relative -mx-4 h-44 overflow-hidden">
         <div
-          aria-hidden="true"
-          className="sun-drift pointer-events-none absolute -left-16 -top-16 h-64 w-64 rounded-full"
-          style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--accent) 22%, transparent) 0%, transparent 65%)" }}
+          className="sun-drift absolute bottom-[-4.5rem] left-1/2 -ml-[5.5rem] h-44 w-44 rounded-full"
+          style={{ background: "radial-gradient(circle at 50% 35%, #ffd08a 0%, var(--sunset) 55%, var(--sunset-deep) 100%)" }}
         />
-        <div aria-hidden="true" className="relative w-[10.5rem] shrink-0">
-          <div className="float-y" style={{ filter: "drop-shadow(0 18px 24px rgb(0 0 0 / 0.55))" }}>
-            <SanderCardFut playerData={DEMO_CARD} />
-          </div>
-        </div>
-        <div className="relative min-w-0">
-          <p className="eyebrow text-[var(--accent)]">La tua carta</p>
-          <p className="mt-1 font-display text-2xl font-extrabold uppercase leading-none text-white">Bronzo, argento, oro.</p>
-          <p className="mt-2 text-sm text-[var(--muted-text)]">Ogni partita aggiorna il rating e la cornice. Condividila nelle storie.</p>
-        </div>
-      </section>
-
-      {/* Proof */}
-      <div className="rise-in grid grid-cols-3 gap-2" style={{ "--i": 3 } as React.CSSProperties}>
-        {[
-          { n: stats.players, label: "Giocatori" },
-          { n: stats.matches, label: "Partite" },
-          { n: CITY_NAMES.length, label: "Comuni" },
-        ].map((s) => (
-          <div key={s.label} className="rounded-[var(--radius-lg)] bg-[var(--surface-2)] px-2 py-4 text-center">
-            <CountUp value={s.n} className="num block text-3xl leading-none text-[var(--accent)]" />
-            <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">{s.label}</p>
-          </div>
-        ))}
+        <div
+          className="absolute inset-x-0 bottom-0 h-16"
+          style={{ background: "var(--sea-deep)", borderTop: "1px solid color-mix(in srgb, var(--sunset) 50%, transparent)" }}
+        />
+        <div className="absolute inset-x-[23%] bottom-11 h-[3px] rounded-full" style={{ background: "color-mix(in srgb, var(--sunset) 55%, transparent)" }} />
+        <div className="absolute inset-x-[33%] bottom-7 h-[3px] rounded-full" style={{ background: "color-mix(in srgb, var(--sunset) 35%, transparent)" }} />
+        <div className="absolute inset-x-[42%] bottom-3.5 h-[3px] rounded-full" style={{ background: "color-mix(in srgb, var(--sunset) 20%, transparent)" }} />
       </div>
 
-      {/* Why not just the WhatsApp group? */}
-      <section className="flex flex-col gap-3">
-        <div>
-          <p className="eyebrow text-[var(--accent)]">Perché SANDER</p>
-          <h2 className="font-display text-2xl font-extrabold uppercase leading-none text-white">
-            Più del solito gruppo WhatsApp
-          </h2>
-        </div>
-        <ul className="flex flex-col gap-2">
-          {WHY.map((w, i) => (
-            <li
-              key={w.title}
-              className="rise-in flex items-start gap-4 rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-4"
-              style={{ "--i": i + 4 } as React.CSSProperties}
-            >
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--accent-soft)]">
-                <w.icon className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-base font-extrabold leading-snug text-white">{w.title}</span>
-                <span className="block text-sm text-[var(--muted-text)]">{w.text}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
+      <section className="rise-in flex flex-col gap-3" style={{ "--i": 0 } as React.CSSProperties}>
+        <p className="eyebrow text-[var(--sunset)]">Beach volley in Riviera</p>
+        <h1 className="font-display text-[2.9rem] font-extrabold uppercase leading-[0.95] text-white">
+          Trova una partita.
+          <br />
+          Anche stasera.
+        </h1>
+        <p className="text-lg leading-snug text-white/80">
+          Partite aperte nei bagni vicino a te, con gente del tuo livello.
+        </p>
       </section>
 
-      {tournament && <TournamentSpotlight t={tournament} />}
-
-      {/* Look around without an account */}
-      <section className="flex flex-col gap-2">
-        <p className="eyebrow text-[var(--muted-text)]">Dai un&apos;occhiata</p>
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            { href: "/players", label: "Classifica" },
-            { href: "/bagni", label: "Re dei Bagni" },
-          ].map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className="flex min-h-[3.5rem] items-center justify-between rounded-[var(--radius-lg)] bg-[var(--surface-2)] px-4 text-base font-bold text-white"
+      <ul className="rise-in flex flex-col gap-2.5" style={{ "--i": 1 } as React.CSSProperties}>
+        {WHY.map(({ icon: Icon, text, tone }) => (
+          <li key={text} className="flex items-center gap-3 text-base font-semibold text-white">
+            <span
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.65rem]"
+              style={{ background: `color-mix(in srgb, ${tone} 14%, transparent)`, color: tone }}
             >
-              {l.label}
-              <ChevronRight className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />
-            </Link>
-          ))}
-        </div>
+              <Icon className="h-5 w-5" aria-hidden="true" />
+            </span>
+            {text}
+          </li>
+        ))}
+      </ul>
+
+      <div className="rise-in flex flex-col gap-2" style={{ "--i": 2 } as React.CSSProperties}>
         <Link
-          href="/scarica"
-          className="flex min-h-[3.5rem] items-center justify-center gap-2 rounded-[var(--radius-lg)] border border-[var(--border)] text-base font-bold text-white"
+          href="/auth/signin?mode=register"
+          className="pressable flex min-h-[3.625rem] items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--accent)] text-lg font-extrabold text-black"
         >
-          <Download className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" /> Scarica l&apos;app
+          Inizia gratis <ArrowRight className="h-5 w-5" aria-hidden="true" />
         </Link>
-      </section>
+        <Link href="/sessions" className="flex min-h-[3.25rem] items-center justify-center text-base font-semibold text-white">
+          {todayOpen > 0
+            ? `Prima guarda ${todayOpen === 1 ? "la partita" : `le ${todayOpen} partite`} di oggi`
+            : "Prima guarda le partite in programma"}
+        </Link>
+        <p className="text-center text-sm text-[var(--muted-text)]">Gratis · Ti iscrivi con Google in 10 secondi</p>
+      </div>
+
+      {tournament && (
+        <div className="rise-in" style={{ "--i": 3 } as React.CSSProperties}>
+          <TournamentSpotlight t={tournament} />
+        </div>
+      )}
     </div>
   )
 }

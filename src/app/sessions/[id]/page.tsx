@@ -303,7 +303,11 @@ export default async function SessionPage({
 
         {/* Group chat — coordinate this game (participants only). Right under
             the line-up: it's what players open most before a match. */}
-        {isParticipant && <SessionChat sessionId={session.id} />}
+        {isParticipant && (
+          <div id="chat" className="scroll-mt-4">
+            <SessionChat sessionId={session.id} />
+          </div>
+        )}
 
         {/* Share + QR — below the join action on purpose: sharing is what the
             organiser does, while someone arriving from a link wants "Unisciti"
