@@ -3,7 +3,8 @@ export const dynamic = "force-dynamic"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { TrendingUp, Flame, Trophy, ArrowUpRight, Medal } from "lucide-react"
-import { getWeeklyRecap } from "@/actions/recap"
+import { getWeeklyRecap, type RecapPlayer } from "@/actions/recap"
+import { ProvisionalBadge, ProvisionalSectionHeading } from "@/components/player/ProvisionalBadge"
 import { ShareButton } from "@/components/ui/ShareButton"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { SectionTabs, RANK_TABS } from "@/components/layout/SectionTabs"
@@ -39,9 +40,36 @@ function Avatar({ name, url, size = 44 }: { name: string; url: string | null; si
   )
 }
 
+/** A riser this week; `pos` is null for players still "in valutazione". */
+function MoverRow({ m, pos }: { m: RecapPlayer; pos: number | null }) {
+  return (
+    <Link
+      href={`/players/${m.id}`}
+      className="flex min-h-[3.5rem] items-center gap-3 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
+    >
+      <span className="w-5 text-center text-sm font-bold text-[var(--muted-text)]">
+        {pos ?? "–"}
+      </span>
+      <Avatar name={m.name} url={m.avatarUrl} />
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-bold text-white">{m.name}</p>
+        {m.provisional ? (
+          <ProvisionalBadge games={m.games} />
+        ) : (
+          <p className="text-xs text-[var(--muted-text)]">
+            {m.matches} {m.matches === 1 ? "partita" : "partite"} · {Math.round(m.glickoRating)} punti
+          </p>
+        )}
+      </div>
+      <span className="text-lg font-black text-[var(--live)]">+{m.ratingDelta}</span>
+    </Link>
+  )
+}
+
 export default async function WeeklyPage() {
   const recap = await getWeeklyRecap()
   const potw = recap.playerOfWeek
+  const risers = recap.movers.filter((m) => m.ratingDelta > 0)
 
   return (
     <div className="pb-10">
@@ -95,14 +123,14 @@ export default async function WeeklyPage() {
                     {potw.name}
                   </Link>
                   <p className="text-sm text-[var(--muted-text)]">
-                    Lv.{potw.level} · {potw.matches}{" "}
+                    Liv. {potw.level} · {potw.matches}{" "}
                     {potw.matches === 1 ? "partita" : "partite"}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-black text-[var(--live)]">+{potw.ratingDelta}</p>
                   <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-text)]">
-                    rating
+                    punti
                   </p>
                 </div>
               </div>
@@ -118,27 +146,21 @@ export default async function WeeklyPage() {
               </p>
             </div>
             <div className="space-y-2">
-              {recap.movers
-                .filter((m) => m.ratingDelta > 0)
+              {risers
+                .filter((m) => !m.provisional)
                 .map((m, i) => (
-                  <Link
-                    key={m.id}
-                    href={`/players/${m.id}`}
-                    className="flex items-center gap-3 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:opacity-80"
-                  >
-                    <span className="w-5 text-center text-sm font-bold text-[var(--muted-text)]">
-                      {i + 1}
-                    </span>
-                    <Avatar name={m.name} url={m.avatarUrl} />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-bold text-white">{m.name}</p>
-                      <p className="text-xs text-[var(--muted-text)]">
-                        {m.matches} {m.matches === 1 ? "partita" : "partite"} · {Math.round(m.glickoRating)} rating
-                      </p>
-                    </div>
-                    <span className="text-lg font-black text-[var(--live)]">+{m.ratingDelta}</span>
-                  </Link>
+                  <MoverRow key={m.id} m={m} pos={i + 1} />
                 ))}
+              {risers.some((m) => m.provisional) && (
+                <>
+                  <ProvisionalSectionHeading className="pt-3 pb-1" />
+                  {risers
+                    .filter((m) => m.provisional)
+                    .map((m) => (
+                      <MoverRow key={m.id} m={m} pos={null} />
+                    ))}
+                </>
+              )}
             </div>
           </section>
 
@@ -167,7 +189,7 @@ export default async function WeeklyPage() {
                   <Avatar name={m.name} url={m.avatarUrl} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-bold text-white">{m.name}</p>
-                    <p className="text-xs text-[var(--muted-text)]">Lv.{m.level}</p>
+                    <p className="text-xs text-[var(--muted-text)]">Liv. {m.level}</p>
                   </div>
                   <span className="text-lg font-black text-white">{m.matches}</span>
                 </Link>

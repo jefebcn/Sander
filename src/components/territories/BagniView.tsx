@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import { Search, Crown, MapPin, Waves } from "lucide-react"
+import { Search, Crown, MapPin, Waves, Hourglass } from "lucide-react"
 import { POPULAR_BAGNI, bagnoLabel } from "@/lib/bagni"
 import type { Territory } from "@/actions/territories"
 
@@ -57,6 +57,12 @@ function TerritoryRow({ t, bagno, muted }: { t?: Territory; bagno?: number; mute
           <Link href={`/players/${t.king.id}`} className="mt-0.5 flex items-center gap-1.5">
             <Crown className="h-3.5 w-3.5 shrink-0 text-[var(--gold)]" />
             <span className="truncate text-xs font-bold text-[var(--gold)]">{t.king.name}</span>
+            {t.king.provisional && (
+              <Hourglass
+                className="h-3 w-3 shrink-0 text-[var(--warning)]"
+                aria-label="In valutazione: meno di 5 partite"
+              />
+            )}
           </Link>
         ) : (
           <p className="mt-0.5 text-xs text-[var(--muted-text)]">Libero — gioca qui e conquistalo 👑</p>
