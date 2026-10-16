@@ -1,33 +1,41 @@
 "use server"
 
 import { db } from "@/lib/db"
+import { PUBLIC_PLAYER_SELECT } from "@/lib/publicPlayer"
+import { z } from "zod"
 
-export async function getStandings(tournamentId: string) {
+// Both functions are public RPC endpoints (the live dashboard polls one from the
+// browser): players come back with their public fields only.
+const TournamentIdSchema = z.string().trim().min(1).max(64)
+
+export async function getStandings(id: string) {
+  const tournamentId = TournamentIdSchema.parse(id)
   return db.tournamentStanding.findMany({
     where: { tournamentId },
-    include: { player: true },
+    include: { player: { select: PUBLIC_PLAYER_SELECT } },
     orderBy: { rank: "asc" },
   })
 }
 
-export async function getTournamentDashboard(tournamentId: string) {
+export async function getTournamentDashboard(id: string) {
+  const tournamentId = TournamentIdSchema.parse(id)
   const [tournament, standings, allMatches] = await Promise.all([
     db.tournament.findUniqueOrThrow({
       where: { id: tournamentId },
       include: {
-        registrations: { include: { player: true } },
+        registrations: { include: { player: { select: PUBLIC_PLAYER_SELECT } } },
       },
     }),
     db.tournamentStanding.findMany({
       where: { tournamentId },
-      include: { player: true },
+      include: { player: { select: PUBLIC_PLAYER_SELECT } },
       orderBy: { rank: "asc" },
       take: 10,
     }),
     db.match.findMany({
       where: { tournamentId },
       include: {
-        players: { include: { player: true } },
+        players: { include: { player: { select: PUBLIC_PLAYER_SELECT } } },
       },
       orderBy: [{ round: "asc" }, { matchNumber: "asc" }],
     }),

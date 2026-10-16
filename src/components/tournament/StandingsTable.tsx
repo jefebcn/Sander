@@ -1,6 +1,7 @@
 import { Crown, Medal, BarChart2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { TournamentStanding, Player } from "@/generated/prisma/client"
+import type { TournamentStanding } from "@/generated/prisma/client"
+import type { PublicPlayer as Player } from "@/lib/publicPlayer"
 
 type StandingWithPlayer = TournamentStanding & { player: Player }
 

@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Shield, Hand, TrendingUp } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { Player } from "@/generated/prisma/client"
+import type { PublicPlayer as Player } from "@/lib/publicPlayer"
 
 interface SanderCardMiniProps {
   player: Player

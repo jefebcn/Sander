@@ -5,7 +5,7 @@ import { Search, X, UserCheck, UserPlus } from "lucide-react"
 import { listPlayers } from "@/actions/players"
 import { adminAddPlayerToTournament, adminAddSpectatorToTournament } from "@/actions/registration"
 import { cn } from "@/lib/utils"
-import type { Player } from "@/generated/prisma/client"
+import type { PublicPlayer as Player } from "@/lib/publicPlayer"
 
 interface AdminAddPlayerSheetProps {
   tournamentId: string

@@ -5,7 +5,7 @@ import { Search, X, UserCheck, UserPlus } from "lucide-react"
 import { listPlayers, listUsersWithoutProfile, createMinimalPlayerForUser } from "@/actions/players"
 import { addPlayerToSession } from "@/actions/sessions"
 import { cn } from "@/lib/utils"
-import type { Player } from "@/generated/prisma/client"
+import type { PublicPlayer as Player } from "@/lib/publicPlayer"
 
 interface UnlinkedUser {
   id: string

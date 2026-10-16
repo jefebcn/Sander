@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils"
 import { useHaptic } from "@/lib/useHaptic"
 import { PlayerPickerSheet } from "./PlayerPickerSheet"
 import { SkillBadge } from "./SkillBadge"
-import type { Match, MatchPlayer, Player } from "@/generated/prisma/client"
+import type { Match, MatchPlayer } from "@/generated/prisma/client"
+import type { PublicPlayer as Player } from "@/lib/publicPlayer"
 
 type MatchWithPlayers = Match & {
   players: (MatchPlayer & { player: Player })[]

@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { Users, Medal, Search, X } from "lucide-react"
 import { SanderCardMini } from "@/components/player/SanderCardMini"
-import type { Player } from "@/generated/prisma/client"
+import type { PublicPlayer as Player } from "@/lib/publicPlayer"
 
 interface Props {
   players: Player[]
