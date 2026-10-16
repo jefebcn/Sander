@@ -38,15 +38,17 @@ export async function submitScore(input: SubmitScoreInput) {
   const teamBPlayerIds = match.players.filter((p) => p.team === 1).map((p) => p.playerId)
 
   await db.$transaction(async (tx) => {
-    // Mark match as completed with scores
-    await tx.match.update({
-      where: { id: matchId },
+    // Claim the match atomically: a double tap or a retry would otherwise add
+    // the standings points twice.
+    const claimed = await tx.match.updateMany({
+      where: { id: matchId, isCompleted: false },
       data: {
         teamAScore,
         teamBScore,
         isCompleted: true,
       },
     })
+    if (claimed.count === 0) throw new Error("Risultato già inserito")
 
     // Update standings for each player in this match
     const updateStanding = async (playerIds: string[], won: boolean, myScore: number, oppScore: number) => {

@@ -6,19 +6,6 @@ import { Search, Crown, MapPin, Waves, Hourglass } from "lucide-react"
 import { POPULAR_BAGNI, bagnoLabel } from "@/lib/bagni"
 import type { Territory } from "@/actions/territories"
 
-function KingAvatar({ name, url }: { name: string; url: string | null }) {
-  return (
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-1)] text-xs font-black text-[var(--muted-text)]">
-      {url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={url} alt={name} className="h-full w-full object-cover" />
-      ) : (
-        name.slice(0, 2).toUpperCase()
-      )}
-    </div>
-  )
-}
-
 /** One row: a bagno/location with its king, or an empty "claim it" state. */
 function TerritoryRow({ t, bagno, muted }: { t?: Territory; bagno?: number; muted?: boolean }) {
   const label = t?.location ?? (bagno ? bagnoLabel(bagno) : "")

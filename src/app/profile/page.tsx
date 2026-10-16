@@ -43,6 +43,7 @@ import { AdminSeasonManager } from "@/components/admin/AdminSeasonManager"
 import { getActiveSeason } from "@/actions/seasons"
 import { ContentQueue } from "@/components/admin/ContentQueue"
 import { listContent } from "@/actions/content"
+import { NOT_DELETED_PLAYER } from "@/lib/publicPlayer"
 
 const MONTH_NAMES_IT = [
   "", "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
@@ -177,7 +178,8 @@ export default async function ProfilePage({ searchParams }: Props) {
         matchesLost: fullPlayer.matchesLost,
         winRatePct: fullPlayer.winRatePct,
         sessionsPlayed: fullPlayer.sessionsPlayed,
-        tournamentsWon: fullPlayer.tournamentsWon,
+        // Same source as the titles listed on the profile, so the two agree.
+        tournamentsWon: tournamentWins.length,
         glickoRating: fullPlayer.glickoRating,
         level: fullPlayer.level,
         streak,
@@ -226,6 +228,7 @@ export default async function ProfilePage({ searchParams }: Props) {
           include: { _count: { select: { registrations: true } } },
         }),
         db.player.findMany({
+          where: NOT_DELETED_PLAYER,
           orderBy: { createdAt: "desc" },
           select: {
             id: true,

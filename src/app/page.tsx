@@ -29,6 +29,7 @@ import { GuestLanding } from "@/components/home/GuestLanding"
 import { CountUp } from "@/components/ui/CountUp"
 import { SectionHeader } from "@/components/ui/SectionHeader"
 import { ListRow } from "@/components/ui/ListRow"
+import { seatLimit } from "@/lib/tournament/capacity"
 
 function getMilestoneTitle(level: number): string {
   if (level >= 50) return "Sand King"
@@ -55,14 +56,14 @@ async function getSpotlightTournament(): Promise<SpotlightTournament | null> {
     orderBy: [{ isOpenForRegistration: "desc" }, { date: "asc" }],
     select: {
       id: true, name: true, date: true, location: true, priceCents: true, prizePool: true,
-      maxTeams: true, isOpenForRegistration: true,
+      maxTeams: true, isOpenForRegistration: true, type: true,
       _count: { select: { registrations: { where: { isSpectator: false, paymentStatus: { in: ["FREE", "PAID", "PENDING"] } } } } },
     },
   })
   if (!t) return null
   return {
     id: t.id, name: t.name, date: t.date, location: t.location, priceCents: t.priceCents,
-    prizePool: t.prizePool, maxTeams: t.maxTeams, open: t.isOpenForRegistration,
+    prizePool: t.prizePool, maxTeams: seatLimit(t.type, t.maxTeams), open: t.isOpenForRegistration,
     registered: t._count.registrations,
   }
 }

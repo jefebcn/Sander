@@ -6,9 +6,9 @@ import { Info, X } from "lucide-react"
 
 const ITEMS = [
   {
-    label: "RATING — Glicko",
+    label: "PUNTI",
     description:
-      "Il tuo rating competitivo. Sale quando batti giocatori più forti, scende quando perdi contro i più deboli. Più giochi, più è preciso.",
+      "La tua forza in campo. Salgono quando batti giocatori più forti, scendono quando perdi contro i più deboli. Contano tornei e partite chiuse con il risultato. Nelle prime 5 partite sei \"in valutazione\".",
   },
   {
     label: "PARTITE",

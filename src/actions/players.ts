@@ -9,6 +9,7 @@ import { isAdminEmail } from "@/lib/isAdmin"
 import { PUBLIC_PLAYER_SELECT, DELETED_PLAYER_NAME, NOT_DELETED_PLAYER, type PublicPlayer } from "@/lib/publicPlayer"
 import { romeMonthRange } from "@/lib/romeMonth"
 import { z } from "zod"
+import { refundSessionCredits } from "@/lib/sessionRefunds"
 
 const PlayerIdSchema = z.string().trim().min(1).max(64)
 
@@ -378,6 +379,26 @@ export async function deletePlayer(id: string) {
   // and only the login (User + its Account/AuthSession rows) is deleted.
   // All in one transaction: never a half-deleted account.
   await db.$transaction(async (tx) => {
+    // Matches they were organising can't go ahead with a ghost organiser:
+    // cancel them and give the other players their credits back.
+    const organised = await tx.session.findMany({
+      where: { organizerId: playerId, status: { in: ["OPEN", "FULL"] } },
+      select: { id: true },
+    })
+    for (const s of organised) {
+      await tx.session.update({ where: { id: s.id }, data: { status: "CANCELLED" } })
+      await refundSessionCredits(tx, s.id)
+    }
+    // Free the seats they held in other people's upcoming matches.
+    const seats = await tx.sessionParticipant.findMany({
+      where: { playerId, session: { status: { in: ["OPEN", "FULL"] } } },
+      select: { id: true, sessionId: true },
+    })
+    for (const seat of seats) {
+      await tx.sessionParticipant.delete({ where: { id: seat.id } })
+      await tx.session.updateMany({ where: { id: seat.sessionId, status: "FULL" }, data: { status: "OPEN" } })
+    }
+
     // Rows that only ever concerned this person.
     await tx.pushSubscription.deleteMany({ where: { playerId } })
     await tx.notification.deleteMany({ where: { playerId } })

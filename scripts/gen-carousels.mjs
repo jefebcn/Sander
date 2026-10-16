@@ -117,7 +117,7 @@ const carousels = [
 //     left    90px
 //     right  190px   (like / comment / bookmark / share icons)
 //
-function slideHtml(s, idx) {
+function slideHtml(s) {
   const isHook = s.kind === "hook"
   const isCta = s.kind === "cta"
   const hl = s.hl || []

@@ -1,5 +1,4 @@
 import type { PartnerStat } from "@/actions/players"
-import { cn } from "@/lib/utils"
 
 function displayName(p: { name: string; firstName: string | null }) {
   return p.firstName ?? p.name.split(" ")[0]

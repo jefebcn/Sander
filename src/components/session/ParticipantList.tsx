@@ -152,9 +152,9 @@ export function ParticipantList({ session, participants, currentPlayerId, myWait
       {(teamA.length > 0 || teamB.length > 0) && (
         <div className="grid grid-cols-2 gap-3">
           {[
-            { label: "Team A", members: teamA, teamIdx: 0 as const },
-            { label: "Team B", members: teamB, teamIdx: 1 as const },
-          ].map(({ label, members, teamIdx }) => (
+            { label: "Team A", members: teamA },
+            { label: "Team B", members: teamB },
+          ].map(({ label, members }) => (
             <div key={label} className="rounded-2xl bg-[var(--surface-1)] p-3">
               <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">{label}</p>
               <div className="space-y-2">

@@ -33,10 +33,6 @@ export function effectiveLevel(p: PlayerWithLevel): number {
   return DEFAULT_LEVEL
 }
 
-function pairSum(pool: Map<string, number>, a: string, b: string): number {
-  return (pool.get(a) ?? DEFAULT_LEVEL) + (pool.get(b) ?? DEFAULT_LEVEL)
-}
-
 /**
  * Forms 2-player teams from the given pool minimizing sum variance.
  * Greedy "highest + lowest" which for small pools is close to optimal.

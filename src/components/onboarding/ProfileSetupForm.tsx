@@ -2,7 +2,7 @@
 
 import { useState, useRef, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronLeft, Camera, ChevronRight, X, User } from "lucide-react"
+import { ChevronLeft, Camera, X, User } from "lucide-react"
 import { saveProfile } from "@/actions/profile"
 import { capturePhoto, isNativeApp, hapticTap } from "@/lib/native"
 import { cn } from "@/lib/utils"

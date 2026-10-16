@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest"
+import { describe, it, expect } from "vitest"
 import { generateBracket, advanceWinner } from "./bracket"
 import type { BracketTeam } from "./types"
 
