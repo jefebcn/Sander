@@ -102,12 +102,19 @@ export default function RootLayout({
         <Providers>
           <OnboardingGate />
           <SwRegistrar />
-          <main className="relative z-10 flex-1 pb-20">
+          {/* No z-index here on purpose: a z-index on <main> makes it a stacking
+              context, and every fixed sheet, dialog and CTA inside a page then
+              gets trapped beneath the navbar. Content still paints above the
+              background because <main> is positioned and comes after it in the
+              DOM (AppBackground is z-0). Layers, low to high:
+              page content → navbar & banners (z-30) → sheets/dialogs (z-50+).
+              On wide screens the app keeps its phone-width column. */}
+          <main className="relative w-full flex-1 pb-20 md:mx-auto md:max-w-[560px]">
             <PageWrapper>{children}</PageWrapper>
           </main>
           <MobileNav />
           {/* Banners stacked just above the navbar — client-only, lazy loaded */}
-          <div className="fixed bottom-[4.5rem] left-0 right-0 z-40 flex flex-col gap-2 pointer-events-none [&>*]:pointer-events-auto">
+          <div className="fixed bottom-[4.5rem] left-0 right-0 z-30 mx-auto flex max-w-[560px] flex-col gap-2 pointer-events-none [&>*]:pointer-events-auto">
             <ClientOnlyBanners />
           </div>
           <Toaster />

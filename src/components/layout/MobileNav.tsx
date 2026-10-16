@@ -85,8 +85,11 @@ export function MobileNav() {
 
   return (
     <>
+      {/* z-30: above page content, below every sheet/dialog (z-50+), so an
+          overlay opened inside a page always covers the bar. On wide screens
+          the same bar is shown, centred under the phone-width app column. */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border)] bg-[var(--surface-1)]/92 backdrop-blur-xl md:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-[560px] border-t border-[var(--border)] bg-[var(--surface-1)]/92 backdrop-blur-xl md:rounded-t-2xl md:border-x"
         aria-label="Navigazione principale"
       >
         <div
