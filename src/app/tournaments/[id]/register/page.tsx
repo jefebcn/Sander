@@ -6,8 +6,7 @@ import { ChevronLeft } from "lucide-react"
 import { getTournamentForRegistration } from "@/actions/registration"
 import { TournamentRegistrationRecap } from "@/components/tournament/TournamentRegistrationRecap"
 import { PaymentCtaButton } from "@/components/tournament/PaymentCtaButton"
-
-type Status = "NOT_REGISTERED" | "PAID" | "PENDING_STRIPE" | "PENDING_CASH" | "REGISTERED_UNPAID" | "CLOSED"
+import { deriveRegistrationStatus } from "@/lib/tournament/registrationPayment"
 
 export default async function RegisterPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -26,23 +25,15 @@ export default async function RegisterPage({ params }: { params: Promise<{ id: s
     tournament.registrationDeadline &&
     new Date(tournament.registrationDeadline).getTime() < Date.now()
 
-  let status: Status = "NOT_REGISTERED"
-  if (tournament.status !== "DRAFT" || deadlinePassed) {
-    status = "CLOSED"
-  } else if (myRegistration) {
-    if (myRegistration.paymentStatus === "PAID" || myRegistration.paymentStatus === "FREE") {
-      status = "PAID"
-    } else if (myRegistration.paymentStatus === "PENDING" && myRegistration.paymentMethod === "CASH") {
-      status = "PENDING_CASH"
-    } else if (myRegistration.paymentStatus === "PENDING" && myRegistration.paymentMethod === "STRIPE") {
-      status = "PENDING_STRIPE"
-    } else if (myRegistration.paymentStatus === "PENDING" && !myRegistration.paymentMethod) {
-      status = "REGISTERED_UNPAID"
-    }
-  }
+  const ownPlayerReg = myRegistration && !myRegistration.isSpectator ? myRegistration : null
+  const status =
+    tournament.status !== "DRAFT" || deadlinePassed
+      ? ("CLOSED" as const)
+      : deriveRegistrationStatus(ownPlayerReg)
 
   return (
-    <div className="min-h-dvh pb-32">
+    // Bottom padding clears the fixed CTA, which sits above the mobile nav.
+    <div className="min-h-dvh pb-56 md:pb-32">
       {/* Header with back */}
       <div
         className="flex items-center gap-3 px-4 pt-6 pb-3"
@@ -67,7 +58,8 @@ export default async function RegisterPage({ params }: { params: Promise<{ id: s
         isFree={isFree}
         status={status}
         isAuthed={isAuthed}
-        currentSkillLevel={myRegistration?.skillLevel ?? null}
+        currentSkillLevel={ownPlayerReg?.skillLevel ?? null}
+        registrationId={ownPlayerReg?.id ?? null}
       />
     </div>
   )

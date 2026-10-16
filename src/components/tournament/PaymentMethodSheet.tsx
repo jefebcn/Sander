@@ -49,6 +49,7 @@ export function PaymentMethodSheet({
     startTransition(async () => {
       const result = await startCheckout({ tournamentId, skillLevel })
       if (!result.ok) {
+        // Friendly message from the server; cash / PayPal stay available below.
         setError(result.error)
         return
       }
@@ -132,7 +133,7 @@ export function PaymentMethodSheet({
       {/* Sheet */}
       <div
         className={cn(
-          "relative z-10 flex flex-col rounded-t-3xl bg-[#1e1e1e] transition-transform duration-300",
+          "relative z-10 flex flex-col rounded-t-3xl bg-[var(--surface-1)] transition-transform duration-300",
           open ? "translate-y-0" : "translate-y-full",
         )}
         style={{ maxHeight: "80dvh" }}

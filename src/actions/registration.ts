@@ -1,10 +1,22 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import type Stripe from "stripe"
 import { db } from "@/lib/db"
+import type { Prisma } from "@/generated/prisma/client"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
-import { canManageTournament } from "@/lib/isAdmin"
+import { canManageTournament, isAdminEmail } from "@/lib/isAdmin"
 import { stripe, getAppUrl } from "@/lib/stripe"
+import {
+  hasFreeSeat,
+  seatLimit,
+  SEAT_FREE_STATUSES,
+  TOURNAMENT_FULL_MESSAGE,
+} from "@/lib/tournament/capacity"
+import {
+  classifyCheckoutSession,
+  CARD_PAYMENT_UNAVAILABLE_MESSAGE,
+} from "@/lib/tournament/registrationPayment"
 import {
   StartCheckoutSchema,
   CreateManualPaymentSchema,
@@ -13,16 +25,20 @@ import {
   CancelRegistrationSchema,
   GetTournamentForRegistrationSchema,
   AdminSetSkillLevelSchema,
+  AdminSetPaymentStatusSchema,
+  TournamentIdSchema,
+  PlayerIdSchema,
 } from "@/lib/validators/registration.schema"
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? ""
+type Tx = Prisma.TransactionClient
+
+const STRIPE_UNVERIFIABLE_MESSAGE =
+  "Non riusciamo a verificare il pagamento con carta in questo momento. Riprova tra qualche minuto."
 
 async function requireAdmin() {
   const session = await getCurrentSession()
   if (!session?.user?.id) throw new Error("Non autenticato")
-  if (!ADMIN_EMAIL || session.user.email !== ADMIN_EMAIL) {
-    throw new Error("Accesso non autorizzato")
-  }
+  if (!isAdminEmail(session.user.email)) throw new Error("Accesso non autorizzato")
 }
 
 async function requireCurrentPlayer() {
@@ -39,8 +55,11 @@ async function assertRegistrable(tournamentId: string) {
     select: {
       id: true,
       name: true,
+      type: true,
       status: true,
+      maxTeams: true,
       priceCents: true,
+      spectatorPriceCents: true,
       priceCurrency: true,
       isOpenForRegistration: true,
       registrationDeadline: true,
@@ -55,6 +74,152 @@ async function assertRegistrable(tournamentId: string) {
   return tournament
 }
 
+type RegistrableTournament = Awaited<ReturnType<typeof assertRegistrable>>
+
+function isFreeTournament(t: { priceCents: number | null }) {
+  return t.priceCents == null || t.priceCents === 0
+}
+
+/** A row in one of these states no longer counts as a registration. */
+function isStaleRow(reg: { paymentStatus: string }) {
+  return (SEAT_FREE_STATUSES as readonly string[]).includes(reg.paymentStatus)
+}
+
+// ───────────────────────────── error handling ────────────────────────────────
+
+function isStripeError(e: unknown): e is { type: string; code?: string; message: string } {
+  return (
+    typeof e === "object" && e !== null && "type" in e &&
+    typeof (e as { type: unknown }).type === "string" &&
+    (e as { type: string }).type.startsWith("Stripe")
+  )
+}
+
+/**
+ * Message safe to show to users. Our own `throw new Error("…")` messages are
+ * Italian and user-facing; Stripe / Prisma / Zod errors are logged server-side
+ * and replaced (a raw Stripe error can read "Invalid API Key provided…").
+ */
+function toUserError(e: unknown, context: string): string {
+  if (isStripeError(e)) {
+    console.error(`[registration] ${context}: Stripe error`, e)
+    return CARD_PAYMENT_UNAVAILABLE_MESSAGE
+  }
+  if (typeof e === "object" && e !== null && "code" in e) {
+    const code = (e as { code: unknown }).code
+    if (code === "P2002") return "Risulti già in lista per questo torneo. Ricarica la pagina."
+    if (typeof code === "string" && code.startsWith("P")) {
+      console.error(`[registration] ${context}: DB error`, e)
+      return "Si è verificato un errore. Riprova."
+    }
+  }
+  if (e instanceof Error && e.name === "ZodError") return "Dati non validi"
+  if (e instanceof Error) return e.message
+  console.error(`[registration] ${context}: unknown error`, e)
+  return "Si è verificato un errore. Riprova."
+}
+
+// ───────────────────────────── capacity ──────────────────────────────────────
+
+/**
+ * Throws when the tournament is full. Must run inside the transaction that
+ * creates the registration: the tournament row is locked (FOR UPDATE) so two
+ * concurrent sign-ups for the last seat are serialized.
+ * Seat rule (PENDING rows count): see src/lib/tournament/capacity.ts.
+ */
+async function assertSeatAvailable(
+  tx: Tx,
+  tournament: Pick<RegistrableTournament, "id" | "type" | "maxTeams">,
+  playerId: string,
+) {
+  if (seatLimit(tournament.type, tournament.maxTeams) == null) return
+  await tx.$queryRaw`SELECT id FROM "tournaments" WHERE id = ${tournament.id} FOR UPDATE`
+  const taken = await tx.tournamentRegistration.count({
+    where: {
+      tournamentId: tournament.id,
+      isSpectator: false,
+      playerId: { not: playerId },
+      paymentStatus: { notIn: [...SEAT_FREE_STATUSES] },
+    },
+  })
+  if (!hasFreeSeat(tournament.type, tournament.maxTeams, taken)) {
+    throw new Error(TOURNAMENT_FULL_MESSAGE)
+  }
+}
+
+// ───────────────────────────── Stripe helpers ────────────────────────────────
+
+type SessionResolution =
+  | { state: "open"; url: string }
+  | { state: "paid"; session: Stripe.Checkout.Session }
+  | { state: "closed" }
+  | { state: "unknown" }
+
+async function resolveCheckoutSession(sessionId: string): Promise<SessionResolution> {
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId)
+    const state = classifyCheckoutSession(session)
+    if (state === "paid") return { state, session }
+    if (state === "open" && session.url) return { state, url: session.url }
+    return { state: "closed" }
+  } catch (e) {
+    if (isStripeError(e) && e.code === "resource_missing") return { state: "closed" }
+    console.error("[registration] cannot retrieve Stripe session", sessionId, e)
+    return { state: "unknown" }
+  }
+}
+
+/**
+ * Make sure a Checkout Session can no longer take money: expire it if open.
+ * "paid" → the customer already paid (mark the registration PAID, never delete
+ * it); "closed" → safe to drop; "unknown" → Stripe unreachable, do nothing.
+ */
+async function closeCheckoutSession(
+  sessionId: string,
+): Promise<{ state: "paid"; session: Stripe.Checkout.Session } | { state: "closed" } | { state: "unknown" }> {
+  const res = await resolveCheckoutSession(sessionId)
+  if (res.state !== "open") return res
+  try {
+    const expired = await stripe.checkout.sessions.expire(sessionId)
+    if (classifyCheckoutSession(expired) === "paid") return { state: "paid", session: expired }
+    return { state: "closed" }
+  } catch {
+    // Expire fails when the session completed/expired in the meantime — look again.
+    const again = await resolveCheckoutSession(sessionId)
+    return again.state === "open" ? { state: "unknown" } : again
+  }
+}
+
+/** Same fields the checkout.session.completed webhook sets; idempotent. */
+async function markRegistrationPaid(registrationId: string, session: Stripe.Checkout.Session) {
+  const paymentIntentId =
+    typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id ?? null
+  await db.tournamentRegistration.updateMany({
+    where: { id: registrationId, paymentStatus: "PENDING" },
+    data: {
+      paymentStatus: "PAID",
+      paymentMethod: "STRIPE",
+      paidAt: new Date(),
+      amountPaidCents: session.amount_total ?? null,
+      stripePaymentIntentId: paymentIntentId,
+    },
+  })
+}
+
+function revalidateTournament(tournamentId: string) {
+  revalidatePath("/tournaments")
+  revalidatePath(`/tournaments/${tournamentId}`)
+}
+
+/** Fields kept when an existing row is replaced by a fresh one (new id). */
+function carriedFields(
+  prev: { seedPosition: number | null; teamName: string | null; teamLogoUrl: string | null } | null,
+) {
+  return prev
+    ? { seedPosition: prev.seedPosition, teamName: prev.teamName, teamLogoUrl: prev.teamLogoUrl }
+    : {}
+}
+
 // ───────────────────────────── startCheckout ─────────────────────────────────
 
 export async function startCheckout(input: unknown): Promise<
@@ -64,8 +229,9 @@ export async function startCheckout(input: unknown): Promise<
     const { tournamentId, skillLevel } = StartCheckoutSchema.parse(input)
     const player = await requireCurrentPlayer()
     const tournament = await assertRegistrable(tournamentId)
+    const isFree = isFreeTournament(tournament)
+    const successUrl = `/tournaments/${tournamentId}/register/success`
 
-    // Already registered? Look up existing row.
     const existing = await db.tournamentRegistration.findUnique({
       where: { tournamentId_playerId: { tournamentId, playerId: player.id } },
     })
@@ -75,81 +241,91 @@ export async function startCheckout(input: unknown): Promise<
         return { ok: false, error: "Sei già iscritto a questo torneo" }
       }
       if (existing.paymentStatus === "PENDING" && existing.stripeSessionId) {
-        // Reuse existing Stripe Checkout session
-        try {
-          const session = await stripe.checkout.sessions.retrieve(existing.stripeSessionId)
-          if (session.status === "open" && session.url) {
-            return { ok: true, redirectUrl: session.url }
-          }
-        } catch {
-          // Stripe session gone — fall through to create a new one
+        const res = await resolveCheckoutSession(existing.stripeSessionId)
+        if (res.state === "open") return { ok: true, redirectUrl: res.url }
+        if (res.state === "paid") {
+          // Paid, but the webhook hasn't landed yet: never recreate the row
+          // (the webhook would not find it → money taken, registration PENDING).
+          await markRegistrationPaid(existing.id, res.session)
+          revalidateTournament(tournamentId)
+          return { ok: true, redirectUrl: successUrl }
         }
-        // Expired or missing: delete stale row, create fresh
-        await db.tournamentRegistration.delete({ where: { id: existing.id } }).catch(() => {})
-      } else if (existing.paymentStatus === "PENDING") {
-        if (existing.paymentMethod === "CASH") {
-          return { ok: false, error: "Hai già scelto il pagamento in contanti" }
-        }
-        // PENDING+null (registered, no method yet): delete to allow Stripe flow
-        await db.tournamentRegistration.delete({ where: { id: existing.id } }).catch(() => {})
+        if (res.state === "unknown") return { ok: false, error: CARD_PAYMENT_UNAVAILABLE_MESSAGE }
+        // closed (expired / unpaid): replaced below by a fresh row
+      } else if (existing.paymentStatus === "PENDING" && existing.paymentMethod === "CASH") {
+        return { ok: false, error: "Hai già scelto il pagamento in contanti" }
       }
     }
 
-    // Free tournament — skip Stripe entirely
-    if (tournament.priceCents == null || tournament.priceCents === 0) {
-      await db.tournamentRegistration.create({
+    // A player already on the list stays there (as "registered, not paid") if
+    // the card payment then fails to start.
+    const wasOnList = existing?.paymentStatus === "PENDING" && !existing.isSpectator ? existing : null
+
+    // Replace any previous row with a fresh one (new id): a late
+    // checkout.session.expired webhook for an old session deletes by row id.
+    const registration = await db.$transaction(async (tx) => {
+      await assertSeatAvailable(tx, tournament, player.id)
+      if (existing) await tx.tournamentRegistration.deleteMany({ where: { id: existing.id } })
+      return tx.tournamentRegistration.create({
         data: {
           tournamentId,
           playerId: player.id,
-          paymentStatus: "PAID",
-          paymentMethod: "FREE",
-          paidAt: new Date(),
-          amountPaidCents: 0,
-          skillLevel: skillLevel ?? null,
+          skillLevel: skillLevel ?? existing?.skillLevel ?? null,
+          ...carriedFields(wasOnList),
+          ...(isFree
+            ? { paymentStatus: "PAID" as const, paymentMethod: "FREE", paidAt: new Date(), amountPaidCents: 0 }
+            : { paymentStatus: "PENDING" as const, paymentMethod: "STRIPE" }),
         },
       })
-      revalidatePath("/tournaments")
-      revalidatePath(`/tournaments/${tournamentId}`)
-      return { ok: true, redirectUrl: `/tournaments/${tournamentId}/register/success` }
+    })
+
+    if (isFree) {
+      revalidateTournament(tournamentId)
+      return { ok: true, redirectUrl: successUrl }
     }
 
-    // Paid flow: create PENDING row first (DB unique constraint is our race guard)
-    const registration = await db.tournamentRegistration.create({
-      data: {
-        tournamentId,
-        playerId: player.id,
-        paymentStatus: "PENDING",
-        paymentMethod: "STRIPE",
-        skillLevel: skillLevel ?? null,
-      },
-    })
-
-    const appUrl = getAppUrl()
-
-    const checkoutSession = await stripe.checkout.sessions.create({
-      mode: "payment",
-      line_items: [
-        {
-          price_data: {
-            currency: tournament.priceCurrency.toLowerCase(),
-            unit_amount: tournament.priceCents,
-            product_data: {
-              name: `Iscrizione torneo — ${tournament.name}`,
+    let checkoutSession: Stripe.Checkout.Session
+    try {
+      const appUrl = getAppUrl()
+      checkoutSession = await stripe.checkout.sessions.create({
+        mode: "payment",
+        line_items: [
+          {
+            price_data: {
+              currency: tournament.priceCurrency.toLowerCase(),
+              unit_amount: tournament.priceCents ?? 0,
+              product_data: {
+                name: `Iscrizione torneo — ${tournament.name}`,
+              },
             },
+            quantity: 1,
           },
-          quantity: 1,
+        ],
+        metadata: {
+          tournamentId,
+          playerId: player.id,
+          registrationId: registration.id,
         },
-      ],
-      metadata: {
-        tournamentId,
-        playerId: player.id,
-        registrationId: registration.id,
-      },
-      client_reference_id: registration.id,
-      expires_at: Math.floor(Date.now() / 1000) + 30 * 60, // 30 minuti
-      success_url: `${appUrl}/tournaments/${tournamentId}/register/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url:  `${appUrl}/tournaments/${tournamentId}/register/cancel?registration_id=${registration.id}`,
-    })
+        client_reference_id: registration.id,
+        expires_at: Math.floor(Date.now() / 1000) + 30 * 60, // 30 minuti
+        success_url: `${appUrl}/tournaments/${tournamentId}/register/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url:  `${appUrl}/tournaments/${tournamentId}/register/cancel?registration_id=${registration.id}`,
+      })
+      if (!checkoutSession.url) throw new Error("Stripe checkout session without url")
+    } catch (err) {
+      // Never leave a PENDING/STRIPE row with no session behind: the user would
+      // be stuck on "Completa pagamento" forever. Raw Stripe text is logged only.
+      console.error("[registration] startCheckout: cannot create Stripe session", err)
+      if (wasOnList) {
+        await db.tournamentRegistration
+          .update({ where: { id: registration.id }, data: { paymentMethod: null } })
+          .catch(() => {})
+      } else {
+        await db.tournamentRegistration.deleteMany({ where: { id: registration.id } }).catch(() => {})
+      }
+      revalidateTournament(tournamentId)
+      return { ok: false, error: CARD_PAYMENT_UNAVAILABLE_MESSAGE }
+    }
 
     // Store session id for webhook + idempotent re-use
     await db.tournamentRegistration.update({
@@ -157,15 +333,83 @@ export async function startCheckout(input: unknown): Promise<
       data: { stripeSessionId: checkoutSession.id },
     })
 
-    if (!checkoutSession.url) {
-      // Roll back the pending row if we couldn't get a URL
-      await db.tournamentRegistration.delete({ where: { id: registration.id } }).catch(() => {})
-      throw new Error("URL di checkout mancante")
-    }
-
     return { ok: true, redirectUrl: checkoutSession.url }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+    return { ok: false, error: toUserError(e, "startCheckout") }
+  }
+}
+
+// ─────────────────────── manual payment (cash / PayPal) ──────────────────────
+
+async function createManualRegistration(
+  input: unknown,
+  method: "CASH" | "PAYPAL",
+): Promise<{ ok: true; registrationId: string } | { ok: false; error: string }> {
+  try {
+    const { tournamentId, skillLevel } = CreateManualPaymentSchema.parse(input)
+    const player = await requireCurrentPlayer()
+    const tournament = await assertRegistrable(tournamentId)
+    const isFree = isFreeTournament(tournament)
+
+    const existing = await db.tournamentRegistration.findUnique({
+      where: { tournamentId_playerId: { tournamentId, playerId: player.id } },
+    })
+
+    if (existing) {
+      if (existing.paymentStatus === "PAID" || existing.paymentStatus === "FREE") {
+        return { ok: false, error: "Sei già iscritto a questo torneo" }
+      }
+      if (existing.paymentStatus === "PENDING" && existing.stripeSessionId) {
+        // Switching away from card: the Stripe session must not be able to
+        // take money anymore.
+        const res = await closeCheckoutSession(existing.stripeSessionId)
+        if (res.state === "paid") {
+          await markRegistrationPaid(existing.id, res.session)
+          revalidateTournament(tournamentId)
+          return { ok: true, registrationId: existing.id }
+        }
+        if (res.state === "unknown") return { ok: false, error: STRIPE_UNVERIFIABLE_MESSAGE }
+        // closed: replace the row below (new id) — the old session's expiry
+        // webhook deletes by row id and must not hit the new registration.
+      } else if (existing.paymentStatus === "PENDING") {
+        const updates: { paymentMethod?: string; skillLevel?: number } = {}
+        if (!isFree && existing.paymentMethod !== method) updates.paymentMethod = method
+        if (skillLevel != null && existing.skillLevel !== skillLevel) updates.skillLevel = skillLevel
+        if (Object.keys(updates).length > 0) {
+          await db.tournamentRegistration.update({
+            where: { id: existing.id },
+            data: updates,
+          })
+          revalidateTournament(tournamentId)
+        }
+        return { ok: true, registrationId: existing.id }
+      }
+    }
+
+    const keep = existing?.paymentStatus === "PENDING" && !existing.isSpectator ? existing : null
+
+    const registration = await db.$transaction(async (tx) => {
+      await assertSeatAvailable(tx, tournament, player.id)
+      if (existing) await tx.tournamentRegistration.deleteMany({ where: { id: existing.id } })
+      return tx.tournamentRegistration.create({
+        data: {
+          tournamentId,
+          playerId: player.id,
+          ...carriedFields(keep),
+          // Free tournament: treat as FREE, not cash/PayPal
+          paymentStatus: isFree ? "PAID" : "PENDING",
+          paymentMethod: isFree ? "FREE" : method,
+          paidAt: isFree ? new Date() : null,
+          amountPaidCents: isFree ? 0 : null,
+          skillLevel: skillLevel ?? existing?.skillLevel ?? null,
+        },
+      })
+    })
+
+    revalidateTournament(tournamentId)
+    return { ok: true, registrationId: registration.id }
+  } catch (e) {
+    return { ok: false, error: toUserError(e, `manual ${method} registration`) }
   }
 }
 
@@ -174,53 +418,7 @@ export async function startCheckout(input: unknown): Promise<
 export async function createPaypalRegistration(input: unknown): Promise<
   { ok: true; registrationId: string } | { ok: false; error: string }
 > {
-  try {
-    const { tournamentId, skillLevel } = CreateManualPaymentSchema.parse(input)
-    const player = await requireCurrentPlayer()
-    const tournament = await assertRegistrable(tournamentId)
-
-    const existing = await db.tournamentRegistration.findUnique({
-      where: { tournamentId_playerId: { tournamentId, playerId: player.id } },
-    })
-    if (existing) {
-      if (existing.paymentStatus === "PAID" || existing.paymentStatus === "FREE") {
-        return { ok: false, error: "Sei già iscritto a questo torneo" }
-      }
-      if (existing.paymentStatus === "PENDING") {
-        const updates: { paymentMethod?: string; skillLevel?: number } = {}
-        if (existing.paymentMethod !== "PAYPAL") updates.paymentMethod = "PAYPAL"
-        if (skillLevel != null && existing.skillLevel !== skillLevel) updates.skillLevel = skillLevel
-        if (Object.keys(updates).length > 0) {
-          await db.tournamentRegistration.update({
-            where: { id: existing.id },
-            data: updates,
-          })
-          revalidatePath(`/tournaments/${tournamentId}`)
-        }
-        return { ok: true, registrationId: existing.id }
-      }
-    }
-
-    const isFree = tournament.priceCents == null || tournament.priceCents === 0
-
-    const registration = await db.tournamentRegistration.create({
-      data: {
-        tournamentId,
-        playerId: player.id,
-        paymentStatus: isFree ? "PAID" : "PENDING",
-        paymentMethod: isFree ? "FREE" : "PAYPAL",
-        paidAt: isFree ? new Date() : null,
-        amountPaidCents: isFree ? 0 : null,
-        skillLevel: skillLevel ?? null,
-      },
-    })
-
-    revalidatePath("/tournaments")
-    revalidatePath(`/tournaments/${tournamentId}`)
-    return { ok: true, registrationId: registration.id }
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) }
-  }
+  return createManualRegistration(input, "PAYPAL")
 }
 
 // ─────────────────────── createManualPaymentRegistration ─────────────────────
@@ -228,54 +426,7 @@ export async function createPaypalRegistration(input: unknown): Promise<
 export async function createManualPaymentRegistration(input: unknown): Promise<
   { ok: true; registrationId: string } | { ok: false; error: string }
 > {
-  try {
-    const { tournamentId, skillLevel } = CreateManualPaymentSchema.parse(input)
-    const player = await requireCurrentPlayer()
-    const tournament = await assertRegistrable(tournamentId)
-
-    const existing = await db.tournamentRegistration.findUnique({
-      where: { tournamentId_playerId: { tournamentId, playerId: player.id } },
-    })
-    if (existing) {
-      if (existing.paymentStatus === "PAID" || existing.paymentStatus === "FREE") {
-        return { ok: false, error: "Sei già iscritto a questo torneo" }
-      }
-      if (existing.paymentStatus === "PENDING") {
-        const updates: { paymentMethod?: string; skillLevel?: number } = {}
-        if (existing.paymentMethod !== "CASH") updates.paymentMethod = "CASH"
-        if (skillLevel != null && existing.skillLevel !== skillLevel) updates.skillLevel = skillLevel
-        if (Object.keys(updates).length > 0) {
-          await db.tournamentRegistration.update({
-            where: { id: existing.id },
-            data: updates,
-          })
-          revalidatePath(`/tournaments/${tournamentId}`)
-        }
-        return { ok: true, registrationId: existing.id }
-      }
-    }
-
-    // Free tournament: treat as FREE, not cash
-    const isFree = tournament.priceCents == null || tournament.priceCents === 0
-
-    const registration = await db.tournamentRegistration.create({
-      data: {
-        tournamentId,
-        playerId: player.id,
-        paymentStatus: isFree ? "PAID" : "PENDING",
-        paymentMethod: isFree ? "FREE" : "CASH",
-        paidAt: isFree ? new Date() : null,
-        amountPaidCents: isFree ? 0 : null,
-        skillLevel: skillLevel ?? null,
-      },
-    })
-
-    revalidatePath("/tournaments")
-    revalidatePath(`/tournaments/${tournamentId}`)
-    return { ok: true, registrationId: registration.id }
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) }
-  }
+  return createManualRegistration(input, "CASH")
 }
 
 // ────────────────────────── registerForTournament ────────────────────────────
@@ -292,7 +443,7 @@ export async function registerForTournament(input: unknown): Promise<
     const existing = await db.tournamentRegistration.findUnique({
       where: { tournamentId_playerId: { tournamentId, playerId: player.id } },
     })
-    if (existing) {
+    if (existing && !isStaleRow(existing)) {
       if (existing.paymentStatus === "PAID" || existing.paymentStatus === "FREE") {
         return { ok: false, error: "Sei già iscritto a questo torneo" }
       }
@@ -307,18 +458,23 @@ export async function registerForTournament(input: unknown): Promise<
       return { ok: true }
     }
 
-    const isFree = tournament.priceCents == null || tournament.priceCents === 0
+    const isFree = isFreeTournament(tournament)
 
-    await db.tournamentRegistration.create({
-      data: {
-        tournamentId,
-        playerId: player.id,
-        paymentStatus: isFree ? "PAID" : "PENDING",
-        paymentMethod: isFree ? "FREE" : null,
-        paidAt: isFree ? new Date() : null,
-        amountPaidCents: isFree ? 0 : null,
-        skillLevel: skillLevel ?? null,
-      },
+    await db.$transaction(async (tx) => {
+      await assertSeatAvailable(tx, tournament, player.id)
+      // A cancelled/rejected row would otherwise block the unique slot forever.
+      if (existing) await tx.tournamentRegistration.deleteMany({ where: { id: existing.id } })
+      await tx.tournamentRegistration.create({
+        data: {
+          tournamentId,
+          playerId: player.id,
+          paymentStatus: isFree ? "PAID" : "PENDING",
+          paymentMethod: isFree ? "FREE" : null,
+          paidAt: isFree ? new Date() : null,
+          amountPaidCents: isFree ? 0 : null,
+          skillLevel: skillLevel ?? null,
+        },
+      })
     })
 
     // Notify player of successful registration
@@ -332,11 +488,10 @@ export async function registerForTournament(input: unknown): Promise<
       }),
     ).catch(() => {})
 
-    revalidatePath("/tournaments")
-    revalidatePath(`/tournaments/${tournamentId}`)
+    revalidateTournament(tournamentId)
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+    return { ok: false, error: toUserError(e, "registerForTournament") }
   }
 }
 
@@ -398,7 +553,12 @@ export async function adminRejectManualPayment(input: unknown) {
 
 // ──────────────────────────── adminSetPaymentStatus ──────────────────────────
 
-export async function adminSetPaymentStatus(registrationId: string, paid: boolean) {
+export async function adminSetPaymentStatus(registrationIdInput: string, paidInput: boolean) {
+  const { registrationId, paid } = AdminSetPaymentStatusSchema.parse({
+    registrationId: registrationIdInput,
+    paid: paidInput,
+  })
+
   const reg = await db.tournamentRegistration.findUnique({
     where: { id: registrationId },
     select: { tournamentId: true, paymentStatus: true, tournament: { select: { priceCents: true } } },
@@ -459,21 +619,46 @@ export async function adminSetRegistrationSkillLevel(input: unknown) {
 // ──────────────────────────── cancelRegistration ─────────────────────────────
 
 export async function cancelRegistration(input: unknown) {
-  const player = await requireCurrentPlayer()
   const { registrationId } = CancelRegistrationSchema.parse(input)
+  const player = await requireCurrentPlayer()
 
   const reg = await db.tournamentRegistration.findUnique({
     where: { id: registrationId },
-    select: { playerId: true, tournamentId: true, paymentStatus: true },
+    select: { playerId: true, tournamentId: true, paymentStatus: true, paymentMethod: true, stripeSessionId: true },
   })
   if (!reg) throw new Error("Iscrizione non trovata")
   if (reg.playerId !== player.id) throw new Error("Non autorizzato")
-  if (reg.paymentStatus === "PAID") {
+  // Free-tournament sign-ups are stored as PAID/FREE: nothing to refund there.
+  if (reg.paymentStatus === "PAID" && reg.paymentMethod !== "FREE") {
     throw new Error("Iscrizione già pagata: contatta l'organizzatore per un rimborso")
   }
 
-  await db.tournamentRegistration.delete({ where: { id: registrationId } })
-  revalidatePath(`/tournaments/${reg.tournamentId}`)
+  if (reg.paymentStatus === "PENDING" && reg.stripeSessionId) {
+    // Expire the open checkout first, or the user could still pay for a
+    // registration that no longer exists.
+    const res = await closeCheckoutSession(reg.stripeSessionId)
+    if (res.state === "paid") {
+      await markRegistrationPaid(registrationId, res.session)
+      revalidateTournament(reg.tournamentId)
+      throw new Error(
+        "Il pagamento con carta risulta completato: sei iscritto. Per annullare contatta l'organizzatore.",
+      )
+    }
+    if (res.state === "unknown") throw new Error(STRIPE_UNVERIFIABLE_MESSAGE)
+  }
+
+  await db.tournamentRegistration.deleteMany({ where: { id: registrationId } })
+  revalidateTournament(reg.tournamentId)
+}
+
+/** Client-friendly wrapper: returns the reason instead of throwing. */
+export async function cancelMyRegistration(input: unknown): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    await cancelRegistration(input)
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: toUserError(e, "cancelRegistration") }
+  }
 }
 
 // ─────────────────────────── adminRemoveRegistration ─────────────────────────
@@ -499,12 +684,16 @@ export async function adminRemoveRegistration(input: unknown) {
 }
 
 // ─────────────────────────── adminAddPlayerToTournament ──────────────────────
+// Organizer override: not subject to maxTeams (the organizer decides).
 
 export async function adminAddPlayerToTournament(
-  tournamentId: string,
-  playerId: string,
+  tournamentIdInput: string,
+  playerIdInput: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
+    const tournamentId = TournamentIdSchema.parse(tournamentIdInput)
+    const playerId = PlayerIdSchema.parse(playerIdInput)
+
     const session = await getCurrentSession()
     if (!session?.user?.id) return { ok: false, error: "Non autenticato" }
     const allowed = await canManageTournament(session.user.email, tournamentId)
@@ -537,17 +726,20 @@ export async function adminAddPlayerToTournament(
     revalidatePath(`/tournaments/${tournamentId}`)
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+    return { ok: false, error: toUserError(e, "adminAddPlayerToTournament") }
   }
 }
 
 // ─────────────────────────── adminAddSpectatorToTournament ───────────────────
 
 export async function adminAddSpectatorToTournament(
-  tournamentId: string,
-  playerId: string,
+  tournamentIdInput: string,
+  playerIdInput: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
+    const tournamentId = TournamentIdSchema.parse(tournamentIdInput)
+    const playerId = PlayerIdSchema.parse(playerIdInput)
+
     const session = await getCurrentSession()
     if (!session?.user?.id) return { ok: false, error: "Non autenticato" }
     const allowed = await canManageTournament(session.user.email, tournamentId)
@@ -581,7 +773,7 @@ export async function adminAddSpectatorToTournament(
     revalidatePath(`/tournaments/${tournamentId}`)
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+    return { ok: false, error: toUserError(e, "adminAddSpectatorToTournament") }
   }
 }
 
@@ -647,43 +839,43 @@ export async function listPendingManualRegistrations() {
   })
 }
 
-export async function registerAsSpectator(tournamentId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+export async function registerAsSpectator(tournamentIdInput: string): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
+    const tournamentId = TournamentIdSchema.parse(tournamentIdInput)
     const session = await getCurrentSession()
     if (!session?.user?.id) return { ok: false, error: "Non autenticato" }
     const player = await db.player.findUnique({ where: { userId: session.user.id } })
     if (!player) return { ok: false, error: "Profilo non trovato" }
 
-    const tournament = await db.tournament.findUnique({
-      where: { id: tournamentId },
-      select: { isOpenForRegistration: true, status: true, spectatorPriceCents: true, name: true },
-    })
-    if (!tournament) return { ok: false, error: "Torneo non trovato" }
-    if (!tournament.isOpenForRegistration) return { ok: false, error: "Iscrizioni chiuse" }
+    // Same window as player sign-ups: open, not started, before the deadline.
+    const tournament = await assertRegistrable(tournamentId)
 
     const existing = await db.tournamentRegistration.findUnique({
       where: { tournamentId_playerId: { tournamentId, playerId: player.id } },
     })
-    if (existing) return { ok: false, error: "Sei già nella lista" }
+    if (existing && !isStaleRow(existing)) return { ok: false, error: "Sei già nella lista" }
 
     const isFree = !tournament.spectatorPriceCents || tournament.spectatorPriceCents === 0
 
-    await db.tournamentRegistration.create({
-      data: {
-        tournamentId,
-        playerId: player.id,
-        isSpectator: true,
-        paymentStatus: isFree ? "FREE" : "PENDING",
-        paymentMethod: isFree ? "FREE" : null,
-        paidAt: isFree ? new Date() : null,
-        amountPaidCents: isFree ? 0 : null,
-      },
+    await db.$transaction(async (tx) => {
+      if (existing) await tx.tournamentRegistration.deleteMany({ where: { id: existing.id } })
+      await tx.tournamentRegistration.create({
+        data: {
+          tournamentId,
+          playerId: player.id,
+          isSpectator: true,
+          paymentStatus: isFree ? "FREE" : "PENDING",
+          paymentMethod: isFree ? "FREE" : null,
+          paidAt: isFree ? new Date() : null,
+          amountPaidCents: isFree ? 0 : null,
+        },
+      })
     })
 
     revalidatePath(`/tournaments/${tournamentId}`)
     revalidatePath("/tournaments")
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+    return { ok: false, error: toUserError(e, "registerAsSpectator") }
   }
 }

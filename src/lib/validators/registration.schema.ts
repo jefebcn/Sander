@@ -41,3 +41,11 @@ export type AdminRejectManualPaymentInput    = z.infer<typeof AdminRejectManualP
 export type CancelRegistrationInput          = z.infer<typeof CancelRegistrationSchema>
 export type GetTournamentForRegistrationInput = z.infer<typeof GetTournamentForRegistrationSchema>
 export type AdminSetSkillLevelInput          = z.infer<typeof AdminSetSkillLevelSchema>
+
+// Positional-argument actions (tournamentId / registrationId passed directly).
+export const TournamentIdSchema   = z.string().min(1)
+export const PlayerIdSchema       = z.string().min(1)
+export const AdminSetPaymentStatusSchema = z.object({
+  registrationId: z.string().min(1),
+  paid: z.boolean(),
+})
