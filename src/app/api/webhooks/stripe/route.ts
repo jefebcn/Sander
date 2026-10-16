@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
         }
 
         // ── Idempotency layer 2: conditional updateMany (no-op if already PAID)
-        await db.tournamentRegistration.updateMany({
+        const marked = await db.tournamentRegistration.updateMany({
           where: { id: registrationId, paymentStatus: "PENDING" },
           data: {
             paymentStatus: "PAID",
@@ -102,6 +102,10 @@ export async function POST(req: NextRequest) {
             stripePaymentIntentId: (session.payment_intent as string | null) ?? null,
           },
         })
+        if (marked.count === 0) {
+          const existing = await db.tournamentRegistration.findUnique({ where: { id: registrationId }, select: { paymentStatus: true } })
+          if (!existing) console.error("[stripe webhook] paid checkout without registration (orphan payment)", session.id, registrationId)
+        }
 
         if (tournamentId) {
           revalidatePath("/tournaments")
@@ -116,8 +120,10 @@ export async function POST(req: NextRequest) {
         const registrationId = session.metadata?.registrationId
         if (registrationId) {
           // Free the unique (tournamentId, playerId) slot
+          // Only the row this checkout belongs to: a newer attempt for the same
+          // registration has its own session and must survive.
           await db.tournamentRegistration.deleteMany({
-            where: { id: registrationId, paymentStatus: "PENDING" },
+            where: { id: registrationId, paymentStatus: "PENDING", stripeSessionId: session.id },
           })
         }
         break

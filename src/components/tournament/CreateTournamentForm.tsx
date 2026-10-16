@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { ChevronRight, Check, Trophy, Crown, Users, RotateCcw, Swords, Shuffle } from "lucide-react"
@@ -395,9 +396,9 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
           <div className="rounded-2xl bg-[var(--surface-2)] p-6 text-center text-sm text-[var(--muted-text)]">
             <Users className="mx-auto mb-2 h-8 w-8 opacity-50" />
             Nessun giocatore disponibile.{" "}
-            <a href="/players" className="text-[var(--accent)] underline">
+            <Link href="/players" className="text-[var(--accent)] underline">
               Aggiungi giocatori
-            </a>{" "}
+            </Link>{" "}
             prima.
           </div>
         ) : (
