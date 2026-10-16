@@ -66,6 +66,7 @@ export async function saveProfile(input: unknown) {
   }
 
   revalidatePath("/")
+  revalidatePath("/profile")
   revalidatePath("/sessions")
   revalidatePath("/players")
 }

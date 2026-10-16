@@ -35,7 +35,7 @@ export function InviteTab({ promoCode, inviteCount, leaderboard = [] }: InviteTa
   const shareUrl = `${APP_URL}${invitePath}`
   const shareText =
     `Ci vediamo in spiaggia? 🏐 Su SANDER trovi partite di beach volley in Riviera e una classifica per ogni bagno. ` +
-    `Iscriviti col mio codice ${promoCode}: ti regalano ${INVITEE_SC} SanderCredits.`
+    `Iscriviti col mio codice ${promoCode}: alla prima partita ti regalano ${INVITEE_SC} SanderCredits.`
 
   const next = nextInviteMilestone(inviteCount)
   const stepPct = next ? Math.round(((inviteCount - next.prevAt) / (next.at - next.prevAt)) * 100) : 100
@@ -88,12 +88,12 @@ export function InviteTab({ promoCode, inviteCount, leaderboard = [] }: InviteTa
           <div className="rounded-[var(--radius-sm)] bg-black/25 p-3">
             <p className="text-xs font-bold uppercase text-[var(--muted-text)]">A te</p>
             <p className="num text-2xl text-[var(--tone)]">+{INVITER_SC} SC</p>
-            <p className="text-xs text-[var(--muted-text)]">e +{INVITER_XP} XP</p>
+            <p className="text-xs text-[var(--muted-text)]">e +{INVITER_XP} XP, quando gioca</p>
           </div>
           <div className="rounded-[var(--radius-sm)] bg-black/25 p-3">
             <p className="text-xs font-bold uppercase text-[var(--muted-text)]">Al tuo amico</p>
             <p className="num text-2xl text-white">+{INVITEE_SC} SC</p>
-            <p className="text-xs text-[var(--muted-text)]">di benvenuto</p>
+            <p className="text-xs text-[var(--muted-text)]">alla prima partita</p>
           </div>
         </div>
       </section>
@@ -136,7 +136,7 @@ export function InviteTab({ promoCode, inviteCount, leaderboard = [] }: InviteTa
       <section className="rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-5">
         <div className="flex items-end justify-between">
           <div>
-            <p className="text-sm text-[var(--muted-text)]">Amici che hai portato</p>
+            <p className="text-sm text-[var(--muted-text)]">Amici che hanno giocato</p>
             <p className="num text-4xl leading-none text-white">{inviteCount}</p>
           </div>
           <div className="text-right">
@@ -187,7 +187,7 @@ export function InviteTab({ promoCode, inviteCount, leaderboard = [] }: InviteTa
         <ol className="mt-3 space-y-2 text-base text-[var(--muted-text)]">
           <li><span className="num mr-2 text-[var(--tone)]">1</span>Mandi il link o fai scansionare il QR.</li>
           <li><span className="num mr-2 text-[var(--tone)]">2</span>Il tuo amico si iscrive con il tuo codice.</li>
-          <li><span className="num mr-2 text-[var(--tone)]">3</span>Tu ricevi +{INVITER_SC} SC subito, lui +{INVITEE_SC} SC quando completa il profilo.</li>
+          <li><span className="num mr-2 text-[var(--tone)]">3</span>Quando gioca la sua prima partita, tu ricevi +{INVITER_SC} SC e lui +{INVITEE_SC} SC.</li>
         </ol>
         <p className="mt-3 text-sm text-[var(--muted-text)]">
           Anche il link di una partita che condividi contiene il tuo codice.

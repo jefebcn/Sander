@@ -195,7 +195,7 @@ export default async function ProfilePage({ searchParams }: Props) {
 
   const [inviteCount, referralLeaderboard] = activeTab === "invita"
     ? await Promise.all([
-        db.user.count({ where: { invitedByPlayerId: player.id } }),
+        db.user.count({ where: { invitedByPlayerId: player.id, inviteRewardedAt: { not: null } } }),
         getReferralLeaderboard(),
       ])
     : [0, []]

@@ -25,7 +25,7 @@ export function InviteCard({ invited }: { invited: number }) {
         <div className="min-w-0 flex-1">
           <p className="eyebrow text-[var(--tone)]">Porta un amico in spiaggia</p>
           <p className="text-base font-extrabold leading-snug text-white">
-            +{INVITER_SC} SC a te, +{INVITEE_SC} SC a lui
+            +{INVITER_SC} SC a te, +{INVITEE_SC} SC a lui alla sua prima partita
           </p>
           <p className="text-sm text-[var(--muted-text)]">
             {next

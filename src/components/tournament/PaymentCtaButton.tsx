@@ -13,7 +13,7 @@ type SheetMode = "pay" | "register"
 
 /** Fixed CTAs sit above the mobile bottom nav (~5rem + safe area); flush on desktop. */
 const FIXED_BAR =
-  "fixed inset-x-0 z-[100] bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] md:bottom-0"
+  "fixed inset-x-0 z-[100] bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] md:bottom-0 md:mx-auto md:max-w-[560px]"
 
 export function PaymentCtaButton({
   tournamentId,

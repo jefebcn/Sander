@@ -163,7 +163,7 @@ export default async function Home() {
       getSpotlightTournament(),
       getUnreadCount(),
       getUnreadMessageCount(),
-      db.user.count({ where: { invitedByPlayerId: player.id } }),
+      db.user.count({ where: { invitedByPlayerId: player.id, inviteRewardedAt: { not: null } } }),
       getMyCityRank(player.id, player.homeCity),
       db.tournament.findFirst({
         where: { status: "COMPLETED" },
