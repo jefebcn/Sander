@@ -47,7 +47,7 @@ export function FilterableSessionList({ sessions, isLoggedIn = false }: Filterab
             key={f}
             onClick={() => setFormat(f)}
             className={cn(
-              "rounded-full px-3 py-1.5 text-xs font-bold shrink-0 transition-colors",
+              "min-h-[2.75rem] rounded-full px-4 text-sm font-bold shrink-0 transition-colors",
               format === f
                 ? "bg-[var(--accent)] text-black"
                 : "bg-[var(--surface-2)] text-[var(--muted-text)]",

@@ -1,5 +1,10 @@
 import Link from "next/link"
-import { ChevronLeft, TrendingUp, Swords, Shield, Trophy, AlertCircle } from "lucide-react"
+import { ChevronLeft, TrendingUp, Swords, Shield, Trophy, AlertCircle, Hourglass, Layers } from "lucide-react"
+import { START_LEVELS } from "@/lib/startLevel"
+import { DIVISIONS } from "@/lib/divisions"
+import { PROVISIONAL_GAMES } from "@/lib/rankingEligibility"
+
+const startRatings = START_LEVELS.map((l) => l.rating).join(", ").replace(/, (\d+)$/, " o $1")
 
 export default function RankingInfoPage() {
   return (
@@ -7,7 +12,7 @@ export default function RankingInfoPage() {
       <header className="flex items-center gap-3 px-4 py-5">
         <Link
           href="/players"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--muted-text)]"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--muted-text)]"
           aria-label="Indietro"
         >
           <ChevronLeft className="h-5 w-5" />
@@ -30,7 +35,7 @@ export default function RankingInfoPage() {
             <div>
               <p className="font-bold text-white mb-1">Glicko-2 — il sistema usato dagli scacchi</p>
               <p className="text-sm text-white/70 leading-relaxed">
-                Ogni giocatore parte da <strong className="text-[var(--accent)]">1500 punti</strong>. Il punteggio sale vincendo partite di torneo e scende perdendole, tenendo conto della forza dell&apos;avversario.
+                Si parte da <strong className="text-[var(--accent)]">{startRatings} punti</strong>, secondo il livello scelto all&apos;iscrizione ({START_LEVELS.map((l) => l.label.toLowerCase()).join(", ")}). I punti salgono quando vinci e scendono quando perdi, tenendo conto della forza degli avversari.
               </p>
             </div>
           </div>
@@ -100,40 +105,72 @@ export default function RankingInfoPage() {
           </div>
         </div>
 
-        {/* Only tournament matches */}
-        <div className="rounded-2xl bg-[var(--surface-2)] p-4 slide-up stagger-3">
+        {/* Entering the leaderboard */}
+        <div className="rounded-2xl bg-[var(--surface-2)] p-4 slide-up stagger-2">
           <div className="flex items-start gap-3">
-            <Trophy className="h-5 w-5 shrink-0 text-[var(--accent)] mt-0.5" />
+            <Hourglass className="h-5 w-5 shrink-0 text-[var(--warning)] mt-0.5" />
             <div>
-              <p className="font-bold text-white text-sm mb-1">Solo partite di torneo</p>
+              <p className="font-bold text-white text-sm mb-1">Quando entri in classifica</p>
               <p className="text-xs text-[var(--muted-text)] leading-relaxed">
-                Il ranking Glicko-2 si aggiorna solo al termine delle partite dei <strong className="text-white">tornei ufficiali</strong>. Le sessioni libere non influenzano il punteggio, ma contribuiscono all&apos;XP.
+                Dalla prima partita con risultato. Fino alla {PROVISIONAL_GAMES}ª il punteggio è <strong className="text-white">provvisorio</strong>: compari nella sezione &laquo;In valutazione&raquo;, dopo i giocatori con almeno {PROVISIONAL_GAMES} partite, così un paio di vittorie fortunate non valgono il podio.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Scale */}
+        {/* Only tournament matches */}
+        <div className="rounded-2xl bg-[var(--surface-2)] p-4 slide-up stagger-3">
+          <div className="flex items-start gap-3">
+            <Trophy className="h-5 w-5 shrink-0 text-[var(--accent)] mt-0.5" />
+            <div>
+              <p className="font-bold text-white text-sm mb-1">Tornei e partite libere</p>
+              <p className="text-xs text-[var(--muted-text)] leading-relaxed">
+                Contano le partite dei <strong className="text-white">tornei</strong> e anche le <strong className="text-white">partite libere</strong> chiuse con il risultato: in queste il punteggio si muove meno, circa il 40% di quanto farebbe in torneo. Una partita chiusa senza risultato non sposta i punti, ma dà comunque XP.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Scale: the divisions used everywhere else */}
         <div className="space-y-2 slide-up stagger-4">
           <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)] px-1">
-            Fasce di punteggio
+            Divisioni
           </p>
-          {[
-            { range: "2400+",      label: "Élite",         color: "text-[var(--gold)]",      bg: "rgba(255,215,0,0.1)" },
-            { range: "2000–2399",  label: "Avanzato",      color: "text-[var(--accent)]",    bg: "rgba(201,243,29,0.1)" },
-            { range: "1700–1999",  label: "Intermedio+",   color: "text-[var(--sky)]",       bg: "rgba(0,180,240,0.1)" },
-            { range: "1500–1699",  label: "Intermedio",    color: "text-white",              bg: "rgba(255,255,255,0.05)" },
-            { range: "1200–1499",  label: "Base",          color: "text-[var(--muted-text)]",bg: "transparent" },
-          ].map(({ range, label, color, bg }) => (
-            <div
-              key={range}
-              className="flex items-center justify-between rounded-xl px-4 py-3"
-              style={{ background: bg, border: "1px solid rgba(255,255,255,0.06)" }}
-            >
-              <span className={`font-black text-sm ${color}`}>{range}</span>
-              <span className="text-sm text-[var(--muted-text)]">{label}</span>
+          {[...DIVISIONS].reverse().map((d) => {
+            const next = DIVISIONS.find((x) => x.order === d.order + 1)
+            const range = next ? (d.min > 0 ? `${d.min}–${next.min - 1}` : `fino a ${next.min - 1}`) : `${d.min}+`
+            return (
+              <div
+                key={d.key}
+                className="flex min-h-[2.75rem] items-center justify-between rounded-xl px-4 py-3"
+                style={{ background: "var(--surface-2)", border: "1px solid rgba(255,255,255,0.06)" }}
+              >
+                <span className="font-black text-sm" style={{ color: d.color }}>
+                  {d.emoji} {d.name}
+                </span>
+                <span className="text-sm text-[var(--muted-text)]">{range} punti</span>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Vocabulary: points vs level */}
+        <div className="rounded-2xl bg-[var(--surface-2)] p-4 slide-up stagger-4">
+          <div className="flex items-start gap-3">
+            <Layers className="h-5 w-5 shrink-0 text-[var(--accent)] mt-0.5" />
+            <div>
+              <p className="font-bold text-white text-sm mb-1">Punti, divisione e livello</p>
+              <p className="text-xs text-[var(--muted-text)] leading-relaxed">
+                I <strong className="text-white">punti</strong> (es. 1378) dicono quanto sei forte: decidono classifiche, divisione e il colore della tua carta (bronzo, argento, oro). Il <strong className="text-white">livello</strong> (Liv. 3, con il suo titolo) dice quanto giochi: sale con l&apos;XP e non scende mai.
+              </p>
+              <Link
+                href="/level-info"
+                className="mt-2 inline-flex min-h-[2.75rem] items-center text-xs font-bold text-[var(--accent)]"
+              >
+                Come si sale di livello
+              </Link>
             </div>
-          ))}
+          </div>
         </div>
 
       </div>

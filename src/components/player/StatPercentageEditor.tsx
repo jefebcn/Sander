@@ -88,7 +88,8 @@ export function StatPercentageEditor({ initial, glickoRating }: Props) {
                 max={100}
                 value={val}
                 onChange={(e) => handleChange(key, e.target.value)}
-                className="flex-1 accent-[var(--accent)] h-1.5"
+                aria-label={`${desc}, percentuale`}
+                className="h-11 min-w-0 flex-1 accent-[var(--accent)]"
               />
 
               {/* Numeric input */}
@@ -98,7 +99,8 @@ export function StatPercentageEditor({ initial, glickoRating }: Props) {
                 max={100}
                 value={val}
                 onChange={(e) => handleChange(key, e.target.value)}
-                className="w-12 rounded-lg bg-[var(--surface-2)] text-center text-sm font-bold text-white outline-none focus:ring-1 focus:ring-[var(--accent)] py-1"
+                aria-label={`${desc}, percentuale (numero)`}
+                className="min-h-[2.75rem] w-14 rounded-lg bg-[var(--surface-2)] text-center text-base font-bold text-white outline-none focus:ring-1 focus:ring-[var(--accent)]"
               />
 
               {/* Computed value */}
@@ -110,9 +112,19 @@ export function StatPercentageEditor({ initial, glickoRating }: Props) {
         })}
       </div>
 
-      <p className="text-xs text-[var(--muted-text)]">
-        Valore = Glicko-2 ÷ 40 + %. Con {Math.round(glickoRating)} GLK e 0%: base {Math.round(glickoRating / 40)}. Le percentuali devono sommare a 100.
+      <p className="text-sm text-[var(--muted-text)]">
+        Distribuisci 100 punti tra i tuoi colpi: la carta mostra dove sei più forte.
       </p>
+
+      {/* The formula is for the curious, not something to read before using the sliders. */}
+      <details className="text-sm text-[var(--muted-text)]">
+        <summary className="cursor-pointer py-3 font-semibold text-[var(--accent)]">
+          Come si calcola?
+        </summary>
+        <p className="pb-1">
+          Valore = Glicko-2 ÷ 40 + %. Con {Math.round(glickoRating)} GLK e 0%: base {Math.round(glickoRating / 40)}. Le percentuali devono sommare a 100.
+        </p>
+      </details>
 
       {error && <p className="text-xs text-red-400">{error}</p>}
 

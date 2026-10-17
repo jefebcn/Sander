@@ -62,8 +62,10 @@ export function ShareStoryButton({
   const [qr, setQr] = useState<string | null>(null)
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle")
 
-  const origin =
-    typeof window !== "undefined" ? window.location.origin : "https://www.sanderbv.it"
+  // Production origin on the first render (server and client agree), the real
+  // one after mount: reading window during render broke hydration on previews.
+  const [origin, setOrigin] = useState("https://www.sanderbv.it")
+  useEffect(() => setOrigin(window.location.origin), [])
   // QR + caption point to the conversion landing; the displayed text stays clean.
   const landingUrl = `${origin}/scarica?ref=story`
 

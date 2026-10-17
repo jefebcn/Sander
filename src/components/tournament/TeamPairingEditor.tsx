@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation"
 import { Shuffle, Users, Pencil, X } from "lucide-react"
 import { randomizePairings, swapPlayers, updateTeamInfo } from "@/actions/tournaments"
 import { cn } from "@/lib/utils"
-import type { Player, TournamentRegistration } from "@/generated/prisma/client"
+import type { TournamentRegistration } from "@/generated/prisma/client"
+import type { PublicPlayer as Player } from "@/lib/publicPlayer"
 
 type RegWithPlayer = TournamentRegistration & { player: Player }
 

@@ -2,9 +2,10 @@
 
 import { useState, useTransition } from "react"
 import Link from "next/link"
-import { UserPlus, UserMinus, Search, User, X, UserX, BellRing } from "lucide-react"
+import { UserPlus, UserMinus, Search, User, X, BellRing } from "lucide-react"
 import { toast } from "sonner"
-import { joinSession, leaveSession, assignTeam, cancelSession, removeGuestFromSession, joinWaitlist, leaveWaitlist } from "@/actions/sessions"
+import { joinSession, leaveSession, assignTeam, cancelSession, removeParticipantFromSession, joinWaitlist, leaveWaitlist } from "@/actions/sessions"
+import { joinWindowOpen } from "@/lib/sessionRules"
 import { cn } from "@/lib/utils"
 import { CompleteSessionForm } from "./CompleteSessionForm"
 import { AddPlayerSheet } from "./AddPlayerSheet"
@@ -25,6 +26,7 @@ interface ParticipantListProps {
     status: string
     maxPlayers: number
     format: string
+    date: Date | string
   }
   participants: Participant[]
   currentPlayerId: string | null
@@ -41,11 +43,14 @@ const FORMAT_LABEL: Record<string, string> = {
 export function ParticipantList({ session, participants, currentPlayerId, myWaitlistPosition = null }: ParticipantListProps) {
   const [isPending, startTransition] = useTransition()
   const [addPlayerOpen, setAddPlayerOpen] = useState(false)
+  // Destructive actions ask twice: the first tap arms, the second confirms.
+  const [armed, setArmed] = useState<string | null>(null)
 
   const isOrganizer = currentPlayerId === session.organizerId
   const isParticipant = participants.some((p) => p.player?.id === currentPlayerId)
   const spotsLeft = session.maxPlayers - participants.length
-  const canJoin = !isParticipant && spotsLeft > 0 && session.status === "OPEN"
+  const started = !joinWindowOpen(new Date(session.date))
+  const canJoin = !isParticipant && spotsLeft > 0 && session.status === "OPEN" && !started
 
   const teamA = participants.filter((p) => p.team === 0)
   const teamB = participants.filter((p) => p.team === 1)
@@ -82,6 +87,8 @@ export function ParticipantList({ session, participants, currentPlayerId, myWait
   }
 
   function handleLeave() {
+    if (armed !== "leave") return setArmed("leave")
+    setArmed(null)
     startTransition(async () => {
       try {
         await leaveSession(session.id)
@@ -103,6 +110,8 @@ export function ParticipantList({ session, participants, currentPlayerId, myWait
   }
 
   function handleCancel() {
+    if (armed !== "cancel") return setArmed("cancel")
+    setArmed(null)
     startTransition(async () => {
       try {
         await cancelSession(session.id)
@@ -113,11 +122,13 @@ export function ParticipantList({ session, participants, currentPlayerId, myWait
     })
   }
 
-  function handleRemoveGuest(participantId: string) {
+  function handleRemove(participantId: string) {
+    if (armed !== `remove:${participantId}`) return setArmed(`remove:${participantId}`)
+    setArmed(null)
     startTransition(async () => {
       try {
-        await removeGuestFromSession(participantId)
-        toast.success("Ospite rimosso")
+        await removeParticipantFromSession(participantId)
+        toast.success("Giocatore rimosso")
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Errore")
       }
@@ -139,11 +150,12 @@ export function ParticipantList({ session, participants, currentPlayerId, myWait
 
       {/* Teams (if any assigned) */}
       {(teamA.length > 0 || teamB.length > 0) && (
-        <div className="grid grid-cols-2 gap-3">
+        // The organiser's rows carry A/B/remove buttons: stack the teams so they fit.
+        <div className={cn("grid gap-3", isOrganizer ? "grid-cols-1" : "grid-cols-2")}>
           {[
-            { label: "Team A", members: teamA, teamIdx: 0 as const },
-            { label: "Team B", members: teamB, teamIdx: 1 as const },
-          ].map(({ label, members, teamIdx }) => (
+            { label: "Team A", members: teamA },
+            { label: "Team B", members: teamB },
+          ].map(({ label, members }) => (
             <div key={label} className="rounded-2xl bg-[var(--surface-1)] p-3">
               <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">{label}</p>
               <div className="space-y-2">
@@ -153,7 +165,9 @@ export function ParticipantList({ session, participants, currentPlayerId, myWait
                     participant={p}
                     isOrganizer={isOrganizer}
                     onAssign={handleAssign}
-                    onRemoveGuest={handleRemoveGuest}
+                    onRemove={handleRemove}
+                    removeArmed={armed === `remove:${p.id}`}
+                    isSelf={p.playerId === currentPlayerId}
                     isPending={isPending}
                   />
                 ))}
@@ -179,7 +193,9 @@ export function ParticipantList({ session, participants, currentPlayerId, myWait
                 participant={p}
                 isOrganizer={isOrganizer}
                 onAssign={handleAssign}
-                onRemoveGuest={handleRemoveGuest}
+                onRemove={handleRemove}
+                removeArmed={armed === `remove:${p.id}`}
+                isSelf={p.playerId === currentPlayerId}
                 isPending={isPending}
               />
             ))}
@@ -207,12 +223,24 @@ export function ParticipantList({ session, participants, currentPlayerId, myWait
               className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-semibold text-[var(--muted-text)] transition-all active:scale-[0.98] disabled:opacity-50"
             >
               <UserMinus className="h-5 w-5" aria-hidden="true" />
-              Lascia partita
+              {armed === "leave" ? "Tocca di nuovo per lasciare" : "Lascia partita"}
             </button>
+          )}
+          {started && !isParticipant && !isOrganizer && session.status === "OPEN" && (
+            <div className="rounded-2xl bg-[var(--surface-2)] px-4 py-4 text-center">
+              <p className="text-base font-bold text-white">Partita già iniziata</p>
+              <Link
+                href="/sessions"
+                className="mt-3 flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-1)] font-bold text-white"
+              >
+                <Search className="h-5 w-5" aria-hidden="true" />
+                Trova un&apos;altra partita
+              </Link>
+            </div>
           )}
           {/* Nothing was rendered here before: someone arriving on a full match
               from a shared link saw no button and no explanation at all. */}
-          {!isParticipant && !canJoin && (
+          {!isParticipant && !isOrganizer && !canJoin && !started && (
             <div className="rounded-2xl bg-[var(--surface-2)] px-4 py-4 text-center">
               <p className="text-base font-bold text-white">Posti esauriti</p>
               <p className="mt-1 text-sm text-[var(--muted-text)]">
@@ -276,7 +304,7 @@ export function ParticipantList({ session, participants, currentPlayerId, myWait
             disabled={isPending}
             className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--danger)]/15 font-semibold text-[var(--danger)] transition-all active:scale-[0.98] disabled:opacity-40"
           >
-            Annulla partita
+            {armed === "cancel" ? "Tocca di nuovo per annullare la partita" : "Annulla partita"}
           </button>
         </div>
       )}
@@ -298,74 +326,83 @@ function PlayerRow({
   participant,
   isOrganizer,
   onAssign,
-  onRemoveGuest,
+  onRemove,
+  removeArmed,
+  isSelf,
   isPending,
 }: {
   participant: Participant
   isOrganizer: boolean
   onAssign: (id: string, team: 0 | 1 | null) => void
-  onRemoveGuest: (id: string) => void
+  onRemove: (id: string) => void
+  removeArmed: boolean
+  isSelf: boolean
   isPending: boolean
 }) {
   const isGuest = participant.playerId === null
+  const name = isGuest ? participant.guestName : participant.player!.name
 
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--surface-3)] text-xs font-black">
+    <div className="flex min-w-0 items-center gap-2">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-3)] text-xs font-black">
         {isGuest ? (
-          <User className="h-4 w-4 text-[var(--muted-text)]" />
+          <User className="h-4 w-4 text-[var(--muted-text)]" aria-hidden="true" />
         ) : (
           participant.player!.name.slice(0, 2).toUpperCase()
         )}
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">
-          {isGuest ? participant.guestName : participant.player!.name}
+          {name}
           {isGuest && (
             <span className="ml-1.5 text-xs font-normal text-[var(--muted-text)]">ospite</span>
           )}
         </p>
         {!isGuest && (
-          <p className="text-xs text-[var(--muted-text)]">Lv.{participant.player!.level}</p>
+          <p className="text-xs text-[var(--muted-text)]">Liv. {participant.player!.level}</p>
         )}
       </div>
       {isOrganizer && (
         <div className="flex gap-1">
-          {isGuest ? (
+          {removeArmed ? (
             <button
-              onClick={() => onRemoveGuest(participant.id)}
+              onClick={() => onRemove(participant.id)}
               disabled={isPending}
-              className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--danger)]/15 text-[var(--danger)] transition-colors hover:bg-[var(--danger)]/25 disabled:opacity-40"
-              title="Rimuovi ospite"
+              className="flex min-h-[2.75rem] items-center rounded-lg bg-[var(--danger)] px-3 text-xs font-bold text-white disabled:opacity-40"
             >
-              <X className="h-3.5 w-3.5" />
+              Rimuovi
             </button>
           ) : (
             <>
-              <button
-                onClick={() => onAssign(participant.id, participant.team === 0 ? null : 0)}
-                disabled={isPending}
-                className={cn(
-                  "rounded-lg px-2 py-1 text-xs font-bold transition-colors",
-                  participant.team === 0
-                    ? "bg-blue-500/20 text-blue-300"
-                    : "bg-[var(--surface-3)] text-[var(--muted-text)]",
-                )}
-              >
-                A
-              </button>
-              <button
-                onClick={() => onAssign(participant.id, participant.team === 1 ? null : 1)}
-                disabled={isPending}
-                className={cn(
-                  "rounded-lg px-2 py-1 text-xs font-bold transition-colors",
-                  participant.team === 1
-                    ? "bg-orange-500/20 text-orange-300"
-                    : "bg-[var(--surface-3)] text-[var(--muted-text)]",
-                )}
-              >
-                B
-              </button>
+              {([0, 1] as const).map((team) => (
+                <button
+                  key={team}
+                  onClick={() => onAssign(participant.id, participant.team === team ? null : team)}
+                  disabled={isPending}
+                  aria-pressed={participant.team === team}
+                  aria-label={`Metti ${name} nel Team ${team === 0 ? "A" : "B"}`}
+                  className={cn(
+                    "flex h-11 w-11 items-center justify-center rounded-lg text-sm font-bold transition-colors",
+                    participant.team === team
+                      ? team === 0
+                        ? "bg-[var(--blocker)]/25 text-white"
+                        : "bg-[var(--defender)]/25 text-white"
+                      : "bg-[var(--surface-3)] text-[var(--muted-text)]",
+                  )}
+                >
+                  {team === 0 ? "A" : "B"}
+                </button>
+              ))}
+              {!isSelf && (
+                <button
+                  onClick={() => onRemove(participant.id)}
+                  disabled={isPending}
+                  aria-label={`Rimuovi ${name} dalla partita`}
+                  className="flex h-11 w-11 items-center justify-center rounded-lg bg-[var(--danger)]/15 text-[var(--danger)] transition-colors hover:bg-[var(--danger)]/25 disabled:opacity-40"
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </button>
+              )}
             </>
           )}
         </div>

@@ -63,7 +63,7 @@ export async function AdminPendingPaymentsList() {
             <button
               type="submit"
               aria-label="Conferma pagamento"
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--accent)] text-black active:brightness-90"
+              className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--accent)] text-black active:brightness-90"
             >
               <Check className="h-5 w-5" />
             </button>
@@ -78,7 +78,7 @@ export async function AdminPendingPaymentsList() {
             <button
               type="submit"
               aria-label="Rifiuta"
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-3)] text-white active:bg-[var(--danger)]/20"
+              className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-3)] text-white active:bg-[var(--danger)]/20"
             >
               <X className="h-5 w-5" />
             </button>

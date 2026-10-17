@@ -6,6 +6,12 @@ import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { CreatePlayerSchema, UpdateStatPctSchema, AdminAddCreditsSchema } from "@/lib/validators/player.schema"
 import type { CreatePlayerInput, UpdateStatPctInput } from "@/lib/validators/player.schema"
 import { isAdminEmail } from "@/lib/isAdmin"
+import { PUBLIC_PLAYER_SELECT, DELETED_PLAYER_NAME, NOT_DELETED_PLAYER, type PublicPlayer } from "@/lib/publicPlayer"
+import { romeMonthRange } from "@/lib/romeMonth"
+import { z } from "zod"
+import { refundSessionCredits } from "@/lib/sessionRefunds"
+
+const PlayerIdSchema = z.string().trim().min(1).max(64)
 
 export async function createPlayer(input: CreatePlayerInput) {
   // Must be authenticated to create a player profile
@@ -26,22 +32,24 @@ export async function createPlayer(input: CreatePlayerInput) {
   return player
 }
 
-export async function getPlayer(id: string) {
+/**
+ * A player's public profile. Anyone can call this (it is an RPC endpoint), so
+ * it returns only the public fields — never birth date, gender, credits or the
+ * auth user id.
+ */
+export async function getPlayer(id: string): Promise<PublicPlayer> {
+  const playerId = PlayerIdSchema.parse(id)
   return db.player.findUniqueOrThrow({
-    where: { id },
-    include: {
-      registrations: {
-        include: { tournament: true },
-        orderBy: { tournament: { date: "desc" } },
-        take: 5,
-      },
-      _count: { select: { organizedSessions: true } },
-    },
+    where: { id: playerId },
+    select: PUBLIC_PLAYER_SELECT,
   })
 }
 
-export async function listPlayers() {
+/** Every active player, public fields only (pickers, lists, leaderboards). */
+export async function listPlayers(): Promise<PublicPlayer[]> {
   return db.player.findMany({
+    where: NOT_DELETED_PLAYER,
+    select: PUBLIC_PLAYER_SELECT,
     orderBy: [{ matchesWon: "desc" }, { name: "asc" }],
   })
 }
@@ -51,16 +59,20 @@ export async function checkHasPlayerProfile(): Promise<boolean> {
   if (!session?.user?.id) return false
   const player = await db.player.findUnique({
     where: { userId: session.user.id },
-    select: { firstName: true, lastName: true },
+    select: { firstName: true },
   })
-  // Profile must exist AND have first+last name filled in (i.e. onboarding completed)
-  return !!(player?.firstName && player?.lastName)
+  // Onboarding is done once the profile has a first name: it is the only name
+  // the form requires (the surname is optional), so also asking for lastName
+  // sent everyone without a surname back to /onboarding/profile at every login.
+  return !!player?.firstName?.trim()
 }
 
 export async function listUsersWithoutProfile() {
+  // Admin-only data, but the add-player sheet every organiser opens asks for
+  // it too: answer non-admins with an empty list instead of throwing, so the
+  // caller can never break on it.
   const session = await getCurrentSession()
-  if (!session?.user?.id) throw new Error("Non autenticato")
-  if (!isAdminEmail(session.user.email)) throw new Error("Non autorizzato")
+  if (!session?.user?.id || !isAdminEmail(session.user.email)) return []
 
   return db.user.findMany({
     where: { player: null },
@@ -355,15 +367,76 @@ export async function deletePlayer(id: string) {
   if (!session?.user?.id) throw new Error("Non autenticato")
   if (!isAdminEmail(session.user.email)) throw new Error("Solo l'amministratore può eliminare i giocatori")
 
-  // Grab userId before deletion so we can remove the auth account too
-  const player = await db.player.findUnique({ where: { id }, select: { userId: true } })
+  const playerId = PlayerIdSchema.parse(id)
 
-  await db.player.delete({ where: { id } })
+  const player = await db.player.findUnique({ where: { id: playerId }, select: { userId: true } })
+  if (!player) throw new Error("Giocatore non trovato")
 
-  // Delete the linked User — cascades to Account + AuthSession rows
-  if (player?.userId) {
-    await db.user.delete({ where: { id: player.userId } })
-  }
+  // Deleting the Player row is not an option: sessions they organised point at
+  // it with no cascade (the delete failed for any organiser), and the cascade on
+  // match/standing rows would rewrite other people's tournament history. So the
+  // row stays as an anonymous placeholder, stripped of every personal field,
+  // and only the login (User + its Account/AuthSession rows) is deleted.
+  // All in one transaction: never a half-deleted account.
+  await db.$transaction(async (tx) => {
+    // Matches they were organising can't go ahead with a ghost organiser:
+    // cancel them and give the other players their credits back.
+    const organised = await tx.session.findMany({
+      where: { organizerId: playerId, status: { in: ["OPEN", "FULL"] } },
+      select: { id: true },
+    })
+    for (const s of organised) {
+      await tx.session.update({ where: { id: s.id }, data: { status: "CANCELLED" } })
+      await refundSessionCredits(tx, s.id)
+    }
+    // Free the seats they held in other people's upcoming matches.
+    const seats = await tx.sessionParticipant.findMany({
+      where: { playerId, session: { status: { in: ["OPEN", "FULL"] } } },
+      select: { id: true, sessionId: true },
+    })
+    for (const seat of seats) {
+      await tx.sessionParticipant.delete({ where: { id: seat.id } })
+      await tx.session.updateMany({ where: { id: seat.sessionId, status: "FULL" }, data: { status: "OPEN" } })
+    }
+
+    // Rows that only ever concerned this person.
+    await tx.pushSubscription.deleteMany({ where: { playerId } })
+    await tx.notification.deleteMany({ where: { playerId } })
+    await tx.playerAvailability.deleteMany({ where: { playerId } })
+    await tx.sessionWaitlist.deleteMany({ where: { playerId } })
+    await tx.sessionNudge.deleteMany({ where: { playerId } })
+
+    await tx.player.update({
+      where: { id: playerId },
+      data: {
+        name: DELETED_PLAYER_NAME,
+        firstName: null,
+        lastName: null,
+        birthDate: null,
+        gender: null,
+        nationality: null,
+        avatarUrl: null,
+        userId: null,
+        homeCity: null,
+        startLevel: null,
+        nudgesOptOut: true,
+        sanderCredits: 0,
+        // Zero games: off every leaderboard (see lib/rankingEligibility).
+        matchesWon: 0,
+        matchesLost: 0,
+        winRatePct: 0,
+        tournamentsWon: 0,
+        sessionsPlayed: 0,
+        xp: 0,
+        level: 1,
+      },
+    })
+
+    // Cascades to Account + AuthSession rows.
+    if (player.userId) {
+      await tx.user.delete({ where: { id: player.userId } })
+    }
+  })
 
   revalidatePath("/players")
   revalidatePath("/profile")
@@ -407,8 +480,9 @@ export async function getPlayerAdvancedStats(playerId: string) {
 
 
 export async function getMonthlyTopPlayers() {
-  const now = new Date()
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  // The month on the Riviera calendar: the server clock is UTC, where the 1st
+  // starts one or two hours late.
+  const { start: startOfMonth } = romeMonthRange()
 
   // Tournament match wins this month
   const tourneyMatches = await db.match.findMany({
@@ -475,7 +549,7 @@ export async function getMonthlyTopPlayers() {
     .map(([id]) => id)
 
   const players = await db.player.findMany({
-    where: { id: { in: topIds } },
+    where: { id: { in: topIds }, ...NOT_DELETED_PLAYER },
     select: {
       id: true,
       name: true,
@@ -502,11 +576,7 @@ export async function getMonthlyTopPlayers() {
 
 /** Same win-counting logic as getMonthlyTopPlayers but for the previous month */
 async function getLastMonthTopPlayers() {
-  const now = new Date()
-  const year = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear()
-  const month = now.getMonth() === 0 ? 12 : now.getMonth() // 1-based
-  const startOfLastMonth = new Date(year, month - 1, 1)
-  const endOfLastMonth = new Date(year, month, 1)
+  const { start: startOfLastMonth, end: endOfLastMonth, year, month } = romeMonthRange(new Date(), -1)
 
   const tourneyMatches = await db.match.findMany({
     where: { isCompleted: true, updatedAt: { gte: startOfLastMonth, lt: endOfLastMonth } },
@@ -619,11 +689,7 @@ export async function getTournamentWins(playerId: string): Promise<TournamentWin
 export async function awardMonthlyPodium() {
   // Cheap guard: once last month's podium is stored, skip the heavy recompute.
   // (This action was running getLastMonthTopPlayers on every /players?tab=podio view.)
-  const guard = new Date()
-  guard.setDate(1)
-  guard.setMonth(guard.getMonth() - 1)
-  const gMonth = guard.getMonth() + 1
-  const gYear = guard.getFullYear()
+  const { month: gMonth, year: gYear } = romeMonthRange(new Date(), -1)
   const already = await db.monthlyAward.findFirst({
     where: { month: gMonth, year: gYear },
     select: { id: true },

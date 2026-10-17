@@ -2,22 +2,9 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import { Search, Crown, MapPin, Waves } from "lucide-react"
+import { Search, Crown, MapPin, Waves, Hourglass } from "lucide-react"
 import { POPULAR_BAGNI, bagnoLabel } from "@/lib/bagni"
 import type { Territory } from "@/actions/territories"
-
-function KingAvatar({ name, url }: { name: string; url: string | null }) {
-  return (
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-1)] text-xs font-black text-[var(--muted-text)]">
-      {url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={url} alt={name} className="h-full w-full object-cover" />
-      ) : (
-        name.slice(0, 2).toUpperCase()
-      )}
-    </div>
-  )
-}
 
 /** One row: a bagno/location with its king, or an empty "claim it" state. */
 function TerritoryRow({ t, bagno, muted }: { t?: Territory; bagno?: number; muted?: boolean }) {
@@ -57,6 +44,12 @@ function TerritoryRow({ t, bagno, muted }: { t?: Territory; bagno?: number; mute
           <Link href={`/players/${t.king.id}`} className="mt-0.5 flex items-center gap-1.5">
             <Crown className="h-3.5 w-3.5 shrink-0 text-[var(--gold)]" />
             <span className="truncate text-xs font-bold text-[var(--gold)]">{t.king.name}</span>
+            {t.king.provisional && (
+              <Hourglass
+                className="h-3 w-3 shrink-0 text-[var(--warning)]"
+                aria-label="In valutazione: meno di 5 partite"
+              />
+            )}
           </Link>
         ) : (
           <p className="mt-0.5 text-xs text-[var(--muted-text)]">Libero — gioca qui e conquistalo 👑</p>

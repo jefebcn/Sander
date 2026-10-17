@@ -1,6 +1,10 @@
 export const dynamic = "force-dynamic"
 
 import Image from "next/image"
+import Link from "next/link"
+import { redirect } from "next/navigation"
+import { auth } from "@/lib/auth"
+import { safeCallbackUrl } from "@/lib/safeRedirect"
 import { AuthForm } from "@/components/auth/AuthForm"
 import { BackButton } from "@/components/auth/BackButton"
 
@@ -10,7 +14,15 @@ export default async function SignInPage({
   searchParams: Promise<{ callbackUrl?: string; invite?: string; mode?: string }>
 }) {
   const { callbackUrl, invite, mode } = await searchParams
-  const resolvedCallback = callbackUrl ?? "/"
+  // Same-site paths only: never hand an external URL to router.push/signIn.
+  const resolvedCallback = safeCallbackUrl(callbackUrl)
+
+  // Already signed in: the form has nothing to offer, go where they were headed.
+  const session = await auth()
+  if (session?.user?.id) {
+    redirect(resolvedCallback.startsWith("/auth/") ? "/" : resolvedCallback)
+  }
+
   const defaultMode = mode === "register" ? "register" : "login"
 
   return (
@@ -74,8 +86,15 @@ export default async function SignInPage({
         {/* Form */}
         <AuthForm callbackUrl={resolvedCallback} inviteCode={invite} defaultMode={defaultMode} />
 
-        <p className="text-center text-xs text-[var(--muted-text)]">
-          Accedendo accetti i nostri Termini di Servizio
+        <p className="text-center text-sm text-[var(--muted-text)]">
+          Accedendo accetti i nostri{" "}
+          <Link href="/terms" className="inline-flex min-h-[2.75rem] items-center font-semibold text-white underline underline-offset-2">
+            Termini di Servizio
+          </Link>{" "}
+          e la{" "}
+          <Link href="/privacy" className="inline-flex min-h-[2.75rem] items-center font-semibold text-white underline underline-offset-2">
+            Privacy Policy
+          </Link>
         </p>
       </div>
     </div>

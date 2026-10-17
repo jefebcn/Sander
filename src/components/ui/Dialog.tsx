@@ -34,7 +34,7 @@ export function DialogContent({
         )}
       >
         {(title || description) && (
-          <div className="mb-5">
+          <div className="mb-5 pr-10">
             {title && (
               <RadixDialog.Title className="text-xl font-black text-[var(--foreground)]">
                 {title}
@@ -48,8 +48,8 @@ export function DialogContent({
           </div>
         )}
         {children}
-        <RadixDialog.Close className="absolute right-4 top-4 rounded-lg p-1.5 text-[var(--muted-text)] hover:bg-[var(--surface-3)] hover:text-[var(--foreground)] transition-colors">
-          <X className="h-4 w-4" />
+        <RadixDialog.Close className="absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-full text-[var(--muted-text)] hover:bg-[var(--surface-3)] hover:text-[var(--foreground)] transition-colors">
+          <X className="h-5 w-5" aria-hidden="true" />
           <span className="sr-only">Chiudi</span>
         </RadixDialog.Close>
       </RadixDialog.Content>

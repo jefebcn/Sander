@@ -4,6 +4,7 @@ import { useState, useRef } from "react"
 import { X, Share2, Download } from "lucide-react"
 import { createPortal } from "react-dom"
 import type { PlayerCardData } from "@/components/player/SanderCardFut"
+import { FlagImage } from "@/components/ui/FlagImage"
 
 /* ──────────────────────────────────────────────────────────────────────────── */
 /*  Constants                                                                  */
@@ -31,23 +32,6 @@ const STAT_POSITIONS: { key: keyof PlayerCardData["stats"]; left: string }[] = [
   { key: "sta", left: "68.75%" },   // Col 13.75
 ]
 
-/* ──────────────────────────────────────────────────────────────────────────── */
-/*  Flag via CDN                                                               */
-/* ──────────────────────────────────────────────────────────────────────────── */
-
-function FlagIcon({ code }: { code: string }) {
-  const iso = code.toLowerCase()
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={`https://flagcdn.com/w80/${iso}.png`}
-      alt={code}
-      crossOrigin="anonymous"
-      className="h-full w-full object-cover"
-      loading="eager"
-    />
-  )
-}
 
 /* ──────────────────────────────────────────────────────────────────────────── */
 /*  Minimal Podium Preview (template + photo only, no text)                    */
@@ -203,7 +187,7 @@ function PodiumCardFull({
             zIndex: 20,
           }}
         >
-          <FlagIcon code={playerData.nationalityCode} />
+          <FlagImage code={playerData.nationalityCode} className="h-full w-full object-cover" />
         </div>
 
         {/* Role — Row 6.0, Col 4.5 */}

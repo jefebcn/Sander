@@ -2,7 +2,6 @@ export const dynamic = "force-dynamic"
 
 import type { Metadata } from "next"
 import { MapPin, Calendar, Euro, FileText, Coins, RefreshCw, Gauge, Pencil } from "lucide-react"
-import { notFound } from "next/navigation"
 import Link from "next/link"
 import { getSession, getWaitlistInfo } from "@/actions/sessions"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
@@ -24,6 +23,7 @@ import { ratingDeltaFor } from "@/lib/matchRecap"
 import { startingRating, type StartLevel } from "@/lib/startLevel"
 import { getCityLeaderboards } from "@/actions/territories"
 import { parseCity } from "@/lib/cities"
+import { joinWindowOpen } from "@/lib/sessionRules"
 
 export async function generateMetadata(
   { params }: { params: Promise<{ id: string }> }
@@ -84,13 +84,6 @@ export default async function SessionPage({
         orderBy: [{ round: "asc" }, { matchNumber: "asc" }],
       }).catch(() => [])
     : []
-
-  // Completed sessions are private — only participants (and the organizer,
-  // who may have run it without a seat and just closed it) can view them
-  if (session.status === "COMPLETED") {
-    const isParticipant = session.participants.some((p) => p.player?.id === currentPlayer?.id)
-    if (!isParticipant && session.organizerId !== currentPlayer?.id) notFound()
-  }
 
   // Fetch SC balance if this session costs SanderCredits
   const currentPlayerCredits =
@@ -272,13 +265,13 @@ export default async function SessionPage({
         </div>
 
         {/* CTA per utenti non autenticati */}
-        {!currentPlayer && (session.status === "OPEN" || session.status === "FULL") && (
+        {!currentPlayer && (session.status === "OPEN" || session.status === "FULL") && joinWindowOpen(session.date) && (
           <Link
             href={`/auth/signin?mode=register&callbackUrl=${encodeURIComponent(`/sessions/${session.id}`)}${inviteCode ? `&invite=${inviteCode}` : ""}`}
             className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl font-black text-black text-base"
             style={{ background: "var(--accent)" }}
           >
-            {inviteCode ? `Registrati e gioca (+${INVITEE_SC} SC in regalo)` : "Accedi per partecipare"}
+            {inviteCode ? `Registrati e gioca: +${INVITEE_SC} SC alla prima partita` : "Accedi per partecipare"}
           </Link>
         )}
 
@@ -301,11 +294,20 @@ export default async function SessionPage({
             status: session.status,
             maxPlayers: session.maxPlayers,
             format: session.format,
+            date: session.date.toISOString(),
           }}
           participants={session.participants}
           currentPlayerId={currentPlayer?.id ?? null}
           myWaitlistPosition={waitlist.myPosition}
         />
+
+        {/* Group chat — coordinate this game (participants only). Right under
+            the line-up: it's what players open most before a match. */}
+        {isParticipant && (
+          <div id="chat" className="scroll-mt-4">
+            <SessionChat sessionId={session.id} />
+          </div>
+        )}
 
         {/* Share + QR — below the join action on purpose: sharing is what the
             organiser does, while someone arriving from a link wants "Unisciti"
@@ -329,9 +331,6 @@ export default async function SessionPage({
             </div>
           </div>
         )}
-
-        {/* Group chat — coordinate this game (participants only) */}
-        {isParticipant && <SessionChat sessionId={session.id} />}
 
         {/* Live scoreboard — anyone playing this match (the board itself already
             accepts any participant, and on the sand whoever is nearest scores) */}

@@ -47,7 +47,6 @@ export function TournamentPaymentsList({
   registrations,
   priceCents,
   isAdmin,
-  tournamentId: _tournamentId,
   tournamentStatus,
 }: TournamentPaymentsListProps) {
   const paid = registrations.filter((r) => r.paymentStatus === "PAID" || r.paymentStatus === "FREE")

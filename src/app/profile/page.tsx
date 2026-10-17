@@ -26,9 +26,12 @@ import { AdminDeleteSessionButton } from "@/components/profile/AdminDeleteSessio
 import { AdminDeleteTournamentButton } from "@/components/profile/AdminDeleteTournamentButton"
 import { AdminDeletePlayerButton } from "@/components/profile/AdminDeletePlayerButton"
 import { AdminRecalcStatsButton } from "@/components/profile/AdminRecalcStatsButton"
+import { AdminSection } from "@/components/profile/AdminSection"
+import { AdminSearchList } from "@/components/profile/AdminSearchList"
 import { NotifyPermission } from "@/components/push/NotifyPermission"
 
 import { isAdminEmail } from "@/lib/isAdmin"
+import { CONTACT_EMAIL } from "@/lib/contact"
 import { getTournamentWins, getMatchHistory, getPartnerStats } from "@/actions/players"
 import { MatchHistory } from "@/components/player/MatchHistory"
 import { PartnerStats } from "@/components/player/PartnerStats"
@@ -40,6 +43,7 @@ import { AdminSeasonManager } from "@/components/admin/AdminSeasonManager"
 import { getActiveSeason } from "@/actions/seasons"
 import { ContentQueue } from "@/components/admin/ContentQueue"
 import { listContent } from "@/actions/content"
+import { NOT_DELETED_PLAYER } from "@/lib/publicPlayer"
 
 const MONTH_NAMES_IT = [
   "", "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
@@ -118,12 +122,14 @@ interface Props { searchParams: Promise<{ tab?: string; topup?: string }> }
 export default async function ProfilePage({ searchParams }: Props) {
   const { tab, topup } = await searchParams
   const validTabs = ["profilo", "partite", "organizzate", "invita", "app", "supporter", "admin"]
-  const activeTab = validTabs.includes(tab ?? "") ? (tab as string) : "profilo"
+  const requestedTab = validTabs.includes(tab ?? "") ? (tab as string) : "profilo"
 
   const [player, session] = await Promise.all([getCurrentPlayer(), getCurrentSession()])
   if (!player) redirect("/auth/signin?callbackUrl=/profile")
 
   const isAdmin = isAdminEmail(session?.user?.email)
+  // The admin tab doesn't exist for everyone else: show the profile instead of a blank page.
+  const activeTab = requestedTab === "admin" && !isAdmin ? "profilo" : requestedTab
 
   // Always fetch core player data
   const [fullPlayer, streak, monthlyAwards, tournamentWins] = await Promise.all([
@@ -174,7 +180,8 @@ export default async function ProfilePage({ searchParams }: Props) {
         matchesLost: fullPlayer.matchesLost,
         winRatePct: fullPlayer.winRatePct,
         sessionsPlayed: fullPlayer.sessionsPlayed,
-        tournamentsWon: fullPlayer.tournamentsWon,
+        // Same source as the titles listed on the profile, so the two agree.
+        tournamentsWon: tournamentWins.length,
         glickoRating: fullPlayer.glickoRating,
         level: fullPlayer.level,
         streak,
@@ -182,11 +189,17 @@ export default async function ProfilePage({ searchParams }: Props) {
       })
     : []
 
+  // No games of any kind yet: the stats panel would be sliders over nothing.
+  const isNewPlayer =
+    fullPlayer.matchesWon + fullPlayer.matchesLost === 0 &&
+    fullPlayer.sessionsPlayed === 0 &&
+    matchHistory.length === 0
+
   const promoCode = buildPromoCode(player.id)
 
   const [inviteCount, referralLeaderboard] = activeTab === "invita"
     ? await Promise.all([
-        db.user.count({ where: { invitedByPlayerId: player.id } }),
+        db.user.count({ where: { invitedByPlayerId: player.id, inviteRewardedAt: { not: null } } }),
         getReferralLeaderboard(),
       ])
     : [0, []]
@@ -217,6 +230,7 @@ export default async function ProfilePage({ searchParams }: Props) {
           include: { _count: { select: { registrations: true } } },
         }),
         db.player.findMany({
+          where: NOT_DELETED_PLAYER,
           orderBy: { createdAt: "desc" },
           select: {
             id: true,
@@ -262,7 +276,7 @@ export default async function ProfilePage({ searchParams }: Props) {
               aria-label="Modifica profilo"
               className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-2)] text-white"
             >
-              <Pencil className="h-5 w-5" />
+              <Pencil className="h-5 w-5" aria-hidden="true" />
             </Link>
             <SignOutButton
               className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-2)] text-white"
@@ -353,6 +367,25 @@ export default async function ProfilePage({ searchParams }: Props) {
             </div>
           )}
 
+          {/* The stat sliders and their formula mean nothing before a first game:
+              show newcomers where to start instead. */}
+          {isNewPlayer ? (
+            <div className="tone-play space-y-3 rounded-2xl bg-[var(--surface-2)] p-5 text-center">
+              <ChartColumn className="mx-auto h-8 w-8 text-[var(--tone)]" aria-hidden="true" />
+              <p className="text-lg font-black text-white">
+                Gioca la tua prima partita per sbloccare le statistiche
+              </p>
+              <p className="text-base text-[var(--muted-text)]">
+                Dopo la prima partita potrai scegliere in cosa sei più forte e la tua carta si aggiornerà.
+              </p>
+              <Link
+                href="/sessions"
+                className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl bg-[var(--accent)] text-base font-black text-black"
+              >
+                Trova una partita
+              </Link>
+            </div>
+          ) : (
           <StatPercentageEditor
             glickoRating={fullPlayer.glickoRating}
             initial={{
@@ -364,6 +397,7 @@ export default async function ProfilePage({ searchParams }: Props) {
               staPct: fullPlayer.staPct,
             }}
           />
+          )}
           {(tournamentWins.length > 0 || monthlyAwards.length > 0) && (
             <div className="rounded-2xl bg-[var(--surface-2)] p-5 flex flex-col gap-3">
               <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
@@ -517,7 +551,7 @@ export default async function ProfilePage({ searchParams }: Props) {
               <p className="text-[var(--muted-text)]">Nessuna sessione ancora</p>
               <Link
                 href="/sessions"
-                className="rounded-xl bg-[var(--accent)] px-6 py-3 text-sm font-black text-black"
+                className="flex min-h-[3.5rem] items-center rounded-xl bg-[var(--accent)] px-6 text-base font-black text-black"
               >
                 Trova una partita
               </Link>
@@ -562,7 +596,7 @@ export default async function ProfilePage({ searchParams }: Props) {
               <p className="text-[var(--muted-text)]">Non hai ancora organizzato sessioni</p>
               <Link
                 href="/sessions/new"
-                className="rounded-xl bg-[var(--accent)] px-6 py-3 text-sm font-black text-black"
+                className="flex min-h-[3.5rem] items-center rounded-xl bg-[var(--accent)] px-6 text-base font-black text-black"
               >
                 Crea una partita
               </Link>
@@ -611,7 +645,7 @@ export default async function ProfilePage({ searchParams }: Props) {
             <NudgeToggle initialOptOut={fullPlayer.nudgesOptOut} />
           </div>
           {[
-            { label: "Chiedi aiuto o segnala un problema", href: "mailto:support@sander.app" },
+            { label: "Chiedi aiuto o segnala un problema", href: `mailto:${CONTACT_EMAIL}` },
             { label: "Termini del servizio", href: "/terms" },
             { label: "Privacy policy", href: "/privacy" },
             { label: "Valuta l'app", href: "https://www.instagram.com" },
@@ -621,11 +655,11 @@ export default async function ProfilePage({ searchParams }: Props) {
               href={href}
               target={href.startsWith("http") || href.startsWith("mailto") ? "_blank" : undefined}
               rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
-              className="flex items-center justify-between px-2 py-4 text-sm font-semibold text-[var(--accent)] transition-opacity active:opacity-60"
+              className="flex min-h-[3.5rem] items-center justify-between px-2 py-4 text-base font-semibold text-[var(--accent)] transition-opacity active:opacity-60"
               style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
             >
               {label}
-              <ArrowUpRight className="h-4 w-4 shrink-0" />
+              <ArrowUpRight className="h-4 w-4 shrink-0" aria-hidden="true" />
             </a>
           ))}
 
@@ -698,7 +732,7 @@ export default async function ProfilePage({ searchParams }: Props) {
 
       {/* ══ Admin tab ═════════════════════════════════════════ */}
       {activeTab === "admin" && isAdmin && (
-        <div className="px-4 space-y-5">
+        <div className="px-4 space-y-3">
 
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-2">
@@ -739,108 +773,105 @@ export default async function ProfilePage({ searchParams }: Props) {
             </div>
           )}
 
-          {/* All sessions */}
-          <div>
-            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
-              Tutte le sessioni
-            </p>
-            <div className="space-y-2">
-              {adminSessions.map((s) => (
-                <div
-                  key={s.id}
-                  className="flex items-center gap-2 rounded-2xl bg-[var(--surface-2)] p-3"
-                >
-                  <Link
-                    href={`/sessions/${s.id}`}
-                    className="flex-1 min-w-0 active:opacity-80"
-                  >
-                    <p className="font-bold text-white text-sm truncate">{s.title}</p>
-                    <p className="text-xs text-[var(--muted-text)]">
-                      {s.organizer.name} · {formatDate(s.date)} · {s._count.participants} partecipanti
-                    </p>
-                  </Link>
-                  <span
-                    className="shrink-0 text-xs font-bold"
-                    style={{ color: STATUS_COLORS[s.status] ?? "var(--muted-text)" }}
-                  >
-                    {STATUS_LABELS[s.status] ?? s.status}
-                  </span>
-                  <AdminDeleteSessionButton id={s.id} />
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* Everything below folds into labelled sections: the tab used to be
+              one ~12,000px scroll with the credits manager at the very bottom. */}
+          <AdminSection title="SanderCredits" hint="Ricariche e omaggi" defaultOpen>
+            <AdminCreditsManager players={adminPlayers} />
+          </AdminSection>
 
-          {/* All tournaments */}
-          <div>
-            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
-              Tutti i tornei
-            </p>
-            <div className="space-y-2">
-              {adminTournaments.map((t) => (
-                <div
-                  key={t.id}
-                  className="flex items-center gap-2 rounded-2xl bg-[var(--surface-2)] p-3"
-                >
-                  <Link
-                    href={`/tournaments/${t.id}`}
-                    className="flex-1 min-w-0 flex items-center gap-3 active:opacity-80"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-white text-sm truncate">{t.name}</p>
-                      <p className="text-xs text-[var(--muted-text)]">
-                        {formatDate(t.date)} · {t._count.registrations} iscritti
+          <AdminSection title="Sessioni" count={adminSessions.length}>
+            <AdminSearchList
+              label="Cerca tra le sessioni"
+              placeholder="Cerca per titolo, luogo, organizzatore…"
+              items={adminSessions.map((s) => ({
+                id: s.id,
+                text: `${s.title} ${s.location ?? ""} ${s.organizer?.name ?? ""}`.toLowerCase(),
+                node: (
+                  <div className="flex items-center gap-2 rounded-2xl bg-[var(--surface-2)] p-3">
+                    <Link
+                      href={`/sessions/${s.id}`}
+                      className="flex min-h-[2.75rem] min-w-0 flex-1 flex-col justify-center active:opacity-80"
+                    >
+                      <p className="truncate text-base font-bold text-white">{s.title}</p>
+                      <p className="text-sm text-[var(--muted-text)]">
+                        {s.organizer.name} · {formatDate(s.date)} · {s._count.participants} partecipanti
                       </p>
-                    </div>
-                    <StatusBadge status={t.status as "DRAFT" | "LIVE" | "COMPLETED"} />
-                  </Link>
-                  <AdminDeleteTournamentButton id={t.id} />
-                </div>
-              ))}
-            </div>
-          </div>
+                    </Link>
+                    <span
+                      className="shrink-0 text-sm font-bold"
+                      style={{ color: STATUS_COLORS[s.status] ?? "var(--muted-text)" }}
+                    >
+                      {STATUS_LABELS[s.status] ?? s.status}
+                    </span>
+                    <AdminDeleteSessionButton id={s.id} />
+                  </div>
+                ),
+              }))}
+            />
+          </AdminSection>
 
-          {/* All players */}
-          <div>
-            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
-              Account giocatori
-            </p>
-            <div className="space-y-2">
-              {adminPlayers.map((p: { id: string; name: string; level: number; createdAt: Date; avatarUrl?: string | null; user?: { email?: string } }) => (
-                <div
-                  key={p.id}
-                  className="flex items-center gap-2 rounded-2xl bg-[var(--surface-2)] p-3"
+          <AdminSection title="Tornei" count={adminTournaments.length}>
+            {adminTournaments.map((t) => (
+              <div
+                key={t.id}
+                className="flex items-center gap-2 rounded-2xl bg-[var(--surface-2)] p-3"
+              >
+                <Link
+                  href={`/tournaments/${t.id}`}
+                  className="flex min-h-[2.75rem] min-w-0 flex-1 items-center gap-3 active:opacity-80"
                 >
-                  <Link
-                    href={`/players/${p.id}`}
-                    className="flex-1 min-w-0 active:opacity-80"
-                  >
-                    <div className="flex items-center gap-2">
-                      <p className="font-bold text-white text-sm truncate">{p.name}</p>
-                      {!p.avatarUrl && (
-                        <span className="text-xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[var(--muted-text)]/20 text-[var(--muted-text)]">
-                          no foto
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-[var(--muted-text)] truncate">
-                      {p.user?.email ?? "—"} · Lv.{p.level} · {formatDate(p.createdAt)}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-base font-bold text-white">{t.name}</p>
+                    <p className="text-sm text-[var(--muted-text)]">
+                      {formatDate(t.date)} · {t._count.registrations} iscritti
                     </p>
-                  </Link>
-                  <AdminDeletePlayerButton id={p.id} />
-                </div>
-              ))}
-            </div>
-          </div>
+                  </div>
+                  <StatusBadge status={t.status as "DRAFT" | "LIVE" | "COMPLETED"} />
+                </Link>
+                <AdminDeleteTournamentButton id={t.id} />
+              </div>
+            ))}
+          </AdminSection>
 
-          {/* Auto-generated social content queue */}
-          <ContentQueue initial={adminContent} />
+          <AdminSection title="Account giocatori" count={adminPlayers.length}>
+            <AdminSearchList
+              label="Cerca tra i giocatori"
+              placeholder="Cerca per nome o email…"
+              items={adminPlayers.map((p: { id: string; name: string; level: number; createdAt: Date; avatarUrl?: string | null; user?: { email?: string } }) => ({
+                id: p.id,
+                text: `${p.name} ${p.user?.email ?? ""}`.toLowerCase(),
+                node: (
+                  <div className="flex items-center gap-2 rounded-2xl bg-[var(--surface-2)] p-3">
+                    <Link
+                      href={`/players/${p.id}`}
+                      className="flex min-h-[2.75rem] min-w-0 flex-1 flex-col justify-center active:opacity-80"
+                    >
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-base font-bold text-white">{p.name}</p>
+                        {!p.avatarUrl && (
+                          <span className="rounded bg-[var(--muted-text)]/20 px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
+                            no foto
+                          </span>
+                        )}
+                      </div>
+                      <p className="truncate text-sm text-[var(--muted-text)]">
+                        {p.user?.email ?? "—"} · Lv.{p.level} · {formatDate(p.createdAt)}
+                      </p>
+                    </Link>
+                    <AdminDeletePlayerButton id={p.id} />
+                  </div>
+                ),
+              }))}
+            />
+          </AdminSection>
 
-          {/* Season manager */}
-          <AdminSeasonManager activeSeason={adminActiveSeason} />
+          <AdminSection title="Contenuti social" count={adminContent.length} hint="Coda dei post generati">
+            <ContentQueue initial={adminContent} />
+          </AdminSection>
 
-          {/* SanderCredits manager */}
-          <AdminCreditsManager players={adminPlayers} />
+          <AdminSection title="Stagione" hint={adminActiveSeason ? "Stagione attiva" : "Nessuna stagione attiva"}>
+            <AdminSeasonManager activeSeason={adminActiveSeason} />
+          </AdminSection>
 
         </div>
       )}

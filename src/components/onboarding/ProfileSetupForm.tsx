@@ -2,10 +2,11 @@
 
 import { useState, useRef, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronLeft, Camera, ChevronRight, X } from "lucide-react"
+import { ChevronLeft, Camera, X, User } from "lucide-react"
 import { saveProfile } from "@/actions/profile"
 import { capturePhoto, isNativeApp, hapticTap } from "@/lib/native"
 import { cn } from "@/lib/utils"
+import { canGoBackInApp } from "@/lib/navHistory"
 import { CITY_NAMES } from "@/lib/cities"
 import { START_LEVELS, type StartLevel } from "@/lib/startLevel"
 
@@ -97,6 +98,9 @@ function BottomSheet({
 }) {
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
       className={cn(
         "fixed inset-0 z-[300] flex flex-col justify-end transition-all duration-300",
         open ? "visible" : "invisible",
@@ -113,7 +117,7 @@ function BottomSheet({
       {/* Sheet */}
       <div
         className={cn(
-          "relative z-10 flex flex-col rounded-t-3xl bg-[#1e1e1e] transition-transform duration-300",
+          "relative z-10 flex flex-col rounded-t-3xl bg-[var(--surface-2)] transition-transform duration-300",
           open ? "translate-y-0" : "translate-y-full",
         )}
         style={{ maxHeight: "80dvh" }}
@@ -121,10 +125,12 @@ function BottomSheet({
         <div className="flex items-center justify-between px-5 pb-3 pt-5">
           <h3 className="text-lg font-bold text-white">{title}</h3>
           <button
+            type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-3)]"
+            aria-label="Chiudi"
+            className="-mr-1.5 flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-3)]"
           >
-            <X className="h-4 w-4 text-[var(--muted-text)]" />
+            <X className="h-5 w-5 text-[var(--muted-text)]" aria-hidden="true" />
           </button>
         </div>
         {children}
@@ -153,16 +159,16 @@ function FormRow({
   return (
     <div className="border-b border-[var(--border)]">
       {isInput ? (
-        <div className="flex min-h-[3.5rem] items-center justify-between px-5">
+        <label className="flex min-h-[3.5rem] items-center justify-between gap-3 px-5">
           <span className="shrink-0 text-base font-medium text-white">{label}</span>
           <input
             type={inputType ?? "text"}
             value={value}
             onChange={(e) => onInputChange?.(e.target.value)}
             placeholder={placeholder}
-            className="flex-1 bg-transparent text-right text-base text-[var(--accent)] placeholder:text-[var(--accent)]/60 focus:outline-none"
+            className="min-w-0 flex-1 bg-transparent text-right text-base text-[var(--accent)] placeholder:text-[var(--accent)]/60 focus:outline-none"
           />
-        </div>
+        </label>
       ) : (
         <button
           type="button"
@@ -290,8 +296,9 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
         })
         localStorage.setItem("sander_onboarded", "1")
         localStorage.setItem("sander_has_profile", "1")
+        // Editing from the profile goes back there; a brand-new player starts at home.
+        router.push(initialData ? "/profile" : "/")
         router.refresh()
-        router.push("/")
       } catch (err) {
         setError(err instanceof Error ? err.message : "Errore durante il salvataggio")
       }
@@ -309,11 +316,12 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
             button pushed to /auth/signin — an unlabelled way out of the app. */}
         {initialData && (
           <button
-            onClick={() => router.back()}
+            onClick={() => (canGoBackInApp() ? router.back() : router.push("/profile"))}
+            type="button"
             aria-label="Indietro"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-3)] text-white transition-colors active:bg-[var(--surface-4)]"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--surface-3)] text-white transition-colors active:bg-[var(--surface-4)]"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
           </button>
         )}
         <div className="min-w-0">
@@ -333,7 +341,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
         <div className="relative">
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={handleAvatarButton}
             className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full"
             style={{ background: "var(--accent)" }}
             aria-label="Cambia foto profilo"
@@ -342,20 +350,17 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
               // eslint-disable-next-line @next/next/no-img-element
               <img src={avatarPreview} alt="Avatar" className="h-full w-full object-cover" />
             ) : (
-              <svg viewBox="0 0 100 100" className="h-20 w-20" fill="none">
-                <circle cx="50" cy="38" r="18" fill="rgba(0,0,0,0.25)" />
-                <ellipse cx="50" cy="80" rx="28" ry="18" fill="rgba(0,0,0,0.25)" />
-              </svg>
+              <User className="h-14 w-14 text-black/40" strokeWidth={2.25} aria-hidden="true" />
             )}
           </button>
           {/* Camera badge */}
           <button
             type="button"
             onClick={handleAvatarButton}
-            className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface-3)] shadow-lg"
+            className="absolute -bottom-2 -right-2 flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-3)] shadow-lg ring-4 ring-[var(--surface-1)]"
             aria-label="Carica foto"
           >
-            <Camera className="h-4 w-4 text-white" />
+            <Camera className="h-5 w-5 text-white" aria-hidden="true" />
           </button>
           <input
             ref={fileInputRef}
@@ -575,6 +580,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
             value={nationalitySearch}
             onChange={(e) => setNationalitySearch(e.target.value)}
             placeholder="Cerca paese..."
+            aria-label="Cerca paese"
             className="w-full rounded-xl bg-[var(--surface-3)] px-4 py-2.5 text-base text-white placeholder:text-[var(--muted-text)] focus:outline-none"
             autoFocus={nationalityOpen}
           />

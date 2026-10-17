@@ -1,7 +1,8 @@
 "use client"
 
-import { useRef } from "react"
+import { useEffect, useRef } from "react"
 import { usePathname } from "next/navigation"
+import { markInAppNavigation } from "@/lib/navHistory"
 
 /** Top-level areas: moving between them is a "tab switch", not a drill-down. */
 const AREA_ROOTS = ["/", "/sessions", "/tournaments", "/trova", "/players", "/settimana", "/stagione", "/bagni", "/profile"]
@@ -20,6 +21,13 @@ export function PageWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const prev = useRef<string | null>(null)
   const last = useRef<{ path: string; cls: string } | null>(null)
+  const seenPath = useRef(pathname)
+
+  // Lets back buttons know there is an in-app page behind this one.
+  useEffect(() => {
+    if (pathname !== seenPath.current) markInAppNavigation()
+    seenPath.current = pathname
+  }, [pathname])
 
   // Compute once per pathname, during render, so the class is on the first paint.
   if (last.current?.path !== pathname) {

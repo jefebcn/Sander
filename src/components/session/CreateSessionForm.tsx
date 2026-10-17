@@ -52,8 +52,9 @@ function defaultStartIso() {
 
 function formatDateLabel(iso: string) {
   const d = new Date(iso)
-  const today = new Date()
-  const isToday = d.toDateString() === today.toDateString()
+  // "Today" in Riviera time, whatever zone the phone is set to.
+  const romeDay = (x: Date) => x.toLocaleDateString("en-CA", { timeZone: "Europe/Rome" })
+  const isToday = romeDay(d) === romeDay(new Date())
   const time = d.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" })
   if (isToday) return `Oggi, ${time}`
   return `${d.toLocaleDateString("it-IT", { timeZone: "Europe/Rome", day: "2-digit", month: "short" })}, ${time}`
@@ -105,6 +106,10 @@ export function CreateSessionForm({ presets, defaultCity }: { presets?: Presets;
   const [paymentType, setPaymentType] = useState<PaymentType>(
     (presets?.paymentType as PaymentType | undefined) ?? "FREE",
   )
+  // Computed after mount: the server renders in UTC, so a value from render
+  // would differ on the device and break hydration.
+  const [minDate, setMinDate] = useState("")
+  useEffect(() => setMinDate(minDateTime()), [])
   const [quotaAmount, setQuotaAmount] = useState(
     presets ? presetsToQuotaDisplay(presets) : "",
   )
@@ -194,6 +199,7 @@ export function CreateSessionForm({ presets, defaultCity }: { presets?: Presets;
             }
           }}
           placeholder="Bagno o campo (es. Bagno 26)"
+            aria-label="Luogo della partita"
           className="w-full rounded-xl bg-[var(--surface-2)] py-3 pl-9 pr-4 text-base text-[var(--foreground)] placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
         />
       </div>
@@ -208,7 +214,7 @@ export function CreateSessionForm({ presets, defaultCity }: { presets?: Presets;
               type="button"
               onClick={() => setLocation(label)}
               className={cn(
-                "rounded-full border px-3 py-1 text-xs font-bold transition-colors",
+                "min-h-[2.75rem] rounded-full border px-4 text-sm font-bold transition-colors",
                 location === label
                   ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
                   : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted-text)]",
@@ -229,7 +235,7 @@ export function CreateSessionForm({ presets, defaultCity }: { presets?: Presets;
               type="button"
               onClick={() => setLocation(loc)}
               className={cn(
-                "rounded-full border px-3 py-1 text-xs font-semibold transition-colors",
+                "min-h-[2.75rem] rounded-full border px-4 text-sm font-semibold transition-colors",
                 location === loc
                   ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
                   : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted-text)]",
@@ -263,7 +269,7 @@ export function CreateSessionForm({ presets, defaultCity }: { presets?: Presets;
                   setCity(selected ? "" : name)
                 }}
                 className={cn(
-                  "rounded-full border px-3 py-2 text-sm font-bold transition-colors",
+                  "min-h-[2.75rem] rounded-full border px-4 text-sm font-bold transition-colors",
                   selected
                     ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
                     : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted-text)]",
@@ -285,7 +291,9 @@ export function CreateSessionForm({ presets, defaultCity }: { presets?: Presets;
         </div>
         <input
           type="datetime-local"
+          aria-label="Data e ora della partita"
           value={date}
+          min={minDate || undefined}
           onChange={(e) => setDate(e.target.value)}
           className="absolute inset-0 opacity-0 cursor-pointer w-full"
           style={{ colorScheme: "dark" }}
@@ -323,6 +331,7 @@ export function CreateSessionForm({ presets, defaultCity }: { presets?: Presets;
             value={quotaAmount}
             onChange={(e) => setQuotaAmount(e.target.value)}
             placeholder="Quota a persona (€)"
+            aria-label="Quota a persona in euro"
             autoFocus
             className="flex-1 bg-transparent text-base font-semibold text-white focus:outline-none placeholder:text-[var(--muted-text)] placeholder:font-normal"
           />
@@ -338,6 +347,7 @@ export function CreateSessionForm({ presets, defaultCity }: { presets?: Presets;
             value={loserPays}
             onChange={(e) => setLoserPays(e.target.value)}
             placeholder="Cosa paga chi perde? (es. 1 birra)"
+            aria-label="Cosa paga chi perde"
             autoFocus
             className="flex-1 bg-transparent text-base font-semibold text-white focus:outline-none placeholder:text-[var(--muted-text)] placeholder:font-normal"
           />
@@ -353,6 +363,7 @@ export function CreateSessionForm({ presets, defaultCity }: { presets?: Presets;
             value={quotaAmount}
             onChange={(e) => setQuotaAmount(e.target.value)}
             placeholder="Costo a persona (SC)"
+            aria-label="Costo a persona in SanderCredits"
             autoFocus
             className="flex-1 bg-transparent text-base font-semibold text-white focus:outline-none placeholder:text-[var(--muted-text)] placeholder:font-normal"
           />
@@ -402,6 +413,7 @@ export function CreateSessionForm({ presets, defaultCity }: { presets?: Presets;
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Note (opzionale)"
+            aria-label="Note"
             rows={2}
             maxLength={200}
             className="w-full resize-none rounded-xl bg-[var(--surface-2)] px-4 py-3 text-base text-[var(--foreground)] placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
@@ -435,4 +447,10 @@ export function CreateSessionForm({ presets, defaultCity }: { presets?: Presets;
       )}
     </form>
   )
+}
+
+/** Earliest selectable start, as a datetime-local value in the device's time. */
+function minDateTime(): string {
+  const d = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000)
+  return d.toISOString().slice(0, 16)
 }

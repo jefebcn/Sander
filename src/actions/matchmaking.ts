@@ -1,7 +1,11 @@
 "use server"
 
 import { db } from "@/lib/db"
+import { z } from "zod"
 import { getDivision, type Division } from "@/lib/divisions"
+import { NOT_DELETED_PLAYER } from "@/lib/publicPlayer"
+import { ratedGames, isProvisional } from "@/lib/rankingEligibility"
+import { compatibilityScore, type MatchMode } from "@/lib/matchmakingScore"
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  Matchmaking — find players at your level (opponents) or complementary       */
@@ -9,7 +13,7 @@ import { getDivision, type Division } from "@/lib/divisions"
 /*  beach-volley roles (a blocker pairs best with a defender).                  */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-export type MatchMode = "partner" | "opponent"
+export type { MatchMode } from "@/lib/matchmakingScore"
 
 export interface MatchCandidate {
   id: string
@@ -20,6 +24,10 @@ export interface MatchCandidate {
   role: "BLOCKER" | "DEFENDER"
   ratingDiff: number
   compatibility: number // 0–100
+  /** Decided games behind the rating. */
+  games: number
+  /** Fewer than 5 games: the rating is still a first estimate. */
+  provisional: boolean
 }
 
 export interface MatchmakingResult {
@@ -30,24 +38,34 @@ export interface MatchmakingResult {
 
 const DEFAULT_BAND = 150
 
+const MatchmakingInputSchema = z.object({
+  playerId: z.string().trim().min(1).max(64),
+  mode: z.enum(["partner", "opponent"]),
+  band: z.number().int().min(25).max(1000),
+})
+
 export async function getPlayersAtMyLevel(
   playerId: string,
   mode: MatchMode = "partner",
   band = DEFAULT_BAND,
 ): Promise<MatchmakingResult> {
+  const input = MatchmakingInputSchema.parse({ playerId, mode, band })
+
   const me = await db.player.findUniqueOrThrow({
-    where: { id: playerId },
+    where: { id: input.playerId },
     select: { glickoRating: true, preferredRole: true },
   })
 
   const others = await db.player.findMany({
-    where: { id: { not: playerId } },
+    where: { id: { not: input.playerId }, ...NOT_DELETED_PLAYER },
     select: {
       id: true,
       name: true,
       avatarUrl: true,
       glickoRating: true,
       preferredRole: true,
+      matchesWon: true,
+      matchesLost: true,
     },
   })
 
@@ -57,14 +75,18 @@ export async function getPlayersAtMyLevel(
   const candidates: MatchCandidate[] = others
     .map((p) => {
       const ratingDiff = Math.abs(p.glickoRating - myRating)
-      // Level closeness: 100 at identical rating, 0 at the band edge.
-      const closeness = Math.max(0, Math.round((1 - ratingDiff / band) * 100))
-      // Partner mode rewards complementary roles (blocker + defender).
-      const complementary = p.preferredRole !== myRole
-      const compatibility =
-        mode === "partner"
-          ? Math.min(100, closeness + (complementary ? 12 : 0))
-          : closeness
+      const games = ratedGames(p)
+      // Level closeness + (for partners) complementary role, scaled down while
+      // the candidate's rating rests on few games: see lib/matchmakingScore.
+      const compatibility = compatibilityScore({
+        mode: input.mode,
+        band: input.band,
+        myRating,
+        myRole,
+        rating: p.glickoRating,
+        role: p.preferredRole,
+        games,
+      })
       return {
         id: p.id,
         name: p.name,
@@ -74,14 +96,16 @@ export async function getPlayersAtMyLevel(
         role: p.preferredRole,
         ratingDiff: Math.round(ratingDiff),
         compatibility,
+        games,
+        provisional: isProvisional(games) || games === 0,
       }
     })
-    .filter((c) => c.ratingDiff <= band)
+    .filter((c) => c.ratingDiff <= input.band)
     .sort((a, b) => b.compatibility - a.compatibility || a.ratingDiff - b.ratingDiff)
 
   return {
     me: { rating: Math.round(myRating), division: getDivision(myRating), role: myRole },
-    band,
+    band: input.band,
     candidates: candidates.slice(0, 30),
   }
 }

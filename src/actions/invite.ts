@@ -13,21 +13,27 @@ export async function findPlayerByInviteCode(code: string): Promise<string | nul
   const normalized = code.trim().toUpperCase()
   if (!normalized || normalized.length !== 9) return null
 
-  const players = await db.player.findMany({ select: { id: true } })
-  const match = players.find((p) => buildPromoCode(p.id) === normalized)
+  // The code is characters 3-10 of the id (see buildPromoCode): match it in the
+  // database instead of loading every player into memory on each sign-up.
+  const key = normalized.replace("-", "")
+  if (!/^[A-Z0-9]{8}$/.test(key)) return null
+  const rows = await db.$queryRaw<{ id: string }[]>`
+    SELECT id FROM players WHERE upper(substring(id from 3 for 8)) = ${key} LIMIT 5`
+  const match = rows.find((p) => buildPromoCode(p.id) === normalized)
   return match?.id ?? null
 }
 
-// NOTE: invite redemption lives in src/lib/referralRedeem.ts (internal, not a
-// callable server action) so it can't be farmed by clients. Do not re-export it.
+// NOTE: invite linking and rewards live in src/lib/referralRedeem.ts (internal,
+// not a callable server action) so they can't be farmed by clients. Do not
+// re-export them.
 
-/** Ranking of players by number of friends invited (with a linked account). */
+/** Ranking of players by number of invited friends who have played a first match. */
 export async function getReferralLeaderboard(
   limit = 10,
 ): Promise<{ id: string; name: string; avatarUrl: string | null; invites: number }[]> {
   const grouped = await db.user.groupBy({
     by: ["invitedByPlayerId"],
-    where: { invitedByPlayerId: { not: null } },
+    where: { invitedByPlayerId: { not: null }, inviteRewardedAt: { not: null } },
     _count: { _all: true },
   })
   if (grouped.length === 0) return []
@@ -52,7 +58,8 @@ export async function getReferralLeaderboard(
 }
 
 /**
- * Count how many users were invited by the current player.
+ * Count how many invited friends of the current player have played a first
+ * match, i.e. the invites that actually earned credits.
  */
 export async function getInviteCount(): Promise<number> {
   const session = await auth()
@@ -64,5 +71,5 @@ export async function getInviteCount(): Promise<number> {
   })
   if (!player) return 0
 
-  return db.user.count({ where: { invitedByPlayerId: player.id } })
+  return db.user.count({ where: { invitedByPlayerId: player.id, inviteRewardedAt: { not: null } } })
 }

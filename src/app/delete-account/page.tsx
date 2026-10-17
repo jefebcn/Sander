@@ -39,12 +39,11 @@ export default function DeleteAccountPage() {
         <div className="rounded-2xl bg-[var(--surface-2)] p-4 space-y-3">
           <p className="font-black text-white">Cosa viene eliminato</p>
           <ul className="space-y-1.5 text-white/70">
-            <li>✓ Profilo utente (nome, email, foto)</li>
-            <li>✓ Statistiche e rating Glicko</li>
-            <li>✓ Storico partite e tornei</li>
-            <li>✓ Livello XP e badge</li>
+            <li>✓ Profilo utente (nome, email, foto, data di nascita)</li>
+            <li>✓ Accesso all&apos;account e notifiche</li>
+            <li>✓ Statistiche, punti, livello XP e badge</li>
             <li>✓ SanderCredits residui</li>
-            <li>✓ Sessioni organizzate</li>
+            <li>✓ Partite in programma che organizzi (annullate, con rimborso agli iscritti)</li>
           </ul>
         </div>
 
@@ -53,6 +52,7 @@ export default function DeleteAccountPage() {
           <p className="font-black text-white">Cosa viene conservato</p>
           <ul className="space-y-1.5 text-white/70">
             <li>⚠ Dati aggregati anonimi (statistiche globali piattaforma)</li>
+            <li>⚠ Risultati di partite e tornei già giocati, senza il tuo nome (&quot;Giocatore eliminato&quot;), per non alterare lo storico degli altri giocatori</li>
             <li>⚠ Dati richiesti da obblighi di legge (fino a 10 anni)</li>
           </ul>
         </div>

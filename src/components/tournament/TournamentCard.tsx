@@ -42,7 +42,9 @@ export function TournamentCard({ tournament: t }: TournamentCardProps) {
 
   const formula = [TYPE_LABEL[t.type] ?? t.type, t.gender].filter(Boolean).join(" · ")
 
-  const open = t.isOpenForRegistration && t.status === "DRAFT"
+  // Same rule the server applies (assertRegistrable): open flag, not started, deadline not passed.
+  const open =
+    t.isOpenForRegistration && t.status === "DRAFT" && !(deadline && deadline.getTime() < Date.now())
   const price = t.priceCents ? `${(t.priceCents / 100).toFixed(t.priceCents % 100 ? 2 : 0)} €` : "Gratis"
 
   return (
@@ -59,7 +61,7 @@ export function TournamentCard({ tournament: t }: TournamentCardProps) {
           <img src={t.coverUrl} alt="" className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--surface-2)] via-black/10 to-transparent" />
           <div className="absolute right-3 top-3">
-            <StatusBadge status={t.status as "DRAFT" | "LIVE" | "COMPLETED"} />
+            <StatusBadge status={t.status as "DRAFT" | "LIVE" | "COMPLETED"} registrationOpen={open} />
           </div>
         </div>
       )}
@@ -72,7 +74,7 @@ export function TournamentCard({ tournament: t }: TournamentCardProps) {
               {t.name}
             </h2>
           </div>
-          {!t.coverUrl && <StatusBadge status={t.status as "DRAFT" | "LIVE" | "COMPLETED"} />}
+          {!t.coverUrl && <StatusBadge status={t.status as "DRAFT" | "LIVE" | "COMPLETED"} registrationOpen={open} />}
         </div>
 
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[var(--muted-text)]">

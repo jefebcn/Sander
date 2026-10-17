@@ -47,7 +47,7 @@ export function CookieBanner() {
         }}
       >
         <span className="text-base leading-none" aria-hidden="true">🍪</span>
-        <p className="flex-1 min-w-0 text-xs text-[var(--muted-text)] leading-snug">
+        <p className="flex-1 min-w-0 text-sm text-[var(--muted-text)] leading-snug">
           Utilizziamo cookie tecnici per il funzionamento del sito.
         </p>
         <button
@@ -62,7 +62,7 @@ export function CookieBanner() {
           aria-label="Rifiuta"
           className="flex h-11 w-11 shrink-0 items-center justify-center text-[var(--muted-text)] hover:text-white transition-colors"
         >
-          <X className="h-4 w-4" />
+          <X className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
     </div>

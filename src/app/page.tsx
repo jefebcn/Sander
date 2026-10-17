@@ -126,7 +126,8 @@ export default async function Home() {
       getSpotlightTournament(),
       getUnreadCount(),
       getUnreadMessageCount(),
-      db.user.count({ where: { invitedByPlayerId: player.id } }),
+      // Counted once the friend has played a first match (and the reward is paid).
+      db.user.count({ where: { invitedByPlayerId: player.id, inviteRewardedAt: { not: null } } }),
       getMyCityRank(player.id, player.homeCity, boards),
       db.tournament.findFirst({
         where: { status: "COMPLETED" },
@@ -178,7 +179,7 @@ export default async function Home() {
       done: fullPlayer.sessionsPlayed > 0 || !!unscored || !!nextMatchRow?.participants.some((p) => p.playerId === player.id),
     },
     { id: "photo", title: "Metti la foto sulla carta", text: "Così ti riconoscono in spiaggia", href: "/onboarding/profile", done: !!fullPlayer.avatarUrl },
-    { id: "invite", title: "Porta un amico", text: "+30 crediti a te, +20 a chi inviti", href: "/profile?tab=invita", done: invited > 0 },
+    { id: "invite", title: "Porta un amico", text: "+30 crediti quando gioca la prima partita", href: "/profile?tab=invita", done: invited > 0 },
   ]
   const showFirstSteps = fullPlayer.sessionsPlayed < 3 && firstSteps.some((s) => !s.done)
 

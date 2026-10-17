@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useId, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { signIn } from "next-auth/react"
@@ -8,6 +8,7 @@ import { Eye, EyeOff, LogIn } from "lucide-react"
 import { registerWithEmail } from "@/actions/auth"
 import { trackEvent } from "@/lib/analytics"
 import { cn } from "@/lib/utils"
+import { safeCallbackUrl } from "@/lib/safeRedirect"
 
 type Mode = "login" | "register"
 
@@ -17,7 +18,11 @@ interface AuthFormProps {
   defaultMode?: Mode
 }
 
-export function AuthForm({ callbackUrl, inviteCode: initialInviteCode, defaultMode = "login" }: AuthFormProps) {
+const INPUT =
+  "w-full rounded-2xl bg-[var(--surface-2)] px-4 py-3.5 text-base text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+const LABEL = "mb-1 block px-1 text-sm font-semibold text-[var(--muted-text)]"
+
+export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInviteCode, defaultMode = "login" }: AuthFormProps) {
   const [mode, setMode] = useState<Mode>(defaultMode)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -27,6 +32,9 @@ export function AuthForm({ callbackUrl, inviteCode: initialInviteCode, defaultMo
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
+  // Re-checked here too: this value ends up in router.push and signIn.
+  const callbackUrl = safeCallbackUrl(rawCallbackUrl)
+  const id = useId()
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -67,14 +75,15 @@ export function AuthForm({ callbackUrl, inviteCode: initialInviteCode, defaultMo
   return (
     <div className="space-y-5">
       {/* Tab toggle */}
-      <div className="flex rounded-2xl bg-[var(--surface-2)] p-1">
+      <div className="flex rounded-2xl bg-[var(--surface-2)] p-1" role="group" aria-label="Accedi o registrati">
         {(["login", "register"] as Mode[]).map((m) => (
           <button
             key={m}
             type="button"
             onClick={() => { setMode(m); setError(null) }}
+            aria-pressed={mode === m}
             className={cn(
-              "flex-1 rounded-xl py-2.5 text-sm font-bold transition-all",
+              "flex min-h-[2.75rem] flex-1 items-center justify-center rounded-xl text-base font-bold transition-all",
               mode === m
                 ? "bg-[var(--accent)] text-black"
                 : "text-[var(--muted-text)]",
@@ -87,58 +96,82 @@ export function AuthForm({ callbackUrl, inviteCode: initialInviteCode, defaultMo
 
       {/* Email / password form */}
       <form onSubmit={handleSubmit} className="space-y-3">
-        <input
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email"
-          className="w-full rounded-2xl bg-[var(--surface-2)] px-4 py-3.5 text-base text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-        />
-
-        <div className="relative">
+        <div>
+          <label htmlFor={`${id}-email`} className={LABEL}>Email</label>
           <input
-            type={showPwd ? "text" : "password"}
+            id={`${id}-email`}
+            type="email"
             required
-            minLength={mode === "register" ? 8 : 1}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder={mode === "register" ? "Password (min. 8 caratteri)" : "Password"}
-            className="w-full rounded-2xl bg-[var(--surface-2)] px-4 py-3.5 pr-12 text-base text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            autoComplete="email"
+            inputMode="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="nome@esempio.it"
+            className={INPUT}
           />
-          <button
-            type="button"
-            onClick={() => setShowPwd((v) => !v)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--muted-text)]"
-            tabIndex={-1}
-          >
-            {showPwd ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-          </button>
+        </div>
+
+        <div>
+          <label htmlFor={`${id}-password`} className={LABEL}>
+            Password{mode === "register" && <span className="font-normal"> (min. 8 caratteri)</span>}
+          </label>
+          <div className="relative">
+            <input
+              id={`${id}-password`}
+              type={showPwd ? "text" : "password"}
+              required
+              autoComplete={mode === "register" ? "new-password" : "current-password"}
+              minLength={mode === "register" ? 8 : 1}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={cn(INPUT, "pr-14")}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPwd((v) => !v)}
+              aria-label={showPwd ? "Nascondi password" : "Mostra password"}
+              aria-pressed={showPwd}
+              aria-controls={`${id}-password`}
+              className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-xl text-[var(--muted-text)] active:text-white"
+            >
+              {showPwd ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
+            </button>
+          </div>
         </div>
 
         {mode === "register" && (
           <>
-            <input
-              type={showPwd ? "text" : "password"}
-              required
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              placeholder="Conferma password"
-              className="w-full rounded-2xl bg-[var(--surface-2)] px-4 py-3.5 text-base text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-            />
-            <input
-              type="text"
-              value={inviteCode}
-              onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-              placeholder="Codice invito (opzionale)"
-              maxLength={9}
-              className="w-full rounded-2xl bg-[var(--surface-2)] px-4 py-3.5 text-base text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] tracking-widest"
-            />
+            <div>
+              <label htmlFor={`${id}-confirm`} className={LABEL}>Conferma password</label>
+              <input
+                id={`${id}-confirm`}
+                type={showPwd ? "text" : "password"}
+                required
+                autoComplete="new-password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                className={INPUT}
+              />
+            </div>
+            <div>
+              <label htmlFor={`${id}-invite`} className={LABEL}>
+                Codice invito <span className="font-normal">(opzionale)</span>
+              </label>
+              <input
+                id={`${id}-invite`}
+                type="text"
+                autoComplete="off"
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                maxLength={9}
+                className={cn(INPUT, "tracking-widest")}
+              />
+            </div>
           </>
         )}
 
         {error && (
-          <p className="rounded-xl bg-[var(--danger)]/15 px-4 py-2.5 text-sm text-[var(--danger)]">
+          <p role="alert" className="rounded-xl bg-[var(--danger)]/15 px-4 py-2.5 text-base text-[var(--danger)]">
             {error}
           </p>
         )}
@@ -158,7 +191,7 @@ export function AuthForm({ callbackUrl, inviteCode: initialInviteCode, defaultMo
         {mode === "login" && (
           <Link
             href="/auth/forgot-password"
-            className="block text-center text-sm text-[var(--muted-text)] underline-offset-2 hover:text-white"
+            className="flex min-h-[2.75rem] items-center justify-center text-center text-base text-[var(--muted-text)] underline-offset-2 hover:text-white"
           >
             Password dimenticata?
           </Link>

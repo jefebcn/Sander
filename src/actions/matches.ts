@@ -7,6 +7,8 @@ import type { SubmitScoreInput } from "@/lib/validators/match.schema"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
 
 import { isAdminEmail, canManageTournament } from "@/lib/isAdmin"
+import { PUBLIC_PLAYER_SELECT } from "@/lib/publicPlayer"
+import { z } from "zod"
 
 export async function submitScore(input: SubmitScoreInput) {
   // Must be authenticated
@@ -36,15 +38,17 @@ export async function submitScore(input: SubmitScoreInput) {
   const teamBPlayerIds = match.players.filter((p) => p.team === 1).map((p) => p.playerId)
 
   await db.$transaction(async (tx) => {
-    // Mark match as completed with scores
-    await tx.match.update({
-      where: { id: matchId },
+    // Claim the match atomically: a double tap or a retry would otherwise add
+    // the standings points twice.
+    const claimed = await tx.match.updateMany({
+      where: { id: matchId, isCompleted: false },
       data: {
         teamAScore,
         teamBScore,
         isCompleted: true,
       },
     })
+    if (claimed.count === 0) throw new Error("Risultato già inserito")
 
     // Update standings for each player in this match
     const updateStanding = async (playerIds: string[], won: boolean, myScore: number, oppScore: number) => {
@@ -207,12 +211,19 @@ export async function replaceMatchPlayer(
   revalidatePath(`/tournaments/${match.tournamentId}`)
 }
 
+const MatchesForRoundSchema = z.object({
+  tournamentId: z.string().trim().min(1).max(64),
+  round: z.number().int().min(0).max(1000),
+})
+
 export async function getMatchesForRound(tournamentId: string, round: number) {
+  const data = MatchesForRoundSchema.parse({ tournamentId, round })
   return db.match.findMany({
-    where: { tournamentId, round },
+    where: { tournamentId: data.tournamentId, round: data.round },
     include: {
       players: {
-        include: { player: true },
+        // Public fields only: this is callable by anyone.
+        include: { player: { select: PUBLIC_PLAYER_SELECT } },
       },
     },
     orderBy: { matchNumber: "asc" },

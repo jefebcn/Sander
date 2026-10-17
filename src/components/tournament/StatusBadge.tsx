@@ -17,30 +17,49 @@ const badgeVariants = cva(
 
 type Status = "DRAFT" | "LIVE" | "COMPLETED"
 
-const LABELS: Record<Status, string> = {
-  DRAFT: "Bozza",
-  LIVE: "LIVE",
-  COMPLETED: "Completato",
+/**
+ * DRAFT is the normal "upcoming / registration phase" status, not an
+ * unpublished draft — labelling it "Bozza" next to "Iscrizioni aperte" read
+ * as a contradiction.
+ */
+function draftLabel(registrationOpen: boolean | undefined): string {
+  if (registrationOpen === undefined) return "In programma"
+  return registrationOpen ? "Iscrizioni aperte" : "Iscrizioni chiuse"
 }
 
 interface StatusBadgeProps extends VariantProps<typeof badgeVariants> {
   status: Status
+  /** For DRAFT tournaments: whether sign-ups are currently possible. */
+  registrationOpen?: boolean
   className?: string
 }
 
-export function StatusBadge({ status, className }: StatusBadgeProps) {
+export function StatusBadge({ status, registrationOpen, className }: StatusBadgeProps) {
+  const label =
+    status === "DRAFT" ? draftLabel(registrationOpen)
+    : status === "LIVE" ? "LIVE"
+    : "Completato"
+  const draftOpen = status === "DRAFT" && registrationOpen === true
+
   return (
-    <span className={cn(badgeVariants({ status }), className)} aria-label={`Stato: ${LABELS[status]}`}>
+    <span
+      className={cn(
+        badgeVariants({ status }),
+        draftOpen && "bg-[var(--tone-soft)] text-[var(--tone)]",
+        className,
+      )}
+      aria-label={`Stato: ${label}`}
+    >
       {status === "LIVE" && (
         <span className="live-dot h-2 w-2 rounded-full bg-[var(--live)]" aria-hidden="true" />
       )}
       {status === "DRAFT" && (
-        <span className="h-2 w-2 rounded-full bg-[var(--muted-text)]" aria-hidden="true" />
+        <span className="h-2 w-2 rounded-full bg-current" aria-hidden="true" />
       )}
       {status === "COMPLETED" && (
         <span className="h-2 w-2 rounded-full bg-[var(--completed)]" aria-hidden="true" />
       )}
-      {LABELS[status]}
+      {label}
     </span>
   )
 }

@@ -6,7 +6,8 @@ import { db } from "@/lib/db"
 import { RegisterSchema, ForgotPasswordSchema, ResetPasswordSchema } from "@/lib/validators/auth.schema"
 import { sendPasswordResetEmail } from "@/lib/email"
 import { findPlayerByInviteCode } from "@/actions/invite"
-import { redeemInvite } from "@/lib/referralRedeem"
+import { linkInvite } from "@/lib/referralRedeem"
+import { findUserByEmail } from "@/lib/userByEmail"
 
 type ActionResult = { success: true } | { error: string }
 
@@ -16,7 +17,7 @@ export async function registerWithEmail(input: unknown): Promise<ActionResult> {
   try {
     const { email, password, inviteCode } = RegisterSchema.parse(input)
 
-    const existing = await db.user.findUnique({ where: { email } })
+    const existing = await findUserByEmail(email)
     if (existing) {
       return { error: "Email già in uso. Prova ad accedere." }
     }
@@ -24,11 +25,12 @@ export async function registerWithEmail(input: unknown): Promise<ActionResult> {
     const hashed = await bcrypt.hash(password, 12)
     const user = await db.user.create({ data: { email, password: hashed } })
 
-    // Redeem invite code if provided
+    // Link the inviter now; both rewards are paid when the new player finishes
+    // a first real match, so fake sign-ups earn nothing.
     if (inviteCode) {
       const inviterPlayerId = await findPlayerByInviteCode(inviteCode)
       if (inviterPlayerId) {
-        await redeemInvite(user.id, inviterPlayerId)
+        await linkInvite(user.id, inviterPlayerId)
       }
     }
 
@@ -49,7 +51,7 @@ export async function requestPasswordReset(input: unknown): Promise<ActionResult
   try {
     const { email } = ForgotPasswordSchema.parse(input)
 
-    const user = await db.user.findUnique({ where: { email } })
+    const user = await findUserByEmail(email)
 
     // If user exists AND has a password (not OAuth-only) → send the email
     if (user?.password) {
@@ -97,7 +99,7 @@ export async function resetPassword(input: unknown): Promise<ActionResult> {
     }
 
     const email = record.identifier.replace("reset:", "")
-    const user = await db.user.findUnique({ where: { email } })
+    const user = await findUserByEmail(email)
 
     if (!user) {
       return { error: "Account non trovato." }
@@ -106,7 +108,8 @@ export async function resetPassword(input: unknown): Promise<ActionResult> {
     const hashed = await bcrypt.hash(password, 12)
 
     await db.$transaction([
-      db.user.update({ where: { id: user.id }, data: { password: hashed } }),
+      // The reset link reached this inbox: that proves the address is theirs.
+      db.user.update({ where: { id: user.id }, data: { password: hashed, emailVerified: user.emailVerified ?? new Date() } }),
       db.verificationToken.delete({ where: { token } }),
     ])
 

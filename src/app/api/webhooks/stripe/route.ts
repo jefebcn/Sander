@@ -2,7 +2,7 @@ import { NextRequest } from "next/server"
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { stripe } from "@/lib/stripe"
-import { grantStripeTopUp } from "@/lib/creditTopUp"
+import { grantStripeTopUp, revokeStripeTopUp } from "@/lib/creditTopUp"
 import type Stripe from "stripe"
 
 export const runtime = "nodejs"
@@ -26,7 +26,6 @@ export async function POST(req: NextRequest) {
 
   if (!signature) return new Response("Missing signature", { status: 400 })
   if (!webhookSecret) {
-    // eslint-disable-next-line no-console
     console.error("[stripe webhook] STRIPE_WEBHOOK_SECRET not configured")
     return new Response("Webhook secret not configured", { status: 500 })
   }
@@ -37,7 +36,6 @@ export async function POST(req: NextRequest) {
   try {
     event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret)
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.error("[stripe webhook] Signature verification failed", err)
     return new Response("Invalid signature", { status: 400 })
   }
@@ -57,13 +55,15 @@ export async function POST(req: NextRequest) {
       return new Response(null, { status: 200 })
     }
     // Any other DB error → 500 (Stripe will retry)
-    // eslint-disable-next-line no-console
     console.error("[stripe webhook] DB error storing event", err)
     return new Response("DB error", { status: 500 })
   }
 
   try {
     switch (event.type) {
+      // Bank transfers and other delayed methods complete here, not on
+      // checkout.session.completed (whose payment_status is then "unpaid").
+      case "checkout.session.async_payment_succeeded":
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session
 
@@ -77,8 +77,7 @@ export async function POST(req: NextRequest) {
             amountCents: session.amount_total ?? null,
           })
           if (result === "invalid") {
-            // eslint-disable-next-line no-console
-            console.error("[stripe webhook] sc_topup with invalid metadata", session.id)
+                    console.error("[stripe webhook] sc_topup with invalid metadata", session.id)
           }
           revalidatePath("/profile")
           revalidatePath("/admin/metriche")
@@ -89,13 +88,12 @@ export async function POST(req: NextRequest) {
         const tournamentId   = session.metadata?.tournamentId
 
         if (!registrationId) {
-          // eslint-disable-next-line no-console
-          console.error("[stripe webhook] checkout.session.completed missing registrationId")
+                console.error("[stripe webhook] checkout.session.completed missing registrationId")
           return new Response(null, { status: 200 })
         }
 
         // ── Idempotency layer 2: conditional updateMany (no-op if already PAID)
-        await db.tournamentRegistration.updateMany({
+        const marked = await db.tournamentRegistration.updateMany({
           where: { id: registrationId, paymentStatus: "PENDING" },
           data: {
             paymentStatus: "PAID",
@@ -104,6 +102,10 @@ export async function POST(req: NextRequest) {
             stripePaymentIntentId: (session.payment_intent as string | null) ?? null,
           },
         })
+        if (marked.count === 0) {
+          const existing = await db.tournamentRegistration.findUnique({ where: { id: registrationId }, select: { paymentStatus: true } })
+          if (!existing) console.error("[stripe webhook] paid checkout without registration (orphan payment)", session.id, registrationId)
+        }
 
         if (tournamentId) {
           revalidatePath("/tournaments")
@@ -118,8 +120,10 @@ export async function POST(req: NextRequest) {
         const registrationId = session.metadata?.registrationId
         if (registrationId) {
           // Free the unique (tournamentId, playerId) slot
+          // Only the row this checkout belongs to: a newer attempt for the same
+          // registration has its own session and must survive.
           await db.tournamentRegistration.deleteMany({
-            where: { id: registrationId, paymentStatus: "PENDING" },
+            where: { id: registrationId, paymentStatus: "PENDING", stripeSessionId: session.id },
           })
         }
         break
@@ -135,6 +139,17 @@ export async function POST(req: NextRequest) {
             where: { stripePaymentIntentId: paymentIntentId, paymentStatus: "PAID" },
             data: { paymentStatus: "REFUNDED" },
           })
+          // A refunded SanderCredits pack: take the credits back. Only full
+          // refunds; a partial refund is a manual decision for the admin.
+          if (charge.refunded) {
+            const sessions = await stripe.checkout.sessions.list({ payment_intent: paymentIntentId, limit: 1 })
+            const s = sessions.data[0]
+            if (s?.metadata?.kind === "sc_topup") {
+              await revokeStripeTopUp(s.id)
+              revalidatePath("/profile")
+              revalidatePath("/admin/metriche")
+            }
+          }
         }
         break
       }
@@ -146,8 +161,11 @@ export async function POST(req: NextRequest) {
 
     return new Response(null, { status: 200 })
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.error("[stripe webhook] handler error", err)
+    // Forget the event so Stripe's retry is processed again instead of being
+    // skipped as a duplicate. Every effect above is idempotent on its own
+    // (unique stripeSessionId, conditional updates), so a re-run is safe.
+    await db.stripeWebhookEvent.delete({ where: { id: event.id } }).catch(() => {})
     // Returning 500 lets Stripe retry the delivery
     return new Response("Handler error", { status: 500 })
   }
