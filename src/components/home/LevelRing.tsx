@@ -19,7 +19,7 @@ export function LevelRing({
   const offset = 100 - Math.max(3, Math.min(100, pct))
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
-      <svg viewBox="0 0 80 80" className="absolute inset-0 h-full w-full -rotate-90" aria-hidden="true">
+      <svg viewBox="0 0 80 80" className="absolute inset-0 h-full w-full -rotate-90 overflow-visible" aria-hidden="true">
         <circle cx="40" cy="40" r="37" fill="none" stroke="var(--surface-4)" strokeWidth="4.5" />
         <circle
           cx="40"
@@ -46,7 +46,7 @@ export function LevelRing({
           </span>
         )}
       </div>
-      <span className="num absolute -bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[var(--accent)] px-2 py-0.5 text-sm leading-none text-black ring-2 ring-[var(--surface-2)]">
+      <span className="num absolute -bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[var(--accent)] px-2 py-0.5 text-sm leading-none text-black ring-2 ring-[var(--surface-1)]">
         LIV {level}
       </span>
     </div>

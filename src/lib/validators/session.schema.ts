@@ -72,6 +72,11 @@ export const CompleteSessionSchema = z.object({
     .optional(),
 })
 
+/** One-tap join from the home's open-match cards. */
+export const QuickJoinSchema = z.object({
+  sessionId: z.string().min(1).max(64),
+})
+
 /**
  * Shape of the in-progress scoreboard persisted in Session.liveScore.
  * Validated in both directions: it is written by any session member and then

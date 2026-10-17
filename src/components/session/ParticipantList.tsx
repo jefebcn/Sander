@@ -267,7 +267,10 @@ export function ParticipantList({ session, participants, currentPlayerId, myWait
 
           <AddGuestButton sessionId={session.id} />
 
-          <CompleteSessionForm sessionId={session.id} participants={participants} />
+          {/* The home's "Com'è andata?" card links straight here. */}
+          <div id="risultato" className="scroll-mt-24">
+            <CompleteSessionForm sessionId={session.id} participants={participants} />
+          </div>
           <button
             onClick={handleCancel}
             disabled={isPending}

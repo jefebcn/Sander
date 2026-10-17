@@ -1,6 +1,7 @@
 "use server"
 
 import { db } from "@/lib/db"
+import { creditCost, joinPrice } from "@/lib/joinPrice"
 
 const HISTORY_DAYS = 90
 const since = (days = HISTORY_DAYS) =>
@@ -27,6 +28,10 @@ export interface SuggestedSession {
   city: string | null
   /** Who's already in, for the seat circles. */
   players: { name: string; avatarUrl: string | null }[]
+  /** What a seat costs ("4 crediti", "5,00 € a testa"); null when free. */
+  price: string | null
+  /** Credits debited on join: such seats are taken on the match page, not in one tap. */
+  creditCost: number
 }
 
 export interface SuggestedTournament {
@@ -107,6 +112,9 @@ export async function getPersonalizedRecommendations(
         date: true,
         format: true,
         maxPlayers: true,
+        paymentType: true,
+        quotaAmount: true,
+        courtCost: true,
         _count: { select: { participants: true } },
         participants: {
           take: 8,
@@ -129,7 +137,8 @@ export async function getPersonalizedRecommendations(
         : "new"
       return { id: s.id, title: s.title, location: s.location, city: s.city, date: s.date,
                spotsLeft, maxPlayers: s.maxPlayers, format: s.format, familiarity,
-               players: s.participants.map((p) => ({ name: p.player?.name ?? p.guestName ?? "?", avatarUrl: p.player?.avatarUrl ?? null })) }
+               players: s.participants.map((p) => ({ name: p.player?.name ?? p.guestName ?? "?", avatarUrl: p.player?.avatarUrl ?? null })),
+               price: joinPrice(s), creditCost: creditCost(s) }
     })
     // Rank: known > preferred format > open spots > date
     .sort((a, b) => {

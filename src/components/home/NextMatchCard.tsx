@@ -16,26 +16,23 @@ export interface NextMatch {
 
 /** The match you already said yes to — the most useful thing on the screen. */
 export function NextMatchCard({ match }: { match: NextMatch }) {
+  // Kept here for its first hour; after that it becomes "Com'è andata?".
+  const started = new Date(match.date).getTime() <= Date.now()
   const soon = daysFromNow(match.date) <= 1
   const missing = Math.max(0, match.maxPlayers - match.players)
   return (
     <Link
       href={`/sessions/${match.id}`}
-      className="pressable tone-play relative block overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-5 shadow-[var(--shadow-glow)]"
+      className="pressable tone-play relative block overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-5 ring-2 ring-[var(--crest-line)]"
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full opacity-25"
-        style={{ background: "radial-gradient(circle, var(--accent) 0%, transparent 65%)" }}
-      />
-      <div className="relative flex items-center justify-between gap-3">
-        <p className="eyebrow text-[var(--accent)]">La tua prossima partita</p>
-        <Pill tone="play" live={soon}>{relativeDay(match.date)}</Pill>
+      <div className="flex items-center justify-between gap-3">
+        <p className="eyebrow text-[var(--accent)]">{started ? "La tua partita è in corso" : "La tua prossima partita"}</p>
+        <Pill tone="play" live={soon}>{started ? "Adesso" : relativeDay(match.date)}</Pill>
       </div>
-      <div className="relative mt-3 flex items-end gap-4">
+      <div className="mt-3 flex items-end gap-4">
         <div>
           <p className="num text-5xl leading-none text-white">{formatTime(match.date)}</p>
-          <p className="mt-1 text-sm font-bold capitalize text-[var(--muted-text)]">{formatDayShort(match.date)}</p>
+          <p className="mt-1 text-sm font-bold text-[var(--muted-text)] first-letter:uppercase">{formatDayShort(match.date)}</p>
         </div>
         <div className="min-w-0 flex-1 pb-1">
           <p className="truncate text-base font-extrabold text-white">{match.title}</p>
@@ -45,11 +42,11 @@ export function NextMatchCard({ match }: { match: NextMatch }) {
           </p>
         </div>
       </div>
-      <div className="relative mt-4 flex items-center justify-between border-t border-[var(--border)] pt-3">
+      <div className="mt-4 flex items-center justify-between border-t border-[var(--crest-hair)] pt-3">
         <span className="flex items-center gap-3">
           <PlayerSlots players={match.faces} total={match.maxPlayers} />
           <span className="text-sm font-bold text-white">
-            {missing > 0 ? `Ne mancano ${missing}` : "Al completo"}
+            {missing === 0 ? "Al completo" : missing === 1 ? "Ne manca 1" : `Ne mancano ${missing}`}
           </span>
         </span>
         <ChevronRight className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />

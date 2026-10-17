@@ -25,7 +25,7 @@ export function FirstSteps({ steps }: { steps: FirstStep[] }) {
   const done = steps.filter((s) => s.done).length
   const next = steps.find((s) => !s.done)
   return (
-    <section className="tone-play rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-5 shadow-[var(--shadow-card)]">
+    <section className="tone-play rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-5 ring-1 ring-[var(--crest-hair)]">
       <div className="flex items-end justify-between gap-3">
         <div>
           <p className="eyebrow text-[var(--accent)]">Primi passi</p>
@@ -49,7 +49,7 @@ export function FirstSteps({ steps }: { steps: FirstStep[] }) {
                 aria-label={`${s.title}${s.done ? " (fatto)" : ""}`}
                 className={cn(
                   "pressable flex min-h-[3.5rem] items-center gap-3 rounded-[var(--radius-md)] px-3 py-2",
-                  isNext ? "bg-[var(--accent-soft)] ring-1 ring-[var(--accent-line)]" : "bg-black/20",
+                  isNext ? "bg-[var(--accent-soft)] ring-1 ring-[var(--accent-line)]" : "bg-black/30",
                 )}
               >
                 <span

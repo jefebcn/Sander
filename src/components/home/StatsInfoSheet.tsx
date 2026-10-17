@@ -6,7 +6,7 @@ import { Info, X } from "lucide-react"
 
 const ITEMS = [
   {
-    label: "RATING — Glicko",
+    label: "PUNTI — il tuo rating",
     description:
       "Il tuo rating competitivo. Sale quando batti giocatori più forti, scende quando perdi contro i più deboli. Più giochi, più è preciso.",
   },
@@ -84,10 +84,10 @@ export function StatsInfoSheet() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-7 w-7 items-center justify-center rounded-full text-[var(--muted-text)] active:opacity-60"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--muted-text)] active:opacity-60"
         aria-label="Informazioni statistiche"
       >
-        <Info className="h-4 w-4" />
+        <Info className="h-5 w-5" />
       </button>
 
       {mounted && createPortal(sheet, document.body)}

@@ -1,6 +1,6 @@
 import Image from "next/image"
 import { MessageCircle, Camera, Music2, Handshake, ExternalLink } from "lucide-react"
-import { SectionHeader } from "@/components/ui/SectionHeader"
+import { CrestHeading } from "./Crest"
 import { PARTNER_MAILTO, SOCIAL } from "@/lib/contact"
 
 /** WhatsApp group, socials and partners — one calm block instead of four loud ones. */
@@ -11,8 +11,8 @@ export function CommunityStrip() {
     { href: SOCIAL.tiktok, icon: Music2, label: "TikTok", sub: "@sanderbeachvolley" },
   ]
   return (
-    <section className="tone-social flex flex-col gap-3">
-      <SectionHeader eyebrow="Fuori dal campo" title="Community" tone="social" />
+    <section className="tone-social flex flex-col gap-3" aria-labelledby="community-title">
+      <CrestHeading id="community-title" eyebrow="Fuori dal campo" title="Community" />
       <div className="grid grid-cols-3 gap-2">
         {socials.map((s) => (
           <a

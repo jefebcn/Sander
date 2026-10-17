@@ -1,35 +1,38 @@
 export const dynamic = "force-dynamic"
 
-import Image from "next/image"
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { Plus, Search, TrendingUp, Waves, Activity, Medal, ChevronRight, Trophy } from "lucide-react"
+import { TrendingUp, Waves, Activity, Medal, Trophy } from "lucide-react"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
-import { ratingToDisplayLevel } from "@/lib/tournament/glicko2"
+import { getDivision, getNextDivision, pointsToNext, divisionProgress } from "@/lib/divisions"
 import { getPersonalizedRecommendations } from "@/actions/recommendations"
-import { getCityLeaderboards } from "@/actions/territories"
+import { getCityLeaderboards, type CityLeaderboard } from "@/actions/territories"
 import { getUnreadCount } from "@/actions/notifications"
 import { getUnreadMessageCount } from "@/actions/messages"
+import { getFreshRecap, getMyCityRank, getUnscoredMatch, getWeeklyStreak } from "@/lib/home"
 import { TZ } from "@/lib/datetime"
+import { parseCity } from "@/lib/cities"
 import { playerToCardData } from "@/components/player/SanderCardFut"
 import { NotificationBell } from "@/components/push/NotificationBell"
 import { MessagesBell } from "@/components/chat/MessagesBell"
-import { StatsInfoSheet } from "@/components/home/StatsInfoSheet"
 import { ClientOnlyHomeWidgets } from "@/components/home/ClientOnlyHomeWidgets"
-import { LevelRing } from "@/components/home/LevelRing"
+import { CrestHeading, CrestWordmark } from "@/components/home/Crest"
+import { PlayerCrest } from "@/components/home/PlayerCrest"
+import { UnscoredMatch, AfterMatchRecap } from "@/components/home/AfterMatch"
 import { NextMatchCard, type NextMatch } from "@/components/home/NextMatchCard"
 import { OpenMatchesRail } from "@/components/home/OpenMatchesRail"
-import { CityRankCard, type CityRank, type CityPreview } from "@/components/home/CityRankCard"
+import { QuickStart } from "@/components/home/QuickStart"
+import { YourRace } from "@/components/home/YourRace"
+import { WhySander } from "@/components/home/WhySander"
 import { FirstSteps } from "@/components/home/FirstSteps"
-import { parseCity } from "@/lib/cities"
 import { TournamentSpotlight, type SpotlightTournament } from "@/components/home/TournamentSpotlight"
 import { InviteCard } from "@/components/home/InviteCard"
 import { CommunityStrip } from "@/components/home/CommunityStrip"
 import { GuestLanding } from "@/components/home/GuestLanding"
-import { CountUp } from "@/components/ui/CountUp"
-import { SectionHeader } from "@/components/ui/SectionHeader"
 import { ListRow } from "@/components/ui/ListRow"
+
+const NO_STREAK = { weeks: 0, playedThisWeek: false }
 
 function getMilestoneTitle(level: number): string {
   if (level >= 50) return "Sand King"
@@ -68,51 +71,6 @@ async function getSpotlightTournament(): Promise<SpotlightTournament | null> {
   }
 }
 
-/**
- * Where the player stands in the comune they play in most — or, before their
- * first game there, a preview of their home comune's board so even a brand-new
- * account sees a crown to chase.
- */
-async function getMyCityRank(
-  playerId: string,
-  homeCity: string | null,
-): Promise<{ rank: CityRank | null; preview: CityPreview | null }> {
-  try {
-    const boards = await getCityLeaderboards()
-    let best: CityRank | null = null
-    let bestMatches = 0
-    for (const b of boards) {
-      const i = b.standings.findIndex((p) => p.id === playerId)
-      if (i === -1) continue
-      const me = b.standings[i]
-      if (me.matches <= bestMatches) continue
-      bestMatches = me.matches
-      const third = b.standings[2]
-      best = {
-        city: b.city,
-        rank: i + 1,
-        total: b.standings.length,
-        wins: me.wins,
-        winsToPodium: i < 3 || !third ? 0 : Math.max(1, third.wins - me.wins + 1),
-        king: b.king && b.king.id !== playerId ? b.king.name : null,
-      }
-    }
-    if (best || !homeCity) return { rank: best, preview: null }
-    const home = boards.find((b) => b.city === homeCity)
-    return {
-      rank: null,
-      preview: {
-        city: homeCity,
-        king: home?.king?.name ?? null,
-        players: home?.standings.length ?? 0,
-        matches: home?.totalMatches ?? 0,
-      },
-    }
-  } catch {
-    return { rank: null, preview: null }
-  }
-}
-
 export default async function Home() {
   const session = await getCurrentSession()
   const player = await getCurrentPlayer()
@@ -131,7 +89,6 @@ export default async function Home() {
     ])
     return (
       <HomeShell>
-        <GuestHeader />
         <GuestLanding stats={{ players, matches }} tournament={tournament} />
       </HomeShell>
     )
@@ -139,8 +96,12 @@ export default async function Home() {
 
   /* ── Player ──────────────────────────────────────────────────────────── */
   const now = new Date()
-  const [fullPlayer, recs, nextMatchRow, tournament, unreadCount, unreadMessages, invited, cityRank, recentTournament] =
-    await Promise.all([
+  // One scan of the town boards, shared by the rank row and the match recap.
+  const boards = getCityLeaderboards().catch(() => [] as CityLeaderboard[])
+  const [
+    fullPlayer, recs, nextMatchRow, tournament, unreadCount, unreadMessages, invited, cityRank,
+    recentTournament, unscored, recap, streak,
+  ] = await Promise.all([
       db.player.findUnique({
         where: { id: player.id },
         include: { _count: { select: { organizedSessions: true } } },
@@ -148,23 +109,25 @@ export default async function Home() {
       getPersonalizedRecommendations(player.id),
       db.session.findFirst({
         where: {
-          participants: { some: { playerId: player.id } },
+          // Your own match counts even if you organized it without a seat.
+          OR: [{ participants: { some: { playerId: player.id } } }, { organizerId: player.id }],
           status: { in: ["OPEN", "FULL"] },
-          // A match that started an hour ago is still "the next one" to open.
+          // A match that started an hour ago is still "the next one" to open;
+          // after that it becomes "Com'è andata?" (getUnscoredMatch).
           date: { gte: new Date(now.getTime() - 3600_000) },
         },
         orderBy: { date: "asc" },
         select: {
           id: true, title: true, location: true, date: true, maxPlayers: true,
           _count: { select: { participants: true } },
-          participants: { take: 8, select: { guestName: true, player: { select: { name: true, avatarUrl: true } } } },
+          participants: { select: { playerId: true, guestName: true, player: { select: { name: true, avatarUrl: true } } } },
         },
       }),
       getSpotlightTournament(),
       getUnreadCount(),
       getUnreadMessageCount(),
       db.user.count({ where: { invitedByPlayerId: player.id } }),
-      getMyCityRank(player.id, player.homeCity),
+      getMyCityRank(player.id, player.homeCity, boards),
       db.tournament.findFirst({
         where: { status: "COMPLETED" },
         orderBy: { updatedAt: "desc" },
@@ -174,6 +137,14 @@ export default async function Home() {
           standings: { orderBy: { rank: "asc" }, take: 1, select: { player: { select: { name: true } } } },
         },
       }),
+      // Extras: a failure here costs a card, never the whole home. Closing a
+      // match counts it for everyone in it, so with no games played there is
+      // no recap or streak to look up.
+      getUnscoredMatch(player.id, now).catch(() => null),
+      player.sessionsPlayed > 0 ? getFreshRecap(player, boards, now).catch(() => null) : null,
+      player.sessionsPlayed > 0
+        ? getWeeklyStreak(player.id, now).catch(() => NO_STREAK)
+        : NO_STREAK,
     ])
 
   if (!fullPlayer) redirect("/onboarding/profile")
@@ -182,16 +153,16 @@ export default async function Home() {
   const lastName = fullPlayer.lastName ?? fullPlayer.name.split(" ").slice(1).join(" ")
   const initials = `${firstName[0] ?? ""}${lastName[0] ?? ""}`.toUpperCase()
   const xpCurrent = fullPlayer.xp % 100
-  const xpToNext = 100 - xpCurrent
   const totalMatches = fullPlayer.matchesWon + fullPlayer.matchesLost
   const winPct = totalMatches > 0 ? Math.round((fullPlayer.matchesWon / totalMatches) * 100) : 0
-  const rating = ratingToDisplayLevel(fullPlayer.glickoRating ?? 1500)
+  const glicko = fullPlayer.glickoRating ?? 1500
+  const division = getDivision(glicko)
 
   const nextMatch: NextMatch | null = nextMatchRow
     ? {
         id: nextMatchRow.id, title: nextMatchRow.title, location: nextMatchRow.location, date: nextMatchRow.date,
         players: nextMatchRow._count.participants, maxPlayers: nextMatchRow.maxPlayers,
-        faces: nextMatchRow.participants.map((p) => ({ name: p.player?.name ?? p.guestName ?? "?", avatarUrl: p.player?.avatarUrl })),
+        faces: nextMatchRow.participants.slice(0, 8).map((p) => ({ name: p.player?.name ?? p.guestName ?? "?", avatarUrl: p.player?.avatarUrl })),
       }
     : null
   // A player with no games yet gets "first steps" instead of a wall of zeros.
@@ -201,30 +172,48 @@ export default async function Home() {
     !!homeCity && (s.city ?? parseCity(s.location)) === homeCity
   const firstSteps = [
     { id: "city", title: "Scegli il tuo comune", text: "Partite e classifica di casa tua", href: "/onboarding/profile", done: !!homeCity },
-    { id: "play", title: "Unisciti alla prima partita", text: "Basta un tocco su un posto libero", href: "/sessions", done: !!nextMatchRow || fullPlayer.sessionsPlayed > 0 },
+    {
+      id: "play", title: "Unisciti alla prima partita", href: "/sessions",
+      text: recs.suggestedSessions.length > 0 ? "Basta un tocco su Entra, qui sotto" : "Trova una partita con un posto libero",
+      done: fullPlayer.sessionsPlayed > 0 || !!unscored || !!nextMatchRow?.participants.some((p) => p.playerId === player.id),
+    },
     { id: "photo", title: "Metti la foto sulla carta", text: "Così ti riconoscono in spiaggia", href: "/onboarding/profile", done: !!fullPlayer.avatarUrl },
-    { id: "invite", title: "Porta un amico", text: "+30 crediti a te, +20 a lui", href: "/profile?tab=invita", done: invited > 0 },
+    { id: "invite", title: "Porta un amico", text: "+30 crediti a te, +20 a chi inviti", href: "/profile?tab=invita", done: invited > 0 },
   ]
   const showFirstSteps = fullPlayer.sessionsPlayed < 3 && firstSteps.some((s) => !s.done)
 
-  const openMatches = [...recs.suggestedSessions]
+  const suggested = recs.suggestedSessions
+    // Your own match (organized without a seat) is already on the card above.
+    .filter((s) => s.id !== nextMatchRow?.id)
     // Your comune first; the ranking from recommendations is kept otherwise.
     .sort((a, b) => Number(inHomeCity(b)) - Number(inHomeCity(a)))
-    .map((s) => ({
+  const openMatches = suggested.map((s) => ({
     id: s.id, title: s.title, location: s.location, date: s.date, spotsLeft: s.spotsLeft, familiar: s.familiarity === "known",
-    maxPlayers: s.maxPlayers, players: s.players,
+    maxPlayers: s.maxPlayers, players: s.players, price: s.price, creditCost: s.creditCost,
   }))
+  const local = suggested.filter(inHomeCity).length
+  const railTitle =
+    local === 0 ? "Partite aperte" : local === suggested.length ? `A ${homeCity}` : `A ${homeCity} e dintorni`
 
   // Sections rise in one after another, top to bottom.
   let section = 0
   const rise = () => ({ className: "rise-in", style: { "--i": section++ } as React.CSSProperties })
 
+  const nothingNow = !unscored && !recap && !nextMatch
+  // "Segna" goes where a score actually gets saved: the match waiting for its
+  // result, or the live board of the one being played; else a practice board.
+  const score =
+    unscored && unscored.entry.kind !== "wait"
+      ? { href: unscored.entry.href, sub: "Il risultato" }
+      : nextMatchRow && nextMatchRow.date <= now
+        ? { href: `/segna?session=${nextMatchRow.id}`, sub: "Dal vivo" }
+        : { href: "/segna", sub: "Conta i punti" }
+
   return (
     <HomeShell>
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <header className="flex items-center gap-3">
-        <Image src="/sander-logo.png" alt="SANDER" width={40} height={40} className="object-contain" priority />
-        <span className="font-display text-xl font-extrabold uppercase tracking-wide text-white">Sander</span>
+      <header className="relative z-10 flex items-center gap-3">
+        <CrestWordmark />
         <div className="ml-auto flex items-center gap-2">
           <MessagesBell unreadCount={unreadMessages} />
           <NotificationBell unreadCount={unreadCount} />
@@ -232,116 +221,105 @@ export default async function Home() {
       </header>
 
       {/* ── You ────────────────────────────────────────────────────────── */}
-      <section {...rise()}>
-        <div className={`relative overflow-hidden rounded-[var(--radius-lg)] p-5 ${HOME_HERO_PHOTO ? "glass" : "bg-[var(--surface-2)] shadow-[var(--shadow-card)]"}`}>
-          <div
-            aria-hidden="true"
-            className="sun-drift pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full"
-            style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--accent) 22%, transparent) 0%, transparent 62%)" }}
-          />
-          <Link href="/profile" className="relative flex items-center gap-4">
-            <LevelRing level={fullPlayer.level} pct={xpCurrent} avatarUrl={fullPlayer.avatarUrl} initials={initials} />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-[var(--muted-text)]">{greeting(now)},</p>
-              <p className="truncate font-display text-[2.1rem] font-extrabold uppercase leading-[0.95] text-white">{firstName}</p>
-              <span className="mt-1.5 inline-block rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs font-extrabold uppercase tracking-wider text-[var(--accent)]">
-                {getMilestoneTitle(fullPlayer.level)}
-              </span>
-            </div>
-          </Link>
-
-          {isNew ? (
-            <p className="relative mt-4 rounded-[var(--radius-sm)] bg-black/25 px-3 py-2.5 text-sm text-white/85">
-              Il tuo rating parte da <strong className="text-[var(--accent)]">{rating}</strong>: sale quando vinci,
-              scende quando perdi. Gioca e scopri il tuo vero livello.
-            </p>
-          ) : (
-          <>
-          <div className="relative mt-5 grid grid-cols-3 divide-x divide-[var(--border)] rounded-[var(--radius-md)] bg-black/25 py-3">
-            <div className="text-center">
-              <CountUp value={fullPlayer.sessionsPlayed} className="num block text-3xl leading-none text-white" />
-              <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Partite</p>
-            </div>
-            <div className="text-center">
-              <p className="num text-3xl leading-none text-white">
-                <CountUp value={winPct} />%
-              </p>
-              <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Vinte</p>
-            </div>
-            <div className="text-center">
-              <p className="num text-3xl leading-none text-[var(--accent)]">{rating}</p>
-              <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Rating</p>
-            </div>
-          </div>
-
-          <div className="relative mt-4 flex items-center gap-3">
-            <Link href="/level-info" className="flex min-h-[2.75rem] flex-1 items-center gap-3">
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-[var(--surface-4)]" aria-hidden="true">
-                <div className="xp-bar-fill h-full rounded-full bg-[var(--accent)]" style={{ width: `${Math.max(3, xpCurrent)}%` }} />
-              </div>
-              <span className="shrink-0 text-sm font-bold text-white">
-                {xpToNext} punti al <span className="text-[var(--accent)]">liv {fullPlayer.level + 1}</span>
-              </span>
-            </Link>
-            <StatsInfoSheet />
-          </div>
-          {recs.performanceInsight && (
-            <p className="relative mt-3 rounded-[var(--radius-sm)] bg-[var(--accent-soft)] px-3 py-2 text-sm font-semibold text-[var(--accent)]">
-              {recs.performanceInsight.label}
-            </p>
-          )}
-          </>
-          )}
-        </div>
-      </section>
-
-      {showFirstSteps && (
-        <div {...rise()}>
-          <FirstSteps steps={firstSteps} />
-        </div>
-      )}
-
-      {/* ── Play ───────────────────────────────────────────────────────── */}
-      {(nextMatch || !isNew) && (
       <div {...rise()}>
-        {nextMatch ? (
-          <NextMatchCard match={nextMatch} />
-        ) : (
-          <div className="tone-play rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-5">
-            <p className="eyebrow text-[var(--accent)]">Nessuna partita in programma</p>
-            <p className="mt-1 font-display text-3xl font-extrabold uppercase leading-none text-white">Pronto a giocare?</p>
-            <div className="mt-4 flex gap-2">
-              <Link
-                href="/sessions/new"
-                className="pressable flex min-h-[3.5rem] flex-[1.3] items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--accent)] text-base font-extrabold text-black shadow-[var(--shadow-glow)]"
-              >
-                <Plus className="h-5 w-5" aria-hidden="true" /> Crea partita
-              </Link>
-              <Link
-                href="/sessions"
-                className="pressable flex min-h-[3.5rem] flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--surface-3)] text-base font-extrabold text-white"
-              >
-                <Search className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" /> Trova
-              </Link>
-            </div>
-          </div>
-        )}
+        <PlayerCrest
+          p={{
+            greeting: greeting(now),
+            firstName,
+            initials,
+            avatarUrl: fullPlayer.avatarUrl,
+            title: getMilestoneTitle(fullPlayer.level),
+            level: fullPlayer.level,
+            xpPct: xpCurrent,
+            matchesToLevel: Math.max(1, Math.ceil((100 - xpCurrent) / 10)),
+            isNew,
+            sessions: fullPlayer.sessionsPlayed,
+            winPct,
+            rating: Math.round(glicko),
+            division: { name: division.name, next: getNextDivision(glicko)?.name ?? null, pointsToNext: pointsToNext(glicko) },
+            insight: isNew ? null : recs.performanceInsight?.label ?? null,
+          }}
+        />
       </div>
 
-      )}
-
-      {openMatches.length > 0 && (
+      {/* ── Now: right after a match, then the next one ────────────────── */}
+      {unscored && (
         <div {...rise()}>
-          <OpenMatchesRail
-            matches={openMatches}
-            title={homeCity && inHomeCity(recs.suggestedSessions.find((m) => m.id === openMatches[0].id)!) ? `A ${homeCity}` : "Partite aperte"}
-          />
+          <UnscoredMatch match={unscored} />
+        </div>
+      )}
+      {recap && (
+        <div {...rise()}>
+          <AfterMatchRecap recap={recap} cardData={playerToCardData(fullPlayer)} primary={!unscored} />
+        </div>
+      )}
+      {nextMatch && (
+        <div {...rise()}>
+          <NextMatchCard match={nextMatch} />
         </div>
       )}
 
-      {/* ── Compete ────────────────────────────────────────────────────── */}
+      {isNew ? (
+        <>
+          {showFirstSteps && (
+            <div {...rise()}>
+              <FirstSteps steps={firstSteps} />
+            </div>
+          )}
+          {openMatches.length > 0 && (
+            <div {...rise()}>
+              <OpenMatchesRail
+                matches={openMatches}
+                title={railTitle}
+                eyebrow={nextMatch ? "Posti liberi" : "La tua prima partita"}
+              />
+            </div>
+          )}
+          <div {...rise()}>
+            <WhySander variant="player" hasOpenMatches={openMatches.length > 0} />
+          </div>
+          <div {...rise()}>
+            <QuickStart score={score} />
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Nothing booked: the quick actions come first, as "ready to play?". */}
+          {nothingNow && (
+            <div {...rise()}>
+              <QuickStart score={score} eyebrow="Nessuna partita in programma" title="Pronto a giocare?" />
+            </div>
+          )}
+          {openMatches.length > 0 && (
+            <div {...rise()}>
+              <OpenMatchesRail matches={openMatches} title={railTitle} />
+            </div>
+          )}
+          {showFirstSteps && (
+            <div {...rise()}>
+              <FirstSteps steps={firstSteps} />
+            </div>
+          )}
+          {!nothingNow && (
+            <div {...rise()}>
+              <QuickStart score={score} />
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── Why come back ──────────────────────────────────────────────── */}
       <div {...rise()}>
-        <CityRankCard data={cityRank.rank} preview={cityRank.preview} />
+        <YourRace
+          city={cityRank}
+          division={{
+            name: division.name,
+            next: getNextDivision(glicko)?.name ?? null,
+            pointsToNext: pointsToNext(glicko),
+            progress: divisionProgress(glicko),
+          }}
+          streak={streak}
+        />
       </div>
 
       {tournament && (
@@ -350,28 +328,30 @@ export default async function Home() {
         </div>
       )}
 
-      {/* ── Bring friends ──────────────────────────────────────────────── */}
-      <div {...rise()}>
-        <InviteCard invited={invited} />
-      </div>
+      {/* ── Bring friends (unless "Porta un amico" is still a first step) ─ */}
+      {!(showFirstSteps && invited === 0) && (
+        <div {...rise()}>
+          <InviteCard invited={invited} />
+        </div>
+      )}
 
       {/* ── Discover ───────────────────────────────────────────────────── */}
-      <section {...rise()}>
+      <section {...rise()} aria-labelledby="discover-title">
         <div className="flex flex-col gap-3">
-          <SectionHeader eyebrow="Classifiche" title="Scopri" tone="compete" />
+          <CrestHeading id="discover-title" eyebrow="Classifiche" title="Scopri" />
           <div className="grid grid-cols-2 gap-2">
             {[
-              { href: "/settimana", icon: TrendingUp, label: "La settimana", sub: "Chi ha giocato di più", tone: "tone-compete" },
-              { href: "/stagione", icon: Waves, label: "Stagione", sub: "Divisioni e promozioni", tone: "tone-compete" },
-              { href: "/players?tab=podio", icon: Medal, label: "Podio del mese", sub: "I migliori di adesso", tone: "tone-compete" },
-              { href: "/feed", icon: Activity, label: "Feed", sub: "Cosa succede ora", tone: "tone-social" },
+              { href: "/settimana", icon: TrendingUp, label: "La settimana", sub: "Chi ha giocato di più" },
+              { href: "/stagione", icon: Waves, label: "Stagione", sub: "Divisioni e promozioni" },
+              { href: "/players?tab=podio", icon: Medal, label: "Podio del mese", sub: "I migliori di adesso" },
+              { href: "/feed", icon: Activity, label: "Feed", sub: "Cosa succede ora" },
             ].map((d) => (
               <Link
                 key={d.href}
                 href={d.href}
-                className={`pressable ${d.tone} flex min-h-[5.5rem] flex-col justify-between rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-4 active:bg-[var(--surface-3)]`}
+                className="pressable flex min-h-[5.5rem] flex-col justify-between rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-4 ring-1 ring-[var(--crest-hair)] active:bg-[var(--surface-3)]"
               >
-                <d.icon className="h-6 w-6 text-[var(--tone)]" aria-hidden="true" />
+                <d.icon className="h-6 w-6 text-[var(--accent)]" aria-hidden="true" />
                 <span>
                   <span className="block text-base font-extrabold leading-tight text-white">{d.label}</span>
                   <span className="block text-xs text-[var(--muted-text)]">{d.sub}</span>
@@ -405,55 +385,18 @@ export default async function Home() {
 }
 
 /**
- * Hero photo behind the top of the home: an empty court at sunset, the moment
- * people actually play. It fades into the page so cards stay readable.
+ * The home wears the logo's colours (see .theme-crest): brand black instead
+ * of the sea at dusk, white hairlines, lime only where it counts.
  */
-const HOME_HERO_PHOTO = true
-
 function HomeShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative min-h-dvh overflow-x-hidden">
-      {HOME_HERO_PHOTO && (
-        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[30rem] overflow-hidden">
-          <Image
-            src="/shea-rouda-YCJoGdoQTgQ-unsplash.jpg"
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-[50%_62%] opacity-80"
-          />
-          {/* Darken the top for the header, fade the bottom into the page. */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(180deg, color-mix(in srgb, var(--background) 55%, transparent) 0%, color-mix(in srgb, var(--background) 15%, transparent) 35%, color-mix(in srgb, var(--background) 70%, transparent) 75%, var(--background) 100%)",
-            }}
-          />
-        </div>
-      )}
+    <div className="theme-crest relative min-h-dvh overflow-x-hidden bg-[var(--background)]">
       <div
-        className="relative z-10 flex flex-col gap-5 px-4 pb-8"
-        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.25rem)" }}
+        className="relative z-10 flex flex-col gap-6 px-4 pb-8"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}
       >
         {children}
       </div>
     </div>
-  )
-}
-
-function GuestHeader() {
-  return (
-    <header className="flex items-center gap-3">
-      <Image src="/sander-logo.png" alt="SANDER" width={40} height={40} className="object-contain" priority />
-      <span className="font-display text-xl font-extrabold uppercase tracking-wide text-white">Sander</span>
-      <Link
-        href="/auth/signin"
-        className="ml-auto flex min-h-[2.75rem] items-center gap-1 rounded-full bg-[var(--surface-2)] px-4 text-sm font-bold text-white"
-      >
-        Accedi <ChevronRight className="h-4 w-4 text-[var(--accent)]" aria-hidden="true" />
-      </Link>
-    </header>
   )
 }

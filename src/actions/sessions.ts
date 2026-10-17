@@ -10,6 +10,7 @@ import {
   SubmitSessionMatchScoreSchema,
   CompleteSessionSchema,
   LiveScoreSchema,
+  QuickJoinSchema,
 } from "@/lib/validators/session.schema"
 import { updateGlickoAfterSession } from "@/lib/rating"
 import { isAdminEmail } from "@/lib/isAdmin"
@@ -17,6 +18,7 @@ import { generateKOTBSchedule, applyMatchResult, rankStandings } from "@/lib/tou
 import type { StandingEntry } from "@/lib/tournament/types"
 import { after } from "next/server"
 import { nudgeForSession } from "@/lib/nudges"
+import { creditCost } from "@/lib/joinPrice"
 // ─── Push helpers (dynamic import — keeps web-push out of SSR bundle) ────────
 
 type PushPayload = { title: string; body: string; url: string }
@@ -262,6 +264,50 @@ export async function joinSession(sessionId: string) {
 
   revalidatePath(`/sessions/${sessionId}`)
   revalidatePath("/sessions")
+}
+
+/** The home says "partita" and offers the waitlist on the match page. */
+const QUICK_JOIN_WORDING: Record<string, string> = {
+  "Sessione al completo": "Partita al completo: aprila per metterti in lista",
+  "La sessione non è aperta": "Questa partita non è più aperta",
+}
+
+/**
+ * One tap on a free seat from the home. Same rules as joinSession, but the
+ * expected failures come back as values (thrown messages are hidden in
+ * production builds) and the home refreshes, so the match moves up to "La tua
+ * prossima partita". Seats paid in credits are not taken from here: the
+ * balance has to be checked on the match page first. (Euro paid on the sand
+ * is shown on the home card, next to the button.)
+ */
+export async function quickJoinSession(
+  input: unknown,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const parsed = QuickJoinSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, error: "Partita non valida" }
+  const { sessionId } = parsed.data
+  try {
+    const session = await db.session.findUnique({
+      where: { id: sessionId },
+      select: { paymentType: true, quotaAmount: true, courtCost: true, maxPlayers: true },
+    })
+    if (!session) return { ok: false, error: "Partita non trovata" }
+    if (creditCost(session) > 0) {
+      return { ok: false, error: "Questa partita si paga in crediti: aprila per entrare" }
+    }
+    await joinSession(sessionId)
+  } catch (e) {
+    if (e && typeof e === "object" && "code" in e && e.code === "P2002") {
+      return { ok: false, error: "Sei già in questa partita" }
+    }
+    // joinSession's own messages are plain Errors written for people; anything
+    // else (database, network) gets a generic line instead of its internals.
+    const forPeople = e instanceof Error && e.constructor === Error
+    const message = forPeople ? e.message : "Non sei riuscito a entrare, riprova"
+    return { ok: false, error: QUICK_JOIN_WORDING[message] ?? message }
+  }
+  revalidatePath("/")
+  return { ok: true }
 }
 
 export async function editSession(input: unknown): Promise<{ ok: true } | { ok: false; error: string }> {

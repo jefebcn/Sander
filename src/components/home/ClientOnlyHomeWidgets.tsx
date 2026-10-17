@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic"
 import type { PlayerCardData } from "@/components/player/SanderCardFut"
-import { SectionHeader } from "@/components/ui/SectionHeader"
+import { CrestHeading } from "./Crest"
 
 const LevelUpCelebration = dynamic(
   () => import("./LevelUpCelebration").then((m) => m.LevelUpCelebration),
@@ -23,8 +23,8 @@ export function ClientOnlyHomeWidgets({ currentLevel, playerName, cardData }: Pr
   return (
     <>
       <LevelUpCelebration currentLevel={currentLevel} playerName={playerName} cardData={cardData} />
-      <section className="flex flex-col gap-3">
-        <SectionHeader eyebrow="Dalla spiaggia" title="Video della community" tone="social" />
+      <section className="flex flex-col gap-3" aria-labelledby="videos-title">
+        <CrestHeading id="videos-title" eyebrow="Dalla spiaggia" title="Video della community" />
         <VideoCarousel />
       </section>
     </>

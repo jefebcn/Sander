@@ -85,10 +85,11 @@ export default async function SessionPage({
       }).catch(() => [])
     : []
 
-  // Completed sessions are private — only participants can view them
+  // Completed sessions are private — only participants (and the organizer,
+  // who may have run it without a seat and just closed it) can view them
   if (session.status === "COMPLETED") {
     const isParticipant = session.participants.some((p) => p.player?.id === currentPlayer?.id)
-    if (!isParticipant) notFound()
+    if (!isParticipant && session.organizerId !== currentPlayer?.id) notFound()
   }
 
   // Fetch SC balance if this session costs SanderCredits

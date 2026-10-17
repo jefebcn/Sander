@@ -11,13 +11,8 @@ export function InviteCard({ invited }: { invited: number }) {
   return (
     <Link
       href="/profile?tab=invita"
-      className="pressable tone-social relative block overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-5"
+      className="pressable tone-social relative block overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-5 ring-1 ring-[var(--crest-hair)]"
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-24 -left-10 h-56 w-56 rounded-full opacity-20"
-        style={{ background: "radial-gradient(circle, var(--social) 0%, transparent 65%)" }}
-      />
       <div className="relative flex items-start gap-4">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--tone-soft)] text-[var(--tone)]">
           <UserPlus className="h-6 w-6" aria-hidden="true" />
@@ -25,7 +20,7 @@ export function InviteCard({ invited }: { invited: number }) {
         <div className="min-w-0 flex-1">
           <p className="eyebrow text-[var(--tone)]">Porta un amico in spiaggia</p>
           <p className="text-base font-extrabold leading-snug text-white">
-            +{INVITER_SC} SC a te, +{INVITEE_SC} SC a lui
+            +{INVITER_SC} crediti a te, +{INVITEE_SC} a chi inviti
           </p>
           <p className="text-sm text-[var(--muted-text)]">
             {next
@@ -37,7 +32,7 @@ export function InviteCard({ invited }: { invited: number }) {
       <div className="relative mt-4 h-2 overflow-hidden rounded-full bg-[var(--surface-4)]" aria-hidden="true">
         <div className="xp-bar-fill h-full rounded-full bg-[var(--social)]" style={{ width: `${Math.max(4, pct)}%` }} />
       </div>
-      <span className="relative mt-4 flex min-h-[3rem] items-center justify-center rounded-[var(--radius-md)] bg-[var(--social)] text-base font-extrabold text-black">
+      <span className="relative mt-4 flex min-h-[3.5rem] items-center justify-center rounded-[var(--radius-md)] text-base font-extrabold text-white ring-1 ring-[var(--crest-hair)]">
         Invita ora
       </span>
     </Link>

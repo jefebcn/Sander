@@ -24,6 +24,8 @@ export interface PlayerCardData {
 interface SanderCardFutProps {
   playerData: PlayerCardData
   className?: string
+  /** "lazy" for a card below the fold: its frame is a multi-MB image. */
+  frameLoading?: "eager" | "lazy"
 }
 
 /* ──────────────────────────────────────────────────────────────────────────── */
@@ -96,7 +98,7 @@ const STAT_POSITIONS: { key: keyof PlayerCardData["stats"]; left: string }[] = [
 /*  Debug  (Z-50):  20×20 calibration grid (temporary)                         */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
-export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
+export function SanderCardFut({ playerData, className, frameLoading }: SanderCardFutProps) {
   const glicko = Math.round(playerData.glicko2)
   const frame = getFrameTemplate(glicko)
   const roleAbbr = playerData.stats.mur > playerData.stats.dif ? "MUR" : "DIF"
@@ -148,6 +150,8 @@ export function SanderCardFut({ playerData, className }: SanderCardFutProps) {
           src={frame}
           alt="Card frame"
           crossOrigin="anonymous"
+          loading={frameLoading}
+          decoding={frameLoading === "lazy" ? "async" : undefined}
           className="pointer-events-none absolute inset-0 h-full w-full object-contain"
           style={{ zIndex: 10 }}
         />
