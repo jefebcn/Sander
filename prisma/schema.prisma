@@ -64,6 +64,8 @@ model User {
   // Invite tracking
   invitedByPlayerId String?
   invitedByPlayer   Player?  @relation("PlayerInvites", fields: [invitedByPlayerId], references: [id])
+  // Set once both referral rewards are paid (after the invitee's first real match)
+  inviteRewardedAt  DateTime?
 
   accounts    Account[]
   authSessions AuthSession[]
@@ -735,6 +737,8 @@ model CreditTopUp {
   createdByEmail String?
   /// Set for STRIPE top-ups; unique so a replayed webhook can't credit twice.
   stripeSessionId String? @unique
+  /// Set when the card payment is refunded on Stripe and the credits taken back.
+  refundedAt      DateTime?
 
   @@index([createdAt])
   @@index([playerId])
