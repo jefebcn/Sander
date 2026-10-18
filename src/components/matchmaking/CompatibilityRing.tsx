@@ -5,7 +5,7 @@ interface Props {
 
 function color(v: number): string {
   if (v >= 80) return "#22c55e"
-  if (v >= 55) return "#c9f31d"
+  if (v >= 55) return "#ff6b4a"
   if (v >= 30) return "#eab308"
   return "#f97316"
 }

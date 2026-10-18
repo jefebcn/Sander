@@ -362,8 +362,8 @@ function PodiumModal({
             disabled={saving}
             className="mt-4 flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-semibold"
             style={{
-              background: "rgba(201,243,29,0.07)",
-              border: "1px solid rgba(201,243,29,0.2)",
+              background: "rgba(255,107,74,0.07)",
+              border: "1px solid rgba(255,107,74,0.2)",
               color: "var(--accent)",
               opacity: saving ? 0.6 : 1,
               cursor: saving ? "wait" : "pointer",

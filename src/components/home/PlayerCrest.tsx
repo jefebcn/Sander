@@ -46,7 +46,7 @@ export function PlayerCrest({ p }: { p: PlayerCrestData }) {
           </span>
           <h1 className="mt-4 flex max-w-full flex-col items-center">
             <span className="text-sm font-semibold text-[var(--muted-text)]">{p.greeting},</span>
-            <span className="max-w-full truncate font-display text-[2.6rem] font-black uppercase leading-[0.9] tracking-wide text-white">
+            <span className="max-w-full truncate font-display text-[2.6rem] font-black leading-[0.9] tracking-wide text-white">
               {p.firstName}
             </span>
           </h1>

@@ -2,7 +2,7 @@
 
 import * as RadixDialog from "@radix-ui/react-dialog"
 import Link from "next/link"
-import { Plus, Search, Gauge, Trophy, UserPlus, CalendarClock, X, type LucideIcon } from "lucide-react"
+import { Plus, Search, Gauge, Trophy, UserPlus, CalendarClock, HeartHandshake, Users, X, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Tone } from "@/components/ui/Card"
 import { toneOf } from "@/components/ui/Card"
@@ -20,6 +20,8 @@ interface Action {
 const ACTIONS: Action[] = [
   { href: "/sessions/new", icon: Plus, title: "Crea una partita", text: "Scegli bagno e ora, gli altri si uniscono", tone: "play", primary: true },
   { href: "/sessions", icon: Search, title: "Trova una partita", text: "Posti liberi vicino a te", tone: "play" },
+  { href: "/scopri", icon: HeartHandshake, title: "Trova un compagno", text: "Swipe tra chi gioca al tuo livello", tone: "play" },
+  { href: "/scopri/coppie", icon: Users, title: "Sfida una coppia", text: "2v2: la tua coppia contro un'altra", tone: "social" },
   { href: "/trova", icon: CalendarClock, title: "Sono libero", text: "Di' quando puoi e trova compagni", tone: "play" },
   { href: "/segna", icon: Gauge, title: "Segna il punteggio", text: "Tabellone dal vivo", tone: "play" },
   { href: "/tournaments/new", icon: Trophy, title: "Organizza un torneo", text: "Iscrizioni e tabellone automatici", tone: "compete" },
@@ -38,7 +40,7 @@ export function QuickActionsSheet({ open, onOpenChange }: { open: boolean; onOpe
         >
           <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-[var(--muted)]" aria-hidden="true" />
           <div className="mb-4 flex items-center justify-between">
-            <RadixDialog.Title className="font-display text-2xl font-extrabold uppercase text-white">
+            <RadixDialog.Title className="font-display text-2xl font-extrabold text-white">
               Cosa vuoi fare?
             </RadixDialog.Title>
             <RadixDialog.Close
@@ -57,7 +59,7 @@ export function QuickActionsSheet({ open, onOpenChange }: { open: boolean; onOpe
           >
             <primary.icon className="h-7 w-7" strokeWidth={2.5} aria-hidden="true" />
             <span>
-              <span className="block font-display text-xl font-extrabold uppercase leading-tight">{primary.title}</span>
+              <span className="block font-display text-xl font-extrabold leading-tight">{primary.title}</span>
               <span className="block text-sm font-semibold text-black/70">{primary.text}</span>
             </span>
           </Link>

@@ -33,7 +33,7 @@ export function DivisionBadge({ division, size = 120, showName = false }: Props)
           <div
             className="flex h-full w-full items-center justify-center rounded-[26%]"
             style={{
-              background: "linear-gradient(160deg, #14181a 0%, #0a0c0d 100%)",
+              background: "linear-gradient(160deg, #1b1924 0%, #0d0c12 100%)",
               boxShadow: `inset 0 0 ${size * 0.25}px ${c}22`,
             }}
           >

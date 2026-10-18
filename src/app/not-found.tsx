@@ -6,7 +6,7 @@ export default function NotFound() {
     <div className="mx-auto flex min-h-[70dvh] max-w-md flex-col items-center justify-center gap-5 px-6 text-center">
       <div
         className="flex h-20 w-20 items-center justify-center rounded-3xl"
-        style={{ background: "rgba(201,243,29,0.1)", border: "1px solid rgba(201,243,29,0.25)" }}
+        style={{ background: "rgba(255,107,74,0.1)", border: "1px solid rgba(255,107,74,0.25)" }}
       >
         <Volleyball className="h-10 w-10 text-[var(--accent)]" />
       </div>

@@ -70,7 +70,7 @@ export function TournamentCard({ tournament: t }: TournamentCardProps) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="eyebrow text-[var(--tone)]">{formula}</p>
-            <h2 className="mt-1 font-display text-2xl font-extrabold uppercase leading-[0.95] text-white line-clamp-2">
+            <h2 className="mt-1 font-display text-2xl font-extrabold leading-[0.95] text-white line-clamp-2">
               {t.name}
             </h2>
           </div>

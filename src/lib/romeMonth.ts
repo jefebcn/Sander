@@ -76,3 +76,9 @@ export function romeWeekStart(now: Date = new Date()): Date {
   const back = (dow + 6) % 7
   return romeMidnight(y, m, d - back)
 }
+
+/** 00:00 Rome time of the day containing `now`. */
+export function romeDayStart(now: Date = new Date()): Date {
+  const [y, m, d] = dayKey(now).split("-").map(Number)
+  return romeMidnight(y, m, d)
+}

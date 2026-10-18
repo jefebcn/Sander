@@ -102,7 +102,7 @@ function Card({
           <div className="mb-1 flex items-center gap-2">
             <span
               className="rounded-full px-2 py-0.5 text-xs font-black uppercase tracking-wider"
-              style={{ background: "rgba(201,243,29,0.15)", color: "var(--accent)" }}
+              style={{ background: "rgba(255,107,74,0.15)", color: "var(--accent)" }}
             >
               {KIND_LABEL[item.kind] ?? item.kind}
             </span>

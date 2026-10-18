@@ -1,48 +1,49 @@
 @import "tailwindcss";
 
-/* ─── Sander High-Contrast Dark Theme ─────────────────────────────────────── */
-/* Designed for outdoor beach volleyball use: maximum contrast under direct sun */
+/* ─── SANDER · Riviera di notte ───────────────────────────────────────────── */
+/* Ink night sky, coral sunset, aqua sea, sun gold. Dark only: readable under */
+/* direct sun, and the white of the crest stays white.                        */
 
 :root {
-  /* Always dark — near-black with micro green tint */
-  --background: #07090a;
+  /* Ink with a violet hint: the sky just after sunset */
+  --background: #0d0c12;
   --foreground: #ffffff;
 
-  --surface-1: #0d100d;
-  --surface-2: #121512;
-  --surface-3: #181c18;
-  --surface-4: #1e221e;
+  --surface-1: #15131c;
+  --surface-2: #1b1924;
+  --surface-3: #23202e;
+  --surface-4: #2c2939;
 
-  /* Neon yellow-green — SANDER brand */
-  --accent: #c9f31d;
-  --accent-dim: #a8cc10;
-  --accent-fg: #000000;
+  /* Corallo — the primary action, the like, the brand voice */
+  --accent: #ff6b4a;
+  --accent-dim: #e85636;
+  --accent-fg: #160a06;
 
-  /* Electric blue — sky */
-  --sky: #00b4f0;
+  /* Acqua — the sea */
+  --sky: #49d9c9;
 
   /* Role colours */
-  --blocker: #3b82f6;
-  --defender: #f97316;
+  --blocker: #8f86ff;
+  --defender: #49d9c9;
 
   /* Status colours */
-  --live: #22c55e;
-  --draft: #6b7280;
-  --completed: #a855f7;
+  --live: #c6f432;
+  --draft: #6f6a80;
+  --completed: #b392ff;
 
   /* Semantic */
-  --danger: #ef4444;
-  --warning: #f59e0b;
-  --success: #22c55e;
+  --danger: #ff4d6d;
+  --warning: #ffc247;
+  --success: #3ddc97;
 
   /* Medal colours */
-  --gold: #ffd700;
-  --silver: #c0c0c0;
-  --bronze: #cd7f32;
+  --gold: #ffd166;
+  --silver: #c9c6d6;
+  --bronze: #d08a52;
 
-  --border: #1a1e1a;
-  --muted: #252c25;
-  --muted-text: #a3a3a3;
+  --border: #26232f;
+  --muted: #312d3d;
+  --muted-text: #b1acc0;
 
   /* Interaction */
   --interactive: var(--surface-2);
@@ -53,21 +54,27 @@
 
   /* ── Area colours — "a colour tells you where you are" ───────────────────
      Every part of the app has one tone, used for its nav highlight, icons,
-     eyebrows and accents. Lime stays the brand and the primary action.
-       play     → partite, crea, gioca            (lime, brand)
-       compete  → tornei, classifiche, podi       (amber gold)
-       social   → amici, inviti, chat, community  (sky)
+     eyebrows and accents. Coral stays the brand and the primary action.
+       play     → partite, crea, gioca, scopri    (coral, brand)
+       compete  → tornei, classifiche, podi       (sun gold)
+       social   → match, chat, coppie, inviti     (aqua)
        sand     → bagni, comuni, territorio       (warm sand)          */
   --play: var(--accent);
-  --compete: #f5b83d;
-  --social: #38bdf8;
-  --sand: #e8d3a6;
+  --compete: #ffc247;
+  --social: #49d9c9;
+  --sand: #f3dcb8;
 
-  /* Atmosphere: Adriatic at dusk (AppBackground). */
-  --sea-deep: #0b1220;
-  --sea-night: #090d14;
-  --sunset: #ff8a4c;
-  --sunset-deep: #ff5e3a;
+  /* Scopri: the match moment and the weekly Ace. */
+  --love: #ff4f7b;
+  --ace: #ffc247;
+  /* The logo's crown: kept for the crest and live dots. */
+  --lime: #c6f432;
+
+  /* Atmosphere: Riviera at night (AppBackground). */
+  --sea-deep: #14111f;
+  --sea-night: #0f0d16;
+  --sunset: #ff6b4a;
+  --sunset-deep: #ff4f7b;
 
   /* Soft fills / hairlines derived from a tone (set --tone on a parent). */
   --tone: var(--accent);
@@ -76,12 +83,16 @@
   --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
   --accent-line: color-mix(in srgb, var(--accent) 32%, transparent);
 
-  /* Radius & elevation */
-  --radius-sm: 0.75rem;
-  --radius-md: 1rem;
-  --radius-lg: 1.5rem;
-  --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 10px 30px -12px rgb(0 0 0 / 0.6);
-  --shadow-glow: 0 0 0 1px var(--accent-line), 0 12px 32px -10px color-mix(in srgb, var(--accent) 45%, transparent);
+  /* The crest's white line, full and as a hairline. */
+  --crest-line: #f7f5fb;
+  --crest-hair: rgb(255 255 255 / 0.1);
+
+  /* Radius & elevation: softer corners, cards that feel like photos */
+  --radius-sm: 0.875rem;
+  --radius-md: 1.125rem;
+  --radius-lg: 1.75rem;
+  --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 14px 34px -14px rgb(0 0 0 / 0.7);
+  --shadow-glow: 0 0 0 1px var(--accent-line), 0 14px 36px -10px color-mix(in srgb, var(--accent) 55%, transparent);
 
   /* Motion — one vocabulary for the whole app */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -94,7 +105,7 @@
 /* Area tones — put one on a page or card; children read var(--tone).
    The derived fills are re-declared here on purpose: a custom property that
    references another is resolved where it is declared, so defining them only
-   on :root would freeze them to lime for every area. */
+   on :root would freeze them to coral for every area. */
 .tone-play    { --tone: var(--play); }
 .tone-compete { --tone: var(--compete); }
 .tone-social  { --tone: var(--social); }
@@ -129,7 +140,11 @@
   --color-social: var(--social);
   --color-sand: var(--sand);
   --color-tone: var(--tone);
-  --font-display: var(--font-condensed), var(--font-sans), system-ui, sans-serif;
+  --color-love: var(--love);
+  --color-ace: var(--ace);
+  --color-lime: var(--lime);
+  --font-display: var(--font-brico), var(--font-sans), system-ui, sans-serif;
+  --font-serif: var(--font-instrument), Georgia, serif;
 }
 
 /* ─── Base ────────────────────────────────────────────────────────────────── */
@@ -153,10 +168,19 @@ html {
 }
 
 /* ─── Typography roles ────────────────────────────────────────────────────── */
-/* Display = condensed uppercase, the same voice as the social posts. */
+/* Display = Bricolage Grotesque, a touch condensed: titles, numbers, the
+   brand voice. Serif = Instrument Serif: prompt answers and the few lines
+   that should read like a sentence, not a sign. */
 .font-display {
   font-family: var(--font-display);
-  letter-spacing: 0.005em;
+  font-stretch: 85%;
+  font-variation-settings: "opsz" 48;
+  letter-spacing: -0.01em;
+}
+.font-serif {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.005em;
 }
 /* Small all-caps label above a title. 12px floor: never smaller. */
 .eyebrow {
@@ -169,6 +193,7 @@ html {
 /* Numbers that must not jiggle when they change (scores, counters). */
 .num {
   font-family: var(--font-display);
+  font-stretch: 85%;
   font-variant-numeric: tabular-nums;
   font-weight: 800;
   letter-spacing: 0;
@@ -186,36 +211,35 @@ body {
 .app-bg { background: var(--background); }
 .app-bg__glow, .app-bg__grain { position: absolute; inset: 0; }
 
-/* Night: today's near-black, lit only by a faint lime haze. */
+/* Night: plain ink, lit only by a faint coral haze. */
 .app-bg--night .app-bg__glow {
   background: radial-gradient(ellipse 90% 45% at 85% -5%, color-mix(in srgb, var(--accent) 9%, transparent) 0%, transparent 70%);
 }
 
-/* Sunset: deep sea-blue base, the warm last light on the horizon at the top. */
+/* Sunset: ink base, the coral-pink last light at the top, a touch of sea. */
 .app-bg--sunset {
   background: linear-gradient(180deg, var(--sea-deep) 0%, var(--sea-night) 38%, var(--background) 72%);
 }
 .app-bg--sunset .app-bg__glow {
   background:
     radial-gradient(ellipse 120% 38% at 50% -6%, color-mix(in srgb, var(--sunset) 20%, transparent) 0%, color-mix(in srgb, var(--sunset-deep) 8%, transparent) 40%, transparent 72%),
-    radial-gradient(ellipse 70% 30% at 100% 0%, color-mix(in srgb, var(--accent) 7%, transparent) 0%, transparent 70%);
+    radial-gradient(ellipse 70% 30% at 100% 0%, color-mix(in srgb, var(--sky) 7%, transparent) 0%, transparent 70%);
 }
 
-/* Sunset theme: surfaces turn cool slate so cards sit on the sea instead of
-   floating as green-black slabs on a blue sky. Lime stays the brand. */
+/* Sunset theme: same ink surfaces, the sky does the talking. */
 body[data-bg="sunset"] {
-  --surface-1: #0d121a;
-  --surface-2: #121924;
-  --surface-3: #18212e;
-  --surface-4: #1f2a39;
-  --border: #1b2431;
-  --muted: #26303f;
-  --muted-text: #a6afbd;
+  --surface-1: #15131c;
+  --surface-2: #1b1924;
+  --surface-3: #23202e;
+  --surface-4: #2c2939;
+  --border: #26232f;
+  --muted: #312d3d;
+  --muted-text: #b1acc0;
 }
 body[data-bg="sunset"] .app-bg__glow {
   background:
     radial-gradient(ellipse 130% 42% at 50% -8%, color-mix(in srgb, var(--sunset) 34%, transparent) 0%, color-mix(in srgb, var(--sunset-deep) 14%, transparent) 38%, transparent 70%),
-    radial-gradient(ellipse 60% 26% at 100% 0%, color-mix(in srgb, var(--accent) 8%, transparent) 0%, transparent 70%);
+    radial-gradient(ellipse 60% 26% at 100% 0%, color-mix(in srgb, var(--sky) 8%, transparent) 0%, transparent 70%);
 }
 
 /* Frosted card for content that sits on a photo or on the sunset. */
@@ -227,33 +251,15 @@ body[data-bg="sunset"] .app-bg__glow {
 }
 
 /* ─── Crest theme — the logo's own look ──────────────────────────────────────
-   The logo is a white monoline shield with a chevron tip, a lime crown with a
-   rising sun, on black. Pages wrapped in .theme-crest (the home) take exactly
-   that: neutral blacks instead of the sea-blue surfaces, white hairlines,
-   lime only where it matters, tighter corners. Everything still reads the
-   usual tokens, so components need no special cases. */
+   The logo is a white monoline shield with a chevron tip and a crown with a
+   rising sun. Pages wrapped in .theme-crest (the home) keep the Riviera ink
+   surfaces and add the crest's white hairlines; tones stay the app's own.
+   Everything still reads the usual tokens, so components need no special
+   cases. */
 .theme-crest {
-  /* The brand's own blacks (as on :root and in the app icon), undoing the
-     sunset theme's slate. */
-  --background: #07090a;
-  --surface-1: #0d100d;
-  --surface-2: #121512;
-  --surface-3: #181c18;
-  --surface-4: #1e221e;
-  --border: #1a1e1a;
-  --muted: #252c25;
-  --muted-text: #a3a3a3;
-  /* The crest's white line, full and as a hairline. */
-  --crest-line: #f5f5f5;
-  --crest-hair: rgb(255 255 255 / 0.12);
-  /* Logo colours only: the crown is lime, everything else white. */
-  --compete: var(--accent);
-  --sand: var(--accent);
-  --social: var(--crest-line);
-  --radius-sm: 0.5rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
-  --shadow-card: inset 0 0 0 1px var(--crest-hair), 0 12px 28px -14px rgb(0 0 0 / 0.8);
+  --crest-line: #f7f5fb;
+  --crest-hair: rgb(255 255 255 / 0.1);
+  --shadow-card: inset 0 0 0 1px var(--crest-hair), 0 14px 30px -14px rgb(0 0 0 / 0.8);
 }
 
 /* Shield with the logo's chevron tip. --crest-tip sets how deep the V is. */
@@ -267,7 +273,7 @@ body[data-bg="sunset"] .app-bg__glow {
 }
 
 /* The rays of the sun on the logo's crown, thin and still, behind a crest.
-   No glow: one lime line, repeated. The top of the mask fades in too, so the
+   No glow: one accent line, repeated. The top of the mask fades in too, so the
    rays never end on a hard line. */
 .crest-sun {
   background:

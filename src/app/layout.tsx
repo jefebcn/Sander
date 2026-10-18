@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next"
 import { Analytics } from "@vercel/analytics/next"
-import { Barlow, Barlow_Condensed } from "next/font/google"
+import { Figtree, Bricolage_Grotesque, Instrument_Serif } from "next/font/google"
 import "./globals.css"
 import { Providers } from "@/lib/providers"
 import { MobileNav } from "@/components/layout/MobileNav"
@@ -12,19 +12,28 @@ import { PageWrapper } from "@/components/layout/PageWrapper"
 import { RefTracker } from "@/components/analytics/RefTracker"
 import { AppBackground, type BackgroundVariant } from "@/components/layout/AppBackground"
 
-const barlow = Barlow({
+// Body: Figtree, round and very legible in the sun.
+const figtree = Figtree({
   variable: "--font-sans",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
   display: "swap",
 })
 
-// Display face for titles and big numbers — the same condensed uppercase voice
-// as the social posts, so app and Instagram feel like one brand.
-const barlowCondensed = Barlow_Condensed({
-  variable: "--font-condensed",
+// Display: Bricolage Grotesque for titles and big numbers, slightly condensed
+// through its width axis (see .font-display).
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-brico",
   subsets: ["latin"],
-  weight: ["600", "700", "800", "900"],
+  axes: ["opsz", "wdth"],
+  display: "swap",
+})
+
+// Serif: prompt answers on Scopri cards read like something a person said.
+const instrument = Instrument_Serif({
+  variable: "--font-instrument",
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
   display: "swap",
 })
 
@@ -81,7 +90,7 @@ export const metadata: Metadata = {
 // Pinch-zoom stays enabled: blocking it locks out anyone who needs larger text
 // (WCAG 1.4.4). Inputs are ≥16px, so iOS doesn't auto-zoom on focus anyway.
 export const viewport: Viewport = {
-  themeColor: "#0b1220",
+  themeColor: "#0d0c12",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -96,7 +105,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="it" className={`${barlow.variable} ${barlowCondensed.variable} h-full`}>
+    <html lang="it" className={`${figtree.variable} ${bricolage.variable} ${instrument.variable} h-full`}>
       <body data-bg={BG} className="min-h-dvh flex flex-col bg-[var(--background)] text-[var(--foreground)]">
         <AppBackground variant={BG} />
         <Providers>

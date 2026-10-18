@@ -21,7 +21,7 @@ export function SectionHeader({
     <div className={cn("flex items-end justify-between gap-3", toneOf(tone), className)}>
       <div className="min-w-0">
         {eyebrow && <p className="eyebrow text-[var(--tone)]">{eyebrow}</p>}
-        <h2 className="font-display text-2xl font-extrabold uppercase leading-none text-white">{title}</h2>
+        <h2 className="font-display text-2xl font-extrabold leading-none text-white">{title}</h2>
       </div>
       {action && (
         <Link

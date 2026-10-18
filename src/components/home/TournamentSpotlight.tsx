@@ -28,7 +28,7 @@ export function TournamentSpotlight({ t }: { t: SpotlightTournament }) {
         <p className="eyebrow text-[var(--tone)]">Torneo in arrivo</p>
         {t.open ? <Pill tone="compete" live>Iscrizioni aperte</Pill> : <Pill tone="compete">{relativeDay(t.date)}</Pill>}
       </div>
-      <p className="relative mt-2 font-display text-3xl font-extrabold uppercase leading-none text-white">{t.name}</p>
+      <p className="relative mt-2 font-display text-3xl font-extrabold leading-none text-white">{t.name}</p>
       <p className="relative mt-2 text-sm font-semibold text-[var(--muted-text)] first-letter:uppercase">
         {formatDayShort(t.date)}{t.location ? ` · ${t.location}` : ""}
       </p>

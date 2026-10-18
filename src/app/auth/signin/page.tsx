@@ -53,7 +53,7 @@ export default async function SignInPage({
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 70% 35% at 50% 0%, rgba(201,243,29,0.10) 0%, transparent 60%)",
+            "radial-gradient(ellipse 70% 35% at 50% 0%, rgba(255,107,74,0.10) 0%, transparent 60%)",
         }}
         aria-hidden="true"
       />
@@ -74,7 +74,7 @@ export default async function SignInPage({
             className="object-contain"
           />
           <div className="space-y-1 text-center">
-            <h1 className="font-display text-4xl font-extrabold uppercase leading-none text-white">
+            <h1 className="font-display text-4xl font-extrabold leading-none text-white">
               Entra nel campo.
             </h1>
             <p className="text-sm text-[var(--muted-text)]">

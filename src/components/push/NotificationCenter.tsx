@@ -85,7 +85,7 @@ export function NotificationCenter({ open, onClose }: NotificationCenterProps) {
       {/* Sheet */}
       <div
         className="fixed bottom-0 left-0 right-0 z-[70] flex max-h-[85dvh] flex-col rounded-t-3xl overflow-hidden"
-        style={{ background: "#1e241e" }}
+        style={{ background: "#23202e" }}
       >
         {/* Handle */}
         <div className="mx-auto mt-3 mb-1 h-1 w-10 rounded-full bg-white/20" />
@@ -143,8 +143,8 @@ export function NotificationCenter({ open, onClose }: NotificationCenterProps) {
                 onClick={() => handleClickNotification(n)}
                 className="flex w-full items-start gap-3 rounded-2xl p-4 text-left active:opacity-70"
                 style={{
-                  background: n.readAt ? "rgba(255,255,255,0.05)" : "rgba(201,243,29,0.10)",
-                  border: n.readAt ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(201,243,29,0.30)",
+                  background: n.readAt ? "rgba(255,255,255,0.05)" : "rgba(255,107,74,0.10)",
+                  border: n.readAt ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(255,107,74,0.30)",
                 }}
               >
                 {/* Unread dot */}

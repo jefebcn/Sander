@@ -126,7 +126,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             <StatusBadge status={tournament.status} registrationOpen={registrationOpen} />
           </div>
           {/* Wraps instead of truncating: the name is the poster. */}
-          <h1 className="mt-1 font-display text-[2.1rem] font-extrabold uppercase leading-[0.95] text-white">{tournament.name}</h1>
+          <h1 className="mt-1 font-display text-[2.1rem] font-extrabold leading-[0.95] text-white">{tournament.name}</h1>
           <p className="mt-1 text-sm text-[var(--muted-text)]">
             {formatDate(tournament.date)} · {playerRegs.length} giocatori
           </p>
@@ -425,7 +425,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
           </p>
           <StatusBadge status={tournament.status} registrationOpen={registrationOpen} />
         </div>
-        <h1 className="mt-1 font-display text-[2.1rem] font-extrabold uppercase leading-[0.95] text-white">{tournament.name}</h1>
+        <h1 className="mt-1 font-display text-[2.1rem] font-extrabold leading-[0.95] text-white">{tournament.name}</h1>
         <p className="mt-1 text-sm text-[var(--muted-text)]">
           {formatDate(tournament.date)} · {playerRegs.length} giocatori
         </p>
@@ -672,12 +672,12 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               className="flex items-center gap-4 rounded-2xl p-4 transition-colors hover:opacity-90 active:scale-[0.98]"
               style={{
                 background: "var(--surface-1)",
-                border: "1px solid rgba(201,243,29,0.25)",
+                border: "1px solid rgba(255,107,74,0.25)",
               }}
             >
               <div
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-                style={{ background: "rgba(201,243,29,0.1)" }}
+                style={{ background: "rgba(255,107,74,0.1)" }}
               >
                 <Trophy className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />
               </div>

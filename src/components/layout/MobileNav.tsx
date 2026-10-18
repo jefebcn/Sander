@@ -3,15 +3,17 @@
 import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { Home, Volleyball, Trophy, User, Plus } from "lucide-react"
+import { useQuery } from "@tanstack/react-query"
+import { Home, Volleyball, Trophy, User, HeartHandshake } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useHaptic } from "@/lib/useHaptic"
-import { QuickActionsSheet } from "./QuickActionsSheet"
+import { getScopriBadge } from "@/actions/scopri"
 
 /**
- * Four destinations + one action. The centre button is the thing people open
- * the app to do — play — so it is one thumb-tap away from every screen
- * instead of buried inside a tab.
+ * Four destinations around Scopri. The centre button is the thing people open
+ * the app to do now — find someone to play with — so it is one thumb-tap away
+ * from every screen, with the likes and replies waiting for you on it.
+ * (Quick actions moved to the "+" on Home and Gioca: QuickActionsButton.)
  *
  * Each tab lights up in its area colour (see globals.css), and secondary
  * surfaces light up their parent, so you always know where you are.
@@ -23,16 +25,22 @@ const NAV_ITEMS = [
   { href: "/profile",   icon: User,       label: "Profilo",     tone: "var(--social)",  matches: ["/messaggi", "/admin"] },
 ] as const
 
+const SCOPRI_PATH = "/scopri"
+
 export function MobileNav() {
   const pathname = usePathname()
   const haptic = useHaptic()
   // Optimistic path — updates immediately on tap for instant active-state feedback
   const [optimisticPath, setOptimisticPath] = useState<string | null>(null)
-  const [sheetOpen, setSheetOpen] = useState(false)
+  const { data: badge = 0 } = useQuery({
+    queryKey: ["scopri-badge"],
+    queryFn: () => getScopriBadge(),
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
+  })
 
   useEffect(() => {
     setOptimisticPath(null)
-    setSheetOpen(false)
   }, [pathname])
 
   // Hide on full-screen overlays: auth, onboarding, and an open conversation
@@ -98,24 +106,31 @@ export function MobileNav() {
         >
           {NAV_ITEMS.slice(0, 2).map(renderTab)}
 
-          {/* Centre action */}
+          {/* Centre: Scopri */}
           <div className="flex flex-1 justify-center">
-            <button
-              type="button"
-              onClick={() => { haptic("success"); setSheetOpen(true) }}
-              aria-label="Azioni rapide: crea, trova, segna, invita"
-              aria-haspopup="dialog"
-              aria-expanded={sheetOpen}
-              className="-mt-6 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--accent)] text-black shadow-[var(--shadow-glow)] ring-4 ring-[var(--background)] transition-transform duration-150 active:scale-90"
+            <Link
+              href={SCOPRI_PATH}
+              prefetch={true}
+              onClick={() => { haptic("success"); setOptimisticPath(SCOPRI_PATH) }}
+              aria-label={badge > 0 ? `Scopri: trova con chi giocare, ${badge} novità` : "Scopri: trova con chi giocare"}
+              aria-current={displayPath.startsWith(SCOPRI_PATH) ? "page" : undefined}
+              className={cn(
+                "relative -mt-6 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--accent)] text-black shadow-[var(--shadow-glow)] ring-4 ring-[var(--background)] transition-transform duration-150 active:scale-90",
+                displayPath.startsWith(SCOPRI_PATH) && "scale-105",
+              )}
             >
-              <Plus className={cn("h-8 w-8 transition-transform duration-300", sheetOpen && "rotate-45")} strokeWidth={2.75} />
-            </button>
+              <HeartHandshake className="h-8 w-8" strokeWidth={2.25} aria-hidden="true" />
+              {badge > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-[var(--love)] px-1.5 text-xs font-extrabold text-white ring-2 ring-[var(--background)]">
+                  {badge > 9 ? "9+" : badge}
+                </span>
+              )}
+            </Link>
           </div>
 
           {NAV_ITEMS.slice(2).map(renderTab)}
         </div>
       </nav>
-      <QuickActionsSheet open={sheetOpen} onOpenChange={setSheetOpen} />
     </>
   )
 }

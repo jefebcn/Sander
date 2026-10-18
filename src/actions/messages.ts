@@ -5,6 +5,7 @@ import { db } from "@/lib/db"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { getPartnerStats } from "@/actions/players"
 import { SendMessageSchema, CreateGroupSchema } from "@/lib/validators/message.schema"
+import { isBlockedPair } from "@/lib/scopri/blocks"
 
 // Lazy push import keeps web-push out of the SSR/client bundle (mirrors sessions.ts).
 async function safeNotifyPlayers(
@@ -56,6 +57,7 @@ export async function getOrCreateDmThread(otherPlayerId: string): Promise<string
 
   const other = await db.player.findUnique({ where: { id: otherPlayerId }, select: { id: true } })
   if (!other) throw new Error("Giocatore non trovato")
+  if (await isBlockedPair(me.id, other.id)) throw new Error("Non puoi scrivere a questo giocatore")
 
   const key = dmKeyFor(me.id, other.id)
   const existing = await db.chatThread.findUnique({ where: { dmKey: key }, select: { id: true } })
@@ -360,6 +362,10 @@ export async function sendMessage(input: unknown) {
 
   const { isMember, others } = await resolveMembers(thread, me.id)
   if (!isMember) throw new Error("Non autorizzato")
+  // A block (or an unmatch on Scopri) closes the private chat for good.
+  if (thread.kind === "DM" && others[0] && (await isBlockedPair(me.id, others[0]))) {
+    throw new Error("Non puoi più scrivere in questa conversazione")
+  }
 
   const now = new Date()
   const msg = await db.chatMessage.create({

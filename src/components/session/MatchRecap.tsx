@@ -28,7 +28,7 @@ export function MatchRecap({ data }: { data: MatchRecapData }) {
         style={{ background: "radial-gradient(circle, var(--tone) 0%, transparent 65%)" }}
       />
       <p className="eyebrow relative text-[var(--tone)]">La tua partita</p>
-      <p className="relative font-display text-5xl font-black uppercase leading-none text-white">
+      <p className="relative font-display text-5xl font-black leading-none text-white">
         {data.won ? "Vittoria" : "Sconfitta"}
       </p>
       <div className="relative mt-4 flex flex-wrap gap-2">

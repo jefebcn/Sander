@@ -103,8 +103,8 @@ export default async function WeeklyPage() {
             <div
               className="rounded-3xl p-5"
               style={{
-                background: "linear-gradient(145deg, rgba(201,243,29,0.14), rgba(201,243,29,0.03))",
-                border: "1px solid rgba(201,243,29,0.25)",
+                background: "linear-gradient(145deg, rgba(255,107,74,0.14), rgba(255,107,74,0.03))",
+                border: "1px solid rgba(255,107,74,0.25)",
               }}
             >
               <div className="mb-3 flex items-center gap-2">

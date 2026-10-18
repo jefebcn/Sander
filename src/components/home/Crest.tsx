@@ -84,7 +84,7 @@ export function CrestHeading({
     <div className={cn("flex items-end gap-3", className)}>
       <div className="min-w-0">
         {eyebrow && <p className="eyebrow text-[var(--accent)]">{eyebrow}</p>}
-        <h2 id={id} className="font-display text-2xl font-extrabold uppercase leading-none text-white">{title}</h2>
+        <h2 id={id} className="font-display text-2xl font-extrabold leading-none text-white">{title}</h2>
       </div>
       <span aria-hidden="true" className="mb-1.5 h-px min-w-6 flex-1 bg-[var(--crest-hair)]" />
       {action && (
@@ -105,7 +105,7 @@ export function CrestWordmark() {
   return (
     <Link href="/" className="flex min-h-[2.75rem] items-center gap-2.5" aria-label="SANDER, home">
       <Image src="/icon-192.png" alt="" width={40} height={40} className="rounded-[0.6rem]" loading="eager" />
-      <span className="font-display text-[1.35rem] font-black uppercase leading-none tracking-[0.22em] text-white">
+      <span className="font-display text-[1.35rem] font-black leading-none tracking-[0.22em] text-white">
         Sander
       </span>
     </Link>

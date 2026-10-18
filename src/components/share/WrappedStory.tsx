@@ -10,7 +10,7 @@ interface Props {
   shareUrl: string
 }
 
-const ACCENT = "#c9f31d"
+const ACCENT = "#ff6b4a"
 
 function Tile({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
@@ -21,8 +21,8 @@ function Tile({ label, value, accent }: { label: string; value: string; accent?:
         gap: 8,
         padding: "40px 36px",
         borderRadius: 32,
-        background: accent ? "rgba(201,243,29,0.12)" : "rgba(255,255,255,0.05)",
-        border: accent ? "2px solid rgba(201,243,29,0.3)" : "2px solid transparent",
+        background: accent ? "rgba(255,107,74,0.12)" : "rgba(255,255,255,0.05)",
+        border: accent ? "2px solid rgba(255,107,74,0.3)" : "2px solid transparent",
       }}
     >
       <span
@@ -58,8 +58,8 @@ export function WrappedStory({ playerName, recap, title = "IL TUO MESE", qrDataU
         color: "#fff",
         fontFamily: "sans-serif",
         background:
-          "radial-gradient(ellipse 70% 40% at 100% 0%, rgba(201,243,29,0.18) 0%, transparent 60%)," +
-          "linear-gradient(170deg, #0d1209 0%, #090b09 45%, #040504 100%)",
+          "radial-gradient(ellipse 70% 40% at 100% 0%, rgba(255,107,74,0.18) 0%, transparent 60%)," +
+          "linear-gradient(170deg, #14111f 0%, #0f0d16 45%, #08070c 100%)",
       }}
     >
       {/* Header */}

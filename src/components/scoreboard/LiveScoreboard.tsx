@@ -32,7 +32,7 @@ interface Props {
   initialState?: LiveState | null
 }
 
-const TEAM_COLORS = ["#c9f31d", "#3b82f6"] as const
+const TEAM_COLORS = ["#ff6b4a", "#3b82f6"] as const
 const SAVE_DEBOUNCE_MS = 600
 const POLL_MS = 3500
 const IDLE_BEFORE_SYNC_MS = 4000

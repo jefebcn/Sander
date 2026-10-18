@@ -20,7 +20,7 @@ export default async function ResetPasswordPage({ searchParams }: Props) {
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 70% 35% at 50% 0%, rgba(201,243,29,0.07) 0%, transparent 60%)",
+            "radial-gradient(ellipse 70% 35% at 50% 0%, rgba(255,107,74,0.07) 0%, transparent 60%)",
         }}
         aria-hidden="true"
       />

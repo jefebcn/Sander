@@ -7,6 +7,7 @@ import { FilterableSessionList } from "@/components/session/FilterableSessionLis
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { SessionsInfoSheet } from "@/components/session/SessionsInfoSheet"
 import { PageHeader } from "@/components/layout/PageHeader"
+import { QuickActionsButton } from "@/components/layout/QuickActionsButton"
 import { SectionTabs, PLAY_TABS } from "@/components/layout/SectionTabs"
 
 export default async function SessionsPage() {
@@ -16,7 +17,7 @@ export default async function SessionsPage() {
   return (
     <div className="flex flex-col pb-6">
 
-      <PageHeader eyebrow="Gioca" title="Partite" tone="play" action={<SessionsInfoSheet />} />
+      <PageHeader eyebrow="Gioca" title="Partite" tone="play" action={<div className="flex items-center gap-2"><SessionsInfoSheet /><QuickActionsButton /></div>} />
       <SectionTabs items={PLAY_TABS} active="partite" className="pb-4" />
 
       {/* ── CTA ───────────────────────────────────────────────── */}
