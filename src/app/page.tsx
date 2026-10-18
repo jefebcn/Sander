@@ -31,6 +31,9 @@ import { InviteCard } from "@/components/home/InviteCard"
 import { CommunityStrip } from "@/components/home/CommunityStrip"
 import { GuestLanding } from "@/components/home/GuestLanding"
 import { ListRow } from "@/components/ui/ListRow"
+import { QuickActionsButton } from "@/components/layout/QuickActionsButton"
+import { ScopriHomeCard } from "@/components/home/ScopriHomeCard"
+import { scopriSummary } from "@/lib/scopri/server"
 
 const NO_STREAK = { weeks: 0, playedThisWeek: false }
 
@@ -98,6 +101,7 @@ export default async function Home() {
   const now = new Date()
   // One scan of the town boards, shared by the rank row and the match recap.
   const boards = getCityLeaderboards().catch(() => [] as CityLeaderboard[])
+  const scopriP = scopriSummary(player.id, player.homeCity, now).catch(() => null)
   const [
     fullPlayer, recs, nextMatchRow, tournament, unreadCount, unreadMessages, invited, cityRank,
     recentTournament, unscored, recap, streak,
@@ -203,6 +207,7 @@ export default async function Home() {
   const nothingNow = !unscored && !recap && !nextMatch
   // "Segna" goes where a score actually gets saved: the match waiting for its
   // result, or the live board of the one being played; else a practice board.
+  const scopri = await scopriP
   const score =
     unscored && unscored.entry.kind !== "wait"
       ? { href: unscored.entry.href, sub: "Il risultato" }
@@ -218,6 +223,7 @@ export default async function Home() {
         <div className="ml-auto flex items-center gap-2">
           <MessagesBell unreadCount={unreadMessages} />
           <NotificationBell unreadCount={unreadCount} />
+          <QuickActionsButton />
         </div>
       </header>
 
@@ -257,6 +263,11 @@ export default async function Home() {
       {nextMatch && (
         <div {...rise()}>
           <NextMatchCard match={nextMatch} />
+        </div>
+      )}
+      {scopri && (
+        <div {...rise()}>
+          <ScopriHomeCard {...scopri} city={player.homeCity} />
         </div>
       )}
 

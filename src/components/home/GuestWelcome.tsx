@@ -88,7 +88,7 @@ export function GuestWelcome() {
               </span>
               <span className="min-w-0 flex-1">
                 <span className={cn("block truncate text-xs font-bold uppercase tracking-wider", c.sub)}>{c.kicker}</span>
-                <span className="block truncate font-display text-xl font-extrabold uppercase leading-tight">{c.title}</span>
+                <span className="block truncate font-display text-xl font-extrabold leading-tight">{c.title}</span>
               </span>
               <span className={cn("flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-sm font-extrabold", c.chip)}>
                 {c.pill}
@@ -104,7 +104,7 @@ export function GuestWelcome() {
         style={{ boxShadow: "0 -5px 0 0 var(--accent)" }}
       >
         <p className="eyebrow text-[var(--muted-text)]">Beach volley · Riviera Romagnola</p>
-        <h1 id="welcome-title" className="mt-2 font-display text-[2.9rem] font-black uppercase leading-[0.88] tracking-tight text-white">
+        <h1 id="welcome-title" className="mt-2 font-display text-[2.9rem] font-black leading-[0.88] tracking-tight text-white">
           Il campo è lì.
           <br />
           <span className="text-[var(--accent)]">Manchi tu.</span>

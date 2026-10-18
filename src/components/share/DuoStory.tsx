@@ -10,7 +10,7 @@ interface Props {
   shareUrl: string
 }
 
-const ACCENT = "#c9f31d"
+const ACCENT = "#ff6b4a"
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/)
@@ -31,8 +31,8 @@ export function DuoStory({ playerA, playerB, played, won, winRate, qrDataUrl, sh
         color: "#fff",
         fontFamily: "sans-serif",
         background:
-          "radial-gradient(ellipse 70% 40% at 0% 0%, rgba(201,243,29,0.16) 0%, transparent 60%)," +
-          "linear-gradient(170deg, #0d1209 0%, #090b09 45%, #040504 100%)",
+          "radial-gradient(ellipse 70% 40% at 0% 0%, rgba(255,107,74,0.16) 0%, transparent 60%)," +
+          "linear-gradient(170deg, #14111f 0%, #0f0d16 45%, #08070c 100%)",
       }}
     >
       {/* Header */}
@@ -66,7 +66,7 @@ export function DuoStory({ playerA, playerB, played, won, winRate, qrDataUrl, sh
                 justifyContent: "center",
                 fontSize: 76,
                 fontWeight: 900,
-                border: "4px solid rgba(201,243,29,0.4)",
+                border: "4px solid rgba(255,107,74,0.4)",
               }}
             >
               {initials(n)}
@@ -110,7 +110,7 @@ export function DuoStory({ playerA, playerB, played, won, winRate, qrDataUrl, sh
             alignItems: "center",
             padding: "28px 56px",
             borderRadius: 28,
-            background: "rgba(201,243,29,0.12)",
+            background: "rgba(255,107,74,0.12)",
           }}
         >
           <span style={{ fontSize: 64, fontWeight: 900, color: ACCENT }}>{won}</span>

@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "#0d1a0d",
+          background: "#1a1424",
           gap: "24px",
           padding: "64px",
         }}
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
             display: "flex",
             alignItems: "center",
             gap: "12px",
-            background: "#c8f135",
+            background: "#ff6b4a",
             borderRadius: "999px",
             padding: "8px 24px",
           }}

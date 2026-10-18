@@ -28,7 +28,7 @@ export default function RankingInfoPage() {
         {/* Overview */}
         <div
           className="rounded-2xl p-4 slide-up"
-          style={{ background: "rgba(201,243,29,0.07)", border: "1px solid rgba(201,243,29,0.2)" }}
+          style={{ background: "rgba(255,107,74,0.07)", border: "1px solid rgba(255,107,74,0.2)" }}
         >
           <div className="flex items-start gap-3">
             <TrendingUp className="h-5 w-5 shrink-0 text-[var(--accent)] mt-0.5" />

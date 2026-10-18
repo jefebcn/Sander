@@ -193,6 +193,22 @@ model Player {
   sentMessages         ChatMessage[]
   creditTopUps         CreditTopUp[]
 
+  // Scopri: profile for finding teammates, swipes, matches, duos.
+  discoverPhotos       PlayerPhoto[]
+  discoverPrompts      PlayerPrompt[]
+  discoverProfile      DiscoverProfile?
+  swipesSent           PlayerSwipe[]      @relation("SwipesSent")
+  swipesReceived       PlayerSwipe[]      @relation("SwipesReceived")
+  matchesAsA           PlayerMatch[]      @relation("PlayerMatchA")
+  matchesAsB           PlayerMatch[]      @relation("PlayerMatchB")
+  dailyPicks           DailyPick[]        @relation("DailyPickOwner")
+  pickedIn             DailyPick[]        @relation("DailyPickTarget")
+  blocksMade           PlayerBlock[]      @relation("BlocksMade")
+  blocksReceived       PlayerBlock[]      @relation("BlocksReceived")
+  creditSpends         CreditSpend[]
+  duosFormed           Duo[]              @relation("DuoA")
+  duosJoined           Duo[]              @relation("DuoB")
+
   @@map("players")
 }
 
@@ -743,4 +759,249 @@ model CreditTopUp {
   @@index([createdAt])
   @@index([playerId])
   @@map("credit_topups")
+}
+
+// ─── Scopri: trova compagni di gioco ────────────────────────────────────────
+// One player at a time, a like on a specific photo or prompt (optionally with
+// a comment), a match when it's mutual, then the chat and a match on the sand.
+// Duos (2v2) do the same, pair against pair, and end up in a group chat.
+
+enum SwipeTarget {
+  PROFILE
+  PHOTO
+  PROMPT
+}
+
+enum LikeStatus {
+  PENDING
+  MATCHED
+  DECLINED
+}
+
+enum DuoStatus {
+  PENDING
+  ACTIVE
+  ENDED
+}
+
+/// Up to 6 photos shown on the Scopri card, in order.
+model PlayerPhoto {
+  id        String   @id @default(cuid())
+  playerId  String
+  url       String
+  position  Int
+  createdAt DateTime @default(now())
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId, position])
+  @@map("player_photos")
+}
+
+/// Three answers to beach volley prompts (keys in lib/scopri/prompts).
+model PlayerPrompt {
+  id        String   @id @default(cuid())
+  playerId  String
+  promptKey String
+  answer    String
+  position  Int
+  updatedAt DateTime @updatedAt
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, position])
+  @@map("player_prompts")
+}
+
+/// Scopri settings: what you look for, your dealbreakers, extras bought with SC.
+model DiscoverProfile {
+  playerId  String   @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Side of the court: SINISTRA | DESTRA | ENTRAMBI.
+  side       String?
+  /// Any of COMPAGNO | PARTITE | ALLENAMENTO | TORNEI | MISTO.
+  lookingFor String[] @default([])
+  /// Hidden from Scopri while true (matches and chats stay).
+  paused     Boolean  @default(false)
+
+  // Dealbreakers, applied both ways: two players see each other only if each
+  // one meets the other's.
+  prefCities String[]    @default([])
+  prefGender String?
+  prefRole   PlayerRole?
+  /// Largest rating gap accepted.
+  maxGap     Int         @default(300)
+
+  /// Likes and Aces bought with SC, used once the free ones run out.
+  bonusLikes         Int       @default(0)
+  bonusAces          Int       @default(0)
+  /// "Ti vogliono" shows everyone at once until this instant (bought with SC).
+  likesUnlockedUntil DateTime?
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@map("discover_profiles")
+}
+
+/// One row per direction of a pair: a like (on a photo, a prompt or the whole
+/// profile) or a skip. Skips expire, so a face can come back later.
+model PlayerSwipe {
+  id          String      @id @default(cuid())
+  fromId      String
+  toId        String
+  liked       Boolean
+  target      SwipeTarget @default(PROFILE)
+  targetId    String?
+  /// What was liked, frozen at the time (prompt text or photo url).
+  targetLabel String?
+  comment     String?
+  /// Ace: the weekly super like, shown first in "Ti vogliono".
+  isAce       Boolean     @default(false)
+  /// A like sent from "Ti vogliono" to answer one: free, it makes the match.
+  reply       Boolean     @default(false)
+  status      LikeStatus  @default(PENDING)
+  createdAt   DateTime    @default(now())
+  respondedAt DateTime?
+
+  from Player @relation("SwipesSent", fields: [fromId], references: [id], onDelete: Cascade)
+  to   Player @relation("SwipesReceived", fields: [toId], references: [id], onDelete: Cascade)
+
+  @@unique([fromId, toId])
+  @@index([toId, liked, status])
+  @@index([fromId, createdAt])
+  @@map("player_swipes")
+}
+
+/// A mutual like. aId < bId so a pair has one row.
+model PlayerMatch {
+  id        String    @id @default(cuid())
+  aId       String
+  bId       String
+  threadId  String?
+  createdAt DateTime  @default(now())
+  endedAt   DateTime?
+  /// "Avete giocato insieme?" answered by each side (null = not asked yet).
+  aPlayed   Boolean?
+  bPlayed   Boolean?
+
+  a Player @relation("PlayerMatchA", fields: [aId], references: [id], onDelete: Cascade)
+  b Player @relation("PlayerMatchB", fields: [bId], references: [id], onDelete: Cascade)
+
+  @@unique([aId, bId])
+  @@index([bId])
+  @@map("player_matches")
+}
+
+/// "Il più compatibile di oggi": one stable pairing of the pool per Rome day.
+model DailyPick {
+  id        String   @id @default(cuid())
+  playerId  String
+  pickId    String
+  /// Rome calendar day, YYYY-MM-DD.
+  day       String
+  score     Int
+  reasons   String[] @default([])
+  createdAt DateTime @default(now())
+
+  player Player @relation("DailyPickOwner", fields: [playerId], references: [id], onDelete: Cascade)
+  pick   Player @relation("DailyPickTarget", fields: [pickId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, day])
+  @@map("daily_picks")
+}
+
+/// Block, optionally with a report. Either way the two never see each other again.
+model PlayerBlock {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  reported  Boolean  @default(false)
+  reason    String?
+  note      String?
+  createdAt DateTime @default(now())
+
+  blocker Player @relation("BlocksMade", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked Player @relation("BlocksReceived", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+  @@map("player_blocks")
+}
+
+/// Every SC spent on Scopri extras, for support and refunds.
+model CreditSpend {
+  id        String   @id @default(cuid())
+  playerId  String
+  kind      String
+  credits   Int
+  createdAt DateTime @default(now())
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId, createdAt])
+  @@map("credit_spends")
+}
+
+/// A pair that plays 2v2 together and looks for another pair.
+model Duo {
+  id         String    @id @default(cuid())
+  aId        String
+  bId        String
+  status     DuoStatus @default(PENDING)
+  name       String?
+  motto      String?
+  createdAt  DateTime  @default(now())
+  acceptedAt DateTime?
+  endedAt    DateTime?
+
+  a Player @relation("DuoA", fields: [aId], references: [id], onDelete: Cascade)
+  b Player @relation("DuoB", fields: [bId], references: [id], onDelete: Cascade)
+
+  swipesSent     DuoSwipe[] @relation("DuoSwipesSent")
+  swipesReceived DuoSwipe[] @relation("DuoSwipesReceived")
+  matchesAsA     DuoMatch[] @relation("DuoMatchA")
+  matchesAsB     DuoMatch[] @relation("DuoMatchB")
+
+  @@index([aId, status])
+  @@index([bId, status])
+  @@map("duos")
+}
+
+model DuoSwipe {
+  id        String     @id @default(cuid())
+  fromDuoId String
+  toDuoId   String
+  /// Which member of the pair sent it.
+  byId      String
+  liked     Boolean
+  comment   String?
+  reply     Boolean    @default(false)
+  status    LikeStatus @default(PENDING)
+  createdAt DateTime   @default(now())
+
+  fromDuo Duo @relation("DuoSwipesSent", fields: [fromDuoId], references: [id], onDelete: Cascade)
+  toDuo   Duo @relation("DuoSwipesReceived", fields: [toDuoId], references: [id], onDelete: Cascade)
+
+  @@unique([fromDuoId, toDuoId])
+  @@index([toDuoId, liked, status])
+  @@map("duo_swipes")
+}
+
+/// Two pairs that liked each other: a group chat of four and, soon, a 2v2.
+model DuoMatch {
+  id        String   @id @default(cuid())
+  aDuoId    String
+  bDuoId    String
+  threadId  String?
+  sessionId String?
+  createdAt DateTime @default(now())
+
+  aDuo Duo @relation("DuoMatchA", fields: [aDuoId], references: [id], onDelete: Cascade)
+  bDuo Duo @relation("DuoMatchB", fields: [bDuoId], references: [id], onDelete: Cascade)
+
+  @@unique([aDuoId, bDuoId])
+  @@index([bDuoId])
+  @@map("duo_matches")
 }

@@ -405,6 +405,14 @@ export async function deletePlayer(id: string) {
     await tx.playerAvailability.deleteMany({ where: { playerId } })
     await tx.sessionWaitlist.deleteMany({ where: { playerId } })
     await tx.sessionNudge.deleteMany({ where: { playerId } })
+    // Scopri: photos, prompts, likes and pairs are personal, not history.
+    await tx.playerPhoto.deleteMany({ where: { playerId } })
+    await tx.playerPrompt.deleteMany({ where: { playerId } })
+    await tx.discoverProfile.deleteMany({ where: { playerId } })
+    await tx.playerSwipe.deleteMany({ where: { OR: [{ fromId: playerId }, { toId: playerId }] } })
+    await tx.dailyPick.deleteMany({ where: { OR: [{ playerId }, { pickId: playerId }] } })
+    await tx.playerMatch.updateMany({ where: { OR: [{ aId: playerId }, { bId: playerId }], endedAt: null }, data: { endedAt: new Date() } })
+    await tx.duo.updateMany({ where: { OR: [{ aId: playerId }, { bId: playerId }], status: { not: "ENDED" } }, data: { status: "ENDED", endedAt: new Date() } })
 
     await tx.player.update({
       where: { id: playerId },

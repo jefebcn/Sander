@@ -29,7 +29,7 @@ export function FirstSteps({ steps }: { steps: FirstStep[] }) {
       <div className="flex items-end justify-between gap-3">
         <div>
           <p className="eyebrow text-[var(--accent)]">Primi passi</p>
-          <p className="font-display text-2xl font-extrabold uppercase leading-none text-white">Entra nel giro</p>
+          <p className="font-display text-2xl font-extrabold leading-none text-white">Entra nel giro</p>
         </div>
         <p className="num text-2xl text-white">
           {done}<span className="text-[var(--muted-text)]">/{steps.length}</span>

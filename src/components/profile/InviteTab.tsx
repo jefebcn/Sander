@@ -79,7 +79,7 @@ export function InviteTab({ promoCode, inviteCount, leaderboard = [] }: InviteTa
           style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--social) 26%, transparent) 0%, transparent 65%)" }}
         />
         <p className="eyebrow relative text-[var(--tone)]">Invita gli amici</p>
-        <h2 className="relative mt-1 font-display text-3xl font-extrabold uppercase leading-[0.95] text-white">
+        <h2 className="relative mt-1 font-display text-3xl font-extrabold leading-[0.95] text-white">
           Porta la tua
           <br />
           squadra in spiaggia
@@ -183,7 +183,7 @@ export function InviteTab({ promoCode, inviteCount, leaderboard = [] }: InviteTa
 
       {/* How it works — short enough to just show */}
       <section className="rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-5">
-        <p className="font-display text-xl font-extrabold uppercase text-white">Come funziona</p>
+        <p className="font-display text-xl font-extrabold text-white">Come funziona</p>
         <ol className="mt-3 space-y-2 text-base text-[var(--muted-text)]">
           <li><span className="num mr-2 text-[var(--tone)]">1</span>Mandi il link o fai scansionare il QR.</li>
           <li><span className="num mr-2 text-[var(--tone)]">2</span>Il tuo amico si iscrive con il tuo codice.</li>

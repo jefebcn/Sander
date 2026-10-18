@@ -77,12 +77,12 @@ export function InstallButton() {
       {ios && (
         <div
           className="rounded-2xl p-4"
-          style={{ background: "var(--surface-2)", border: "1px solid rgba(201,243,29,0.3)" }}
+          style={{ background: "var(--surface-2)", border: "1px solid rgba(255,107,74,0.3)" }}
         >
           <div className="flex items-center gap-3">
             <div
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-              style={{ background: "rgba(201,243,29,0.14)" }}
+              style={{ background: "rgba(255,107,74,0.14)" }}
             >
               <Plus className="h-5 w-5 text-[var(--accent)]" />
             </div>

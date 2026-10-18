@@ -6,8 +6,8 @@
   "categories": ["sports", "lifestyle", "social"],
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#07090a",
-  "theme_color": "#0b1220",
+  "background_color": "#0d0c12",
+  "theme_color": "#0d0c12",
   "orientation": "portrait",
   "icons": [
     {

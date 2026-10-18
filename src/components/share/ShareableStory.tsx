@@ -25,7 +25,7 @@ interface Props {
   shareUrl: string
 }
 
-const ACCENT = "#c9f31d"
+const ACCENT = "#ff6b4a"
 
 function tierLabel(glicko: number): string {
   if (glicko >= 2000) return "ORO"
@@ -76,9 +76,9 @@ export function ShareableStory({
         fontFamily: "-apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif",
         color: "#fff",
         background:
-          "radial-gradient(ellipse 70% 40% at 100% 0%, rgba(201,243,29,0.18) 0%, transparent 60%)," +
-          "radial-gradient(ellipse 60% 40% at 0% 100%, rgba(201,243,29,0.08) 0%, transparent 55%)," +
-          "linear-gradient(170deg, #0d1209 0%, #090b09 45%, #040504 100%)",
+          "radial-gradient(ellipse 70% 40% at 100% 0%, rgba(255,107,74,0.18) 0%, transparent 60%)," +
+          "radial-gradient(ellipse 60% 40% at 0% 100%, rgba(255,107,74,0.08) 0%, transparent 55%)," +
+          "linear-gradient(170deg, #14111f 0%, #0f0d16 45%, #08070c 100%)",
       }}
     >
       {/* Faint logo watermark */}
@@ -131,8 +131,8 @@ export function ShareableStory({
         <div
           style={{
             display: "inline-block",
-            background: "rgba(201,243,29,0.14)",
-            border: "2px solid rgba(201,243,29,0.35)",
+            background: "rgba(255,107,74,0.14)",
+            border: "2px solid rgba(255,107,74,0.35)",
             color: ACCENT,
             borderRadius: 999,
             padding: "12px 34px",
@@ -152,7 +152,7 @@ export function ShareableStory({
             lineHeight: 0.95,
             letterSpacing: -3,
             color: "#fff",
-            textShadow: "0 6px 40px rgba(201,243,29,0.25)",
+            textShadow: "0 6px 40px rgba(255,107,74,0.25)",
           }}
         >
           {h}

@@ -12,7 +12,7 @@ interface Props {
   shareUrl: string
 }
 
-const ACCENT = "#c9f31d"
+const ACCENT = "#ff6b4a"
 
 export function DivisionStory({
   playerName,
@@ -38,7 +38,7 @@ export function DivisionStory({
         padding: "90px 72px",
         color: "#fff",
         fontFamily: "sans-serif",
-        background: `radial-gradient(ellipse 80% 50% at 50% 22%, ${c}2e 0%, transparent 60%), linear-gradient(170deg, #0d1209 0%, #090b09 45%, #040504 100%)`,
+        background: `radial-gradient(ellipse 80% 50% at 50% 22%, ${c}2e 0%, transparent 60%), linear-gradient(170deg, #14111f 0%, #0f0d16 45%, #08070c 100%)`,
       }}
     >
       {/* Header */}
@@ -91,7 +91,7 @@ export function DivisionStory({
             height: 460,
             borderRadius: 130,
             border: `10px solid ${c}`,
-            background: "linear-gradient(160deg, #14181a 0%, #0a0c0d 100%)",
+            background: "linear-gradient(160deg, #1b1924 0%, #0d0c12 100%)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",

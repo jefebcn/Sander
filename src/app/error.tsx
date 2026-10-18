@@ -20,7 +20,7 @@ export default function GlobalError({
       <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--surface-2)]">
         <CloudOff className="h-8 w-8 text-[var(--muted-text)]" aria-hidden="true" />
       </span>
-      <h2 className="font-display text-3xl font-extrabold uppercase text-white">Palla fuori</h2>
+      <h2 className="font-display text-3xl font-extrabold text-white">Palla fuori</h2>
       <p className="max-w-xs text-base text-[var(--muted-text)]">
         Qualcosa non ha funzionato. Riprova: di solito basta. Se succede ancora, torna alla home.
       </p>

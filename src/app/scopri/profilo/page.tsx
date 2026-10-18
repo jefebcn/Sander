@@ -1,0 +1,49 @@
+export const dynamic = "force-dynamic"
+
+import type { Metadata } from "next"
+import { redirect } from "next/navigation"
+import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
+import { db } from "@/lib/db"
+import { DEFAULT_MAX_GAP } from "@/lib/scopri/rules"
+import { loadCardRow, readiness, toCard } from "@/lib/scopri/server"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { ScopriProfileEditor } from "@/components/scopri/ScopriProfileEditor"
+
+export const metadata: Metadata = { title: "Il tuo profilo Scopri — SANDER" }
+
+export default async function ScopriProfilePage() {
+  const player = await getCurrentPlayer()
+  if (!player) redirect("/auth/signin?callbackUrl=/scopri/profilo")
+  await db.discoverProfile.upsert({ where: { playerId: player.id }, create: { playerId: player.id }, update: {} })
+  const me = await loadCardRow(player.id)
+  if (!me) redirect("/onboarding/profile")
+  const p = me.discoverProfile
+
+  return (
+    <div className="pb-10">
+      <PageHeader eyebrow="Scopri" tone="play" title="Il tuo profilo" backHref="/scopri" />
+      <div className="px-4">
+        <ScopriProfileEditor
+          data={{
+            photos: me.discoverPhotos,
+            prompts: me.discoverPrompts.map((x) => ({ position: x.position, promptKey: x.promptKey, answer: x.answer })),
+            avatarUrl: me.avatarUrl,
+            birthDate: me.birthDate ? me.birthDate.toISOString().slice(0, 10) : null,
+            homeCity: me.homeCity,
+            gender: me.gender,
+            role: me.preferredRole,
+            side: p?.side ?? null,
+            lookingFor: p?.lookingFor ?? [],
+            paused: p?.paused ?? false,
+            prefCities: p?.prefCities ?? [],
+            prefGender: p?.prefGender ?? null,
+            prefRole: p?.prefRole ?? null,
+            maxGap: p?.maxGap ?? DEFAULT_MAX_GAP,
+            missing: readiness(me),
+            preview: toCard(me),
+          }}
+        />
+      </div>
+    </div>
+  )
+}
