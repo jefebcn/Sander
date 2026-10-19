@@ -113,7 +113,7 @@ function NoDuo({ data }: { data: CoppieData }) {
     <div className="flex flex-col gap-5">
       <section className="rounded-[var(--radius-lg)] p-6 shadow-[var(--shadow-card)]" style={{ background: "linear-gradient(150deg, color-mix(in srgb, var(--social) 30%, var(--surface-2)), var(--surface-2) 65%)" }}>
         <p className="eyebrow text-[var(--social)]">2v2</p>
-        <h2 className="mt-2 font-display text-4xl font-extrabold leading-none text-white">Forma la tua coppia.</h2>
+        <h2 className="font-hand mt-2 text-[2.75rem] leading-none text-white">Forma la tua coppia.</h2>
         <p className="mt-3 font-serif text-2xl leading-snug text-white/90">
           Poi sfidate le altre coppie: se accettano, chat a quattro e partita in calendario.
         </p>
@@ -121,7 +121,7 @@ function NoDuo({ data }: { data: CoppieData }) {
 
       {data.invites.length > 0 && (
         <section aria-labelledby="inv">
-          <h3 id="inv" className="mb-2 font-display text-2xl font-extrabold text-white">Ti hanno invitato</h3>
+          <h3 id="inv" className="font-hand mb-2 text-[1.9rem] text-white">Ti hanno invitato</h3>
           <ul className="flex flex-col gap-2">
             {data.invites.map((d) => {
               const from = d.members[0]
@@ -173,7 +173,7 @@ function NoDuo({ data }: { data: CoppieData }) {
         </section>
       ) : (
         <section aria-labelledby="pick">
-          <h3 id="pick" className="font-display text-2xl font-extrabold text-white">Con chi?</h3>
+          <h3 id="pick" className="font-hand text-[1.9rem] text-white">Con chi?</h3>
           <p className="mb-2 text-sm text-[var(--muted-text)]">I tuoi match e chi ti ha scritto.</p>
           {data.candidates.length === 0 ? (
             <div className="rounded-[var(--radius-md)] bg-[var(--surface-2)] p-4 text-base text-[var(--muted-text)]">
@@ -207,7 +207,7 @@ function NoDuo({ data }: { data: CoppieData }) {
       )}
 
       <section aria-labelledby="rank-title">
-        <h3 id="rank-title" className="mb-2 font-display text-2xl font-extrabold text-white">Classifica coppie</h3>
+        <h3 id="rank-title" className="font-hand mb-2 text-[1.9rem] text-white">Classifica coppie</h3>
         <Leaderboard rows={data.leaderboard} />
       </section>
 
@@ -265,7 +265,7 @@ function ActiveDuo({ data, duo }: { data: CoppieData; duo: DuoCard }) {
           <Faces members={duo.members} />
           <div className="min-w-0 flex-1">
             <p className="eyebrow text-[var(--social)]">La tua coppia</p>
-            <p className="truncate font-display text-2xl font-extrabold text-white">{duo.name}</p>
+            <p className="font-hand truncate text-[1.9rem] text-white">{duo.name}</p>
             <p className="text-sm text-[var(--muted-text)]">
               {myRank >= 0
                 ? `Punteggio ${data.leaderboard[myRank].rating} · ${myRank + 1}ª in classifica`
@@ -326,7 +326,7 @@ function ActiveDuo({ data, duo }: { data: CoppieData; duo: DuoCard }) {
           </section>
         ) : (
           <div className="rounded-[var(--radius-lg)] bg-[var(--surface-2)] px-6 py-10 text-center">
-            <p className="font-display text-2xl font-extrabold text-white">Nessuna altra coppia per ora</p>
+            <p className="font-hand text-[1.9rem] text-white">Nessuna altra coppia per ora</p>
             <p className="mt-1 text-base text-[var(--muted-text)]">Invita due amici a formarne una: più coppie, più sfide.</p>
           </div>
         ))}
@@ -505,7 +505,7 @@ function DuoProfile({ duo }: { duo: DuoCard }) {
       </div>
       <div className="mt-3 flex items-end justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-display text-3xl font-extrabold leading-tight text-white">{duo.name}</p>
+          <p className="font-hand text-[2.3rem] leading-tight text-white">{duo.name}</p>
           {duo.motto && <p className="mt-1 font-serif text-xl leading-snug text-white/90">«{duo.motto}»</p>}
         </div>
         {typeof duo.score === "number" && <p className="num shrink-0 text-3xl text-[var(--social)]">{duo.score}%</p>}

@@ -59,7 +59,7 @@ export default async function AuthErrorPage({
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-2xl font-black text-white">Errore di accesso</h1>
+          <h1 className="font-hand text-[1.9rem] text-white">Errore di accesso</h1>
           <p className="text-sm text-[var(--muted-text)]">{message}</p>
           {error && (
             <p className="text-xs text-[var(--muted-text)]/50">

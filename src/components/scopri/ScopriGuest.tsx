@@ -14,7 +14,7 @@ export function ScopriGuest() {
     <section className="flex flex-col gap-5 pt-[calc(env(safe-area-inset-top,0px)+1rem)]">
       <div className="rounded-[var(--radius-lg)] p-6 shadow-[var(--shadow-card)]" style={{ background: "linear-gradient(150deg, color-mix(in srgb, var(--accent) 35%, var(--surface-2)), color-mix(in srgb, var(--love) 12%, var(--surface-2)) 70%)" }}>
         <p className="eyebrow text-white/80">Nuovo su SANDER</p>
-        <h1 className="mt-2 font-display text-5xl font-extrabold leading-[0.95] text-white">Scopri chi gioca con te.</h1>
+        <h1 className="font-hand mt-2 text-[3.4rem] leading-[0.95] text-white">Scopri chi gioca con te.</h1>
         <p className="mt-3 font-serif text-2xl leading-snug text-white/90">
           Swipe tra i giocatori della Riviera, fai match, scendete in campo.
         </p>

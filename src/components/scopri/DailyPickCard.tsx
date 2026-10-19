@@ -58,7 +58,7 @@ export function DailyPickCard({
           <span className="eyebrow flex items-center gap-1 text-[var(--ace)]">
             <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> Il più compatibile di oggi
           </span>
-          <span className="mt-1 block font-display text-2xl font-extrabold leading-tight text-white">
+          <span className="font-hand mt-1 block text-[1.9rem] leading-tight text-white">
             {card.name}
             {card.age !== null && <span className="font-serif font-normal text-[var(--muted-text)]">, {card.age}</span>}
           </span>

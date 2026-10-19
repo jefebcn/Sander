@@ -22,7 +22,7 @@ export default function StatsGuidePage() {
           <ChevronLeft className="h-5 w-5" aria-hidden="true" />
         </Link>
         <div>
-          <h1 className="text-xl font-black text-white leading-tight">Guida ai parametri</h1>
+          <h1 className="font-hand text-[1.7rem] text-white leading-tight">Guida ai parametri</h1>
           <p className="text-xs text-[var(--muted-text)]">Come vengono calcolati i tuoi stats</p>
         </div>
       </div>

@@ -40,7 +40,7 @@ export function QuickActionsSheet({ open, onOpenChange }: { open: boolean; onOpe
         >
           <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-[var(--muted)]" aria-hidden="true" />
           <div className="mb-4 flex items-center justify-between">
-            <RadixDialog.Title className="font-display text-2xl font-extrabold text-white">
+            <RadixDialog.Title className="font-hand text-[1.9rem] text-white">
               Cosa vuoi fare?
             </RadixDialog.Title>
             <RadixDialog.Close

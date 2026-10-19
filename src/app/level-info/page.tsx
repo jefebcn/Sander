@@ -129,7 +129,7 @@ export default async function LevelInfoPage() {
           <ChevronLeft className="h-5 w-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-black text-white">Come si sale di livello</h1>
+          <h1 className="font-hand text-[1.9rem] text-white">Come si sale di livello</h1>
           <p className="text-sm text-[var(--muted-text)]">Guadagna XP giocando e interagendo</p>
         </div>
       </header>

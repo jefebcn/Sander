@@ -38,7 +38,7 @@ export default async function ResetPasswordPage({ searchParams }: Props) {
 
       <div className="relative z-10 mt-8 space-y-8">
         <div className="space-y-1">
-          <h1 className="text-2xl font-black text-white">Nuova password</h1>
+          <h1 className="font-hand text-[1.9rem] text-white">Nuova password</h1>
           <p className="text-sm text-[var(--muted-text)]">
             Scegli una password sicura per il tuo account.
           </p>

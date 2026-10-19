@@ -254,7 +254,7 @@ function GameCard({ game, onSkip }: { game: GroupGame; onSkip: () => void }) {
       <p className="eyebrow flex items-center gap-2 text-[var(--tone)]">
         <Users className="h-4 w-4" aria-hidden="true" /> Partita di gruppo vicino a te
       </p>
-      <p className="mt-2 font-display text-3xl font-extrabold leading-tight text-white">{game.title}</p>
+      <p className="font-hand mt-2 text-[2.3rem] leading-tight text-white">{game.title}</p>
       <p className="mt-1 flex items-center gap-1 text-base text-[var(--muted-text)]">
         <MapPin className="h-4 w-4 text-[var(--tone)]" aria-hidden="true" /> {game.location} · {formatWhen(game.date)}
       </p>
@@ -277,7 +277,7 @@ function EmptyDeck({ loading }: { loading: boolean }) {
   return (
     <div className="flex flex-col items-center gap-3 rounded-[var(--radius-lg)] bg-[var(--surface-2)] px-6 py-12 text-center">
       <RefreshCw className={cn("h-8 w-8 text-[var(--accent)]", loading && "animate-spin")} aria-hidden="true" />
-      <p className="font-display text-2xl font-extrabold text-white">{loading ? "Cerco altri giocatori…" : "Per oggi hai visto tutti"}</p>
+      <p className="font-hand text-[1.9rem] text-white">{loading ? "Cerco altri giocatori…" : "Per oggi hai visto tutti"}</p>
       <p className="text-base text-[var(--muted-text)]">
         Allarga i comuni o il livello nelle preferenze, oppure torna domani: arriva sempre qualcuno di nuovo.
       </p>

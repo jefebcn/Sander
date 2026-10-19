@@ -18,7 +18,7 @@ export default function RankingInfoPage() {
           <ChevronLeft className="h-5 w-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-black text-white">Come funziona il Ranking</h1>
+          <h1 className="font-hand text-[1.9rem] text-white">Come funziona il Ranking</h1>
           <p className="text-sm text-[var(--muted-text)]">Sistema di valutazione Glicko-2</p>
         </div>
       </header>

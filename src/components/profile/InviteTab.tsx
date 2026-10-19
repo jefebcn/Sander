@@ -79,7 +79,7 @@ export function InviteTab({ promoCode, inviteCount, leaderboard = [] }: InviteTa
           style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--social) 26%, transparent) 0%, transparent 65%)" }}
         />
         <p className="eyebrow relative text-[var(--tone)]">Invita gli amici</p>
-        <h2 className="relative mt-1 font-display text-3xl font-extrabold leading-[0.95] text-white">
+        <h2 className="font-hand relative mt-1 text-[2.3rem] leading-[0.95] text-white">
           Porta la tua
           <br />
           squadra in spiaggia

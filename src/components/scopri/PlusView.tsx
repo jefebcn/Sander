@@ -52,7 +52,7 @@ export function PlusView({
         <p className="eyebrow flex items-center gap-1 text-[var(--ace)]">
           <Crown className="h-4 w-4" aria-hidden="true" /> SANDER+
         </p>
-        <h2 className="mt-2 font-display text-4xl font-extrabold leading-none text-white">
+        <h2 className="font-hand mt-2 text-[2.75rem] leading-none text-white">
           {active ? "Sei SANDER+" : "Trova compagni senza limiti."}
         </h2>
         <p className="mt-3 font-serif text-2xl text-white/90">

@@ -16,7 +16,7 @@ export default function DeleteAccountPage() {
           <ChevronLeft className="h-5 w-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-black text-white">Elimina Account</h1>
+          <h1 className="font-hand text-[1.9rem] text-white">Elimina Account</h1>
           <p className="text-xs text-[var(--muted-text)]">Richiesta cancellazione dati</p>
         </div>
       </header>

@@ -37,7 +37,7 @@ export function Sheet({
           <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-[var(--muted)]" aria-hidden="true" />
           <div className="mb-4 flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <RadixDialog.Title className="font-display text-2xl font-extrabold leading-tight text-white">{title}</RadixDialog.Title>
+              <RadixDialog.Title className="font-hand text-[1.9rem] leading-tight text-white">{title}</RadixDialog.Title>
               {description ? (
                 <RadixDialog.Description className="mt-1 text-sm text-[var(--muted-text)]">{description}</RadixDialog.Description>
               ) : (
