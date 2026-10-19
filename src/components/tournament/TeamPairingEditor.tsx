@@ -7,6 +7,7 @@ import { randomizePairings, swapPlayers, updateTeamInfo } from "@/actions/tourna
 import { cn } from "@/lib/utils"
 import type { TournamentRegistration } from "@/generated/prisma/client"
 import type { PublicPlayer as Player } from "@/lib/publicPlayer"
+import { resizedPhoto } from "@/lib/photo"
 
 type RegWithPlayer = TournamentRegistration & { player: Player }
 
@@ -109,7 +110,7 @@ export function TeamPairingEditor({ tournamentId, registrations }: TeamPairingEd
                       {p1.teamLogoUrl && (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={p1.teamLogoUrl}
+                          src={resizedPhoto(p1.teamLogoUrl, "thumb")}
                           alt=""
                           className="h-4 w-4 rounded-full object-cover"
                           onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
@@ -250,7 +251,7 @@ function TeamInfoPanel({
         {logoUrl && !logoError && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={logoUrl}
+            src={resizedPhoto(logoUrl, "thumb")}
             alt=""
             className="h-7 w-7 rounded-full object-cover shrink-0"
             onError={() => setLogoError(true)}

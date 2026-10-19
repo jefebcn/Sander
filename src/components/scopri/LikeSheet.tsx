@@ -9,6 +9,7 @@ import { sendLike } from "@/actions/scopri"
 import { COMMENT_MAX, FREE_LIKES_PER_DAY } from "@/lib/scopri/rules"
 import { ExtrasSheet } from "./ExtrasSheet"
 import type { Allowance, LikeTarget, ScopriCard } from "./types"
+import { resizedPhoto } from "@/lib/photo"
 
 export type LikeResult = Awaited<ReturnType<typeof sendLike>>
 
@@ -66,7 +67,7 @@ export function LikeSheet({
         description="Scrivi qualcosa: chi riceve un commento risponde molto più spesso."
       >
         {target?.kind === "PHOTO" && (
-          <img src={target.url} alt="" className="mb-4 aspect-[4/3] w-full rounded-[var(--radius-md)] object-cover" />
+          <img src={resizedPhoto(target.url, "full")} alt="" className="mb-4 aspect-[4/3] w-full rounded-[var(--radius-md)] object-cover" />
         )}
         {target?.kind === "PROMPT" && (
           <div className="mb-4 rounded-[var(--radius-md)] bg-[var(--surface-2)] p-4">

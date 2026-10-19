@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { MapPin, Calendar, Clock, Users } from "lucide-react"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
+import { resizedPhoto } from "@/lib/photo"
 
 const TYPE_LABEL: Record<string, string> = {
   KING_OF_THE_BEACH: "King of the Beach",
@@ -58,7 +59,7 @@ export function TournamentCard({ tournament: t }: TournamentCardProps) {
       {t.coverUrl && (
         <div className="relative h-40 w-full">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={t.coverUrl} alt="" className="h-full w-full object-cover" />
+          <img src={resizedPhoto(t.coverUrl, "full")} alt="" className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--surface-2)] via-black/10 to-transparent" />
           <div className="absolute right-3 top-3">
             <StatusBadge status={t.status as "DRAFT" | "LIVE" | "COMPLETED"} registrationOpen={open} />

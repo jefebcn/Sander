@@ -30,6 +30,7 @@ import { formatDate, formatPrice } from "@/lib/utils"
 import { deriveRegistrationStatus } from "@/lib/tournament/registrationPayment"
 import { redirect } from "next/navigation"
 import { BackButton } from "@/components/layout/PageHeader"
+import { resizedPhoto } from "@/lib/photo"
 
 export const dynamic = "force-dynamic"
 
@@ -112,7 +113,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
           <TournamentCoverEdit tournamentId={id} currentCoverUrl={tournament.coverUrl ?? null} />
         ) : tournament.coverUrl && (
           <div className="relative h-52 w-full">
-            <img src={tournament.coverUrl} alt={tournament.name} className="h-full w-full object-cover" />
+            <img src={resizedPhoto(tournament.coverUrl, "full")} alt={tournament.name} className="h-full w-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
           </div>
         )}
@@ -407,7 +408,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
         <TournamentCoverEdit tournamentId={id} currentCoverUrl={tournament.coverUrl ?? null} />
       ) : tournament.coverUrl && (
         <div className="relative h-52 w-full">
-          <img src={tournament.coverUrl} alt={tournament.name} className="h-full w-full object-cover" />
+          <img src={resizedPhoto(tournament.coverUrl, "full")} alt={tournament.name} className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
         </div>
       )}

@@ -2,6 +2,8 @@
 
 import { useRef, useState } from "react"
 import { ImagePlus, X, Loader2 } from "lucide-react"
+import { resizedPhoto } from "@/lib/photo"
+import { shrinkImage } from "@/lib/shrinkImage"
 
 interface TournamentCoverUploadProps {
   value: string
@@ -22,7 +24,7 @@ export function TournamentCoverUpload({ value, onChange }: TournamentCoverUpload
     setUploading(true)
     try {
       const fd = new FormData()
-      fd.append("file", file)
+      fd.append("file", await shrinkImage(file))
       const res = await fetch("/api/tournament-cover", { method: "POST", body: fd })
       let json: { url?: string; error?: string } = {}
       try { json = await res.json() } catch { /* non-JSON response */ }
@@ -48,7 +50,7 @@ export function TournamentCoverUpload({ value, onChange }: TournamentCoverUpload
 
       {value ? (
         <div className="relative rounded-2xl overflow-hidden h-40">
-          <img src={value} alt="Cover preview" className="h-full w-full object-cover" />
+          <img src={resizedPhoto(value, "full")} alt="Cover preview" className="h-full w-full object-cover" />
           <button
             type="button"
             onClick={() => onChange("")}

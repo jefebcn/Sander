@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { Plus, X, Search, Check } from "lucide-react"
 import { listPlayers } from "@/actions/players"
 import { createGroupThread } from "@/actions/messages"
+import { resizedPhoto } from "@/lib/photo"
 
 type P = { id: string; name: string; firstName: string | null; avatarUrl: string | null }
 
@@ -139,7 +140,7 @@ function NewGroupSheet({ meId, onClose }: { meId: string; onClose: () => void })
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-3)]">
                       {p.avatarUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={p.avatarUrl} alt={p.name} className="h-full w-full object-cover" />
+                        <img src={resizedPhoto(p.avatarUrl, "thumb")} alt={p.name} className="h-full w-full object-cover" />
                       ) : (
                         <span className="text-xs font-black text-[var(--muted-text)]">
                           {p.name.slice(0, 2).toUpperCase()}

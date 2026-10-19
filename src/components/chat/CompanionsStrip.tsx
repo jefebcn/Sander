@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { getOrCreateDmThread } from "@/actions/messages"
+import { resizedPhoto } from "@/lib/photo"
 
 type Companion = { id: string; name: string; avatarUrl: string | null }
 
@@ -40,7 +41,7 @@ export function CompanionsStrip({ companions }: { companions: Companion[] }) {
             <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-3)]">
               {c.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={c.avatarUrl} alt={c.name} className="h-full w-full object-cover" />
+                <img src={resizedPhoto(c.avatarUrl, "thumb")} alt={c.name} className="h-full w-full object-cover" />
               ) : (
                 <span className="text-sm font-black text-[var(--muted-text)]">
                   {c.name.slice(0, 2).toUpperCase()}

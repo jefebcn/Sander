@@ -6,6 +6,7 @@ import { X, Share2, Download } from "lucide-react"
 import { createPortal } from "react-dom"
 import type { PlayerCardData } from "@/components/player/SanderCardFut"
 import { FlagImage } from "@/components/ui/FlagImage"
+import { resizedPhoto } from "@/lib/photo"
 
 /* ──────────────────────────────────────────────────────────────────────────── */
 /*  Constants                                                                  */
@@ -61,7 +62,7 @@ function PodiumPreview({
       {playerData.imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={playerData.imageUrl}
+          src={resizedPhoto(playerData.imageUrl, "card")}
           alt={playerData.name}
           className="absolute object-cover object-center"
           style={{ zIndex: 0, top: "15%", left: "35%", width: "40%", height: "35%" }}
@@ -124,7 +125,7 @@ function PodiumCardFull({
         {playerData.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={playerData.imageUrl}
+            src={resizedPhoto(playerData.imageUrl, "card")}
             alt={playerData.name}
             crossOrigin="anonymous"
             className="absolute object-cover object-center"

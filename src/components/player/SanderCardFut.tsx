@@ -1,3 +1,4 @@
+import { Chakra_Petch } from "next/font/google"
 import { cn } from "@/lib/utils"
 import { PlayerPhoto } from "@/components/player/PlayerPhoto"
 import { FlagImage } from "@/components/ui/FlagImage"
@@ -36,7 +37,9 @@ interface SanderCardFutProps {
 
 /** Dark ink on the pearl enamel, with a light lip under it: reads as engraved. */
 const SHADOW = "0 1px 0 rgba(255,255,255,0.55)"
-const FONT = "'Chakra Petch', sans-serif"
+// Self-hosted by next/font, like PodiumSection: no trip to Google Fonts.
+const chakra = Chakra_Petch({ weight: "700", subsets: ["latin"], display: "swap" })
+const FONT = chakra.style.fontFamily
 
 /* ──────────────────────────────────────────────────────────────────────────── */
 /*  Rating → text color (dark ink on the pearl enamel, per tier)               */
@@ -100,13 +103,6 @@ export function SanderCardFut({ playerData, className, frameLoading }: SanderCar
 
   return (
     <>
-      {/* Google Fonts: Chakra Petch 700 */}
-      {/* eslint-disable-next-line @next/next/no-css-tags */}
-      <link
-        href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@700&display=swap"
-        rel="stylesheet"
-      />
-
       <div
         className={cn(
           "relative mx-auto w-full max-w-[400px] select-none overflow-hidden bg-transparent",

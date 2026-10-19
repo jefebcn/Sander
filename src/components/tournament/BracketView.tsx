@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils"
 import { SkillBadge } from "./SkillBadge"
 import type { Match, MatchPlayer, Player } from "@/generated/prisma/client"
+import { resizedPhoto } from "@/lib/photo"
 
 type MatchWithPlayers = Match & {
   players: (MatchPlayer & { player: Player })[]
@@ -63,7 +64,7 @@ function TeamRow({
         {logoUrl && !isEmpty && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={logoUrl}
+            src={resizedPhoto(logoUrl, "thumb")}
             alt=""
             className="h-5 w-5 rounded-full object-cover shrink-0"
             onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}

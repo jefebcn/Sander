@@ -1,5 +1,6 @@
 import { Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { resizedPhoto } from "@/lib/photo"
 
 export interface SlotPlayer {
   name: string
@@ -44,7 +45,7 @@ export function PlayerSlots({
             >
               {p.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={p.avatarUrl} alt="" className="h-full w-full object-cover" />
+                <img src={resizedPhoto(p.avatarUrl, "thumb")} alt="" className="h-full w-full object-cover" />
               ) : (
                 p.name.slice(0, 2).toUpperCase()
               )}

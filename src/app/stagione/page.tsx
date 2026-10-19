@@ -13,6 +13,7 @@ import { DivisionBadge } from "@/components/season/DivisionBadge"
 import { DivisionShareButton } from "@/components/season/DivisionShareButton"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { SectionTabs, RANK_TABS } from "@/components/layout/SectionTabs"
+import { resizedPhoto } from "@/lib/photo"
 
 export const metadata: Metadata = {
   title: "Stagione — SANDER Beach Volley",
@@ -36,7 +37,7 @@ function Avatar({ name, url, size = 40 }: { name: string; url: string | null; si
     >
       {url ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={url} alt={name} className="h-full w-full object-cover" />
+        <img src={resizedPhoto(url, "thumb")} alt={name} className="h-full w-full object-cover" />
       ) : (
         name.slice(0, 2).toUpperCase()
       )}

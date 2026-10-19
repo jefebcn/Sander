@@ -1,6 +1,7 @@
 import { Check, X, Banknote, Wallet } from "lucide-react"
 import { listPendingManualRegistrations, adminConfirmManualPayment, adminRejectManualPayment } from "@/actions/registration"
 import { formatDate, formatPrice } from "@/lib/utils"
+import { resizedPhoto } from "@/lib/photo"
 
 export async function AdminPendingPaymentsList() {
   const pending = await listPendingManualRegistrations()
@@ -26,7 +27,7 @@ export async function AdminPendingPaymentsList() {
           <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[var(--surface-2)]">
             {reg.player.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={reg.player.avatarUrl} alt={reg.player.name} className="h-full w-full object-cover" />
+              <img src={resizedPhoto(reg.player.avatarUrl, "thumb")} alt={reg.player.name} className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-sm font-bold text-white">
                 {reg.player.name.charAt(0).toUpperCase()}

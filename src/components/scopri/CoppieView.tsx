@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils"
 import { ProposeGameSheet } from "./ProposeGameSheet"
 import type { DuoCard, DuoMember, DuoMatchRow, IncomingDuoLike } from "./types"
 import type { DuoRankRow } from "@/lib/scopri/duos"
+import { resizedPhoto } from "@/lib/photo"
 
 export interface CoppieData {
   meId: string
@@ -71,7 +72,7 @@ function Faces({ members, size = "h-16 w-16" }: { members: DuoMember[]; size?: s
     <span className="flex shrink-0">
       {members.map((m, i) => (
         <span key={m.id} className={cn(size, "overflow-hidden rounded-full bg-[var(--surface-4)] ring-4 ring-[var(--surface-2)]", i > 0 && "-ml-4")}>
-          {m.photo ? <img src={m.photo} alt="" className="h-full w-full object-cover" /> : <Users className="m-auto h-full w-1/2 text-[var(--muted-text)]" aria-hidden="true" />}
+          {m.photo ? <img src={resizedPhoto(m.photo, "thumb")} alt="" className="h-full w-full object-cover" /> : <Users className="m-auto h-full w-1/2 text-[var(--muted-text)]" aria-hidden="true" />}
         </span>
       ))}
     </span>
@@ -488,7 +489,7 @@ function DuoProfile({ duo }: { duo: DuoCard }) {
         {duo.members.map((m) => (
           <div key={m.id} className="overflow-hidden rounded-[var(--radius-md)] bg-[var(--surface-3)]">
             {m.photo ? (
-              <img src={m.photo} alt={`Foto di ${m.name}`} className="aspect-[3/4] w-full object-cover" />
+              <img src={resizedPhoto(m.photo, "card")} alt={`Foto di ${m.name}`} className="aspect-[3/4] w-full object-cover" />
             ) : (
               <div className="flex aspect-[3/4] items-center justify-center text-[var(--muted-text)]">
                 <Users className="h-8 w-8" aria-hidden="true" />

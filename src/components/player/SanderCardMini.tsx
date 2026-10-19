@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Shield, Hand, TrendingUp } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { PublicPlayer as Player } from "@/lib/publicPlayer"
+import { resizedPhoto } from "@/lib/photo"
 
 interface SanderCardMiniProps {
   player: Player
@@ -24,7 +25,7 @@ export function SanderCardMini({ player }: SanderCardMiniProps) {
       >
         {player.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={player.avatarUrl} alt={player.name} className="h-full w-full object-cover" />
+          <img src={resizedPhoto(player.avatarUrl, "thumb")} alt={player.name} className="h-full w-full object-cover" />
         ) : (
           player.name.slice(0, 2).toUpperCase()
         )}

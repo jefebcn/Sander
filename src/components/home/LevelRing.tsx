@@ -1,3 +1,5 @@
+import { resizedPhoto } from "@/lib/photo"
+
 /**
  * Avatar wrapped in an XP ring that draws itself on load (CSS, no JS), with
  * the level on a chip underneath. pathLength=100 makes the dash offset the
@@ -39,7 +41,7 @@ export function LevelRing({
       <div className="absolute inset-[9px] overflow-hidden rounded-full bg-[var(--surface-4)]">
         {avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+          <img src={resizedPhoto(avatarUrl, "thumb")} alt="" className="h-full w-full object-cover" />
         ) : (
           <span className="flex h-full w-full items-center justify-center font-display text-2xl font-extrabold text-white/80">
             {initials}

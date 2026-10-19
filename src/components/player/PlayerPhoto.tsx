@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { resizedPhoto } from "@/lib/photo"
 
 interface PlayerPhotoProps {
   src: string
@@ -32,7 +33,7 @@ export function PlayerPhoto({ src, alt, initials }: PlayerPhotoProps) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={src}
+      src={resizedPhoto(src, "card")}
       alt={alt}
       crossOrigin="anonymous"
       onError={() => setFailed(true)}

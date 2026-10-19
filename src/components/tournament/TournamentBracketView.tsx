@@ -2,6 +2,7 @@ import { Trophy } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { SkillBadge } from "./SkillBadge"
 import type { Match, MatchPlayer, Player } from "@/generated/prisma/client"
+import { resizedPhoto } from "@/lib/photo"
 
 type MatchWithPlayers = Match & {
   players: (MatchPlayer & { player: Player })[]
@@ -94,7 +95,7 @@ function MatchCard({
             {dispA.logoUrl && teamA.length > 0 && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={dispA.logoUrl}
+                src={resizedPhoto(dispA.logoUrl, "thumb")}
                 alt=""
                 className="h-4 w-4 rounded-full object-cover shrink-0"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
@@ -130,7 +131,7 @@ function MatchCard({
             {dispB.logoUrl && teamB.length > 0 && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={dispB.logoUrl}
+                src={resizedPhoto(dispB.logoUrl, "thumb")}
                 alt=""
                 className="h-4 w-4 rounded-full object-cover shrink-0"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
