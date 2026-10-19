@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next"
 import { Analytics } from "@vercel/analytics/next"
-import { Figtree, Bricolage_Grotesque, Instrument_Serif } from "next/font/google"
+import { Figtree, Bricolage_Grotesque, Instrument_Serif, Mansalva } from "next/font/google"
 import "./globals.css"
 import { Providers } from "@/lib/providers"
 import { MobileNav } from "@/components/layout/MobileNav"
@@ -34,6 +34,15 @@ const instrument = Instrument_Serif({
   subsets: ["latin"],
   weight: "400",
   style: ["normal", "italic"],
+  display: "swap",
+})
+
+// Hand: a marker for the big words (page titles, names, "È match"), the same
+// hand-drawn voice as the posters. Never for body text or numbers.
+const mansalva = Mansalva({
+  variable: "--font-hand-raw",
+  subsets: ["latin"],
+  weight: "400",
   display: "swap",
 })
 
@@ -96,8 +105,8 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 }
 
-/** App-wide background: "sunset" (sea at dusk) or "night" (near-black). */
-const BG: BackgroundVariant = "sunset"
+/** App-wide background: "sunset" (sea at dusk) or "night" (grainy graphite). */
+const BG: BackgroundVariant = "night"
 
 export default function RootLayout({
   children,
@@ -105,7 +114,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="it" className={`${figtree.variable} ${bricolage.variable} ${instrument.variable} h-full`}>
+    <html lang="it" className={`${figtree.variable} ${bricolage.variable} ${instrument.variable} ${mansalva.variable} h-full`}>
       <body data-bg={BG} className="min-h-dvh flex flex-col bg-[var(--background)] text-[var(--foreground)]">
         <AppBackground variant={BG} />
         <Providers>

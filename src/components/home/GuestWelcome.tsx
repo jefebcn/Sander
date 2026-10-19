@@ -104,7 +104,7 @@ export function GuestWelcome() {
         style={{ boxShadow: "0 -5px 0 0 var(--accent)" }}
       >
         <p className="eyebrow text-[var(--muted-text)]">Beach volley · Riviera Romagnola</p>
-        <h1 id="welcome-title" className="mt-2 font-display text-[2.9rem] font-black leading-[0.88] tracking-tight text-white">
+        <h1 id="welcome-title" className="mt-2 font-hand text-[3.4rem] leading-[0.9] text-white">
           Il campo è lì.
           <br />
           <span className="text-[var(--accent)]">Manchi tu.</span>

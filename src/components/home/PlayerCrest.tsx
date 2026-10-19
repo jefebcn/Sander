@@ -43,7 +43,7 @@ export function PlayerCrest({ p }: { p: PlayerCrestData }) {
         <LevelRing level={p.level} pct={p.xpPct} avatarUrl={p.avatarUrl} initials={p.initials} size={80} />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-[var(--muted-text)]">{p.greeting},</p>
-          <h1 className="truncate font-display text-[2.1rem] font-extrabold leading-[1.02] text-white">{p.firstName}</h1>
+          <h1 className="truncate font-hand text-[2.6rem] leading-[1] text-white">{p.firstName}</h1>
           {/* Titles and divisions mean nothing before the first game. */}
           {!p.isNew && (
             <p className="mt-1.5 flex flex-wrap items-center gap-1.5">

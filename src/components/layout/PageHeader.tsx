@@ -38,7 +38,7 @@ export function PageHeader({ title, subtitle, eyebrow, tone, action, backHref, c
       {backHref && <BackButton href={backHref} />}
       <div className="min-w-0 flex-1">
         {eyebrow && <p className="eyebrow text-[var(--tone)]">{eyebrow}</p>}
-        <h1 className="font-display text-[2rem] font-extrabold leading-[0.95] tracking-tight text-white">
+        <h1 className="font-hand text-[2.6rem] leading-[0.95] text-white">
           {title}
         </h1>
         {subtitle && <p className="mt-1 truncate text-sm text-[var(--muted-text)]">{subtitle}</p>}

@@ -108,7 +108,7 @@ function LikeButton({ onClick, label }: { onClick: () => void; label: string }) 
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="pressable absolute bottom-3 right-3 flex h-14 w-14 items-center justify-center rounded-full bg-white text-[var(--accent)] shadow-[0_10px_24px_-6px_rgb(0_0_0/0.6)]"
+      className="pressable absolute bottom-3 right-3 z-10 flex h-14 w-14 items-center justify-center rounded-full bg-white text-[var(--accent)] shadow-[0_10px_24px_-6px_rgb(0_0_0/0.6)]"
     >
       <Heart className="h-7 w-7" strokeWidth={2.5} aria-hidden="true" />
     </button>
@@ -117,7 +117,7 @@ function LikeButton({ onClick, label }: { onClick: () => void; label: string }) 
 
 function PhotoBlock({ url, name, onLike }: { url: string; name: string; onLike?: () => void }) {
   return (
-    <div className="relative overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-2)]">
+    <div className="film relative overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-2)]">
       <img src={url} alt={`Foto di ${name}`} loading="lazy" draggable={false} className="aspect-[4/5] w-full select-none object-cover" />
       {onLike && <LikeButton onClick={onLike} label={`Metti like a questa foto di ${name}`} />}
     </div>
