@@ -32,3 +32,6 @@ export function packBonusPct(pack: CreditPack): number {
   const base = (pack.priceCents / 100) * SC_PER_EURO
   return Math.round(((pack.credits - base) / base) * 100)
 }
+
+/** SANDER+ monthly price (Stripe subscription, euro cents). */
+export const PLUS_MONTHLY_CENTS = 499

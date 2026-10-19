@@ -43,6 +43,18 @@ export function ExtrasSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange} title="Extra con gli SC" description="Si pagano con i SanderCredits del tuo profilo.">
+      <Link
+        href="/scopri/plus"
+        onClick={() => onOpenChange(false)}
+        className="pressable mb-3 flex min-h-[4rem] items-center gap-3 rounded-[var(--radius-md)] px-4 text-left"
+        style={{ background: "linear-gradient(120deg, color-mix(in srgb, var(--ace) 26%, var(--surface-2)), var(--surface-2) 70%)" }}
+      >
+        <Crown className="h-6 w-6 shrink-0 text-[var(--ace)]" aria-hidden="true" />
+        <span className="min-w-0 flex-1">
+          <span className="block text-base font-extrabold text-white">SANDER+</span>
+          <span className="block text-sm text-[var(--muted-text)]">Like illimitati, vedi tutti, 3 Ace a settimana</span>
+        </span>
+      </Link>
       <ul className="flex flex-col gap-2">
         {offers.map((id) => {
           const o = SC_OFFERS[id]

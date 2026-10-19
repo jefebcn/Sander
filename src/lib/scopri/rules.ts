@@ -11,6 +11,8 @@ import { dayKey } from "@/lib/datetime"
 
 export const FREE_LIKES_PER_DAY = 8
 export const FREE_ACES_PER_WEEK = 1
+/** SANDER+ members: unlimited likes, three Aces a week. */
+export const PLUS_ACES_PER_WEEK = 3
 /** Matches waiting for your reply before Scopri asks you to answer them first. */
 export const YOUR_TURN_LIMIT = 5
 /** A skipped player can come back after this many days. */
@@ -37,27 +39,38 @@ export type ScOfferId = keyof typeof SC_OFFERS
 export type Role = "BLOCKER" | "DEFENDER"
 
 /** Which allowance pays for the next like, or null when none is left. */
-export function nextLikeSource(usedToday: number, bonus: number): "free" | "bonus" | null {
-  if (usedToday < FREE_LIKES_PER_DAY) return "free"
+export function nextLikeSource(usedToday: number, bonus: number, plus = false): "free" | "bonus" | null {
+  if (plus || usedToday < FREE_LIKES_PER_DAY) return "free"
   if (bonus > 0) return "bonus"
   return null
 }
 
-export function likesLeft(usedToday: number, bonus: number): { free: number; bonus: number; total: number } {
-  const free = Math.max(0, FREE_LIKES_PER_DAY - usedToday)
+export function likesLeft(
+  usedToday: number,
+  bonus: number,
+  plus = false,
+): { free: number; bonus: number; total: number; unlimited: boolean } {
   const b = Math.max(0, bonus)
-  return { free, bonus: b, total: free + b }
+  // JSON has no Infinity: unlimited is a flag, total a large stand-in.
+  if (plus) return { free: 999, bonus: b, total: 999, unlimited: true }
+  const free = Math.max(0, FREE_LIKES_PER_DAY - usedToday)
+  return { free, bonus: b, total: free + b, unlimited: false }
 }
 
 /** Which allowance pays for the next Ace, or null when none is left. */
-export function nextAceSource(usedThisWeek: number, bonus: number): "free" | "bonus" | null {
-  if (usedThisWeek < FREE_ACES_PER_WEEK) return "free"
+export function nextAceSource(usedThisWeek: number, bonus: number, plus = false): "free" | "bonus" | null {
+  if (usedThisWeek < (plus ? PLUS_ACES_PER_WEEK : FREE_ACES_PER_WEEK)) return "free"
   if (bonus > 0) return "bonus"
   return null
 }
 
-export function acesLeft(usedThisWeek: number, bonus: number): number {
-  return Math.max(0, FREE_ACES_PER_WEEK - usedThisWeek) + Math.max(0, bonus)
+export function acesLeft(usedThisWeek: number, bonus: number, plus = false): number {
+  return Math.max(0, (plus ? PLUS_ACES_PER_WEEK : FREE_ACES_PER_WEEK) - usedThisWeek) + Math.max(0, bonus)
+}
+
+/** Is a SANDER+ membership active at `now`? */
+export function isPlus(plusUntil: Date | null | undefined, now: Date = new Date()): boolean {
+  return !!plusUntil && plusUntil > now
 }
 
 /** Age in whole years on the Rome calendar day of `now`. */

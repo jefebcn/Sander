@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useSyncExternalStore } from "react"
 import { X, Zap } from "lucide-react"
 import { ShareStoryButton } from "@/components/share/ShareStoryButton"
 import type { PlayerCardData } from "@/components/player/SanderCardFut"
@@ -23,6 +23,19 @@ function getMessage(level: number) {
   return "Continua a giocare per salire ancora! 🔥"
 }
 
+function subscribeStorage(onChange: () => void) {
+  window.addEventListener("storage", onChange)
+  return () => window.removeEventListener("storage", onChange)
+}
+
+function readCelebrated(): number {
+  try {
+    return parseInt(localStorage.getItem(STORAGE_KEY) ?? "1", 10)
+  } catch {
+    return Number.MAX_SAFE_INTEGER
+  }
+}
+
 interface LevelUpCelebrationProps {
   currentLevel: number
   playerName: string
@@ -30,19 +43,16 @@ interface LevelUpCelebrationProps {
 }
 
 export function LevelUpCelebration({ currentLevel, playerName, cardData }: LevelUpCelebrationProps) {
-  const [show, setShow] = useState(false)
-
-  useEffect(() => {
-    const celebrated = parseInt(localStorage.getItem(STORAGE_KEY) ?? "1", 10)
-    if (currentLevel > celebrated) setShow(true)
-  }, [currentLevel])
+  // The level last celebrated lives in localStorage; null on the server.
+  const celebrated = useSyncExternalStore(subscribeStorage, readCelebrated, () => null)
+  const [dismissed, setDismissed] = useState(false)
 
   function dismiss() {
     localStorage.setItem(STORAGE_KEY, String(currentLevel))
-    setShow(false)
+    setDismissed(true)
   }
 
-  if (!show) return null
+  if (dismissed || celebrated === null || currentLevel <= celebrated) return null
 
   return (
     // Backdrop

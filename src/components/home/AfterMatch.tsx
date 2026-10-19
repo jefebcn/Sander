@@ -35,7 +35,7 @@ export function UnscoredMatch({ match }: { match: UnscoredMatchCard }) {
   const Icon = waiting ? Hourglass : entry.kind === "teams" ? Users : ClipboardPen
   return (
     <section aria-labelledby="unscored-title">
-      <Crest line="lime" tip="1.5rem" innerClassName="p-5 pb-10">
+      <Crest line="accent" innerClassName="p-5">
         <p className="eyebrow text-[var(--accent)]">Partita finita</p>
         <h2 id="unscored-title" className="mt-1 font-display text-4xl font-black leading-none text-white">
           Com&apos;è andata?
@@ -89,7 +89,7 @@ export function AfterMatchRecap({
   const delta = recap.delta
   return (
     <section aria-labelledby="recap-title">
-      <Crest line="white" tip="1.5rem" innerClassName="p-5 pb-10">
+      <Crest innerClassName="p-5">
         {won && (
           <div aria-hidden="true" className="crest-sun pointer-events-none absolute inset-x-0 top-0 h-40 opacity-80" />
         )}
@@ -109,11 +109,11 @@ export function AfterMatchRecap({
           {delta !== null && delta !== 0 && (
             <span className="flex min-h-[2.75rem] items-center gap-1.5 rounded-full bg-black/40 px-3 text-sm font-extrabold text-white ring-1 ring-[var(--crest-hair)]">
               {delta > 0 ? (
-                <TrendingUp className="h-4 w-4 text-[var(--accent)]" aria-hidden="true" />
+                <TrendingUp className="h-4 w-4 text-[var(--success)]" aria-hidden="true" />
               ) : (
                 <TrendingDown className="h-4 w-4" aria-hidden="true" />
               )}
-              <span className={cn(delta > 0 && "text-[var(--accent)]")}>
+              <span className={cn(delta > 0 && "text-[var(--success)]")}>
                 {delta > 0 ? "+" : "−"}{Math.abs(delta)}
               </span>{" "}
               punti

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
+import { Chakra_Petch } from "next/font/google"
 import { X, Share2, Download } from "lucide-react"
 import { createPortal } from "react-dom"
 import type { PlayerCardData } from "@/components/player/SanderCardFut"
@@ -10,7 +11,9 @@ import { FlagImage } from "@/components/ui/FlagImage"
 /*  Constants                                                                  */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
-const FONT = "'Chakra Petch', sans-serif"
+// Loaded with next/font (self-hosted, no render-blocking <link>).
+const chakra = Chakra_Petch({ weight: "700", subsets: ["latin"], display: "swap" })
+const FONT = chakra.style.fontFamily
 
 const PODIUM_FRAMES: Record<number, string> = {
   1: "/assets/cards/podium_1.png",
@@ -111,11 +114,6 @@ function PodiumCardFull({
 
   return (
     <>
-      {/* eslint-disable-next-line @next/next/no-css-tags */}
-      <link
-        href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@700&display=swap"
-        rel="stylesheet"
-      />
 
       <div
         ref={cardRef}

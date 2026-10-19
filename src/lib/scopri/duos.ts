@@ -7,6 +7,7 @@ import { swipeHides } from "./rules"
 import { duoScore, stableJitter, type DuoSide } from "./score"
 import { blockedWith } from "./blocks"
 import { dayKey } from "@/lib/datetime"
+import { eloUpdate } from "./duoElo"
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  Coppie: pairs looking for another pair for a 2v2. Same rhythm as Scopri — */
@@ -272,4 +273,69 @@ export async function partnerCandidates(playerId: string) {
   })
   const byId = new Map(players.map((p) => [p.id, p]))
   return ids.map((id) => byId.get(id)).filter((p): p is MemberRow => !!p).map(toMember)
+}
+
+
+/**
+ * After a completed 2v2 between two matched pairs: move both pair ratings
+ * (Elo) once. Each pair is the side its members played on.
+ */
+export async function rateDuoMatch(sessionId: string, winningTeam: 0 | 1): Promise<boolean> {
+  const m = await db.duoMatch.findFirst({
+    where: { sessionId, ratedAt: null },
+    select: {
+      id: true,
+      aDuo: { select: { id: true, aId: true, bId: true, rating: true } },
+      bDuo: { select: { id: true, aId: true, bId: true, rating: true } },
+    },
+  })
+  if (!m) return false
+  const parts = await db.sessionParticipant.findMany({ where: { sessionId }, select: { playerId: true, team: true } })
+  const teamOf = (d: { aId: string; bId: string }) => {
+    const t = parts.filter((p) => p.playerId === d.aId || p.playerId === d.bId).map((p) => p.team)
+    return t.length === 2 && t[0] === t[1] ? t[0] : null
+  }
+  const aTeam = teamOf(m.aDuo)
+  const bTeam = teamOf(m.bDuo)
+  if (aTeam === null || bTeam === null || aTeam === bTeam) return false
+  // Claim first: a double completion can't rate twice.
+  const claimed = await db.duoMatch.updateMany({ where: { id: m.id, ratedAt: null }, data: { ratedAt: new Date() } })
+  if (claimed.count === 0) return false
+  const aWon = aTeam === winningTeam
+  const [ra, rb] = eloUpdate(m.aDuo.rating, m.bDuo.rating, aWon)
+  await db.$transaction([
+    db.duo.update({ where: { id: m.aDuo.id }, data: { rating: ra, ...(aWon ? { wins: { increment: 1 } } : { losses: { increment: 1 } }) } }),
+    db.duo.update({ where: { id: m.bDuo.id }, data: { rating: rb, ...(aWon ? { losses: { increment: 1 } } : { wins: { increment: 1 } }) } }),
+  ])
+  return true
+}
+
+export interface DuoRankRow {
+  id: string
+  name: string
+  rating: number
+  wins: number
+  losses: number
+  members: [DuoMember, DuoMember]
+}
+
+/** Pairs leaderboard: active pairs by rating, those who played first. */
+export async function duoLeaderboard(limit = 30): Promise<DuoRankRow[]> {
+  const rows = await db.duo.findMany({
+    where: { status: "ACTIVE" },
+    orderBy: [{ rating: "desc" }, { wins: "desc" }],
+    take: 200,
+    select: { ...DUO_SELECT, rating: true, wins: true, losses: true },
+  })
+  return rows
+    .sort((x, y) => Number(y.wins + y.losses > 0) - Number(x.wins + x.losses > 0) || y.rating - x.rating)
+    .slice(0, limit)
+    .map((d) => ({
+      id: d.id,
+      name: duoName(d),
+      rating: Math.round(d.rating),
+      wins: d.wins,
+      losses: d.losses,
+      members: [toMember(d.a), toMember(d.b)],
+    }))
 }

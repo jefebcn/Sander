@@ -28,13 +28,14 @@
 
   /* Status colours */
   --live: #c6f432;
-  --draft: #6f6a80;
+  --draft: #9a95ad;
   --completed: #b392ff;
 
   /* Semantic */
   --danger: #ff4d6d;
   --warning: #ffc247;
-  --success: #3ddc97;
+  /* Successes and "live, now" moments wear the logo's lime. */
+  --success: var(--lime);
 
   /* Medal colours */
   --gold: #ffd166;
@@ -272,20 +273,9 @@ body[data-bg="sunset"] .app-bg__glow {
   );
 }
 
-/* The rays of the sun on the logo's crown, thin and still, behind a crest.
-   No glow: one accent line, repeated. The top of the mask fades in too, so the
-   rays never end on a hard line. */
+/* The sunset light from the top: a soft coral glow behind a hero. */
 .crest-sun {
-  background:
-    repeating-conic-gradient(from 0deg at 50% 0%, color-mix(in srgb, var(--accent) 14%, transparent) 0deg 2deg, transparent 2deg 11deg);
-  -webkit-mask-image:
-    linear-gradient(to bottom, transparent 0, #000 3.5rem),
-    radial-gradient(ellipse 75% 85% at 50% 0%, #000 0%, transparent 72%);
-  -webkit-mask-composite: source-in;
-  mask-image:
-    linear-gradient(to bottom, transparent 0, #000 3.5rem),
-    radial-gradient(ellipse 75% 85% at 50% 0%, #000 0%, transparent 72%);
-  mask-composite: intersect;
+  background: radial-gradient(ellipse 70% 90% at 50% 0%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 70%);
 }
 
 /* Sand grain — static SVG noise, barely there. */

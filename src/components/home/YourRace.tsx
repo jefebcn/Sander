@@ -26,7 +26,7 @@ export function YourRace({
   streak: WeeklyStreak
 }) {
   return (
-    <section className="flex flex-col gap-3" aria-labelledby="race-title">
+    <section className="tone-compete flex flex-col gap-3" aria-labelledby="race-title">
       <CrestHeading id="race-title" eyebrow="Ogni settimana si muove" title="La tua corsa" />
       {/* No overflow-hidden: it would clip the keyboard focus ring of the rows. */}
       <div className="divide-y divide-[var(--crest-hair)] rounded-[var(--radius-lg)] bg-[var(--surface-2)] ring-1 ring-[var(--crest-hair)]">
@@ -34,7 +34,7 @@ export function YourRace({
 
         <Row
           href="/stagione"
-          badge={<Waves className="h-6 w-6 text-[var(--accent)]" aria-hidden="true" />}
+          badge={<Waves className="h-6 w-6 text-[var(--tone)]" aria-hidden="true" />}
           eyebrow={`Divisione ${division.name}`}
           title={
             division.next && division.pointsToNext !== null
@@ -43,13 +43,13 @@ export function YourRace({
           }
         >
           <span className="mt-2 block h-2 overflow-hidden rounded-full bg-[var(--surface-4)]" aria-hidden="true">
-            <span className="xp-bar-fill block h-full rounded-full bg-[var(--accent)]" style={{ width: `${Math.max(4, division.progress)}%` }} />
+            <span className="xp-bar-fill block h-full rounded-full bg-[var(--tone)]" style={{ width: `${Math.max(4, division.progress)}%` }} />
           </span>
         </Row>
 
         <Row
           href="/sessions"
-          badge={<Flame className="h-6 w-6 text-[var(--accent)]" aria-hidden="true" />}
+          badge={<Flame className="h-6 w-6 text-[var(--tone)]" aria-hidden="true" />}
           eyebrow="Serie settimanale"
           title={
             streak.weeks === 0
@@ -95,7 +95,7 @@ function CityRow({ rank, preview }: { rank: CityRank | null; preview: CityPrevie
     return (
       <Row
         href="/bagni"
-        badge={<Crown className="h-6 w-6 text-[var(--accent)]" aria-hidden="true" />}
+        badge={<Crown className="h-6 w-6 text-[var(--tone)]" aria-hidden="true" />}
         eyebrow={`Il tuo comune · ${preview.city}`}
         title={preview.king ? `Il Re è ${preview.king}` : "Il trono è libero"}
         text={`${preview.players} ${preview.players === 1 ? "giocatore" : "giocatori"} in classifica. Gioca una partita col punteggio e ci sei anche tu.`}
@@ -105,7 +105,7 @@ function CityRow({ rank, preview }: { rank: CityRank | null; preview: CityPrevie
   return (
     <Row
       href="/bagni"
-      badge={<Crown className="h-6 w-6 text-[var(--accent)]" aria-hidden="true" />}
+      badge={<Crown className="h-6 w-6 text-[var(--tone)]" aria-hidden="true" />}
       eyebrow="Re dei Bagni"
       title="Conquista il tuo comune"
       text="Ogni vittoria ti fa salire nella classifica del comune e del bagno."
@@ -140,7 +140,7 @@ function Row({
         {text && <span className="block text-base leading-snug text-[var(--muted-text)]">{text}</span>}
         {children}
       </span>
-      <ChevronRight className="h-5 w-5 shrink-0 text-[var(--accent)]" aria-hidden="true" />
+      <ChevronRight className="h-5 w-5 shrink-0 text-[var(--tone)]" aria-hidden="true" />
     </Link>
   )
 }

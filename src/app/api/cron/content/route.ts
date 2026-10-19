@@ -7,6 +7,7 @@ import { notifyPlayer } from "@/lib/push"
 import { isAdminEmail } from "@/lib/isAdmin"
 import { nudgeSweep } from "@/lib/nudges"
 import { cancelStaleSessions } from "@/lib/sessionRefunds"
+import { scopriMorning } from "@/lib/scopri/digest"
 
 export const runtime = "nodejs"
 
@@ -50,5 +51,12 @@ export async function GET(req: NextRequest) {
     return 0
   })
 
-  return NextResponse.json({ ok: true, created, nudged, staleCancelled })
+  // Scopri morning: today's pairing and picks, "tocca a te", pair challenges,
+  // newcomers / invites. Same cron, so the Vercel cron count stays the same.
+  const scopri = await scopriMorning().catch((e) => {
+    console.error("[cron] scopri morning failed", e)
+    return null
+  })
+
+  return NextResponse.json({ ok: true, created, nudged, staleCancelled, scopri })
 }

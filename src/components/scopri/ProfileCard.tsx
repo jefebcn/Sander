@@ -1,9 +1,10 @@
 "use client"
 
 /* eslint-disable @next/next/no-img-element -- user photos from Blob, any size */
-import { Heart, MapPin, Shield, Hand, ArrowLeftRight, Target, Sparkles } from "lucide-react"
+import { Heart, MapPin, Shield, Hand, ArrowLeftRight, Target, Sparkles, BadgeCheck, CalendarCheck, Sun, Repeat, Flag } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { lookingForLabel, sideLabel } from "@/lib/scopri/prompts"
+import { freeSlotLabel, VERIFIED_MIN_GAMES, VERIFIED_MIN_RELIABILITY } from "@/lib/scopri/reliability"
 import type { ScopriCard, LikeTarget } from "./types"
 
 /**
@@ -14,11 +15,14 @@ import type { ScopriCard, LikeTarget } from "./types"
 export function ProfileCard({
   card,
   onLike,
+  onReport,
   className,
   compact = false,
 }: {
   card: ScopriCard
   onLike?: (target: LikeTarget) => void
+  /** Shows "Segnala o blocca" under the card. */
+  onReport?: () => void
   className?: string
   /** Fewer blocks (e.g. inside "Ti vogliono"). */
   compact?: boolean
@@ -46,15 +50,27 @@ export function ProfileCard({
     <article className={cn("flex flex-col gap-3", className)} aria-label={`Profilo di ${card.name}`}>
       <header className="flex items-end justify-between gap-3 px-1">
         <div className="min-w-0">
-          <h2 className="font-display text-4xl font-extrabold leading-none text-white">
-            {card.name}
-            {card.age !== null && <span className="font-serif text-3xl font-normal text-[var(--muted-text)]">, {card.age}</span>}
+          <h2 className="flex items-center gap-2 font-display text-4xl font-extrabold leading-none text-white">
+            <span className="min-w-0 truncate">
+              {card.name}
+              {card.age !== null && <span className="font-serif text-3xl font-normal text-[var(--muted-text)]">, {card.age}</span>}
+            </span>
+            {card.verified && (
+              <BadgeCheck className="h-7 w-7 shrink-0 text-[var(--social)]" aria-label="Giocatore verificato" role="img" />
+            )}
           </h2>
-          {card.homeCity && (
-            <p className="mt-1 flex items-center gap-1 text-base text-[var(--muted-text)]">
-              <MapPin className="h-4 w-4 text-[var(--accent)]" aria-hidden="true" /> {card.homeCity}
-            </p>
-          )}
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-base text-[var(--muted-text)]">
+            {card.homeCity && (
+              <span className="flex items-center gap-1">
+                <MapPin className="h-4 w-4 text-[var(--accent)]" aria-hidden="true" /> {card.homeCity}
+              </span>
+            )}
+            {card.freeToday && (
+              <span className="flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--lime)_16%,transparent)] px-2.5 py-0.5 text-sm font-extrabold text-[var(--lime)]">
+                <Sun className="h-4 w-4" aria-hidden="true" /> Libero oggi · {freeSlotLabel(card.freeToday).toLowerCase()}
+              </span>
+            )}
+          </p>
         </div>
         {typeof card.score === "number" && (
           <div className="shrink-0 text-right">
@@ -73,6 +89,15 @@ export function ProfileCard({
         </ul>
       )}
       {blocks}
+      {onReport && (
+        <button
+          type="button"
+          onClick={onReport}
+          className="flex min-h-[3.5rem] items-center justify-center gap-2 text-sm font-bold text-[var(--muted-text)]"
+        >
+          <Flag className="h-4 w-4" aria-hidden="true" /> Segnala o blocca {card.name}
+        </button>
+      )}
     </article>
   )
 }
@@ -139,14 +164,40 @@ function DetailsBlock({ card }: { card: ScopriCard }) {
         ))}
         <div className="flex items-center gap-2">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-4)] text-[var(--accent)]">
-            <span className="num text-sm">{card.games}</span>
+            <span className="num text-sm">{card.played}</span>
           </span>
           <span className="min-w-0">
             <dt className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Partite</dt>
-            <dd className="truncate text-base font-bold text-white">{card.games === 0 ? "Appena arrivato" : "giocate su SANDER"}</dd>
+            <dd className="truncate text-base font-bold text-white">{card.played === 0 ? "Appena arrivato" : "su SANDER"}</dd>
           </span>
         </div>
+        <div className="flex items-center gap-2">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-4)] text-[var(--social)]">
+            <CalendarCheck className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <span className="min-w-0">
+            <dt className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Presenze</dt>
+            <dd className="truncate text-base font-bold text-white">{card.reliability === null ? "Ancora nessuna" : `${card.reliability}%`}</dd>
+          </span>
+        </div>
+        {card.again !== null && (
+          <div className="flex items-center gap-2">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-4)] text-[var(--social)]">
+              <Repeat className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <span className="min-w-0">
+              <dt className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Rigiocherebbero</dt>
+              <dd className="truncate text-base font-bold text-white">{card.again}% di chi ci ha giocato</dd>
+            </span>
+          </div>
+        )}
       </dl>
+      {card.verified && (
+        <p className="mt-4 flex items-start gap-2 rounded-[var(--radius-md)] bg-[color-mix(in_srgb,var(--social)_12%,transparent)] px-3 py-2 text-sm text-white">
+          <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-[var(--social)]" aria-hidden="true" />
+          Verificato: almeno {VERIFIED_MIN_GAMES} partite registrate su SANDER e {VERIFIED_MIN_RELIABILITY}% di presenze.
+        </p>
+      )}
       {card.lookingFor.length > 0 && (
         <div className="mt-4 border-t border-[var(--border)] pt-3">
           <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Cerca</p>

@@ -148,7 +148,7 @@ export function ConversationView({
                   <p className="mb-0.5 text-xs font-black text-[var(--accent)]">{m.senderName}</p>
                 )}
                 <p className="whitespace-pre-wrap break-words text-base leading-snug">{renderBody(m.body)}</p>
-                <p className={`mt-0.5 text-right text-xs ${m.mine ? "text-black/50" : "text-white/40"}`}>
+                <p className={`mt-0.5 text-right text-xs ${m.mine ? "text-black/65" : "text-white/60"}`}>
                   {timeLabel(m.createdAt)}
                 </p>
               </div>

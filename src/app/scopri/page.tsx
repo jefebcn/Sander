@@ -16,6 +16,8 @@ import {
   incomingLikes,
 } from "@/lib/scopri/server"
 import { openGamesNear } from "@/lib/scopri/games"
+import { freeToday } from "@/lib/scopri/reliability"
+import { refreshPlusIfStale } from "@/lib/scopri/plus"
 import { ScopriNav } from "@/components/scopri/ScopriNav"
 import { SetupGate } from "@/components/scopri/SetupGate"
 import { ScopriDeck } from "@/components/scopri/ScopriDeck"
@@ -39,6 +41,7 @@ export default async function ScopriPage() {
 
   const now = new Date()
   await db.discoverProfile.upsert({ where: { playerId: player.id }, create: { playerId: player.id }, update: {} })
+  await refreshPlusIfStale(player.id, now)
   const me = await loadCardRow(player.id)
   if (!me) return null
   const missing = readiness(me, now)
@@ -55,6 +58,21 @@ export default async function ScopriPage() {
   const [matches, likes, left] = await Promise.all([matchList(me.id, now), incomingLikes(me.id, now), allowance(me.id, now)])
   const waiting = matches.filter((m) => m.turn !== "in-attesa")
   const myPhoto = me.discoverPhotos[0]?.url ?? me.avatarUrl ?? null
+
+  if (me.discoverProfile?.suspendedAt) {
+    return (
+      <div className="px-4 pb-10">
+        <ScopriNav active="scopri" likes={likes.length} waiting={waiting.length} />
+        <div className="rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-6 text-center">
+          <p className="font-display text-3xl font-extrabold text-white">Profilo sospeso</p>
+          <p className="mt-2 text-base text-[var(--muted-text)]">
+            Abbiamo ricevuto segnalazioni sul tuo profilo: per ora non sei visibile su Scopri. Match e chat restano.
+            Per chiarimenti scrivi al supporto di SANDER.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   if (me.discoverProfile?.paused) {
     return (
@@ -103,7 +121,13 @@ export default async function ScopriPage() {
           <DailyPickCard card={pick.card} seen={pick.seen} allowance={left} myPhoto={myPhoto} />
         </div>
       )}
-      <ScopriDeck initialCards={deck.filter((c) => c.id !== pick?.card.id)} initialAllowance={left} games={games} myPhoto={myPhoto} />
+      <ScopriDeck
+        initialCards={deck.filter((c) => c.id !== pick?.card.id)}
+        initialAllowance={left}
+        games={games}
+        myPhoto={myPhoto}
+        myFree={freeToday(me.discoverProfile?.freeDay, me.discoverProfile?.freeSlot, now)}
+      />
     </div>
   )
 }

@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 
 const REASONS = [
   { id: "FINTO", label: "Profilo finto o foto non sue" },
+  { id: "FOTO", label: "Foto non adatta" },
   { id: "OFFENSIVO", label: "Messaggi offensivi" },
   { id: "MOLESTIE", label: "Molestie o insistenza" },
   { id: "MINORENNE", label: "Sembra minorenne" },
@@ -25,11 +26,14 @@ export function ReportSheet({
   onOpenChange,
   playerId,
   name,
+  onDone,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   playerId: string
   name: string
+  /** Called after a block or report (e.g. to drop the card from the deck). */
+  onDone?: () => void
 }) {
   const router = useRouter()
   const [reason, setReason] = useState<(typeof REASONS)[number]["id"] | null>(null)
@@ -46,6 +50,7 @@ export function ReportSheet({
       })
       toast.success(report ? "Segnalazione inviata. Grazie." : `${name} è bloccato`)
       onOpenChange(false)
+      onDone?.()
       router.refresh()
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Non riuscito")

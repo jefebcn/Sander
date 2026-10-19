@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- user photos from Blob, any size */
 import { useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Plus, Trash2, ChevronLeft, Loader2, Eye, Pause, Play, UserRound, Pencil } from "lucide-react"
+import { Plus, Trash2, ChevronLeft, Loader2, Eye, Pause, Play, UserRound, Pencil, Crown } from "lucide-react"
 import { toast } from "sonner"
 import { Sheet } from "@/components/ui/Sheet"
 import { CITY_NAMES } from "@/lib/cities"
@@ -36,6 +36,9 @@ export interface EditorData {
   prefGender: string | null
   prefRole: "BLOCKER" | "DEFENDER" | null
   maxGap: number
+  plus: boolean
+  onlyVerified: boolean
+  onlyFreeToday: boolean
   missing: MissingStep[]
   preview: ScopriCard
 }
@@ -88,6 +91,8 @@ export function ScopriProfileEditor({ data }: { data: EditorData }) {
   const [prefGender, setPrefGender] = useState<string | null>(data.prefGender)
   const [prefRole, setPrefRole] = useState<"BLOCKER" | "DEFENDER" | null>(data.prefRole)
   const [maxGap, setMaxGap] = useState(data.maxGap)
+  const [onlyVerified, setOnlyVerified] = useState(data.onlyVerified)
+  const [onlyFreeToday, setOnlyFreeToday] = useState(data.onlyFreeToday)
 
   async function upload(file: File) {
     setUploading(true)
@@ -131,6 +136,7 @@ export function ScopriProfileEditor({ data }: { data: EditorData }) {
           prefGender: prefGender as "Uomo" | "Donna" | null,
           prefRole,
           maxGap,
+          ...(data.plus ? { onlyVerified, onlyFreeToday } : {}),
         }),
       "Salvato",
     )
@@ -142,9 +148,11 @@ export function ScopriProfileEditor({ data }: { data: EditorData }) {
   const stored = JSON.stringify([
     data.birthDate ?? "", data.homeCity ?? "", data.gender ?? "", data.role, data.side,
     [...data.lookingFor].sort(), [...data.prefCities].sort(), data.prefGender, data.prefRole, data.maxGap,
+    data.onlyVerified, data.onlyFreeToday,
   ])
   const edited = JSON.stringify([
     birthDate, homeCity, gender, role, side, [...lookingFor].sort(), [...prefCities].sort(), prefGender, prefRole, maxGap,
+    onlyVerified, onlyFreeToday,
   ])
   const dirty = stored !== edited
 
@@ -275,7 +283,14 @@ export function ScopriProfileEditor({ data }: { data: EditorData }) {
         <div className="flex flex-col gap-3">
           <label className="flex flex-col gap-1">
             <span className="text-sm font-bold text-[var(--muted-text)]">Data di nascita</span>
-            <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} className={inputCls} />
+            <input
+              type="date"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              disabled={!!data.birthDate}
+              className={cn(inputCls, "disabled:text-[var(--muted-text)]")}
+            />
+            {data.birthDate && <span className="text-xs text-[var(--muted-text)]">Non si può cambiare: scrivi al supporto se è sbagliata.</span>}
           </label>
           <label className="flex flex-col gap-1">
             <span className="text-sm font-bold text-[var(--muted-text)]">Comune dove giochi</span>
@@ -355,6 +370,21 @@ export function ScopriProfileEditor({ data }: { data: EditorData }) {
             </span>
             <input type="range" min={100} max={1000} step={50} value={maxGap} onChange={(e) => setMaxGap(Number(e.target.value))} className="accent-[var(--accent)]" />
           </label>
+          {data.plus ? (
+            <div>
+              <p className="mb-2 flex items-center gap-1 text-sm font-bold text-[var(--ace)]">
+                <Crown className="h-4 w-4" aria-hidden="true" /> Filtri SANDER+
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Chip on={onlyVerified} onClick={() => setOnlyVerified(!onlyVerified)}>Solo verificati</Chip>
+                <Chip on={onlyFreeToday} onClick={() => setOnlyFreeToday(!onlyFreeToday)}>Solo liberi oggi</Chip>
+              </div>
+            </div>
+          ) : (
+            <a href="/scopri/plus" className="flex min-h-[3.5rem] items-center gap-2 rounded-[var(--radius-md)] bg-[var(--surface-2)] px-4 text-base font-bold text-white">
+              <Crown className="h-5 w-5 text-[var(--ace)]" aria-hidden="true" /> Solo verificati, solo liberi oggi: con SANDER+
+            </a>
+          )}
         </div>
       </Section>
 

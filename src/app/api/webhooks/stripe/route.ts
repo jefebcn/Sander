@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { stripe } from "@/lib/stripe"
 import { grantStripeTopUp, revokeStripeTopUp } from "@/lib/creditTopUp"
+import { syncPlusFromSubscription, invoiceSubscriptionId } from "@/lib/scopri/plus"
 import type Stripe from "stripe"
 
 export const runtime = "nodejs"
@@ -66,6 +67,14 @@ export async function POST(req: NextRequest) {
       case "checkout.session.async_payment_succeeded":
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session
+
+        // SANDER+ subscription started.
+        if (session.metadata?.kind === "plus") {
+          const subId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id
+          if (subId) await syncPlusFromSubscription(await stripe.subscriptions.retrieve(subId))
+          revalidatePath("/scopri")
+          break
+        }
 
         // SanderCredits pack bought in the app.
         if (session.metadata?.kind === "sc_topup") {
@@ -150,6 +159,24 @@ export async function POST(req: NextRequest) {
               revalidatePath("/admin/metriche")
             }
           }
+        }
+        break
+      }
+
+      // SANDER+: renewals, cancellations, failed payments.
+      case "customer.subscription.created":
+      case "customer.subscription.updated":
+      case "customer.subscription.deleted": {
+        const sub = event.data.object as Stripe.Subscription
+        if (sub.metadata?.kind === "plus") await syncPlusFromSubscription(sub)
+        break
+      }
+
+      case "invoice.paid": {
+        const subId = invoiceSubscriptionId(event.data.object as Stripe.Invoice)
+        if (subId) {
+          const sub = await stripe.subscriptions.retrieve(subId)
+          if (sub.metadata?.kind === "plus") await syncPlusFromSubscription(sub)
         }
         break
       }

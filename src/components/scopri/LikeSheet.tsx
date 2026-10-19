@@ -106,7 +106,7 @@ export function LikeSheet({
           >
             {busy === "like" ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Heart className="h-5 w-5" strokeWidth={2.75} aria-hidden="true" />}
             Manda like
-            <span className="text-sm font-bold opacity-70">· {allowance.likes.total} rimasti</span>
+            <span className="text-sm font-bold opacity-70">· {allowance.likes.unlimited ? "illimitati" : `${allowance.likes.total} rimasti`}</span>
           </button>
         )}
 

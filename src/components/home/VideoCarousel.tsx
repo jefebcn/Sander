@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useEffect } from "react"
+import { useRef, useState, useEffect, useEffectEvent } from "react"
 import { Play, Pause, ChevronLeft, ChevronRight } from "lucide-react"
 
 // Newest first — add new videos at the beginning of the array.
@@ -60,23 +60,22 @@ function VideoThumb({ src, heavy, autoplayAllowed, index }: { src: string; heavy
   }, [loaded])
 
   // In view → autoplay (when allowed and the viewer hasn't paused it); out of view → pause.
+  // An effect event always sees the latest start/stop, so the observer is set
+  // up once per element instead of on every render.
+  const onVisibility = useEffectEvent((visible: boolean) => {
+    if (visible) {
+      if (autoplayAllowed && !heavy && !userPaused.current) start()
+    } else if (wantPlay.current) {
+      stop()
+    }
+  })
   useEffect(() => {
     const el = boxRef.current
     if (!el || typeof IntersectionObserver === "undefined") return
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          if (autoplayAllowed && !heavy && !userPaused.current) start()
-        } else if (wantPlay.current) {
-          stop()
-        }
-      },
-      { threshold: 0.6 },
-    )
+    const io = new IntersectionObserver(([entry]) => onVisibility(entry.isIntersecting), { threshold: 0.6 })
     io.observe(el)
     return () => io.disconnect()
-    // `loaded` is listed so the callback never holds a stale start().
-  }, [autoplayAllowed, heavy, loaded])
+  }, [])
 
   function handleClick() {
     if (playing) {

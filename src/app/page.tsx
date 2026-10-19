@@ -34,6 +34,8 @@ import { ListRow } from "@/components/ui/ListRow"
 import { QuickActionsButton } from "@/components/layout/QuickActionsButton"
 import { ScopriHomeCard } from "@/components/home/ScopriHomeCard"
 import { scopriSummary } from "@/lib/scopri/server"
+import { pendingPlayAgain } from "@/lib/scopri/playAgainServer"
+import { PlayAgainCard } from "@/components/scopri/PlayAgainCard"
 
 const NO_STREAK = { weeks: 0, playedThisWeek: false }
 
@@ -102,6 +104,7 @@ export default async function Home() {
   // One scan of the town boards, shared by the rank row and the match recap.
   const boards = getCityLeaderboards().catch(() => [] as CityLeaderboard[])
   const scopriP = scopriSummary(player.id, player.homeCity, now).catch(() => null)
+  const playAgainP = pendingPlayAgain(player.id, now).catch(() => null)
   const [
     fullPlayer, recs, nextMatchRow, tournament, unreadCount, unreadMessages, invited, cityRank,
     recentTournament, unscored, recap, streak,
@@ -208,6 +211,7 @@ export default async function Home() {
   // "Segna" goes where a score actually gets saved: the match waiting for its
   // result, or the live board of the one being played; else a practice board.
   const scopri = await scopriP
+  const playAgain = await playAgainP
   const score =
     unscored && unscored.entry.kind !== "wait"
       ? { href: unscored.entry.href, sub: "Il risultato" }
@@ -243,7 +247,7 @@ export default async function Home() {
             sessions: fullPlayer.sessionsPlayed,
             winPct,
             rating: Math.round(glicko),
-            division: { name: division.name, next: getNextDivision(glicko)?.name ?? null, pointsToNext: pointsToNext(glicko) },
+            division: { name: division.name, color: division.color, next: getNextDivision(glicko)?.name ?? null, pointsToNext: pointsToNext(glicko) },
             insight: isNew ? null : recs.performanceInsight?.label ?? null,
           }}
         />
@@ -265,7 +269,12 @@ export default async function Home() {
           <NextMatchCard match={nextMatch} />
         </div>
       )}
-      {scopri && (
+      {playAgain && (
+        <div {...rise()}>
+          <PlayAgainCard ask={playAgain} />
+        </div>
+      )}
+      {scopri && !scopri.minor && (
         <div {...rise()}>
           <ScopriHomeCard {...scopri} city={player.homeCity} />
         </div>
@@ -349,8 +358,8 @@ export default async function Home() {
 
       {/* ── Discover ───────────────────────────────────────────────────── */}
       <section {...rise()} aria-labelledby="discover-title">
-        <div className="flex flex-col gap-3">
-          <CrestHeading id="discover-title" eyebrow="Classifiche" title="Scopri" />
+        <div className="tone-compete flex flex-col gap-3">
+          <CrestHeading id="discover-title" eyebrow="Classifiche" title="Esplora" />
           <div className="grid grid-cols-2 gap-2">
             {[
               { href: "/settimana", icon: TrendingUp, label: "La settimana", sub: "Chi ha giocato di più" },
@@ -363,7 +372,7 @@ export default async function Home() {
                 href={d.href}
                 className="pressable flex min-h-[5.5rem] flex-col justify-between rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-4 ring-1 ring-[var(--crest-hair)] active:bg-[var(--surface-3)]"
               >
-                <d.icon className="h-6 w-6 text-[var(--accent)]" aria-hidden="true" />
+                <d.icon className="h-6 w-6 text-[var(--tone)]" aria-hidden="true" />
                 <span>
                   <span className="block text-base font-extrabold leading-tight text-white">{d.label}</span>
                   <span className="block text-xs text-[var(--muted-text)]">{d.sub}</span>
@@ -397,12 +406,12 @@ export default async function Home() {
 }
 
 /**
- * The home wears the logo's colours (see .theme-crest): brand black instead
- * of the sea at dusk, white hairlines, lime only where it counts.
+ * The home sits on the same Riviera night sky as every page (AppBackground
+ * shows through) and adds the crest's white hairlines (.theme-crest).
  */
 function HomeShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="theme-crest relative min-h-dvh overflow-x-hidden bg-[var(--background)]">
+    <div className="theme-crest relative min-h-dvh overflow-x-hidden">
       <div
         className="relative z-10 flex flex-col gap-6 px-4 pb-8"
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}

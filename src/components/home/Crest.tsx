@@ -4,58 +4,59 @@ import { ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 /**
- * The logo's shield: a white (or lime) monoline frame with a chevron tip.
- * Two nested clip-paths instead of a border, because borders are clipped away
- * on a polygon; the 2px gap between them is the line. Keep content clear of
- * the tip with bottom padding at least as deep as `tip`.
+ * The home's card: rounded like everything else in the Riviera style, with a
+ * hairline and, for the card that holds the main action, a coral glow from
+ * the top corner instead of a heavy frame.
  */
 export function Crest({
   children,
   className,
   innerClassName,
-  line = "white",
-  tip = "1.75rem",
+  line = "hair",
 }: {
   children: React.ReactNode
   className?: string
   innerClassName?: string
-  line?: "white" | "lime" | "hair"
-  tip?: string
+  line?: "accent" | "hair"
 }) {
   return (
     <div
       className={cn(
-        "crest-clip p-[2px]",
-        line === "lime" ? "bg-[var(--accent)]" : line === "hair" ? "bg-[var(--crest-hair)]" : "bg-[var(--crest-line)]",
+        "relative overflow-hidden rounded-[var(--radius-lg)] shadow-[var(--shadow-card)] ring-1",
+        line === "accent" ? "ring-[var(--accent-line)]" : "ring-[var(--crest-hair)]",
         className,
       )}
-      style={{ "--crest-tip": tip } as React.CSSProperties}
+      style={{
+        background:
+          line === "accent"
+            ? "radial-gradient(120% 70% at 0% 0%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 60%), var(--surface-2)"
+            : "linear-gradient(180deg, var(--surface-2), var(--surface-1))",
+      }}
     >
-      <div className={cn("crest-clip relative bg-[var(--surface-1)]", innerClassName)}>{children}</div>
+      <div className={cn("relative", innerClassName)}>{children}</div>
     </div>
   )
 }
 
-/** Small solid shield with a number or a short mark: ranks, steps, places. */
+/** Small solid badge with a number or a short mark: ranks, steps, places. */
 export function CrestBadge({
   children,
   className,
-  tone = "lime",
+  tone = "accent",
 }: {
   children: React.ReactNode
   className?: string
-  tone?: "lime" | "white" | "dark"
+  tone?: "accent" | "white" | "dark"
 }) {
   return (
     <span
       className={cn(
-        "crest-clip num flex shrink-0 items-start justify-center pt-[0.35em] leading-none",
-        tone === "lime" && "bg-[var(--accent)] text-black",
+        "num flex shrink-0 items-center justify-center rounded-[0.8rem] leading-none",
+        tone === "accent" && "bg-[var(--tone,var(--accent))] text-black",
         tone === "white" && "bg-[var(--crest-line)] text-black",
-        tone === "dark" && "bg-[var(--surface-4)] text-[var(--accent)]",
+        tone === "dark" && "bg-[var(--surface-4)] text-[var(--tone,var(--accent))]",
         className,
       )}
-      style={{ "--crest-tip": "28%" } as React.CSSProperties}
     >
       {children}
     </span>
@@ -63,8 +64,8 @@ export function CrestBadge({
 }
 
 /**
- * Section title in the crest voice: lime eyebrow, white condensed title, and
- * a hairline running to the edge like the bar of a coat of arms.
+ * Section title: eyebrow in the area's tone (set a tone-* class on a parent),
+ * white title, and a hairline running to the edge.
  */
 export function CrestHeading({
   id,
@@ -83,14 +84,14 @@ export function CrestHeading({
   return (
     <div className={cn("flex items-end gap-3", className)}>
       <div className="min-w-0">
-        {eyebrow && <p className="eyebrow text-[var(--accent)]">{eyebrow}</p>}
+        {eyebrow && <p className="eyebrow text-[var(--tone)]">{eyebrow}</p>}
         <h2 id={id} className="font-display text-2xl font-extrabold leading-none text-white">{title}</h2>
       </div>
       <span aria-hidden="true" className="mb-1.5 h-px min-w-6 flex-1 bg-[var(--crest-hair)]" />
       {action && (
         <Link
           href={action.href}
-          className="-my-2 flex min-h-[2.75rem] shrink-0 items-center gap-0.5 text-sm font-bold text-[var(--accent)]"
+          className="-my-2 flex min-h-[2.75rem] shrink-0 items-center gap-0.5 text-sm font-bold text-[var(--tone)]"
         >
           {action.label}
           <ChevronRight className="h-4 w-4" aria-hidden="true" />
@@ -100,12 +101,12 @@ export function CrestHeading({
   )
 }
 
-/** Logo + wordmark, spaced like the lettering on the shield. */
+/** Logo + wordmark: the crest and SANDER in capitals. */
 export function CrestWordmark() {
   return (
     <Link href="/" className="flex min-h-[2.75rem] items-center gap-2.5" aria-label="SANDER, home">
-      <Image src="/icon-192.png" alt="" width={40} height={40} className="rounded-[0.6rem]" loading="eager" />
-      <span className="font-display text-[1.35rem] font-black leading-none tracking-[0.22em] text-white">
+      <Image src="/icon-192.png" alt="" width={40} height={40} className="rounded-[0.7rem] ring-1 ring-[var(--crest-hair)]" loading="eager" />
+      <span className="font-display text-[1.3rem] font-extrabold uppercase leading-none tracking-[0.16em] text-white">
         Sander
       </span>
     </Link>

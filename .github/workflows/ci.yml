@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Tipi, test e lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx tsc --noEmit
+      - run: npx vitest run
+      # Errors fail the build; the remaining warnings are listed, not blocking.
+      - run: npx eslint . --quiet
+
+  e2e:
+    name: Prova end-to-end
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: sander
+          POSTGRES_PASSWORD: sander
+          POSTGRES_DB: sander
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://sander:sander@localhost:5432/sander
+      AUTH_SECRET: ci-only-secret-used-nowhere-else
+      AUTH_TRUST_HOST: "true"
+      AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma db push
+      - run: npx prisma generate
+      - run: node scripts/e2e/seed.mjs
+      - run: npx next build
+      - name: Start the app
+        run: |
+          npx next start -p 3000 > next.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:3000/ > /dev/null && exit 0; sleep 1; done
+          cat next.log; exit 1
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/e2e/smoke.mjs
+        env:
+          BASE_URL: http://localhost:3000
+      - name: Screenshot on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure
+          path: |
+            e2e-failure.png
+            next.log
+          if-no-files-found: ignore

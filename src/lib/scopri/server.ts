@@ -14,6 +14,7 @@ import {
   likesLeft,
   acesLeft,
   chatTurn,
+  isPlus,
   MIN_AGE,
   DEFAULT_MAX_GAP,
   type DealbreakerSide,
@@ -22,6 +23,8 @@ import {
 import { discoverScore, stableJitter, type DiscoverPerson, type DiscoverScore } from "./score"
 import { dailyPairs } from "./stableMatch"
 import { blockedWith } from "./blocks"
+import { reliabilityPct, isVerified, freeToday, rankKey, VERIFIED_MIN_GAMES, type FreeSlot } from "./reliability"
+import { againPct, againBonus } from "./playAgain"
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  Scopri on the server: who is in the pool, the deck, matches, daily pick.   */
@@ -43,8 +46,10 @@ export const CARD_SELECT = {
   matchesLost: true,
   level: true,
   userId: true,
+  sessionsPlayed: true,
+  _count: { select: { attendanceEvents: true } },
   discoverProfile: true,
-  discoverPhotos: { orderBy: { position: "asc" }, select: { id: true, url: true } },
+  discoverPhotos: { where: { hiddenAt: null }, orderBy: { position: "asc" }, select: { id: true, url: true } },
   discoverPrompts: { orderBy: { position: "asc" }, select: { id: true, promptKey: true, answer: true, position: true } },
   availability: { select: { weekday: true, slot: true } },
 } as const satisfies Prisma.PlayerSelect
@@ -63,13 +68,25 @@ export interface ScopriCard {
   rating: number
   division: string
   games: number
+  /** Completed matches on SANDER (presences). */
+  played: number
+  /** Share of presences 0–100, null with no history. */
+  reliability: number | null
+  verified: boolean
+  /** "Libero oggi" slot, null if not free today. */
+  freeToday: FreeSlot | null
+  /** Share of "rigiocherei" from people who played with them, null below 3 votes. */
+  again: number | null
   photos: { id: string; url: string }[]
   prompts: { id: string; key: string; question: string; answer: string }[]
   score?: number
   reasons?: string[]
 }
 
-export function toCard(row: CardRow, now: Date = new Date(), score?: DiscoverScore): ScopriCard {
+export type AgainVotes = Map<string, { yes: number; no: number }>
+
+export function toCard(row: CardRow, now: Date = new Date(), score?: DiscoverScore, votes?: AgainVotes): ScopriCard {
+  const v = votes?.get(row.id)
   const photos = row.discoverPhotos.length > 0
     ? row.discoverPhotos
     : row.avatarUrl
@@ -86,10 +103,19 @@ export function toCard(row: CardRow, now: Date = new Date(), score?: DiscoverSco
     rating: Math.round(row.glickoRating),
     division: getDivision(row.glickoRating).name,
     games: ratedGames(row),
+    played: row.sessionsPlayed,
+    reliability: reliabilityOf(row),
+    verified: isVerified(row.sessionsPlayed, reliabilityOf(row)),
+    freeToday: freeToday(row.discoverProfile?.freeDay, row.discoverProfile?.freeSlot, now),
+    again: v ? againPct(v.yes, v.no) : null,
     photos,
     prompts: row.discoverPrompts.map((p) => ({ id: p.id, key: p.promptKey, question: promptText(p.promptKey), answer: p.answer })),
     ...(score ? { score: score.score, reasons: score.reasons } : {}),
   }
+}
+
+export function reliabilityOf(row: Pick<CardRow, "sessionsPlayed" | "_count">): number | null {
+  return reliabilityPct(row.sessionsPlayed, row._count.attendanceEvents)
 }
 
 export function readiness(row: CardRow, now: Date = new Date()) {
@@ -136,18 +162,56 @@ export async function loadCardRow(playerId: string): Promise<CardRow | null> {
   return db.player.findUnique({ where: { id: playerId }, select: CARD_SELECT })
 }
 
-/** Everyone who can be shown on Scopri right now: real, adult, complete, not paused. */
-export async function loadPool(now: Date = new Date()): Promise<CardRow[]> {
+/** "Rigiocherei" votes received by each of `ids`. */
+export async function againVotes(ids: string[]): Promise<AgainVotes> {
+  const out: AgainVotes = new Map()
+  if (ids.length === 0) return out
+  const rows = await db.playAgainVote.groupBy({ by: ["targetId", "again"], where: { targetId: { in: ids } }, _count: { _all: true } })
+  for (const r of rows) {
+    const cur = out.get(r.targetId) ?? { yes: 0, no: 0 }
+    if (r.again) cur.yes += r._count._all
+    else cur.no += r._count._all
+    out.set(r.targetId, cur)
+  }
+  return out
+}
+
+/** Narrows the pool in the database for one viewer (their own dealbreakers, SANDER+ filters). */
+export interface PoolFilter {
+  exclude?: string[]
+  cities?: string[]
+  gender?: string | null
+  role?: "BLOCKER" | "DEFENDER" | null
+  rating?: { min: number; max: number }
+  onlyVerified?: boolean
+  onlyFreeDay?: string
+}
+
+/** Rows read at most per pool query: the deck is scored in memory, so it stays bounded. */
+const POOL_CAP = 600
+
+/** Everyone who can be shown on Scopri right now: real, adult, complete, not paused or suspended. */
+export async function loadPool(now: Date = new Date(), f: PoolFilter = {}): Promise<CardRow[]> {
   const adultBefore = new Date(now)
   adultBefore.setUTCFullYear(adultBefore.getUTCFullYear() - MIN_AGE)
   const rows = await db.player.findMany({
     where: {
       ...NOT_DELETED_PLAYER,
       userId: { not: null },
-      homeCity: { not: null },
+      homeCity: f.cities?.length ? { in: f.cities } : { not: null },
       birthDate: { not: null, lte: adultBefore },
-      discoverProfile: { is: { paused: false } },
+      discoverProfile: {
+        is: { paused: false, suspendedAt: null, ...(f.onlyFreeDay ? { freeDay: f.onlyFreeDay } : {}) },
+      },
+      discoverPrompts: { some: {} },
+      ...(f.exclude?.length ? { id: { notIn: f.exclude } } : {}),
+      ...(f.gender ? { gender: f.gender } : {}),
+      ...(f.role ? { preferredRole: f.role } : {}),
+      ...(f.rating ? { glickoRating: { gte: f.rating.min, lte: f.rating.max } } : {}),
+      ...(f.onlyVerified ? { sessionsPlayed: { gte: VERIFIED_MIN_GAMES } } : {}),
     },
+    orderBy: { updatedAt: "desc" },
+    take: POOL_CAP,
     select: CARD_SELECT,
   })
   return rows.filter((r) => readiness(r, now).length === 0)
@@ -155,29 +219,68 @@ export async function loadPool(now: Date = new Date()): Promise<CardRow[]> {
 
 /** People `meId` must not see in the deck: self, blocks, matches, likes and recent skips. */
 export async function hiddenFor(meId: string, now: Date = new Date()): Promise<Set<string>> {
-  const [swipes, matches, blocked] = await Promise.all([
+  const [swipes, matches, blocked, noVotes] = await Promise.all([
     db.playerSwipe.findMany({ where: { fromId: meId }, select: { toId: true, liked: true, createdAt: true } }),
     db.playerMatch.findMany({ where: { OR: [{ aId: meId }, { bId: meId }] }, select: { aId: true, bId: true } }),
     blockedWith(meId),
+    // A "non rigiocherei" either way keeps the two apart.
+    db.playAgainVote.findMany({
+      where: { again: false, OR: [{ voterId: meId }, { targetId: meId }] },
+      select: { voterId: true, targetId: true },
+    }),
   ])
   const out = new Set<string>([meId, ...blocked])
   for (const s of swipes) if (swipeHides(s, now)) out.add(s.toId)
   for (const m of matches) out.add(m.aId === meId ? m.bId : m.aId)
+  for (const v of noVotes) out.add(v.voterId === meId ? v.targetId : v.voterId)
   return out
 }
 
-/** The next cards for `me`, best first, with a little daily shuffle among close scores. */
+/**
+ * The next cards for `me`, best first. Order = affinity, weighted by showing
+ * up, verified, and "libero oggi" (see rankKey), with a small daily shuffle.
+ */
 export async function buildDeck(me: CardRow, now: Date = new Date(), limit = 12): Promise<ScopriCard[]> {
-  const [pool, hidden] = await Promise.all([loadPool(now), hiddenFor(me.id, now)])
+  const hidden = await hiddenFor(me.id, now)
+  const p = me.discoverProfile
+  const plus = isPlus(p?.plusUntil, now)
+  const gap = p?.maxGap ?? DEFAULT_MAX_GAP
+  // My own dealbreakers narrow the query; theirs are checked below (mutual).
+  const pool = await loadPool(now, {
+    exclude: [...hidden],
+    cities: p?.prefCities,
+    gender: p?.prefGender,
+    role: p?.prefRole,
+    rating: { min: me.glickoRating - gap, max: me.glickoRating + gap },
+    onlyVerified: plus && p?.onlyVerified,
+    onlyFreeDay: plus && p?.onlyFreeToday ? dayKey(now) : undefined,
+  })
+  const votes = await againVotes(pool.map((r) => r.id))
   const meSide = sideOf(me)
   const mePerson = personOf(me)
+  const meFree = freeToday(me.discoverProfile?.freeDay, me.discoverProfile?.freeSlot, now)
   const day = dayKey(now)
   return pool
     .filter((r) => !hidden.has(r.id) && mutuallyEligible(meSide, sideOf(r)))
-    .map((r) => ({ r, s: discoverScore(mePerson, personOf(r)), j: stableJitter(`${day}:${me.id}:${r.id}`) }))
-    .sort((a, b) => b.s.score + b.j - (a.s.score + a.j) || (a.r.id < b.r.id ? -1 : 1))
+    .filter((r) => !(plus && p?.onlyVerified) || isVerified(r.sessionsPlayed, reliabilityOf(r)))
+    .map((r) => {
+      const s = discoverScore(mePerson, personOf(r))
+      const reliability = reliabilityOf(r)
+      const v = votes.get(r.id)
+      const key = rankKey({
+        score: s.score,
+        jitter: stableJitter(`${day}:${me.id}:${r.id}`),
+        reliability,
+        verified: isVerified(r.sessionsPlayed, reliability),
+        themFree: freeToday(r.discoverProfile?.freeDay, r.discoverProfile?.freeSlot, now),
+        meFree,
+        again: againBonus(v ? againPct(v.yes, v.no) : null),
+      })
+      return { r, s, key }
+    })
+    .sort((a, b) => b.key - a.key || (a.r.id < b.r.id ? -1 : 1))
     .slice(0, limit)
-    .map(({ r, s }) => toCard(r, now, s))
+    .map(({ r, s }) => toCard(r, now, s, votes))
 }
 
 /** Likes, Aces and "vedi tutti" left for `meId`. */
@@ -189,16 +292,23 @@ export async function allowance(meId: string, now: Date = new Date()) {
     db.playerSwipe.count({ where: { fromId: meId, isAce: true, createdAt: { gte: romeWeekStart(now) } } }),
     db.discoverProfile.findUnique({
       where: { playerId: meId },
-      select: { bonusLikes: true, bonusAces: true, likesUnlockedUntil: true },
+      select: { bonusLikes: true, bonusAces: true, likesUnlockedUntil: true, plusUntil: true },
     }),
   ])
-  const reveal = profile?.likesUnlockedUntil && profile.likesUnlockedUntil > now ? profile.likesUnlockedUntil : null
+  const plus = isPlus(profile?.plusUntil, now)
+  // SANDER+ always sees everyone who likes them; otherwise "vedi tutti" bought with SC.
+  const reveal = plus
+    ? profile?.plusUntil
+    : profile?.likesUnlockedUntil && profile.likesUnlockedUntil > now
+      ? profile.likesUnlockedUntil
+      : null
   return {
     likesUsed: likesToday,
     acesUsed: acesWeek,
-    likes: likesLeft(likesToday, profile?.bonusLikes ?? 0),
-    aces: acesLeft(acesWeek, profile?.bonusAces ?? 0),
+    likes: likesLeft(likesToday, profile?.bonusLikes ?? 0, plus),
+    aces: acesLeft(acesWeek, profile?.bonusAces ?? 0, plus),
     revealUntil: reveal ? reveal.toISOString() : null,
+    plusUntil: plus && profile?.plusUntil ? profile.plusUntil.toISOString() : null,
   }
 }
 
@@ -279,7 +389,7 @@ const MINI_SELECT = {
   avatarUrl: true,
   homeCity: true,
   preferredRole: true,
-  discoverPhotos: { orderBy: { position: "asc" }, take: 1, select: { url: true } },
+  discoverPhotos: { where: { hiddenAt: null }, orderBy: { position: "asc" }, take: 1, select: { url: true } },
 } as const satisfies Prisma.PlayerSelect
 
 type MiniRow = Prisma.PlayerGetPayload<{ select: typeof MINI_SELECT }>
@@ -331,18 +441,20 @@ export async function matchList(meId: string, now: Date = new Date()): Promise<M
     },
   })
   const threadIds = matches.map((m) => m.threadId).filter((t): t is string => !!t)
-  const [last, mine] = threadIds.length
+  // One message per thread (take: 1 per relation), not every message of every chat.
+  const [threads, mine] = threadIds.length
     ? await Promise.all([
-        db.chatMessage.findMany({
-          where: { threadId: { in: threadIds } },
-          orderBy: { createdAt: "desc" },
-          distinct: ["threadId"],
-          select: { threadId: true, senderId: true, body: true, createdAt: true },
+        db.chatThread.findMany({
+          where: { id: { in: threadIds } },
+          select: {
+            id: true,
+            messages: { orderBy: { createdAt: "desc" }, take: 1, select: { senderId: true, body: true, createdAt: true } },
+          },
         }),
         db.chatParticipant.findMany({ where: { threadId: { in: threadIds }, playerId: meId }, select: { threadId: true, lastReadAt: true } }),
       ])
     : [[], []]
-  const lastBy = new Map(last.map((m) => [m.threadId, m]))
+  const lastBy = new Map(threads.filter((t) => t.messages[0]).map((t) => [t.id, t.messages[0]]))
   const readBy = new Map(mine.map((p) => [p.threadId, p.lastReadAt]))
 
   const rows = matches.map((m): MatchRow => {
@@ -399,6 +511,7 @@ export async function incomingLikes(meId: string, now: Date = new Date()): Promi
   ])
   const me = await loadCardRow(meId)
   const mePerson = me ? personOf(me) : null
+  const votes = await againVotes(rows.map((r) => r.from.id))
   return rows
     .filter((r) => !blocked.has(r.from.id))
     .map((r) => ({
@@ -408,7 +521,7 @@ export async function incomingLikes(meId: string, now: Date = new Date()): Promi
       targetLabel: r.targetLabel,
       comment: r.comment,
       createdAt: r.createdAt.toISOString(),
-      card: toCard(r.from, now, mePerson ? discoverScore(mePerson, personOf(r.from)) : undefined),
+      card: toCard(r.from, now, mePerson ? discoverScore(mePerson, personOf(r.from)) : undefined, votes),
     }))
 }
 
@@ -426,15 +539,17 @@ export async function computeDailyPicks(day: string, now: Date = new Date()): Pr
   const pool = await loadPool(now)
   if (pool.length < 2) return 0
   const ids = pool.map((p) => p.id)
-  const [swipes, matches, blocks] = await Promise.all([
+  const [swipes, matches, blocks, noVotes] = await Promise.all([
     db.playerSwipe.findMany({ where: { fromId: { in: ids }, toId: { in: ids } }, select: { fromId: true, toId: true, liked: true, createdAt: true } }),
     db.playerMatch.findMany({ where: { aId: { in: ids }, bId: { in: ids } }, select: { aId: true, bId: true } }),
     db.playerBlock.findMany({ where: { blockerId: { in: ids }, blockedId: { in: ids } }, select: { blockerId: true, blockedId: true } }),
+    db.playAgainVote.findMany({ where: { again: false, voterId: { in: ids }, targetId: { in: ids } }, select: { voterId: true, targetId: true } }),
   ])
   const banned = new Set<string>()
   for (const s of swipes) if (swipeHides(s, now)) banned.add(pairKey(s.fromId, s.toId))
   for (const m of matches) banned.add(pairKey(m.aId, m.bId))
   for (const b of blocks) banned.add(pairKey(b.blockerId, b.blockedId))
+  for (const v of noVotes) banned.add(pairKey(v.voterId, v.targetId))
 
   const byId = new Map(pool.map((r) => [r.id, { side: sideOf(r), person: personOf(r) }]))
   const cache = new Map<string, DiscoverScore>()
@@ -499,9 +614,9 @@ export async function dailyPickFor(me: CardRow, now: Date = new Date()): Promise
       select: { id: true },
     }),
   ])
-  if (!pick || blocked.has(pick.id) || readiness(pick, now).length > 0 || pick.discoverProfile?.paused) return null
+  if (!pick || blocked.has(pick.id) || readiness(pick, now).length > 0 || pick.discoverProfile?.paused || pick.discoverProfile?.suspendedAt) return null
   return {
-    card: toCard(pick, now, { score: row.score, reasons: row.reasons }),
+    card: toCard(pick, now, { score: row.score, reasons: row.reasons }, await againVotes([pick.id])),
     seen: !!match || (!!swipe && swipe.createdAt >= romeDayStart(now)),
   }
 }
@@ -525,5 +640,21 @@ export async function scopriSummary(playerId: string, city: string | null, now: 
       : Promise.resolve(0),
   ])
   const ready = !!me && readiness(me, now).length === 0 && !me.discoverProfile?.paused
-  return { ready, likes, waiting, nearby }
+  // Scopri is adults only: minors never see the card.
+  const minor = !!me?.birthDate && ageOn(me.birthDate, now) < MIN_AGE
+  return { ready, likes, waiting, nearby, minor }
+}
+
+/** Stamp readyAt the first time a profile becomes complete (for "nuovi su Scopri"). */
+export async function markReadyIfComplete(playerId: string, now: Date = new Date()): Promise<boolean> {
+  const row = await loadCardRow(playerId)
+  if (!row || readiness(row, now).length > 0) return false
+  if (!row.discoverProfile?.readyAt) {
+    await db.discoverProfile.upsert({
+      where: { playerId },
+      create: { playerId, readyAt: now },
+      update: { readyAt: now },
+    })
+  }
+  return true
 }

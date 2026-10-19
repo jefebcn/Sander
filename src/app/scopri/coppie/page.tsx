@@ -14,6 +14,7 @@ import {
   duoLikesUsedToday,
   incomingDuoLikes,
   duoMatchList,
+  duoLeaderboard,
   toDuoCard,
 } from "@/lib/scopri/duos"
 import { ScopriNav } from "@/components/scopri/ScopriNav"
@@ -25,12 +26,13 @@ export default async function CoppiePage() {
   const player = await getCurrentPlayer()
   if (!player) redirect("/auth/signin?callbackUrl=/scopri/coppie")
   const now = new Date()
-  const [duo, sent, invites, likes, matches] = await Promise.all([
+  const [duo, sent, invites, likes, matches, leaderboard] = await Promise.all([
     activeDuoOf(player.id),
     sentInviteOf(player.id),
     invitesFor(player.id),
     incomingLikes(player.id, now),
     matchList(player.id, now),
+    duoLeaderboard(),
   ])
   const waiting = matches.filter((m) => m.turn !== "in-attesa").length
 
@@ -53,6 +55,7 @@ export default async function CoppiePage() {
           likesLeft: Math.max(0, DUO_LIKES_PER_DAY - used),
           incoming,
           matches: duoMatches,
+          leaderboard,
         }}
       />
     </div>

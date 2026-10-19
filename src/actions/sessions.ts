@@ -23,6 +23,8 @@ import {
   isActiveStatus,
   JOIN_GRACE_MS,
 } from "@/lib/sessionRules"
+import { isLateCancel } from "@/lib/scopri/reliability"
+import { rateDuoMatch } from "@/lib/scopri/duos"
 import { rewardInvitesAfterMatch } from "@/lib/referralRedeem"
 import { refundSessionCredits } from "@/lib/sessionRefunds"
 import { updateGlickoAfterSession } from "@/lib/rating"
@@ -464,9 +466,14 @@ export async function leaveSession(sessionId: string) {
 
     const session = await tx.session.findUnique({
       where: { id: sessionId },
-      select: { status: true },
+      select: { status: true, date: true },
     })
     wasFull = session?.status === "FULL"
+    // Leaving in the last hours leaves the others short: it counts against
+    // your attendance on Scopri (lib/scopri/reliability).
+    if (session && isActiveStatus(session.status) && isLateCancel(session.date)) {
+      await tx.attendanceEvent.create({ data: { playerId: player.id, sessionId, kind: "LATE_CANCEL" } })
+    }
 
     // Refund exactly what this player paid — never a flat quota, or anyone the
     // organiser added for free could farm credits by joining and leaving.
@@ -743,6 +750,11 @@ export async function completeSession(
         },
       })
     }
+
+    // A 2v2 between two Scopri pairs also moves the pair ratings (Coppie).
+    if (winningTeam !== null) {
+      await rateDuoMatch(sessionId, winningTeam).catch((e) => console.error("duo rating failed", e))
+    }
   }
 
   // Update Glicko-2 ratings (dampened for friendly sessions)
@@ -860,6 +872,33 @@ async function seatTransaction(
     }
     throw e
   }
+}
+
+/**
+ * Organiser marks a registered player who never showed up: they leave the
+ * match (seat freed, as with a removal) and it counts against their attendance
+ * on Scopri. Only between the start and 48 hours after, before closing it.
+ */
+export async function markNoShow(participantId: string) {
+  const player = await getCurrentPlayer()
+  if (!player) throw new Error("Non autenticato")
+  SessionIdSchema.parse(participantId)
+  const part = await db.sessionParticipant.findUnique({
+    where: { id: participantId },
+    select: { playerId: true, sessionId: true, session: { select: { organizerId: true, status: true, date: true } } },
+  })
+  if (!part) throw new Error("Giocatore non trovato")
+  if (!part.playerId) throw new Error("Vale solo per i giocatori con un account")
+  if (part.session.organizerId !== player.id) throw new Error("Solo l'organizzatore può segnarlo")
+  if (part.playerId === player.id) throw new Error("Non puoi segnare te stesso")
+  if (!isActiveStatus(part.session.status)) throw new Error("La partita è già chiusa")
+  const now = Date.now()
+  if (part.session.date.getTime() > now) throw new Error("Si può segnare solo dopo l'inizio della partita")
+  if (now - part.session.date.getTime() > 48 * 3600_000) throw new Error("Sono passate più di 48 ore")
+
+  await removeParticipantFromSession(participantId)
+  await db.attendanceEvent.create({ data: { playerId: part.playerId, sessionId: part.sessionId, kind: "NO_SHOW" } })
+  return { ok: true as const }
 }
 
 /** Organiser removes a seat (guest or registered player). Paid credits go back. */
