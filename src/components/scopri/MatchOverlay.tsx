@@ -40,7 +40,7 @@ export function MatchOverlay({
         <Face url={photo} className="-ml-6 rotate-6" />
       </div>
       <div>
-        <h2 id="match-title" className="font-display text-6xl font-extrabold leading-none text-white">È un match!</h2>
+        <h2 id="match-title" className="font-hand text-7xl leading-none text-white">È un match!</h2>
         <p className="mt-3 font-serif text-2xl text-white/90">Tu e {name} volete giocare insieme.</p>
       </div>
       <div className="flex w-full max-w-sm flex-col gap-2">

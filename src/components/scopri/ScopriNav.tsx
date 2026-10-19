@@ -15,7 +15,7 @@ export function ScopriNav({ active, likes = 0, waiting = 0 }: { active: Tab; lik
   return (
     <header className="sticky top-0 z-20 -mx-4 mb-4 bg-[color-mix(in_srgb,var(--background)_88%,transparent)] px-4 pb-2 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] backdrop-blur-xl">
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-4xl font-extrabold text-white">
+        <h1 className="font-hand text-[2.9rem] leading-none text-white">
           {active === "scopri" ? "Scopri" : active === "like" ? "Ti vogliono" : active === "match" ? "Match" : "Coppie 2v2"}
         </h1>
         <Link

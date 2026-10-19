@@ -188,6 +188,15 @@ function FormRow({
   )
 }
 
+/** "01 · NOME": the small numbered label above each question. */
+function Step({ n, label }: { n: string; label: string }) {
+  return (
+    <span className="block text-xs font-semibold uppercase tracking-[0.12em] text-white/60">
+      <span className="text-[var(--accent)]">{n}</span> · {label}
+    </span>
+  )
+}
+
 // ─── Main form ─────────────────────────────────────────────────────────────────
 
 interface InitialData {
@@ -310,43 +319,54 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
   }
 
   return (
-    <div className="fixed inset-0 z-[200] flex flex-col overflow-y-auto bg-[var(--surface-1)]">
-      {/* Header */}
-      <div
-        className="flex items-center gap-3 px-4 pt-14 pb-2"
-        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 3.5rem)" }}
-      >
-        {/* Only when editing an existing profile. For a brand-new user this
-            button pushed to /auth/signin — an unlabelled way out of the app. */}
-        {initialData && (
-          <button
-            onClick={() => (canGoBackInApp() ? router.back() : router.push("/profile"))}
-            type="button"
-            aria-label="Indietro"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--surface-3)] text-white transition-colors active:bg-[var(--surface-4)]"
-          >
-            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-          </button>
-        )}
-        <div className="min-w-0">
-          <h1 className="text-2xl font-black leading-tight text-white">
-            {initialData ? "Il tuo profilo" : "Crea la tua carta"}
-          </h1>
-          <p className="mt-0.5 text-sm text-[var(--muted-text)]">
-            {initialData
-              ? "Aggiorna i tuoi dati quando vuoi."
-              : "Bastano nome e ruolo. Comune e livello ti portano subito alle partite giuste."}
-          </p>
-        </div>
+    <div className="fixed inset-0 z-[200] flex flex-col overflow-y-auto bg-[var(--background)]">
+      {/* The poster backdrop: grainy graphite, like the rest of the app. */}
+      <div aria-hidden="true" className="app-bg app-bg--night pointer-events-none fixed inset-0 -z-10">
+        <div className="app-bg__glow" />
+        <div className="app-bg__grain" />
       </div>
 
-      {/* Avatar */}
-      <div className="flex justify-center py-6">
+      {/* Header: small corner info, then the big hand-drawn title. */}
+      <div className="px-5 pb-2" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.25rem)" }}>
+        <div className="flex min-h-[2.75rem] items-center justify-between text-xs font-semibold uppercase tracking-[0.12em] text-white/70">
+          {/* Only when editing an existing profile. For a brand-new user this
+              button pushed to /auth/signin — an unlabelled way out of the app. */}
+          {initialData ? (
+            <button
+              onClick={() => (canGoBackInApp() ? router.back() : router.push("/profile"))}
+              type="button"
+              aria-label="Indietro"
+              className="-ml-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition-colors active:bg-white/20"
+            >
+              <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+            </button>
+          ) : (
+            <span>SANDER</span>
+          )}
+          <span>{initialData ? "Profilo" : "Passo 1 di 2"}</span>
+          <span>Gratis</span>
+        </div>
+        <h1 className="font-hand mt-4 text-[3.25rem] leading-[0.92] text-white">
+          {initialData ? (
+            <>Il tuo <span className="text-[var(--accent)]">profilo</span></>
+          ) : (
+            <>Crea la tua <span className="text-[var(--accent)]">carta</span></>
+          )}
+        </h1>
+        <p className="mt-2 text-base leading-snug text-white/70">
+          {initialData
+            ? "Aggiorna i tuoi dati quando vuoi."
+            : "Bastano nome e ruolo. Comune e livello ti portano subito alle partite giuste."}
+        </p>
+      </div>
+
+      {/* Avatar: a photo sticker with a white die-cut border. */}
+      <div className="flex flex-col items-center gap-3 py-7">
         <div className="relative">
           <button
             type="button"
             onClick={handleAvatarButton}
-            className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full"
+            className="film relative flex h-36 w-32 -rotate-[4deg] items-center justify-center overflow-hidden rounded-[1.25rem] shadow-[0_18px_34px_-12px_rgb(0_0_0/0.8)] ring-[6px] ring-white"
             style={{ background: "var(--accent)" }}
             aria-label="Cambia foto profilo"
           >
@@ -361,10 +381,10 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
           <button
             type="button"
             onClick={handleAvatarButton}
-            className="absolute -bottom-2 -right-2 flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-3)] shadow-lg ring-4 ring-[var(--surface-1)]"
+            className="absolute -bottom-3 -right-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--accent)] text-black shadow-lg ring-4 ring-[var(--background)]"
             aria-label="Carica foto"
           >
-            <Camera className="h-5 w-5 text-white" aria-hidden="true" />
+            <Camera className="h-5 w-5" aria-hidden="true" />
           </button>
           <input
             ref={fileInputRef}
@@ -374,27 +394,33 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
             onChange={handleAvatarChange}
           />
         </div>
+        <p className="font-hand rotate-[-2deg] text-xl text-white/75">una foto in campo, meglio</p>
       </div>
 
-      {/* Form rows */}
+      {/* Form: numbered steps, like the info rows on the posters. */}
       <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
-        <div className="border-t border-[var(--border)]">
-          <FormRow
-            label="Nome"
+        <div className="border-t border-white/10 px-5 py-5">
+          <Step n="01" label="Nome" />
+          <label htmlFor="onb-first-name" className="font-hand mt-1 block text-[1.9rem] leading-tight text-white">
+            Come ti chiami?
+          </label>
+          <input
+            id="onb-first-name"
+            type="text"
             value={firstName}
-            placeholder="Inserisci il tuo nome"
-            isInput
-            onInputChange={setFirstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            placeholder="Il tuo nome"
+            autoComplete="given-name"
+            className="mt-2 w-full border-b-2 border-white/25 bg-transparent pb-2 font-display text-[1.75rem] font-extrabold text-white placeholder:text-white/30 focus:border-[var(--accent)] focus:outline-none"
           />
         </div>
 
         {/* Role: the whole "complementary role" matching in /trova is built on
             this, and the main onboarding never asked for it. */}
-        <div className="border-t border-[var(--border)] px-5 py-4">
-          <p className="text-base font-bold text-white">In campo come giochi?</p>
-          <p className="mt-0.5 text-sm text-[var(--muted-text)]">
-            Ci serve per trovarti compagni complementari.
-          </p>
+        <div className="border-t border-white/10 px-5 py-5">
+          <Step n="02" label="Ruolo" />
+          <p className="font-hand mt-1 text-[1.9rem] leading-tight text-white">In campo come giochi?</p>
+          <p className="mt-0.5 text-sm text-white/65">Ci serve per trovarti compagni complementari.</p>
           <div className="mt-3 flex gap-2">
             {ROLES.map((r) => (
               <button
@@ -403,21 +429,12 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
                 onClick={() => setRole(r.value)}
                 aria-pressed={role === r.value}
                 className={cn(
-                  "flex min-h-[3.5rem] flex-1 flex-col items-center justify-center rounded-2xl px-3 transition-colors",
-                  role === r.value
-                    ? "bg-[var(--accent)] text-black"
-                    : "bg-[var(--surface-3)] text-white",
+                  "flex min-h-[3.75rem] flex-1 flex-col items-center justify-center rounded-[1.25rem] px-3 transition-colors",
+                  role === r.value ? "bg-[var(--accent)] text-black" : "bg-white/5 text-white ring-1 ring-white/15",
                 )}
               >
                 <span className="text-base font-black">{r.label}</span>
-                <span
-                  className={cn(
-                    "text-xs",
-                    role === r.value ? "text-black/70" : "text-[var(--muted-text)]",
-                  )}
-                >
-                  {r.hint}
-                </span>
+                <span className={cn("text-xs", role === r.value ? "text-black/70" : "text-white/60")}>{r.hint}</span>
               </button>
             ))}
           </div>
@@ -425,11 +442,10 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
 
         {/* Two one-tap questions that make the first home about *your* town
             and *your* level. Optional, so they never block sign-up. */}
-        <div className="border-t border-[var(--border)] px-5 py-4">
-          <p className="text-base font-bold text-white">Dove giochi di solito?</p>
-          <p className="mt-0.5 text-sm text-[var(--muted-text)]">
-            Ti mostriamo prima le partite e la classifica del tuo comune.
-          </p>
+        <div className="border-t border-white/10 px-5 py-5">
+          <Step n="03" label="Comune" />
+          <p className="font-hand mt-1 text-[1.9rem] leading-tight text-white">Dove giochi di solito?</p>
+          <p className="mt-0.5 text-sm text-white/65">Ti mostriamo prima le partite e la classifica del tuo comune.</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {CITY_NAMES.map((c) => (
               <button
@@ -439,7 +455,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
                 aria-pressed={homeCity === c}
                 className={cn(
                   "min-h-[2.75rem] rounded-full px-4 text-sm font-bold transition-colors",
-                  homeCity === c ? "bg-[var(--accent)] text-black" : "bg-[var(--surface-3)] text-white",
+                  homeCity === c ? "bg-[var(--accent)] text-black" : "bg-white/5 text-white ring-1 ring-white/15",
                 )}
               >
                 {c}
@@ -448,11 +464,10 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
           </div>
         </div>
 
-        <div className="border-t border-[var(--border)] px-5 py-4">
-          <p className="text-base font-bold text-white">Che livello sei?</p>
-          <p className="mt-0.5 text-sm text-[var(--muted-text)]">
-            Per proporti partite giuste per te. Poi conta solo come giochi.
-          </p>
+        <div className="border-t border-white/10 px-5 py-5">
+          <Step n="04" label="Livello" />
+          <p className="font-hand mt-1 text-[1.9rem] leading-tight text-white">Che livello sei?</p>
+          <p className="mt-0.5 text-sm text-white/65">Per proporti partite giuste per te. Poi conta solo come giochi.</p>
           <div className="mt-3 grid grid-cols-3 gap-2">
             {START_LEVELS.map((l) => (
               <button
@@ -461,12 +476,12 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
                 onClick={() => setStartLevel(l.id)}
                 aria-pressed={startLevel === l.id}
                 className={cn(
-                  "flex min-h-[3.5rem] flex-col items-center justify-center rounded-2xl px-2 text-center transition-colors",
-                  startLevel === l.id ? "bg-[var(--accent)] text-black" : "bg-[var(--surface-3)] text-white",
+                  "flex min-h-[3.75rem] flex-col items-center justify-center rounded-[1.25rem] px-2 text-center transition-colors",
+                  startLevel === l.id ? "bg-[var(--accent)] text-black" : "bg-white/5 text-white ring-1 ring-white/15",
                 )}
               >
                 <span className="text-sm font-black">{l.label}</span>
-                <span className={cn("text-xs leading-tight", startLevel === l.id ? "text-black/70" : "text-[var(--muted-text)]")}>
+                <span className={cn("text-xs leading-tight", startLevel === l.id ? "text-black/70" : "text-white/60")}>
                   {l.hint}
                 </span>
               </button>
@@ -475,10 +490,9 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
         </div>
 
         {/* Everything below was mandatory before showing any content. */}
-        <details className="border-t border-[var(--border)]">
-          <summary className="cursor-pointer px-5 py-4 text-base font-bold text-white">
-            Completa il profilo{" "}
-            <span className="font-normal text-[var(--muted-text)]">(opzionale)</span>
+        <details className="border-t border-white/10">
+          <summary className="flex min-h-[3.5rem] cursor-pointer items-center px-5 text-xs font-semibold uppercase tracking-[0.12em] text-white/75">
+            Completa il profilo&nbsp;<span className="normal-case tracking-normal text-white/50">(opzionale)</span>
           </summary>
           <div className="border-t border-[var(--border)]">
             <FormRow
@@ -521,27 +535,26 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
 
         <div className="flex-1" />
 
-        {/* Conferma button */}
-        <button
-          type="submit"
-          disabled={!isValid || isPending}
-          className={cn(
-            "flex min-h-[4rem] w-full flex-shrink-0 items-center justify-center font-black text-lg text-black transition-all",
-            isValid && !isPending
-              ? "bg-[var(--accent)]"
-              : "bg-[var(--surface-3)] text-[var(--muted-text)]",
-          )}
-          style={{
-            borderRadius: 0,
-            paddingBottom: "env(safe-area-inset-bottom, 0px)",
-          }}
+        {/* Conferma: sticks to the bottom over a fade, so it's always reachable. */}
+        <div
+          className="sticky bottom-0 bg-gradient-to-t from-[var(--background)] via-[var(--background)] to-transparent px-5 pt-6"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)" }}
         >
-          {isPending ? (
-            <span className="h-5 w-5 animate-spin rounded-full border-2 border-black border-t-transparent" />
-          ) : (
-            "Conferma"
-          )}
-        </button>
+          <button
+            type="submit"
+            disabled={!isValid || isPending}
+            className={cn(
+              "flex min-h-[3.75rem] w-full items-center justify-center rounded-full text-lg font-black transition-all",
+              isValid && !isPending ? "bg-[var(--accent)] text-black" : "bg-white/10 text-white/50",
+            )}
+          >
+            {isPending ? (
+              <span className="h-5 w-5 animate-spin rounded-full border-2 border-black border-t-transparent" />
+            ) : (
+              "Conferma"
+            )}
+          </button>
+        </div>
       </form>
 
       {/* Gender sheet */}

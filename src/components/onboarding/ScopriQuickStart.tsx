@@ -23,7 +23,7 @@ const EXAMPLES: Record<string, string> = {
 }
 
 const inputCls =
-  "min-h-[3.5rem] w-full rounded-[var(--radius-md)] bg-[var(--surface-2)] px-4 text-base text-white outline-none ring-1 ring-[var(--border)] focus:ring-[var(--accent)]"
+  "min-h-[3.5rem] w-full rounded-[1.25rem] bg-white/5 px-4 text-base text-white outline-none ring-1 ring-white/15 focus:ring-[var(--accent)]"
 
 /**
  * Sign-up's last step, optional and one minute long: the photo you just set,
@@ -94,49 +94,72 @@ export function ScopriQuickStart({
     }
   }
 
+  // Numbered like the posters; the age question only shows when it's missing.
+  const steps = hasBirthDate ? ["01", "", "02", "03"] : ["01", "02", "03", "04"]
+  const sticker = uploaded ?? (avatarUrl && useAvatar ? avatarUrl : null)
+
   return (
-    <div className="fixed inset-0 z-[200] flex flex-col overflow-y-auto bg-[var(--surface-1)]">
-      <div
-        className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 pb-10"
-        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.5rem)" }}
-      >
-        <header>
-          <p className="eyebrow text-[var(--accent)]">Ultimo passo · facoltativo</p>
-          <h1 className="mt-2 font-display text-4xl font-extrabold leading-none text-white">
-            {firstName}, trova con chi giocare.
+    <div className="fixed inset-0 z-[200] flex flex-col overflow-y-auto bg-[var(--background)]">
+      {/* The poster backdrop: grainy graphite, like the rest of the app. */}
+      <div aria-hidden="true" className="app-bg app-bg--night pointer-events-none fixed inset-0 -z-10">
+        <div className="app-bg__glow" />
+        <div className="app-bg__grain" />
+      </div>
+
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.25rem)" }}>
+        <header className="px-5 pb-2">
+          <div className="flex min-h-[2.75rem] items-center justify-between text-xs font-semibold uppercase tracking-[0.12em] text-white/70">
+            <span>SANDER</span>
+            <span>Passo 2 di 2</span>
+            <span>Facoltativo</span>
+          </div>
+          <h1 className="font-hand mt-4 text-[3rem] leading-[0.92] text-white">
+            {firstName},<br />
+            trova con chi <span className="text-[var(--accent)]">giocare.</span>
           </h1>
-          <p className="mt-3 font-serif text-2xl leading-snug text-white/90">
+          <p className="mt-3 text-base leading-snug text-white/70">
             Un minuto e sei su Scopri: chi gioca vicino ti vede, ti mette like, e sabato si gioca.
           </p>
         </header>
 
         {/* Foto */}
-        <section aria-labelledby="qs-photo">
-          <h2 id="qs-photo" className="mb-2 text-base font-extrabold text-white">La tua foto</h2>
-          {avatarUrl ? (
-            <button
-              type="button"
-              aria-pressed={useAvatar}
-              onClick={() => setUseAvatar((v) => !v)}
-              className="flex w-full items-center gap-3 rounded-[var(--radius-md)] bg-[var(--surface-2)] p-3 text-left"
-            >
-              <img src={avatarUrl} alt="" className="h-16 w-16 rounded-[var(--radius-sm)] object-cover" />
-              <span className="flex-1 text-base font-bold text-white">Usa la foto profilo su Scopri</span>
-              <span className={cn("flex h-7 w-7 items-center justify-center rounded-full", useAvatar ? "bg-[var(--accent)] text-black" : "ring-2 ring-[var(--muted)]")}>
-                {useAvatar && <Check className="h-4 w-4" aria-hidden="true" />}
-              </span>
-            </button>
-          ) : uploaded || hasPhotos ? (
-            <p className="flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--surface-2)] p-4 text-base font-bold text-white">
-              <Check className="h-5 w-5 text-[var(--success)]" aria-hidden="true" /> Foto aggiunta
-            </p>
+        <section aria-labelledby="qs-photo" className="mt-4 border-t border-white/10 px-5 py-5">
+          <Step n={steps[0]} label="Foto" />
+          <h2 id="qs-photo" className="font-hand mt-1 text-[1.9rem] leading-tight text-white">La tua foto</h2>
+          {avatarUrl || uploaded || hasPhotos ? (
+            <div className="mt-4 flex items-center gap-5">
+              {sticker ? (
+                <img src={sticker} alt="" className="h-28 w-24 shrink-0 -rotate-[4deg] rounded-[1rem] object-cover shadow-[0_14px_28px_-12px_rgb(0_0_0/0.8)] ring-[5px] ring-white" />
+              ) : (
+                <span className="flex h-28 w-24 shrink-0 -rotate-[4deg] items-center justify-center rounded-[1rem] bg-white/5 ring-[5px] ring-white/20">
+                  <Camera className="h-7 w-7 text-white/50" aria-hidden="true" />
+                </span>
+              )}
+              {avatarUrl && !uploaded ? (
+                <button
+                  type="button"
+                  aria-pressed={useAvatar}
+                  onClick={() => setUseAvatar((v) => !v)}
+                  className="flex min-h-[3.5rem] flex-1 items-center gap-3 rounded-[1.25rem] bg-white/5 px-4 text-left ring-1 ring-white/15"
+                >
+                  <span className="flex-1 text-base font-bold text-white">Usa la foto profilo su Scopri</span>
+                  <span className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full", useAvatar ? "bg-[var(--accent)] text-black" : "ring-2 ring-white/30")}>
+                    {useAvatar && <Check className="h-4 w-4" aria-hidden="true" />}
+                  </span>
+                </button>
+              ) : (
+                <p className="flex flex-1 items-center gap-2 text-base font-bold text-white">
+                  <Check className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" /> Foto aggiunta
+                </p>
+              )}
+            </div>
           ) : (
             <>
               <button
                 type="button"
                 disabled={uploading}
                 onClick={() => fileRef.current?.click()}
-                className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-[var(--radius-md)] border-2 border-dashed border-[var(--muted)] text-base font-bold text-white"
+                className="mt-3 flex min-h-[3.75rem] w-full items-center justify-center gap-2 rounded-[1.25rem] border-2 border-dashed border-white/25 text-base font-bold text-white"
               >
                 {uploading ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Camera className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />}
                 Aggiungi una foto, meglio se in campo
@@ -154,29 +177,31 @@ export function ScopriQuickStart({
 
         {/* Età */}
         {!hasBirthDate && (
-          <section aria-labelledby="qs-age">
+          <section aria-labelledby="qs-age" className="border-t border-white/10 px-5 py-5">
+            <Step n={steps[1]} label="Età" />
             <label id="qs-age" className="flex flex-col gap-1">
-              <span className="text-base font-extrabold text-white">La tua data di nascita</span>
-              <span className="text-sm text-[var(--muted-text)]">Scopri è per chi ha almeno {MIN_AGE} anni. Agli altri mostriamo solo l&apos;età.</span>
-              <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} className={cn(inputCls, "mt-1")} />
+              <span className="font-hand mt-1 text-[1.9rem] leading-tight text-white">La tua data di nascita</span>
+              <span className="text-sm text-white/65">Scopri è per chi ha almeno {MIN_AGE} anni. Agli altri mostriamo solo l&apos;età.</span>
+              <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} className={cn(inputCls, "mt-2")} />
             </label>
           </section>
         )}
 
         {/* Risposte */}
-        <section aria-labelledby="qs-prompts" className="flex flex-col gap-3">
+        <section aria-labelledby="qs-prompts" className="flex flex-col gap-3 border-t border-white/10 px-5 py-5">
           <div>
-            <h2 id="qs-prompts" className="text-base font-extrabold text-white">Tre risposte su come giochi</h2>
-            <p className="text-sm text-[var(--muted-text)]">È lì che arrivano i like con un commento. Bastano poche parole.</p>
+            <Step n={steps[2]} label="Risposte" />
+            <h2 id="qs-prompts" className="font-hand mt-1 text-[1.9rem] leading-tight text-white">Tre risposte su come giochi</h2>
+            <p className="mt-0.5 text-sm text-white/65">È lì che arrivano i like con un commento. Bastano poche parole.</p>
           </div>
           {prompts.map((p, i) => (
-            <div key={i} className="rounded-[var(--radius-md)] bg-[var(--surface-2)] p-3">
+            <div key={i} className="rounded-[1.25rem] bg-white/5 p-4 ring-1 ring-white/15 focus-within:ring-[var(--accent)]">
               <label className="sr-only" htmlFor={`qs-q-${i}`}>Domanda {i + 1}</label>
               <select
                 id={`qs-q-${i}`}
                 value={p.promptKey}
                 onChange={(e) => setPrompts((list) => list.map((x, j) => (j === i ? { ...x, promptKey: e.target.value } : x)))}
-                className="w-full bg-transparent text-sm font-bold text-[var(--muted-text)] outline-none"
+                className="w-full bg-transparent text-xs font-semibold uppercase tracking-[0.08em] text-white/70 outline-none"
               >
                 {PROMPTS.filter((q) => q.key === p.promptKey || !prompts.some((x) => x.promptKey === q.key)).map((q) => (
                   <option key={q.key} value={q.key}>{q.text}</option>
@@ -196,8 +221,9 @@ export function ScopriQuickStart({
         </section>
 
         {/* Cosa cerchi */}
-        <section aria-labelledby="qs-look">
-          <h2 id="qs-look" className="mb-2 text-base font-extrabold text-white">Cosa cerchi</h2>
+        <section aria-labelledby="qs-look" className="border-t border-white/10 px-5 py-5">
+          <Step n={steps[3]} label="Cosa cerchi" />
+          <h2 id="qs-look" className="font-hand mt-1 mb-3 text-[1.9rem] leading-tight text-white">Cosa cerchi</h2>
           <div className="flex flex-wrap gap-2">
             {LOOKING_FOR.map((l) => {
               const on = lookingFor.includes(l.key)
@@ -207,7 +233,7 @@ export function ScopriQuickStart({
                   type="button"
                   aria-pressed={on}
                   onClick={() => setLookingFor((list) => (on ? list.filter((x) => x !== l.key) : [...list, l.key]))}
-                  className={cn("min-h-[2.75rem] rounded-full px-4 text-sm font-bold", on ? "bg-[var(--accent)] text-black" : "bg-[var(--surface-2)] text-white ring-1 ring-[var(--border)]")}
+                  className={cn("min-h-[2.75rem] rounded-full px-4 text-sm font-bold transition-colors", on ? "bg-[var(--accent)] text-black" : "bg-white/5 text-white ring-1 ring-white/15")}
                 >
                   {l.label}
                 </button>
@@ -216,22 +242,37 @@ export function ScopriQuickStart({
           </div>
         </section>
 
-        <div className="mt-auto flex flex-col gap-2 pt-2">
+        <div className="flex-1" />
+
+        {/* The way in: sticks to the bottom over a fade, so it's always reachable. */}
+        <div
+          className="sticky bottom-0 flex flex-col gap-1 bg-gradient-to-t from-[var(--background)] via-[var(--background)] to-transparent px-5 pt-6"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
+        >
           <button
             type="button"
             disabled={!canSave || saving}
             onClick={save}
-            className="pressable flex min-h-[3.75rem] items-center justify-center gap-2 rounded-full bg-[var(--accent)] text-lg font-extrabold text-black shadow-[var(--shadow-glow)] disabled:opacity-50"
+            className="pressable flex min-h-[3.75rem] items-center justify-center gap-2 rounded-full bg-[var(--accent)] text-lg font-extrabold text-black shadow-[var(--shadow-glow)] disabled:bg-white/10 disabled:text-white/50 disabled:shadow-none"
           >
             {saving ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <HeartHandshake className="h-5 w-5" aria-hidden="true" />}
             Entra in Scopri
           </button>
-          {!hasPhoto && <p className="text-center text-sm text-[var(--muted-text)]">Senza foto puoi aggiungerla dopo dal profilo Scopri.</p>}
-          <button type="button" onClick={() => router.push("/")} className="min-h-[3.5rem] text-base font-bold text-[var(--muted-text)]">
+          {!hasPhoto && <p className="text-center text-sm text-white/60">Senza foto puoi aggiungerla dopo dal profilo Scopri.</p>}
+          <button type="button" onClick={() => router.push("/")} className="min-h-[3.5rem] text-base font-bold text-white/60">
             Più tardi
           </button>
         </div>
       </div>
     </div>
+  )
+}
+
+/** "01 · FOTO": the small numbered label above each question. */
+function Step({ n, label }: { n: string; label: string }) {
+  return (
+    <span className="block text-xs font-semibold uppercase tracking-[0.12em] text-white/60">
+      <span className="text-[var(--accent)]">{n}</span> · {label}
+    </span>
   )
 }

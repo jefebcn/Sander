@@ -1,6 +1,7 @@
 /**
  * Screenshot Play Store 1080×1920 con didascalia, dalle schermate vere.
- * Usa dati demo (mai utenti reali): avvia l'app in locale col seed e lancia
+ * Usa dati demo (mai utenti reali): avvia l'app in locale col seed, collega le foto demo
+ *   (node scripts/store-demo-photos.mjs) e lancia
  *   BASE=http://localhost:3000 EMAIL=test@sander.local PASSWORD=sander123 node scripts/store-scopri.mjs
  * Output: scripts/store-screenshots/scopri-*.png e feature-graphic-scopri-1024x500.png
  */
@@ -54,6 +55,8 @@ for (const [name, path] of SHOTS) {
 // Frame: graphite, headline on top, the phone screen below with rounded corners.
 const board = await browser.newPage({ viewport: { width: 1080, height: 1920 } })
 const logo = (await readFile(join(__dirname, "..", "public", "icon-192.png"))).toString("base64")
+// Generated photo (Higgsfield), no real people or brands: background of the feature graphic.
+const hero = (await readFile(join(__dirname, "store-assets", "hero-2v2.jpg"))).toString("base64")
 for (const [name, , l1, l2] of SHOTS) {
   await board.setContent(`<!doctype html><html><head>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,800&display=swap" rel="stylesheet">
@@ -82,7 +85,9 @@ await board.setViewportSize({ width: 1024, height: 500 })
 await board.setContent(`<!doctype html><html><head>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,800&family=Figtree:wght@600;700&display=swap" rel="stylesheet">
 <style>
-  body{margin:0;width:1024px;height:500px;overflow:hidden;position:relative;background:radial-gradient(60% 90% at 80% 30%,rgba(198,247,54,.16),transparent 70%),#0b0b0c;color:#fff;font-family:'Bricolage Grotesque',system-ui,sans-serif}
+  body{margin:0;width:1024px;height:500px;overflow:hidden;position:relative;background:#0b0b0c url(data:image/jpeg;base64,${hero}) center 40%/cover no-repeat;color:#fff;font-family:'Bricolage Grotesque',system-ui,sans-serif}
+  body::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,11,12,.88) 0%,rgba(11,11,12,.55) 38%,rgba(11,11,12,0) 62%),linear-gradient(0deg,rgba(11,11,12,.55),transparent 45%)}
+  .l,.phone{z-index:1}
   .l{position:absolute;left:64px;top:78px;width:520px}
   .brand{display:flex;align-items:center;gap:16px}
   .brand img{width:60px;height:60px;border-radius:14px}

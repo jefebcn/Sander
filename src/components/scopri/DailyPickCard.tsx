@@ -51,7 +51,7 @@ export function DailyPickCard({
         className="pressable relative flex w-full items-center gap-4 overflow-hidden rounded-[var(--radius-lg)] p-3 pr-4 text-left shadow-[var(--shadow-card)]"
         style={{ background: "linear-gradient(120deg, color-mix(in srgb, var(--ace) 22%, var(--surface-2)), var(--surface-2) 60%)" }}
       >
-        <span className="relative h-24 w-20 shrink-0 overflow-hidden rounded-[var(--radius-md)] bg-[var(--surface-4)] ring-2 ring-[var(--ace)]">
+        <span className="film relative h-24 w-20 shrink-0 overflow-hidden rounded-[var(--radius-md)] bg-[var(--surface-4)] ring-2 ring-[var(--ace)]">
           {photo && <img src={photo} alt="" className="h-full w-full object-cover" />}
         </span>
         <span className="min-w-0 flex-1">

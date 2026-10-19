@@ -51,3 +51,4 @@ next-env.d.ts
 # E2E artifacts
 e2e-failure*.png
 next.log
+scripts/content-grid/tiktok/.frames/
