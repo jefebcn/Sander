@@ -64,7 +64,7 @@ export default async function ScopriPage() {
       <div className="px-4 pb-10">
         <ScopriNav active="scopri" likes={likes.length} waiting={waiting.length} />
         <div className="rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-6 text-center">
-          <p className="font-display text-3xl font-extrabold text-white">Profilo sospeso</p>
+          <p className="font-hand text-[2.3rem] text-white">Profilo sospeso</p>
           <p className="mt-2 text-base text-[var(--muted-text)]">
             Abbiamo ricevuto segnalazioni sul tuo profilo: per ora non sei visibile su Scopri. Match e chat restano.
             Per chiarimenti scrivi al supporto di SANDER.
@@ -79,7 +79,7 @@ export default async function ScopriPage() {
       <div className="px-4 pb-10">
         <ScopriNav active="scopri" likes={likes.length} waiting={waiting.length} />
         <div className="rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-6 text-center">
-          <p className="font-display text-3xl font-extrabold text-white">Profilo in pausa</p>
+          <p className="font-hand text-[2.3rem] text-white">Profilo in pausa</p>
           <p className="mt-2 text-base text-[var(--muted-text)]">Nessuno ti vede e non ricevi like. Match e chat restano.</p>
           <Link href="/scopri/profilo" className="mt-4 inline-flex min-h-[3.5rem] items-center rounded-full bg-[var(--accent)] px-6 text-base font-extrabold text-black">
             Riattiva
@@ -95,7 +95,7 @@ export default async function ScopriPage() {
         <ScopriNav active="scopri" likes={likes.length} waiting={waiting.length} />
         <section className="rounded-[var(--radius-lg)] p-6 shadow-[var(--shadow-card)]" style={{ background: "linear-gradient(150deg, color-mix(in srgb, var(--social) 26%, var(--surface-2)), var(--surface-2) 65%)" }}>
           <p className="eyebrow text-[var(--social)]">Tocca a te</p>
-          <h2 className="mt-2 font-display text-4xl font-extrabold leading-none text-white">{waiting.length} match ti aspettano</h2>
+          <h2 className="font-hand mt-2 text-[2.75rem] leading-none text-white">{waiting.length} match ti aspettano</h2>
           <p className="mt-3 font-serif text-2xl text-white/90">
             Rispondi prima a loro: un match senza chat è una partita che non si gioca.
           </p>

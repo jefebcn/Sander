@@ -50,7 +50,7 @@ export function ProfileCard({
     <article className={cn("flex flex-col gap-3", className)} aria-label={`Profilo di ${card.name}`}>
       <header className="flex items-end justify-between gap-3 px-1">
         <div className="min-w-0">
-          <h2 className="flex items-center gap-2 font-display text-4xl font-extrabold leading-none text-white">
+          <h2 className="font-hand flex items-center gap-2 text-[2.75rem] leading-none text-white">
             <span className="min-w-0 truncate">
               {card.name}
               {card.age !== null && <span className="font-serif text-3xl font-normal text-[var(--muted-text)]">, {card.age}</span>}

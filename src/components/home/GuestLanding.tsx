@@ -60,7 +60,7 @@ export function GuestLanding({
           style={{ background: "linear-gradient(140deg, color-mix(in srgb, var(--accent) 34%, var(--surface-2)), color-mix(in srgb, var(--love) 14%, var(--surface-2)) 75%)" }}
         >
           <HeartHandshake className="h-8 w-8 text-white" aria-hidden="true" />
-          <p className="mt-2 font-display text-3xl font-extrabold leading-tight text-white">Swipe, match, e sabato si gioca.</p>
+          <p className="font-hand mt-2 text-[2.3rem] leading-tight text-white">Swipe, match, e sabato si gioca.</p>
           <ul className="mt-3 flex flex-col gap-1.5 text-base text-white/90">
             <li className="flex items-center gap-2"><Heart className="h-4 w-4" aria-hidden="true" /> Like su una foto o su una risposta, con un commento</li>
             <li className="flex items-center gap-2"><Sparkles className="h-4 w-4" aria-hidden="true" /> Ogni giorno il giocatore più compatibile con te</li>
@@ -82,7 +82,7 @@ export function GuestLanding({
             </div>
           </div>
           <div className="relative min-w-0">
-            <p className="font-display text-2xl font-extrabold leading-none text-white">
+            <p className="font-hand text-[1.9rem] leading-none text-white">
               Bronzo, argento, <span className="text-[var(--accent)]">oro.</span>
             </p>
             <p className="mt-2 text-sm text-[var(--muted-text)]">

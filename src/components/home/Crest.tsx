@@ -85,7 +85,7 @@ export function CrestHeading({
     <div className={cn("flex items-end gap-3", className)}>
       <div className="min-w-0">
         {eyebrow && <p className="eyebrow text-[var(--tone)]">{eyebrow}</p>}
-        <h2 id={id} className="font-display text-2xl font-extrabold leading-none text-white">{title}</h2>
+        <h2 id={id} className="font-hand text-[1.9rem] leading-none text-white">{title}</h2>
       </div>
       <span aria-hidden="true" className="mb-1.5 h-px min-w-6 flex-1 bg-[var(--crest-hair)]" />
       {action && (

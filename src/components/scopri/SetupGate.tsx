@@ -19,7 +19,7 @@ export function SetupGate({ missing }: { missing: MissingStep[] }) {
     <section className="flex flex-col gap-4">
       <div className="rounded-[var(--radius-lg)] p-6 shadow-[var(--shadow-card)]" style={{ background: "linear-gradient(150deg, color-mix(in srgb, var(--accent) 30%, var(--surface-2)), var(--surface-2) 65%)" }}>
         <p className="eyebrow text-[var(--accent)]">Trova con chi giocare</p>
-        <h2 className="mt-2 font-display text-4xl font-extrabold leading-none text-white">Un compagno al tuo livello, a un swipe.</h2>
+        <h2 className="font-hand mt-2 text-[2.75rem] leading-none text-white">Un compagno al tuo livello, a un swipe.</h2>
         <p className="mt-3 font-serif text-2xl leading-snug text-white/90">
           Like su una foto o su una risposta, match, chat, e sabato si gioca.
         </p>

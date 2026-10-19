@@ -28,7 +28,7 @@ export function ScopriHomeCard({
         <p className="eyebrow flex items-center gap-1 text-white/85">
           <HeartHandshake className="h-4 w-4" aria-hidden="true" /> Nuovo · Scopri
         </p>
-        <p className="mt-2 font-display text-3xl font-extrabold leading-tight text-white">Trova con chi giocare, a colpi di swipe.</p>
+        <p className="font-hand mt-2 text-[2.3rem] leading-tight text-white">Trova con chi giocare, a colpi di swipe.</p>
         <p className="mt-2 font-serif text-xl text-white/90">
           {nearby > 0 ? `${nearby} giocatori ${city ? `a ${city}` : "vicino a te"} sono già su Scopri.` : "Foto, tre risposte, e sei in campo."}
         </p>

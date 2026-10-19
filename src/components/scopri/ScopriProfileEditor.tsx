@@ -66,7 +66,7 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
 function Section({ id, title, hint, children }: { id?: string; title: string; hint?: string; children: React.ReactNode }) {
   return (
     <section id={id} className="scroll-mt-24">
-      <h2 className="font-display text-2xl font-extrabold text-white">{title}</h2>
+      <h2 className="font-hand text-[1.9rem] text-white">{title}</h2>
       {hint && <p className="mb-3 text-sm text-[var(--muted-text)]">{hint}</p>}
       {children}
     </section>

@@ -200,7 +200,7 @@ export function LiveScoreboard({ session, initialNames, initialState }: Props) {
     return (
       <div className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 px-6">
         <div className="text-center">
-          <h1 className="text-3xl font-black text-white">Segna dal vivo</h1>
+          <h1 className="font-hand text-[2.3rem] text-white">Segna dal vivo</h1>
           <p className="mt-1 text-sm text-[var(--muted-text)]">
             {sessionMode
               ? "A fine partita salvi il risultato: rating e classifiche si aggiornano da soli."

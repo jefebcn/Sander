@@ -35,7 +35,7 @@ export function PlayAgainCard({ ask }: { ask: PlayAgainAsk }) {
       <p className="eyebrow flex items-center gap-1 text-[var(--social)]">
         <Repeat className="h-3.5 w-3.5" aria-hidden="true" /> {ask.title} · {formatWhen(ask.date)}
       </p>
-      <h2 id="again-title" className="mt-1 font-display text-2xl font-extrabold text-white">Rigiocheresti con…</h2>
+      <h2 id="again-title" className="font-hand mt-1 text-[1.9rem] text-white">Rigiocheresti con…</h2>
       <p className="text-sm text-[var(--muted-text)]">Resta tra te e SANDER: serve a proporti i compagni giusti.</p>
       <ul className="mt-3 flex flex-col gap-2">
         {left.map((p) => (

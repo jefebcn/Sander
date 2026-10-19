@@ -18,7 +18,7 @@ export default function TermsPage() {
           <ChevronLeft className="h-5 w-5" aria-hidden="true" />
         </Link>
         <div>
-          <h1 className="text-2xl font-black text-white">Termini di servizio</h1>
+          <h1 className="font-hand text-[1.9rem] text-white">Termini di servizio</h1>
           <p className="text-xs text-[var(--muted-text)]">Aggiornato il {LAST_UPDATED}</p>
         </div>
       </header>

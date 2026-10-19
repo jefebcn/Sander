@@ -18,7 +18,7 @@ export default function TournamentError({
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-6 text-center">
       <AlertTriangle className="h-12 w-12 text-[var(--danger)]" />
-      <h2 className="text-xl font-black">Errore nel torneo</h2>
+      <h2 className="font-hand text-[1.7rem]">Errore nel torneo</h2>
       <p className="max-w-sm text-sm text-[var(--muted-text)]">
         {error.message || "Si è verificato un errore durante il caricamento del torneo."}
       </p>

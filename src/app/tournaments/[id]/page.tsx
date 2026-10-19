@@ -131,7 +131,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             <StatusBadge status={tournament.status} registrationOpen={registrationOpen} />
           </div>
           {/* Wraps instead of truncating: the name is the poster. */}
-          <h1 className="mt-1 font-display text-[2.1rem] font-extrabold leading-[0.95] text-white">{tournament.name}</h1>
+          <h1 className="font-hand mt-1 text-[2.6rem] leading-[0.95] text-white">{tournament.name}</h1>
           <p className="mt-1 text-sm text-[var(--muted-text)]">
             {formatDate(tournament.date)} · {playerRegs.length} giocatori
           </p>
@@ -431,7 +431,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
           </p>
           <StatusBadge status={tournament.status} registrationOpen={registrationOpen} />
         </div>
-        <h1 className="mt-1 font-display text-[2.1rem] font-extrabold leading-[0.95] text-white">{tournament.name}</h1>
+        <h1 className="font-hand mt-1 text-[2.6rem] leading-[0.95] text-white">{tournament.name}</h1>
         <p className="mt-1 text-sm text-[var(--muted-text)]">
           {formatDate(tournament.date)} · {playerRegs.length} giocatori
         </p>

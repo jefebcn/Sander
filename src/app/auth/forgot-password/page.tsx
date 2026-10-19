@@ -28,7 +28,7 @@ export default function ForgotPasswordPage() {
 
       <div className="relative z-10 mt-8 space-y-8">
         <div className="space-y-1">
-          <h1 className="text-2xl font-black text-white">Password dimenticata?</h1>
+          <h1 className="font-hand text-[1.9rem] text-white">Password dimenticata?</h1>
           <p className="text-sm text-[var(--muted-text)]">
             Nessun problema, ti mandiamo un link.
           </p>

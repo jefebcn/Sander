@@ -50,7 +50,7 @@ export function TournamentRegistrationRecap({ tournament }: { tournament: Tourna
       {/* Title + price badge */}
       <div className="flex items-start justify-between gap-3 px-5 pt-2">
         <div className="min-w-0">
-          <h1 className="text-2xl font-black text-white break-words">{tournament.name}</h1>
+          <h1 className="font-hand text-[1.9rem] text-white break-words">{tournament.name}</h1>
           <p className="mt-1 text-sm text-[var(--muted-text)]">
             Iscrizione torneo
           </p>

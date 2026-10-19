@@ -35,7 +35,7 @@ export default function DownloadPage() {
           className="h-24 w-24 object-contain"
           priority
         />
-        <h1 className="mt-4 text-4xl font-black leading-tight text-white">
+        <h1 className="font-hand mt-4 text-[2.75rem] leading-tight text-white">
           SANDER<span className="text-[var(--accent)]">.</span>
         </h1>
         <p className="mt-2 text-lg font-bold text-white">Il tuo beach volley. Tutto in un&apos;app.</p>

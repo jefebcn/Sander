@@ -51,7 +51,7 @@ export function MatchListView({ matches, myCity }: { matches: MatchRow[]; myCity
     return (
       <div className="rounded-[var(--radius-lg)] bg-[var(--surface-2)] px-6 py-12 text-center">
         <MessageCircle className="mx-auto h-8 w-8 text-[var(--social)]" aria-hidden="true" />
-        <p className="mt-3 font-display text-2xl font-extrabold text-white">Nessun match per ora</p>
+        <p className="font-hand mt-3 text-[1.9rem] text-white">Nessun match per ora</p>
         <p className="mt-1 text-base text-[var(--muted-text)]">Manda qualche like con un commento: è lì che nascono.</p>
         <Link href="/scopri" className="mt-4 inline-flex min-h-[3.5rem] items-center rounded-full bg-[var(--accent)] px-6 text-base font-extrabold text-black">
           Vai a Scopri
@@ -86,7 +86,7 @@ export function MatchListView({ matches, myCity }: { matches: MatchRow[]; myCity
         if (rows.length === 0) return null
         return (
           <section key={s.turn} aria-labelledby={`sec-${s.turn}`}>
-            <h2 id={`sec-${s.turn}`} className="font-display text-2xl font-extrabold text-white">
+            <h2 id={`sec-${s.turn}`} className="font-hand text-[1.9rem] text-white">
               {s.title} <span className="text-[var(--muted-text)]">{rows.length}</span>
             </h2>
             <p className="mb-2 text-sm text-[var(--muted-text)]">{s.hint}</p>

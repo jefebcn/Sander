@@ -57,7 +57,7 @@ export function LikesYouView({
       <>
         <div className="rounded-[var(--radius-lg)] bg-[var(--surface-2)] px-6 py-12 text-center">
           <Heart className="mx-auto h-8 w-8 text-[var(--accent)]" aria-hidden="true" />
-          <p className="mt-3 font-display text-2xl font-extrabold text-white">Ancora nessun like</p>
+          <p className="font-hand mt-3 text-[1.9rem] text-white">Ancora nessun like</p>
           <p className="mt-1 text-base text-[var(--muted-text)]">
             Un profilo con 6 foto e risposte che parlano di come giochi riceve molti più like.
           </p>

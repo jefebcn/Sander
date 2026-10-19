@@ -37,7 +37,7 @@ export function UnscoredMatch({ match }: { match: UnscoredMatchCard }) {
     <section aria-labelledby="unscored-title">
       <Crest line="accent" innerClassName="p-5">
         <p className="eyebrow text-[var(--accent)]">Partita finita</p>
-        <h2 id="unscored-title" className="mt-1 font-display text-4xl font-black leading-none text-white">
+        <h2 id="unscored-title" className="font-hand mt-1 text-[2.75rem] leading-none text-white">
           Com&apos;è andata?
         </h2>
         <p className="mt-2 flex items-center gap-1.5 truncate text-sm text-[var(--muted-text)]">
@@ -99,7 +99,7 @@ export function AfterMatchRecap({
             Dettagli <ChevronRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
-        <h2 id="recap-title" className={cn("relative font-display text-5xl font-black leading-none", won ? "text-[var(--accent)]" : "text-white")}>
+        <h2 id="recap-title" className={cn("font-hand relative text-[3.4rem] leading-none", won ? "text-[var(--accent)]" : "text-white")}>
           {recap.outcome ? OUTCOME[recap.outcome] : "Partita chiusa"}
         </h2>
         {recap.score && <p className="num relative mt-1 text-xl text-white/90">{recap.score}</p>}

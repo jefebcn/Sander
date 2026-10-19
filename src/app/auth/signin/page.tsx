@@ -74,7 +74,7 @@ export default async function SignInPage({
             className="object-contain"
           />
           <div className="space-y-1 text-center">
-            <h1 className="font-display text-4xl font-extrabold leading-none text-white">
+            <h1 className="font-hand text-[2.75rem] leading-none text-white">
               Entra nel campo.
             </h1>
             <p className="text-sm text-[var(--muted-text)]">
