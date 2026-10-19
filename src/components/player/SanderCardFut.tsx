@@ -34,17 +34,17 @@ interface SanderCardFutProps {
 /*  Constants                                                                  */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
-const SHADOW = "0.5px 0.5px 0px rgba(255,255,255,0.1), -0.5px -0.5px 0px rgba(0,0,0,0.6)"
+/** Dark ink on the pearl enamel, with a light lip under it: reads as engraved. */
+const SHADOW = "0 1px 0 rgba(255,255,255,0.55)"
 const FONT = "'Chakra Petch', sans-serif"
 
 /* ──────────────────────────────────────────────────────────────────────────── */
-/*  Rating → text color (dark engraved metallic per tier)                      */
+/*  Rating → text color (dark ink on the pearl enamel, per tier)               */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
 function getTextColor(glicko2: number): string {
-  if (glicko2 >= 2000) return "#5e3a00"  // Gold tiers — deep burnt gold/brass
-  if (glicko2 >= 1500) return "#2d2d2d"  // Silver tiers — dark gunmetal
-  return "#4a2c1d"                        // Bronze tiers — dark burned bronze
+  if (glicko2 >= 1500) return "#1c3439"  // Silver and gold tiers — deep sea teal
+  return "#3d2614"                        // Bronze tiers — dark burned bronze
 }
 
 /* ──────────────────────────────────────────────────────────────────────────── */
@@ -70,22 +70,19 @@ function FlagIcon({ code }: { code: string }) {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────── */
-/*  Stat positioning: each number centred in its recessed slot on the frame.   */
-/*  Slot centres measured on the 2000×2000 frames (x) and the slot row (y).    */
+/*  Stat positioning: each number centred under its label on the frame.        */
+/*  Column centres measured on the 2000×2000 frames (x) and the number row (y).*/
 /* ──────────────────────────────────────────────────────────────────────────── */
 
 const STAT_POSITIONS: { key: keyof PlayerCardData["stats"]; left: string }[] = [
-  { key: "att", left: "29.4%" },
+  { key: "att", left: "30.2%" },
   { key: "dif", left: "38.1%" },
   { key: "ric", left: "46.2%" },
-  { key: "mur", left: "54.5%" },
-  { key: "alz", left: "62.9%" },
-  { key: "sta", left: "71.2%" },
+  { key: "mur", left: "54.6%" },
+  { key: "alz", left: "62.8%" },
+  { key: "sta", left: "70.9%" },
 ]
-const STAT_ROW = "72.3%"
-/** Numbers sit in dark recessed slots: light, with a shadow to read on any metal. */
-const STAT_COLOR = "#f6f4ee"
-const STAT_SHADOW = "0 1px 2px rgba(0,0,0,0.85)"
+const STAT_ROW = "72%"
 
 /* ──────────────────────────────────────────────────────────────────────────── */
 /*  Component: 3-layer sandwich (square 2000×2000 assets)                      */
@@ -226,7 +223,7 @@ export function SanderCardFut({ playerData, className, frameLoading }: SanderCar
           </span>
         </div>
 
-        {/* Stats — centred in the recessed slots */}
+        {/* Stats — centred under their labels */}
         {STAT_POSITIONS.map(({ key, left }) => (
           <span
             key={key}
@@ -238,8 +235,8 @@ export function SanderCardFut({ playerData, className, frameLoading }: SanderCar
               zIndex: 20,
               fontFamily: FONT,
               letterSpacing: "0.03em",
-              color: STAT_COLOR,
-              textShadow: STAT_SHADOW,
+              color: textColor,
+              textShadow: SHADOW,
             }}
           >
             {playerData.stats[key]}
@@ -254,8 +251,9 @@ export function SanderCardFut({ playerData, className, frameLoading }: SanderCar
 /*  Helper: Prisma Player → PlayerCardData                                     */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
+/** 0–99 like FUT: a high rating plus a strong skill would otherwise read 140. */
 function statValue(pct: number, glicko: number) {
-  return Math.round(glicko / 40 + pct)
+  return Math.min(99, Math.round(glicko / 40 + pct))
 }
 
 export interface PrismaPlayerLike {
