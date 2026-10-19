@@ -46,6 +46,7 @@ jobs:
       AUTH_URL: http://localhost:3000
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       NEXT_TELEMETRY_DISABLED: "1"
+      ADMIN_EMAILS: me@e2e.local
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -72,6 +73,6 @@ jobs:
         with:
           name: e2e-failure
           path: |
-            e2e-failure.png
+            e2e-failure*.png
             next.log
           if-no-files-found: ignore
