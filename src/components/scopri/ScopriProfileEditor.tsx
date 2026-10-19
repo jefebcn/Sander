@@ -18,6 +18,7 @@ import {
   addAvatarAsPhoto,
 } from "@/actions/scopri"
 import { cn } from "@/lib/utils"
+import { useIsNativeApp } from "@/lib/native"
 import { ProfileCard } from "./ProfileCard"
 import type { ScopriCard } from "./types"
 
@@ -75,6 +76,7 @@ function Section({ id, title, hint, children }: { id?: string; title: string; hi
 /** Your Scopri card: photos, answers, the details for the sand, your dealbreakers. */
 export function ScopriProfileEditor({ data }: { data: EditorData }) {
   const router = useRouter()
+  const native = useIsNativeApp()
   const fileRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [editing, setEditing] = useState<number | null>(null)
@@ -336,6 +338,10 @@ export function ScopriProfileEditor({ data }: { data: EditorData }) {
         </div>
       </Section>
 
+      <a href="/profile/presenze" className="-mt-4 flex min-h-[3.5rem] items-center justify-between rounded-[var(--radius-md)] bg-[var(--surface-2)] px-4 text-base font-bold text-white">
+        Le tue presenze e assenze <span className="text-[var(--accent)]">›</span>
+      </a>
+
       {/* ── Preferenze ── */}
       <Section id="preferenze" title="Non negoziabili" hint="Vale per tutti e due: vi vedete solo se ognuno rientra nelle scelte dell'altro.">
         <div className="flex flex-col gap-4">
@@ -380,7 +386,7 @@ export function ScopriProfileEditor({ data }: { data: EditorData }) {
                 <Chip on={onlyFreeToday} onClick={() => setOnlyFreeToday(!onlyFreeToday)}>Solo liberi oggi</Chip>
               </div>
             </div>
-          ) : (
+          ) : native ? null : (
             <a href="/scopri/plus" className="flex min-h-[3.5rem] items-center gap-2 rounded-[var(--radius-md)] bg-[var(--surface-2)] px-4 text-base font-bold text-white">
               <Crown className="h-5 w-5 text-[var(--ace)]" aria-hidden="true" /> Solo verificati, solo liberi oggi: con SANDER+
             </a>

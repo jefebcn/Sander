@@ -6,6 +6,7 @@ import { Crown, Check, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { startPlusCheckout, cancelPlus, resumePlus } from "@/actions/plus"
 import { PLUS_BENEFITS } from "@/lib/scopri/plusBenefits"
+import { useIsNativeApp } from "@/lib/native"
 
 /** SANDER+: what you get, the price, and the one button. */
 export function PlusView({
@@ -20,6 +21,10 @@ export function PlusView({
   cancelAtEnd: boolean
 }) {
   const router = useRouter()
+  // Inside the Android app digital subscriptions must go through Google Play
+  // billing: no purchase there (as for SC packs, see WalletCard). Members who
+  // subscribed on the web keep every benefit in the app.
+  const native = useIsNativeApp()
   const [busy, setBusy] = useState(false)
   // Express request to start now (needed to start a paid digital service at once).
   const [consent, setConsent] = useState(false)
@@ -55,7 +60,9 @@ export function PlusView({
             ? cancelAtEnd
               ? `Attivo fino al ${date}, poi non si rinnova.`
               : `Si rinnova il ${date}.`
-            : `${priceLabel} al mese. Disdici quando vuoi.`}
+            : native
+              ? "Non disponibile nell'app."
+              : `${priceLabel} al mese. Disdici quando vuoi.`}
         </p>
       </section>
 
@@ -73,7 +80,7 @@ export function PlusView({
         ))}
       </ul>
 
-      {!active && (
+      {!active && !native && (
         <label className="flex items-start gap-3 rounded-[var(--radius-md)] bg-[var(--surface-2)] p-4 text-sm text-white">
           <input
             type="checkbox"
@@ -89,7 +96,7 @@ export function PlusView({
         </label>
       )}
 
-      {!active ? (
+      {native && !active ? null : !active ? (
         <button
           type="button"
           disabled={busy || !consent}
@@ -113,7 +120,7 @@ export function PlusView({
         >
           Riattiva il rinnovo
         </button>
-      ) : (
+      ) : native ? null : (
         <button
           type="button"
           disabled={busy}
@@ -125,7 +132,9 @@ export function PlusView({
           Disdici il rinnovo
         </button>
       )}
-      <p className="text-center text-xs text-[var(--muted-text)]">Pagamento sicuro con Stripe. L&apos;abbonamento si rinnova ogni mese finché non lo disdici.</p>
+      {!native && (
+        <p className="text-center text-xs text-[var(--muted-text)]">Pagamento sicuro con Stripe. L&apos;abbonamento si rinnova ogni mese finché non lo disdici.</p>
+      )}
     </div>
   )
 }
