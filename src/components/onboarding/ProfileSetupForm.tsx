@@ -147,6 +147,7 @@ function FormRow({
   isInput,
   inputType,
   onInputChange,
+  disabled,
 }: {
   label: string
   value: string
@@ -155,6 +156,7 @@ function FormRow({
   isInput?: boolean
   inputType?: string
   onInputChange?: (v: string) => void
+  disabled?: boolean
 }) {
   return (
     <div className="border-b border-[var(--border)]">
@@ -166,7 +168,8 @@ function FormRow({
             value={value}
             onChange={(e) => onInputChange?.(e.target.value)}
             placeholder={placeholder}
-            className="min-w-0 flex-1 bg-transparent text-right text-base text-[var(--accent)] placeholder:text-[var(--accent)]/60 focus:outline-none"
+            disabled={disabled}
+            className="min-w-0 flex-1 bg-transparent text-right text-base text-[var(--accent)] placeholder:text-[var(--accent)]/60 focus:outline-none disabled:text-[var(--muted-text)]"
           />
         </label>
       ) : (
@@ -351,7 +354,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
               // eslint-disable-next-line @next/next/no-img-element
               <img src={avatarPreview} alt="Avatar" className="h-full w-full object-cover" />
             ) : (
-              <User className="h-14 w-14 text-black/40" strokeWidth={2.25} aria-hidden="true" />
+              <User className="h-14 w-14 text-black/65" strokeWidth={2.25} aria-hidden="true" />
             )}
           </button>
           {/* Camera badge */}
@@ -492,6 +495,8 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
               isInput
               inputType="date"
               onInputChange={setBirthDate}
+              // Set once: Scopri is 18+, so the date can't be changed later.
+              disabled={!!initialData?.birthDate}
             />
             <FormRow
               label="Genere"

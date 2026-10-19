@@ -69,6 +69,8 @@ export interface RankInput {
   /** Their "libero oggi" slot and mine. */
   themFree: FreeSlot | null
   meFree: FreeSlot | null
+  /** Bonus from "rigiocheresti" votes (see playAgain.againBonus), default 0. */
+  again?: number
 }
 
 /**
@@ -81,5 +83,5 @@ export function rankKey(r: RankInput): number {
   let key = r.score * showUp + r.jitter
   if (r.verified) key += 4
   if (r.themFree) key += r.meFree && slotsOverlap(r.themFree, r.meFree) ? 25 : 12
-  return key
+  return key + (r.again ?? 0)
 }

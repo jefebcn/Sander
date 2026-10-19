@@ -29,7 +29,7 @@ export const BlockSchema = z
     playerId: Id,
     report: z
       .object({
-        reason: z.enum(["FINTO", "OFFENSIVO", "MOLESTIE", "MINORENNE", "ALTRO"]),
+        reason: z.enum(["FINTO", "FOTO", "OFFENSIVO", "MOLESTIE", "MINORENNE", "ALTRO"]),
         note: z.string().trim().max(500).optional(),
       })
       .optional(),
@@ -51,6 +51,9 @@ export const DiscoverSettingsSchema = z
     prefGender: z.enum(["Uomo", "Donna"]).nullable().optional(),
     prefRole: z.enum(["BLOCKER", "DEFENDER"]).nullable().optional(),
     maxGap: z.number().int().min(100).max(1000).optional(),
+    // SANDER+ deck filters.
+    onlyVerified: z.boolean().optional(),
+    onlyFreeToday: z.boolean().optional(),
     // Player fields Scopri needs, editable from the same screen.
     birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato data non valido").optional(),
     homeCity: z.string().refine(isKnownCity, "Comune non riconosciuto").optional(),
@@ -137,3 +140,12 @@ export const QuickStartSchema = z
     useAvatar: z.boolean().optional(),
   })
   .strict()
+
+export const PlayAgainSchema = z.object({ sessionId: Id, targetId: Id, again: z.boolean() }).strict()
+
+// ── Admin (Scopri) ───────────────────────────────────────────────────────────
+
+export const AdminPhotoSchema = z.object({ photoId: Id }).strict()
+export const AdminSuspendSchema = z.object({ playerId: Id, reason: z.string().trim().min(2).max(200) }).strict()
+export const AdminPlayerSchema = z.object({ playerId: Id }).strict()
+export const AdminReportSchema = z.object({ reportId: Id }).strict()

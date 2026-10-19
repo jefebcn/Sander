@@ -21,6 +21,7 @@ import { COMMENT_MAX, MOTTO_MAX } from "@/lib/scopri/rules"
 import { cn } from "@/lib/utils"
 import { ProposeGameSheet } from "./ProposeGameSheet"
 import type { DuoCard, DuoMember, DuoMatchRow, IncomingDuoLike } from "./types"
+import type { DuoRankRow } from "@/lib/scopri/duos"
 
 export interface CoppieData {
   meId: string
@@ -33,6 +34,36 @@ export interface CoppieData {
   likesLeft: number
   incoming: IncomingDuoLike[]
   matches: DuoMatchRow[]
+  leaderboard: DuoRankRow[]
+}
+
+function Leaderboard({ rows, mine }: { rows: DuoRankRow[]; mine?: string }) {
+  if (rows.length === 0) {
+    return <p className="rounded-[var(--radius-md)] bg-[var(--surface-2)] p-4 text-base text-[var(--muted-text)]">Ancora nessuna coppia in classifica.</p>
+  }
+  return (
+    <ol className="flex flex-col gap-2">
+      {rows.map((r, i) => (
+        <li
+          key={r.id}
+          className={cn(
+            "flex items-center gap-3 rounded-[var(--radius-md)] bg-[var(--surface-2)] p-2 pr-4",
+            r.id === mine && "ring-2 ring-[var(--social)]",
+          )}
+        >
+          <span className={cn("num w-8 shrink-0 text-center text-xl", i < 3 ? "text-[var(--compete)]" : "text-[var(--muted-text)]")}>{i + 1}</span>
+          <Faces members={r.members} size="h-10 w-10" />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-base font-extrabold text-white">{r.name}</span>
+            <span className="block text-sm text-[var(--muted-text)]">
+              {r.wins + r.losses === 0 ? "Ancora da giocare" : `${r.wins}V · ${r.losses}S`}
+            </span>
+          </span>
+          <span className="num text-xl text-[var(--social)]">{r.rating}</span>
+        </li>
+      ))}
+    </ol>
+  )
 }
 
 function Faces({ members, size = "h-16 w-16" }: { members: DuoMember[]; size?: string }) {
@@ -175,6 +206,11 @@ function NoDuo({ data }: { data: CoppieData }) {
         </section>
       )}
 
+      <section aria-labelledby="rank-title">
+        <h3 id="rank-title" className="mb-2 font-display text-2xl font-extrabold text-white">Classifica coppie</h3>
+        <Leaderboard rows={data.leaderboard} />
+      </section>
+
       <Sheet open={pick !== null} onOpenChange={(o) => !o && setPick(null)} title={`In coppia con ${pick?.name ?? ""}`} description="Dategli un nome e una frase: è la prima cosa che vedono le altre coppie.">
         <div className="flex flex-col gap-3">
           <input
@@ -210,7 +246,7 @@ function NoDuo({ data }: { data: CoppieData }) {
 
 function ActiveDuo({ data, duo }: { data: CoppieData; duo: DuoCard }) {
   const { busy, run } = useRun()
-  const [tab, setTab] = useState<"sfide" | "ricevute" | "partite">(data.incoming.length ? "ricevute" : "sfide")
+  const [tab, setTab] = useState<"sfide" | "ricevute" | "partite" | "classifica">(data.incoming.length ? "ricevute" : "sfide")
   const [deck, setDeck] = useState(data.deck)
   const [likesLeft, setLikesLeft] = useState(data.likesLeft)
   const [challenge, setChallenge] = useState<DuoCard | null>(null)
@@ -220,6 +256,7 @@ function ActiveDuo({ data, duo }: { data: CoppieData; duo: DuoCard }) {
   const [motto, setMotto] = useState(duo.motto ?? "")
   const [game, setGame] = useState<DuoMatchRow | null>(null)
   const current = deck[0]
+  const myRank = data.leaderboard.findIndex((r) => r.id === duo.id)
 
   return (
     <div className="flex flex-col gap-5">
@@ -229,7 +266,11 @@ function ActiveDuo({ data, duo }: { data: CoppieData; duo: DuoCard }) {
           <div className="min-w-0 flex-1">
             <p className="eyebrow text-[var(--social)]">La tua coppia</p>
             <p className="truncate font-display text-2xl font-extrabold text-white">{duo.name}</p>
-            <p className="text-sm text-[var(--muted-text)]">Media {duo.rating}</p>
+            <p className="text-sm text-[var(--muted-text)]">
+              {myRank >= 0
+                ? `Punteggio ${data.leaderboard[myRank].rating} · ${myRank + 1}ª in classifica`
+                : `Livello medio ${duo.rating}`}
+            </p>
           </div>
           <button type="button" onClick={() => setEdit(true)} aria-label="Modifica la coppia" className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--surface-4)] text-white">
             <Pencil className="h-5 w-5" aria-hidden="true" />
@@ -238,11 +279,12 @@ function ActiveDuo({ data, duo }: { data: CoppieData; duo: DuoCard }) {
         {duo.motto && <p className="mt-3 font-serif text-xl leading-snug text-white">«{duo.motto}»</p>}
       </section>
 
-      <nav aria-label="Sezioni coppia" className="grid grid-cols-3 gap-1 rounded-full bg-[var(--surface-2)] p-1">
+      <nav aria-label="Sezioni coppia" className="grid grid-cols-4 gap-1 rounded-full bg-[var(--surface-2)] p-1">
         {[
           { id: "sfide" as const, label: "Sfida" },
-          { id: "ricevute" as const, label: `Ti sfidano${data.incoming.length ? ` · ${data.incoming.length}` : ""}` },
+          { id: "ricevute" as const, label: `Sfide${data.incoming.length ? ` · ${data.incoming.length}` : ""}` },
           { id: "partite" as const, label: `Partite${data.matches.length ? ` · ${data.matches.length}` : ""}` },
+          { id: "classifica" as const, label: "Classifica" },
         ].map((t) => (
           <button
             key={t.id}
@@ -354,6 +396,8 @@ function ActiveDuo({ data, duo }: { data: CoppieData; duo: DuoCard }) {
             ))}
           </ul>
         ))}
+
+      {tab === "classifica" && <Leaderboard rows={data.leaderboard} mine={duo.id} />}
 
       <button
         type="button"

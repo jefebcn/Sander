@@ -209,6 +209,8 @@ model Player {
   duosFormed           Duo[]              @relation("DuoA")
   duosJoined           Duo[]              @relation("DuoB")
   attendanceEvents     AttendanceEvent[]
+  playAgainGiven       PlayAgainVote[]    @relation("PlayAgainVoter")
+  playAgainReceived    PlayAgainVote[]    @relation("PlayAgainTarget")
 
   @@map("players")
 }
@@ -792,10 +794,15 @@ model PlayerPhoto {
   url       String
   position  Int
   createdAt DateTime @default(now())
+  /// Removed by an admin: kept for the record, never shown.
+  hiddenAt  DateTime?
+  /// Reported by someone (shown first in the admin review).
+  reportedAt DateTime?
 
   player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@index([playerId, position])
+  @@index([createdAt])
   @@map("player_photos")
 }
 
@@ -852,8 +859,21 @@ model DiscoverProfile {
   /// Last Scopri reminder push, so nobody gets more than one a few days.
   nudgedAt        DateTime?
 
+  /// Suspended by an admin: out of the pool, can't like. Matches and chats stay.
+  suspendedAt     DateTime?
+  suspendedReason String?
+
+  /// SANDER+ until this instant (Stripe subscription, renewed by the webhook).
+  plusUntil            DateTime?
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  /// SANDER+ filters on the deck.
+  onlyVerified         Boolean   @default(false)
+  onlyFreeToday        Boolean   @default(false)
+
   player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
+  @@index([stripeSubscriptionId])
   @@map("discover_profiles")
 }
 
@@ -897,6 +917,9 @@ model PlayerMatch {
   /// "Avete giocato insieme?" answered by each side (null = not asked yet).
   aPlayed   Boolean?
   bPlayed   Boolean?
+  /// Last "tocca a te" reminder to each side.
+  aNudgedAt DateTime?
+  bNudgedAt DateTime?
 
   a Player @relation("PlayerMatchA", fields: [aId], references: [id], onDelete: Cascade)
   b Player @relation("PlayerMatchB", fields: [bId], references: [id], onDelete: Cascade)
@@ -916,6 +939,8 @@ model DailyPick {
   score     Int
   reasons   String[] @default([])
   createdAt DateTime @default(now())
+  /// Push "il più compatibile di oggi" sent.
+  notifiedAt DateTime?
 
   player Player @relation("DailyPickOwner", fields: [playerId], references: [id], onDelete: Cascade)
   pick   Player @relation("DailyPickTarget", fields: [pickId], references: [id], onDelete: Cascade)
@@ -933,6 +958,8 @@ model PlayerBlock {
   reason    String?
   note      String?
   createdAt DateTime @default(now())
+  /// An admin looked at the report and closed it.
+  reviewedAt DateTime?
 
   blocker Player @relation("BlocksMade", fields: [blockerId], references: [id], onDelete: Cascade)
   blocked Player @relation("BlocksReceived", fields: [blockedId], references: [id], onDelete: Cascade)
@@ -967,6 +994,10 @@ model Duo {
   createdAt  DateTime  @default(now())
   acceptedAt DateTime?
   endedAt    DateTime?
+  /// Pair rating (Elo), moved by 2v2s against other pairs.
+  rating     Float     @default(1500)
+  wins       Int       @default(0)
+  losses     Int       @default(0)
 
   a Player @relation("DuoA", fields: [aId], references: [id], onDelete: Cascade)
   b Player @relation("DuoB", fields: [bId], references: [id], onDelete: Cascade)
@@ -992,6 +1023,8 @@ model DuoSwipe {
   reply     Boolean    @default(false)
   status    LikeStatus @default(PENDING)
   createdAt DateTime   @default(now())
+  /// The challenged pair was reminded once.
+  remindedAt DateTime?
 
   fromDuo Duo @relation("DuoSwipesSent", fields: [fromDuoId], references: [id], onDelete: Cascade)
   toDuo   Duo @relation("DuoSwipesReceived", fields: [toDuoId], references: [id], onDelete: Cascade)
@@ -1009,6 +1042,8 @@ model DuoMatch {
   threadId  String?
   sessionId String?
   createdAt DateTime @default(now())
+  /// The 2v2 result already moved the pair ratings.
+  ratedAt   DateTime?
 
   aDuo Duo @relation("DuoMatchA", fields: [aDuoId], references: [id], onDelete: Cascade)
   bDuo Duo @relation("DuoMatchB", fields: [bDuoId], references: [id], onDelete: Cascade)
@@ -1022,6 +1057,7 @@ model DuoMatch {
 
 enum AttendanceKind {
   LATE_CANCEL
+  NO_SHOW
 }
 
 /// Something that lowers a player's attendance: for now, leaving a match in
@@ -1037,4 +1073,22 @@ model AttendanceEvent {
 
   @@index([playerId, kind])
   @@map("attendance_events")
+}
+
+/// "Rigiocheresti con lui/lei?" after a match played together. A "no" also
+/// keeps the two apart on Scopri; many "no" from different people reach admins.
+model PlayAgainVote {
+  id        String   @id @default(cuid())
+  voterId   String
+  targetId  String
+  sessionId String
+  again     Boolean
+  createdAt DateTime @default(now())
+
+  voter  Player @relation("PlayAgainVoter", fields: [voterId], references: [id], onDelete: Cascade)
+  target Player @relation("PlayAgainTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([voterId, targetId, sessionId])
+  @@index([targetId, again])
+  @@map("play_again_votes")
 }

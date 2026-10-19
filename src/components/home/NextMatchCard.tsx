@@ -14,16 +14,20 @@ export interface NextMatch {
   faces: SlotPlayer[]
 }
 
+function hasStarted(date: Date): boolean {
+  return new Date(date).getTime() <= Date.now()
+}
+
 /** The match you already said yes to — the most useful thing on the screen. */
 export function NextMatchCard({ match }: { match: NextMatch }) {
   // Kept here for its first hour; after that it becomes "Com'è andata?".
-  const started = new Date(match.date).getTime() <= Date.now()
+  const started = hasStarted(match.date)
   const soon = daysFromNow(match.date) <= 1
   const missing = Math.max(0, match.maxPlayers - match.players)
   return (
     <Link
       href={`/sessions/${match.id}`}
-      className="pressable tone-play relative block overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-5 ring-2 ring-[var(--crest-line)]"
+      className="pressable tone-play relative block overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-5 shadow-[var(--shadow-card)] ring-1 ring-[var(--accent-line)]"
     >
       <div className="flex items-center justify-between gap-3">
         <p className="eyebrow text-[var(--accent)]">{started ? "La tua partita è in corso" : "La tua prossima partita"}</p>

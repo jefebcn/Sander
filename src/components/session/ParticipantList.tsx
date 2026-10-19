@@ -5,7 +5,7 @@ import Link from "next/link"
 import { UserPlus, UserMinus, Search, User, X, BellRing } from "lucide-react"
 import { toast } from "sonner"
 import { isLateCancel } from "@/lib/scopri/reliability"
-import { joinSession, leaveSession, assignTeam, cancelSession, removeParticipantFromSession, joinWaitlist, leaveWaitlist } from "@/actions/sessions"
+import { joinSession, leaveSession, assignTeam, cancelSession, removeParticipantFromSession, markNoShow, joinWaitlist, leaveWaitlist } from "@/actions/sessions"
 import { joinWindowOpen } from "@/lib/sessionRules"
 import { cn } from "@/lib/utils"
 import { CompleteSessionForm } from "./CompleteSessionForm"
@@ -123,6 +123,18 @@ export function ParticipantList({ session, participants, currentPlayerId, myWait
     })
   }
 
+  function handleNoShow(participantId: string) {
+    setArmed(null)
+    startTransition(async () => {
+      try {
+        await markNoShow(participantId)
+        toast.success("Segnato come non presentato")
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Errore")
+      }
+    })
+  }
+
   function handleRemove(participantId: string) {
     if (armed !== `remove:${participantId}`) return setArmed(`remove:${participantId}`)
     setArmed(null)
@@ -167,6 +179,8 @@ export function ParticipantList({ session, participants, currentPlayerId, myWait
                     isOrganizer={isOrganizer}
                     onAssign={handleAssign}
                     onRemove={handleRemove}
+                    onNoShow={handleNoShow}
+                    started={started}
                     removeArmed={armed === `remove:${p.id}`}
                     isSelf={p.playerId === currentPlayerId}
                     isPending={isPending}
@@ -195,6 +209,8 @@ export function ParticipantList({ session, participants, currentPlayerId, myWait
                 isOrganizer={isOrganizer}
                 onAssign={handleAssign}
                 onRemove={handleRemove}
+                onNoShow={handleNoShow}
+                started={started}
                 removeArmed={armed === `remove:${p.id}`}
                 isSelf={p.playerId === currentPlayerId}
                 isPending={isPending}
@@ -333,6 +349,8 @@ function PlayerRow({
   isOrganizer,
   onAssign,
   onRemove,
+  onNoShow,
+  started,
   removeArmed,
   isSelf,
   isPending,
@@ -341,6 +359,9 @@ function PlayerRow({
   isOrganizer: boolean
   onAssign: (id: string, team: 0 | 1 | null) => void
   onRemove: (id: string) => void
+  onNoShow: (id: string) => void
+  /** After the start, removing a registered player can mean "didn't show up". */
+  started: boolean
   removeArmed: boolean
   isSelf: boolean
   isPending: boolean
@@ -371,13 +392,24 @@ function PlayerRow({
       {isOrganizer && (
         <div className="flex gap-1">
           {removeArmed ? (
-            <button
-              onClick={() => onRemove(participant.id)}
-              disabled={isPending}
-              className="flex min-h-[2.75rem] items-center rounded-lg bg-[var(--danger)] px-3 text-xs font-bold text-white disabled:opacity-40"
-            >
-              Rimuovi
-            </button>
+            <>
+              {started && !isGuest && (
+                <button
+                  onClick={() => onNoShow(participant.id)}
+                  disabled={isPending}
+                  className="flex min-h-[2.75rem] items-center rounded-lg bg-[var(--warning)] px-3 text-xs font-bold text-black disabled:opacity-40"
+                >
+                  Non si è presentato
+                </button>
+              )}
+              <button
+                onClick={() => onRemove(participant.id)}
+                disabled={isPending}
+                className="flex min-h-[2.75rem] items-center rounded-lg bg-[var(--danger)] px-3 text-xs font-bold text-white disabled:opacity-40"
+              >
+                Rimuovi
+              </button>
+            </>
           ) : (
             <>
               {([0, 1] as const).map((team) => (

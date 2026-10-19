@@ -37,8 +37,15 @@ describe("like allowance", () => {
     expect(nextLikeSource(FREE_LIKES_PER_DAY, 0)).toBeNull()
   })
   it("counts what is left", () => {
-    expect(likesLeft(3, 2)).toEqual({ free: 5, bonus: 2, total: 7 })
-    expect(likesLeft(12, -1)).toEqual({ free: 0, bonus: 0, total: 0 })
+    expect(likesLeft(3, 2)).toEqual({ free: 5, bonus: 2, total: 7, unlimited: false })
+    expect(likesLeft(12, -1)).toEqual({ free: 0, bonus: 0, total: 0, unlimited: false })
+  })
+  it("lets SANDER+ like without limit and send three Aces", () => {
+    expect(nextLikeSource(50, 0, true)).toBe("free")
+    expect(likesLeft(50, 0, true).unlimited).toBe(true)
+    expect(nextAceSource(2, 0, true)).toBe("free")
+    expect(nextAceSource(3, 0, true)).toBeNull()
+    expect(acesLeft(1, 0, true)).toBe(2)
   })
   it("gives one free Ace a week", () => {
     expect(nextAceSource(0, 0)).toBe("free")

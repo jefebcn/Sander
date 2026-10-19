@@ -75,6 +75,38 @@ In più, solo SANDER:
   - Il richiamo non arriva a chi ha disattivato gli avvisi né ai minorenni.
   - Massimo 400 notifiche per esecuzione.
 
+## Dopo la partita, coppie, sicurezza, SANDER+
+
+- **Rigiocheresti?**
+  - Dopo una partita completata (entro 7 giorni) la home e la pagina della partita chiedono, per ogni persona che c'era, sì o no (`PlayAgainVote`).
+  - La percentuale di sì compare sulla carta quando ci sono almeno 3 voti e pesa nell'ordine del mazzo.
+  - Un no, in un senso o nell'altro, tiene separate le due persone su Scopri e nel più compatibile.
+  - Quando 3 persone diverse dicono no nello stesso mese, gli admin ricevono un avviso.
+- **Notifiche del mattino** (cron `content`, per non superare il limite di cron di Vercel):
+  - il più compatibile di oggi, calcolato ora nel cron;
+  - "tocca a te", se l'altro ha scritto più di 24 ore fa, una volta per messaggio;
+  - una sola volta, la sfida di coppia rimasta senza risposta;
+  - i richiami di ingresso.
+- **Coppie**:
+  - Il punteggio di coppia è un Elo (K 32) che si muove quando si chiude con i set un 2v2 tra due coppie in match.
+  - La classifica sta in `/scopri/coppie`.
+  - "Iscrivi la coppia" funziona nei tornei a coppie fisse (BRACKETS, ROUND_ROBIN, DOUBLE_ELIMINATION, CHICECE): i due vengono messi vicini nel seeding.
+- **Sicurezza**:
+  - Si può segnalare anche dal mazzo, con il motivo "Foto non adatta".
+  - `/admin/segnalazioni` raccoglie in un posto solo:
+    - le segnalazioni aperte (sospendi, archivia);
+    - le foto da controllare, prima quelle segnalate (rimuovi, va bene);
+    - le persone con molti "non rigiocherei";
+    - i profili sospesi (riattiva).
+  - Chi è sospeso esce dal pool e non può mandare like.
+  - L'organizzatore può segnare "Non si è presentato" tra l'inizio e le 48 ore successive: conta come assenza.
+  - La data di nascita si inserisce una volta sola e poi non si può più cambiare.
+- **SANDER+** (`/scopri/plus`):
+  - Abbonamento Stripe a €4,99 al mese, con like illimitati, "vedi tutti" sempre attivo, 3 Ace a settimana e i filtri "solo verificati" e "solo liberi oggi".
+  - Il webhook gestisce `checkout.session.completed`, `customer.subscription.*` e `invoice.paid`.
+  - Se la scadenza è passata, la si ricontrolla su Stripe.
+  - La disdetta vale a fine mese.
+
 ## Dove sta il codice
 
 - `prisma/schema.prisma`: modelli `PlayerPhoto`, `PlayerPrompt`,

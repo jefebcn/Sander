@@ -879,3 +879,68 @@ export async function registerAsSpectator(tournamentIdInput: string): Promise<{ 
     return { ok: false, error: toUserError(e, "registerAsSpectator") }
   }
 }
+
+/** Formats where a pair plays together the whole tournament (KOTB rotates partners). */
+const PAIR_FORMATS = ["BRACKETS", "ROUND_ROBIN", "DOUBLE_ELIMINATION", "CHICECE"]
+
+/**
+ * Register your Scopri pair (you + your partner) in one go, side by side in
+ * the seeding so the default pairing keeps you together. Free tournaments are
+ * confirmed at once; paid ones leave each of you a place to pay for.
+ */
+export async function registerDuoForTournament(input: unknown): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const { tournamentId } = StartCheckoutSchema.parse(input)
+    const player = await requireCurrentPlayer()
+    const tournament = await assertRegistrable(tournamentId)
+    if (!PAIR_FORMATS.includes(tournament.type)) {
+      return { ok: false, error: "In questo torneo le coppie cambiano a ogni turno: iscrivetevi uno alla volta" }
+    }
+    const { activeDuoOf, duoName } = await import("@/lib/scopri/duos")
+    const duo = await activeDuoOf(player.id)
+    if (!duo) return { ok: false, error: "Prima forma una coppia su Scopri" }
+    const partnerId = duo.aId === player.id ? duo.bId : duo.aId
+    const isFree = isFreeTournament(tournament)
+    const label = duoName(duo)
+
+    await db.$transaction(async (tx) => {
+      const top = await tx.tournamentRegistration.aggregate({ where: { tournamentId }, _max: { seedPosition: true } })
+      let seed = (top._max.seedPosition ?? 0) + 1
+      for (const [i, playerId] of [player.id, partnerId].entries()) {
+        const existing = await tx.tournamentRegistration.findUnique({
+          where: { tournamentId_playerId: { tournamentId, playerId } },
+        })
+        if (existing && !isStaleRow(existing)) continue
+        await assertSeatAvailable(tx, tournament, playerId)
+        if (existing) await tx.tournamentRegistration.deleteMany({ where: { id: existing.id } })
+        await tx.tournamentRegistration.create({
+          data: {
+            tournamentId,
+            playerId,
+            seedPosition: seed++,
+            teamName: i === 0 ? label : null,
+            adminNotes: `Coppia Scopri: ${label}`,
+            paymentStatus: isFree ? "PAID" : "PENDING",
+            paymentMethod: isFree ? "FREE" : null,
+            paidAt: isFree ? new Date() : null,
+            amountPaidCents: isFree ? 0 : null,
+          },
+        })
+      }
+    })
+
+    const me = player.firstName ?? player.name.split(" ")[0]
+    import("@/lib/push").then(({ notifyPlayer }) =>
+      notifyPlayer(partnerId, {
+        title: `${me} ha iscritto la vostra coppia`,
+        body: isFree ? `Siete in lista per ${tournament.name}.` : `${tournament.name}: completa il pagamento per confermare il tuo posto.`,
+        url: `/tournaments/${tournamentId}`,
+      }),
+    ).catch(() => {})
+
+    revalidateTournament(tournamentId)
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: toUserError(e, "registerDuoForTournament") }
+  }
+}

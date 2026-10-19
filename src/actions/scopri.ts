@@ -15,12 +15,15 @@ import {
   mutuallyEligible,
   likeMessage,
   ageOn,
+  isPlus,
   SC_OFFERS,
   MAX_PHOTOS,
   YOUR_TURN_LIMIT,
 } from "@/lib/scopri/rules"
 import { isBlockedPair } from "@/lib/scopri/blocks"
 import { freeSlotLabel } from "@/lib/scopri/reliability"
+import { PLAY_AGAIN_FLAG_NOS } from "@/lib/scopri/playAgain"
+import { recentNoVoters } from "@/lib/scopri/playAgainServer"
 import {
   loadCardRow,
   readiness,
@@ -50,6 +53,7 @@ import {
   ProposeGameSchema,
   FreeTodaySchema,
   QuickStartSchema,
+  PlayAgainSchema,
 } from "@/lib/validators/scopri.schema"
 
 /* ────────────────────────────────────────────────────────────────────────── */
@@ -68,6 +72,7 @@ async function requireReadyMe(now: Date): Promise<CardRow> {
   const me = await requireMe()
   const row = await loadCardRow(me.id)
   if (!row || readiness(row, now).length > 0) throw new Error("Completa prima il tuo profilo Scopri")
+  if (row.discoverProfile?.suspendedAt) throw new Error("Il tuo profilo Scopri è sospeso")
   if (row.discoverProfile?.paused) throw new Error("Il tuo profilo è in pausa: riattivalo per mandare like")
   return row
 }
@@ -136,13 +141,14 @@ export async function sendLike(input: unknown) {
         if (existing?.liked) throw new Error("Gli hai già mandato un like")
         const profile = await tx.discoverProfile.findUnique({
           where: { playerId: me.id },
-          select: { bonusLikes: true, bonusAces: true },
+          select: { bonusLikes: true, bonusAces: true, plusUntil: true },
         })
+        const plus = isPlus(profile?.plusUntil, now)
         if (isAce) {
           const used = await tx.playerSwipe.count({
             where: { fromId: me.id, isAce: true, createdAt: { gte: romeWeekStart(now) } },
           })
-          const source = nextAceSource(used, profile?.bonusAces ?? 0)
+          const source = nextAceSource(used, profile?.bonusAces ?? 0, plus)
           if (!source) throw new Error("Hai già usato l'Ace di questa settimana")
           if (source === "bonus") {
             const r = await tx.discoverProfile.updateMany({
@@ -155,7 +161,7 @@ export async function sendLike(input: unknown) {
           const used = await tx.playerSwipe.count({
             where: { fromId: me.id, liked: true, isAce: false, reply: false, createdAt: { gte: romeDayStart(now) } },
           })
-          const source = nextLikeSource(used, profile?.bonusLikes ?? 0)
+          const source = nextLikeSource(used, profile?.bonusLikes ?? 0, plus)
           if (!source) throw new Error("Hai finito i like di oggi")
           if (source === "bonus") {
             const r = await tx.discoverProfile.updateMany({
@@ -327,6 +333,10 @@ export async function blockPlayer(input: unknown) {
   const other = await db.player.findUnique({ where: { id: data.playerId }, select: { id: true, name: true } })
   if (!other) throw new Error("Giocatore non trovato")
   await blockPair(me.id, other.id, data.report)
+  // "Foto non adatta": their visible photos go first in the admin review.
+  if (data.report?.reason === "FOTO") {
+    await db.playerPhoto.updateMany({ where: { playerId: other.id, hiddenAt: null }, data: { reportedAt: new Date() } })
+  }
 
   if (data.report) {
     const emails = adminEmails()
@@ -419,6 +429,10 @@ export async function saveDiscoverSettings(input: unknown) {
     const d = new Date(`${data.birthDate}T00:00:00Z`)
     const age = ageOn(d)
     if (Number.isNaN(d.getTime()) || age < 0 || age > 100) throw new Error("Data di nascita non valida")
+    // Set once: changing it later would let anyone step over the 18+ line.
+    if (me.birthDate && me.birthDate.toISOString().slice(0, 10) !== data.birthDate) {
+      throw new Error("La data di nascita non si può cambiare: scrivi al supporto se è sbagliata")
+    }
     playerData.birthDate = d
   }
   if (data.homeCity) playerData.homeCity = data.homeCity
@@ -426,7 +440,13 @@ export async function saveDiscoverSettings(input: unknown) {
   if (data.preferredRole) playerData.preferredRole = data.preferredRole
   if (Object.keys(playerData).length) await db.player.update({ where: { id: me.id }, data: playerData })
 
+  if (data.onlyVerified || data.onlyFreeToday) {
+    const plus = await db.discoverProfile.findUnique({ where: { playerId: me.id }, select: { plusUntil: true } })
+    if (!isPlus(plus?.plusUntil)) throw new Error("Questi filtri sono di SANDER+")
+  }
   const profileData = {
+    ...(data.onlyVerified !== undefined ? { onlyVerified: data.onlyVerified } : {}),
+    ...(data.onlyFreeToday !== undefined ? { onlyFreeToday: data.onlyFreeToday } : {}),
     ...(data.side !== undefined ? { side: data.side } : {}),
     ...(data.lookingFor ? { lookingFor: data.lookingFor } : {}),
     ...(data.paused !== undefined ? { paused: data.paused } : {}),
@@ -625,7 +645,7 @@ export async function setFreeToday(input: unknown) {
 export async function saveScopriQuickStart(input: unknown) {
   const data = QuickStartSchema.parse(input)
   const me = await requireMe()
-  if (data.birthDate) {
+  if (data.birthDate && !me.birthDate) {
     const d = new Date(`${data.birthDate}T00:00:00Z`)
     const age = ageOn(d)
     if (Number.isNaN(d.getTime()) || age < 0 || age > 100) throw new Error("Data di nascita non valida")
@@ -655,4 +675,41 @@ export async function saveScopriQuickStart(input: unknown) {
   const ready = await markReadyIfComplete(me.id)
   refreshScopri()
   return { ready }
+}
+
+/**
+ * "Rigiocheresti con lui/lei?" after a match you both played. A "no" keeps
+ * you apart on Scopri; when three different people say no within a month,
+ * the admins hear about it.
+ */
+export async function votePlayAgain(input: unknown) {
+  const { sessionId, targetId, again } = PlayAgainSchema.parse(input)
+  const me = await requireMe()
+  if (targetId === me.id) throw new Error("Non puoi votare te stesso")
+  const both = await db.sessionParticipant.count({
+    where: { sessionId, playerId: { in: [me.id, targetId] }, session: { status: "COMPLETED" } },
+  })
+  if (both < 2) throw new Error("Potete votarvi solo dopo una partita giocata insieme")
+  await db.playAgainVote.upsert({
+    where: { voterId_targetId_sessionId: { voterId: me.id, targetId, sessionId } },
+    create: { voterId: me.id, targetId, sessionId, again },
+    update: { again },
+  })
+  // Notify once, when the third different person says no.
+  if (!again && (await recentNoVoters(targetId)) === PLAY_AGAIN_FLAG_NOS) {
+    const emails = adminEmails()
+    if (emails.length) {
+      const [admins, target] = await Promise.all([
+        db.player.findMany({ where: { user: { email: { in: emails, mode: "insensitive" } } }, select: { id: true } }),
+        db.player.findUnique({ where: { id: targetId }, select: { name: true } }),
+      ])
+      await notify(
+        admins.map((a) => a.id),
+        { title: "Da controllare su Scopri", body: `${target?.name ?? "Un giocatore"}: tanti "non rigiocherei" questo mese`, url: "/admin/segnalazioni" },
+      )
+    }
+  }
+  revalidatePath("/")
+  revalidatePath(`/sessions/${sessionId}`)
+  return { ok: true as const }
 }

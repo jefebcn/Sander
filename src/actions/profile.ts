@@ -40,6 +40,8 @@ export async function saveProfile(input: unknown) {
         ? { glickoRating: startingRating(data.startLevel) }
         : {}
 
+    // Birth date is set once (Scopri is 18+): the stored one always wins.
+    const keepBirthDate = existing.birthDate ? { birthDate: existing.birthDate } : {}
     await db.player.update({
       where: { id: existing.id },
       data: {
@@ -47,6 +49,7 @@ export async function saveProfile(input: unknown) {
         firstName:     data.firstName,
         preferredRole: data.preferredRole,
         ...optional,
+        ...keepBirthDate,
         ...seed,
         avatarUrl:     data.avatarUrl ?? existing.avatarUrl,
       },

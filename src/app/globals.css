@@ -28,13 +28,14 @@
 
   /* Status colours */
   --live: #c6f432;
-  --draft: #6f6a80;
+  --draft: #9a95ad;
   --completed: #b392ff;
 
   /* Semantic */
   --danger: #ff4d6d;
   --warning: #ffc247;
-  --success: #3ddc97;
+  /* Successes and "live, now" moments wear the logo's lime. */
+  --success: var(--lime);
 
   /* Medal colours */
   --gold: #ffd166;

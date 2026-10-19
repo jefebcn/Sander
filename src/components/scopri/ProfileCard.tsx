@@ -1,7 +1,7 @@
 "use client"
 
 /* eslint-disable @next/next/no-img-element -- user photos from Blob, any size */
-import { Heart, MapPin, Shield, Hand, ArrowLeftRight, Target, Sparkles, BadgeCheck, CalendarCheck, Sun } from "lucide-react"
+import { Heart, MapPin, Shield, Hand, ArrowLeftRight, Target, Sparkles, BadgeCheck, CalendarCheck, Sun, Repeat, Flag } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { lookingForLabel, sideLabel } from "@/lib/scopri/prompts"
 import { freeSlotLabel, VERIFIED_MIN_GAMES, VERIFIED_MIN_RELIABILITY } from "@/lib/scopri/reliability"
@@ -15,11 +15,14 @@ import type { ScopriCard, LikeTarget } from "./types"
 export function ProfileCard({
   card,
   onLike,
+  onReport,
   className,
   compact = false,
 }: {
   card: ScopriCard
   onLike?: (target: LikeTarget) => void
+  /** Shows "Segnala o blocca" under the card. */
+  onReport?: () => void
   className?: string
   /** Fewer blocks (e.g. inside "Ti vogliono"). */
   compact?: boolean
@@ -86,6 +89,15 @@ export function ProfileCard({
         </ul>
       )}
       {blocks}
+      {onReport && (
+        <button
+          type="button"
+          onClick={onReport}
+          className="flex min-h-[3.5rem] items-center justify-center gap-2 text-sm font-bold text-[var(--muted-text)]"
+        >
+          <Flag className="h-4 w-4" aria-hidden="true" /> Segnala o blocca {card.name}
+        </button>
+      )}
     </article>
   )
 }
@@ -168,6 +180,17 @@ function DetailsBlock({ card }: { card: ScopriCard }) {
             <dd className="truncate text-base font-bold text-white">{card.reliability === null ? "Ancora nessuna" : `${card.reliability}%`}</dd>
           </span>
         </div>
+        {card.again !== null && (
+          <div className="flex items-center gap-2">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-4)] text-[var(--social)]">
+              <Repeat className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <span className="min-w-0">
+              <dt className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Rigiocherebbero</dt>
+              <dd className="truncate text-base font-bold text-white">{card.again}% di chi ci ha giocato</dd>
+            </span>
+          </div>
+        )}
       </dl>
       {card.verified && (
         <p className="mt-4 flex items-start gap-2 rounded-[var(--radius-md)] bg-[color-mix(in_srgb,var(--social)_12%,transparent)] px-3 py-2 text-sm text-white">

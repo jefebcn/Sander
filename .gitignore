@@ -47,3 +47,7 @@ next-env.d.ts
 
 # TikTok carousel render intermediates (the PNGs are the deliverable, HTML is throwaway)
 /scripts/tiktok-carousels/*.html
+
+# E2E artifacts
+e2e-failure.png
+next.log

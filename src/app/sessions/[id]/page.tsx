@@ -1,6 +1,8 @@
 export const dynamic = "force-dynamic"
 
 import type { Metadata } from "next"
+import { pendingPlayAgain } from "@/lib/scopri/playAgainServer"
+import { PlayAgainCard } from "@/components/scopri/PlayAgainCard"
 import { MapPin, Calendar, Euro, FileText, Coins, RefreshCw, Gauge, Pencil } from "lucide-react"
 import Link from "next/link"
 import { getSession, getWaitlistInfo } from "@/actions/sessions"
@@ -142,6 +144,11 @@ export default async function SessionPage({
     }
   }
 
+  const playAgain =
+    session.status === "COMPLETED" && currentPlayer && isParticipant
+      ? await pendingPlayAgain(currentPlayer.id, new Date(), session.id)
+      : null
+
   return (
     <div className="pb-6">
       <PageHeader
@@ -153,6 +160,7 @@ export default async function SessionPage({
 
       <div className="space-y-4 px-4">
         {recap && <MatchRecap data={recap} />}
+        {playAgain && <PlayAgainCard ask={playAgain} />}
 
         {/* Details card */}
         <div className="tone-play space-y-4 rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-5 shadow-[var(--shadow-card)]">

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useSyncExternalStore } from "react"
 import { createPortal } from "react-dom"
 import { Info, X } from "lucide-react"
 
@@ -35,11 +35,14 @@ const ITEMS = [
   },
 ]
 
+function noopSubscribe() {
+  return () => {}
+}
+
 export function StatsInfoSheet() {
   const [open, setOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => { setMounted(true) }, [])
+  // Portals need document: true only on the client, without an effect.
+  const mounted = useSyncExternalStore(noopSubscribe, () => true, () => false)
 
   const sheet = open ? (
     <div

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
@@ -31,17 +31,17 @@ export function MobileNav() {
   const pathname = usePathname()
   const haptic = useHaptic()
   // Optimistic path — updates immediately on tap for instant active-state feedback
-  const [optimisticPath, setOptimisticPath] = useState<string | null>(null)
+  // The tapped tab lights up at once; it's dropped as soon as the path changes
+  // (it remembers the path it was set on, so no effect is needed to reset it).
+  const [optimistic, setOptimistic] = useState<{ to: string; from: string } | null>(null)
+  const optimisticPath = optimistic && optimistic.from === pathname ? optimistic.to : null
+  const setOptimisticPath = (to: string) => setOptimistic({ to, from: pathname })
   const { data: badge = 0 } = useQuery({
     queryKey: ["scopri-badge"],
     queryFn: () => getScopriBadge(),
     refetchInterval: 60_000,
     refetchOnWindowFocus: true,
   })
-
-  useEffect(() => {
-    setOptimisticPath(null)
-  }, [pathname])
 
   // Hide on full-screen overlays: auth, onboarding, and an open conversation
   // (/messaggi/<id> — but keep it on the /messaggi inbox).

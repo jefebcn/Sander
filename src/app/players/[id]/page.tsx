@@ -106,7 +106,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
                       <span className="text-xs font-black leading-tight" style={{ color: "#FFD700" }}>
                         {win.tournamentName}
                       </span>
-                      <span className="text-xs text-white/40 leading-tight">
+                      <span className="text-xs text-white/60 leading-tight">
                         {MONTH_NAMES_IT[d.getMonth() + 1]} {d.getFullYear()}
                       </span>
                     </div>
@@ -126,7 +126,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
                       <span className="text-xs font-black leading-tight" style={{ color: meta.color }}>
                         {meta.label}
                       </span>
-                      <span className="text-xs text-white/40 leading-tight">
+                      <span className="text-xs text-white/60 leading-tight">
                         {MONTH_NAMES_IT[award.month]} {award.year}
                       </span>
                     </div>

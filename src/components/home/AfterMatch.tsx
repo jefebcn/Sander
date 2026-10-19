@@ -109,11 +109,11 @@ export function AfterMatchRecap({
           {delta !== null && delta !== 0 && (
             <span className="flex min-h-[2.75rem] items-center gap-1.5 rounded-full bg-black/40 px-3 text-sm font-extrabold text-white ring-1 ring-[var(--crest-hair)]">
               {delta > 0 ? (
-                <TrendingUp className="h-4 w-4 text-[var(--accent)]" aria-hidden="true" />
+                <TrendingUp className="h-4 w-4 text-[var(--success)]" aria-hidden="true" />
               ) : (
                 <TrendingDown className="h-4 w-4" aria-hidden="true" />
               )}
-              <span className={cn(delta > 0 && "text-[var(--accent)]")}>
+              <span className={cn(delta > 0 && "text-[var(--success)]")}>
                 {delta > 0 ? "+" : "−"}{Math.abs(delta)}
               </span>{" "}
               punti

@@ -1,4 +1,6 @@
 import type { Metadata } from "next"
+import { activeDuoOf, duoName } from "@/lib/scopri/duos"
+import { DuoRegisterButton } from "@/components/tournament/DuoRegisterButton"
 import Link from "next/link"
 import { ChevronRight, Play, Trophy, Shuffle, Trash2 } from "lucide-react"
 import { getTournamentDashboard } from "@/actions/standings"
@@ -51,6 +53,9 @@ export async function generateMetadata(
     },
   }
 }
+
+/** Formats where a pair plays together the whole tournament (see registerDuoForTournament). */
+const PAIR_FORMATS = ["BRACKETS", "ROUND_ROBIN", "DOUBLE_ELIMINATION", "CHICECE"]
 
 export default async function TournamentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -384,6 +389,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
       })
     : null
   const myRegistration = myRegRaw && !myRegRaw.isSpectator ? myRegRaw : null
+  const myDuo = currentPlayer ? await activeDuoOf(currentPlayer.id) : null
   const alreadySpectator = myRegRaw?.isSpectator ?? false
 
   const regStatus = deriveRegistrationStatus(myRegistration)
@@ -483,6 +489,10 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               </div>
             )}
           </div>
+          {/* Scopri pair: both of you in one tap (fixed-pair formats only). */}
+          {myDuo && regStatus === "NOT_REGISTERED" && registrationOpen && tournament.status === "DRAFT" && tournament.isOpenForRegistration && PAIR_FORMATS.includes(tournament.type) && (
+            <DuoRegisterButton tournamentId={id} duoName={duoName(myDuo)} />
+          )}
           {/* CTA buttons only when registration is open and not already a spectator */}
           {tournament.status === "DRAFT" && tournament.isOpenForRegistration && !alreadySpectator && (
             <PaymentCtaButton

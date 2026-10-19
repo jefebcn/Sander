@@ -12,6 +12,7 @@ import { LikeSheet, type LikeResult } from "./LikeSheet"
 import { MatchOverlay } from "./MatchOverlay"
 import { ExtrasSheet } from "./ExtrasSheet"
 import { FreeTodayButton } from "./FreeTodayButton"
+import { ReportSheet } from "./ReportSheet"
 import type { FreeSlot } from "@/lib/scopri/reliability"
 import type { Allowance, GroupGame, LikeTarget, ScopriCard } from "./types"
 
@@ -53,6 +54,7 @@ export function ScopriDeck({
   const [target, setTarget] = useState<LikeTarget | null>(null)
   const [match, setMatch] = useState<{ name: string; photo: string | null; threadId: string } | null>(null)
   const [extras, setExtras] = useState(false)
+  const [report, setReport] = useState(false)
   const [drag, setDrag] = useState(0)
   const [leaving, setLeaving] = useState<"left" | "right" | null>(null)
   const [loading, setLoading] = useState(false)
@@ -145,10 +147,10 @@ export function ScopriDeck({
           type="button"
           onClick={() => setExtras(true)}
           className="flex min-h-[2.75rem] items-center gap-3 rounded-full bg-[var(--surface-2)] px-4 text-sm font-bold text-white"
-          aria-label={`${likesLeft} like e ${allowance.aces} Ace rimasti. Prendi extra.`}
+          aria-label={`${allowance.likes.unlimited ? "Like illimitati" : `${likesLeft} like`} e ${allowance.aces} Ace rimasti. Prendi extra.`}
         >
           <span className="flex items-center gap-1">
-            <Heart className="h-4 w-4 text-[var(--accent)]" aria-hidden="true" /> {likesLeft}
+            <Heart className="h-4 w-4 text-[var(--accent)]" aria-hidden="true" /> {allowance.likes.unlimited ? "∞" : likesLeft}
           </span>
           <span className="flex items-center gap-1">
             <Crown className="h-4 w-4 text-[var(--ace)]" aria-hidden="true" /> {allowance.aces}
@@ -182,7 +184,7 @@ export function ScopriDeck({
         >
           <Stamp show={drag > 40} text="GIOCHIAMO" side="left" color="var(--accent)" opacity={Math.min(1, drag / COMMIT)} />
           <Stamp show={drag < -40} text="PASSO" side="right" color="var(--muted-text)" opacity={Math.min(1, -drag / COMMIT)} />
-          <ProfileCard card={current.card} onLike={(t) => setTarget(t)} />
+          <ProfileCard card={current.card} onLike={(t) => setTarget(t)} onReport={() => setReport(true)} />
         </div>
       )}
 
@@ -222,6 +224,9 @@ export function ScopriDeck({
         />
       )}
       <ExtrasSheet open={extras} onOpenChange={setExtras} onBought={setAllowance} />
+      {current?.kind === "player" && (
+        <ReportSheet open={report} onOpenChange={setReport} playerId={current.card.id} name={current.card.name} onDone={() => next("left")} />
+      )}
       {match && <MatchOverlay {...match} myPhoto={myPhoto} onClose={() => setMatch(null)} />}
     </div>
   )

@@ -29,3 +29,32 @@ export function inviteMessage(pool: number, city: string) {
     url: "/onboarding/scopri",
   }
 }
+
+/** "Tocca a te" fires when the other wrote this long ago and you never replied. */
+export const TURN_AFTER_H = 24
+/** A pending pair challenge is recalled once after this long. */
+export const DUO_REMIND_AFTER_H = 24
+
+/** Remind about a chat only once per unanswered message. */
+export function turnNeedsReminder(
+  last: { senderId: string; createdAt: Date } | null,
+  meId: string,
+  nudgedAt: Date | null,
+  now: Date,
+): boolean {
+  if (!last || last.senderId === meId) return false
+  if (now.getTime() - last.createdAt.getTime() < TURN_AFTER_H * 3600_000) return false
+  return !nudgedAt || nudgedAt < last.createdAt
+}
+
+export function dailyPickMessage(name: string, reasons: string[]) {
+  return {
+    title: `Il più compatibile di oggi: ${name}`,
+    body: reasons.length ? reasons.slice(0, 2).join(" · ") : "Scelto per voi due tra tutti i giocatori di Scopri.",
+    url: "/scopri",
+  }
+}
+
+export function turnMessage(name: string) {
+  return { title: `Tocca a te con ${name}`, body: "Ti ha scritto ieri: una risposta e organizzate la partita.", url: "/scopri/match" }
+}
