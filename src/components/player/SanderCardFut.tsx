@@ -52,12 +52,12 @@ function getTextColor(glicko2: number): string {
 /* ──────────────────────────────────────────────────────────────────────────── */
 
 function getFrameTemplate(glicko2: number): string {
-  if (glicko2 >= 2300) return "/assets/cards/gold_premium.png"
-  if (glicko2 >= 2000) return "/assets/cards/gold.png"
-  if (glicko2 >= 1800) return "/assets/cards/silver_premium.png"
-  if (glicko2 >= 1500) return "/assets/cards/silver.png"
-  if (glicko2 >= 1200) return "/assets/cards/bronze_premium.png"
-  return "/assets/cards/bronze.png"
+  if (glicko2 >= 2300) return "/assets/cards/gold_premium.webp"
+  if (glicko2 >= 2000) return "/assets/cards/gold.webp"
+  if (glicko2 >= 1800) return "/assets/cards/silver_premium.webp"
+  if (glicko2 >= 1500) return "/assets/cards/silver.webp"
+  if (glicko2 >= 1200) return "/assets/cards/bronze_premium.webp"
+  return "/assets/cards/bronze.webp"
 }
 
 /* ──────────────────────────────────────────────────────────────────────────── */
@@ -70,18 +70,22 @@ function FlagIcon({ code }: { code: string }) {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────── */
-/*  Stat positioning: each stat at a fixed column (20×20 grid units)           */
-/*  ATT=6.75  DIF=8  RIC=9.75  MUR=11.75  ALZ=13  STA=14.75                  */
+/*  Stat positioning: each number centred in its recessed slot on the frame.   */
+/*  Slot centres measured on the 2000×2000 frames (x) and the slot row (y).    */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
 const STAT_POSITIONS: { key: keyof PlayerCardData["stats"]; left: string }[] = [
-  { key: "att", left: "28.125%" },   // Col 5.625
-  { key: "dif", left: "36.25%" },    // Col 7.25
-  { key: "ric", left: "44.375%" },   // Col 8.875
-  { key: "mur", left: "52.5%" },     // Col 10.5
-  { key: "alz", left: "60.625%" },   // Col 12.125
-  { key: "sta", left: "68.75%" },    // Col 13.75
+  { key: "att", left: "29.4%" },
+  { key: "dif", left: "38.1%" },
+  { key: "ric", left: "46.2%" },
+  { key: "mur", left: "54.5%" },
+  { key: "alz", left: "62.9%" },
+  { key: "sta", left: "71.2%" },
 ]
+const STAT_ROW = "72.3%"
+/** Numbers sit in dark recessed slots: light, with a shadow to read on any metal. */
+const STAT_COLOR = "#f6f4ee"
+const STAT_SHADOW = "0 1px 2px rgba(0,0,0,0.85)"
 
 /* ──────────────────────────────────────────────────────────────────────────── */
 /*  Component: 3-layer sandwich (square 2000×2000 assets)                      */
@@ -222,19 +226,20 @@ export function SanderCardFut({ playerData, className, frameLoading }: SanderCar
           </span>
         </div>
 
-        {/* Stats — Row 14.0 */}
+        {/* Stats — centred in the recessed slots */}
         {STAT_POSITIONS.map(({ key, left }) => (
           <span
             key={key}
-            className="absolute text-sm font-bold leading-none"
+            className="absolute text-sm font-bold leading-none tabular-nums"
             style={{
-              top: "70%",
+              top: STAT_ROW,
               left,
+              transform: "translate(-50%, -50%)",
               zIndex: 20,
               fontFamily: FONT,
-              letterSpacing: "0.05em",
-              color: textColor,
-              textShadow: SHADOW,
+              letterSpacing: "0.03em",
+              color: STAT_COLOR,
+              textShadow: STAT_SHADOW,
             }}
           >
             {playerData.stats[key]}
