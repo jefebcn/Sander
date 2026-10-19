@@ -97,3 +97,36 @@ Dress code: zero scarpe 🦶 Sabbia, sole e un pallone.
 Tagga chi gioca sempre con i calzini 👇
 #beachvolley #apiedinudi #rimini #sander
 ```
+
+---
+
+# TikTok
+
+3 video verticali 1080×1920, 7 secondi, **senza audio**: su TikTok aggiungi un suono di tendenza
+(volume basso, il testo si legge da solo). Clip animate con Higgsfield (Kling) dalle foto della
+griglia, scritte a pennarello che compaiono a tempo, chiusura con sanderbv.it.
+Le scritte stanno fuori dalle zone coperte da pulsanti e didascalia di TikTok.
+
+```bash
+FFMPEG=/percorso/ffmpeg node scripts/content-grid/tiktok.mjs   # → tiktok/*.mp4
+```
+
+**01 · Sander** (tuffo in difesa)
+```
+il beach volley in Riviera ha un club 🏐 trova con chi giocare su SANDER, gratis
+#beachvolley #rimini #rivieraromagnola #sander #beachvolleyball
+```
+
+**02 · Libero oggi?** (schiacciata)
+```
+sei libero stasera? un tap e i tuoi match lo sanno 🌅
+#beachvolley #riccione #2vs2 #sander #estate
+```
+
+**03 · A piedi nudi** (piedi sulla sabbia)
+```
+dress code: zero scarpe 🦶 ci vediamo in spiaggia
+#beachvolley #apiedinudi #rivieraromagnola #sander #tramonto
+```
+
+Pubblica alle 18–21; nei primi 2 secondi c'è già la scritta grande, che è quello che ferma lo scroll.
