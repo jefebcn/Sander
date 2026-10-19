@@ -14,6 +14,8 @@ import { dayKey } from "@/lib/datetime"
 export const LATE_CANCEL_MS = 3 * 3600_000
 export const VERIFIED_MIN_GAMES = 3
 export const VERIFIED_MIN_RELIABILITY = 80
+/** How long after a "non presentato" the player can still contest it. */
+export const DISPUTE_DAYS = 14
 
 export function isLateCancel(sessionDate: Date, now: Date = new Date()): boolean {
   return sessionDate.getTime() - now.getTime() < LATE_CANCEL_MS

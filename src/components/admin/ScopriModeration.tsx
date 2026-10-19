@@ -3,7 +3,7 @@
 import { useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { adminHidePhoto, adminKeepPhoto, adminSuspend, adminUnsuspend, adminCloseReport } from "@/actions/scopriAdmin"
+import { adminHidePhoto, adminKeepPhoto, adminSuspend, adminUnsuspend, adminCloseReport, adminResolveAbsence } from "@/actions/scopriAdmin"
 import { cn } from "@/lib/utils"
 
 type Action =
@@ -12,6 +12,8 @@ type Action =
   | { kind: "suspend"; playerId: string; reason: string }
   | { kind: "unsuspend"; playerId: string }
   | { kind: "close"; reportId: string }
+  | { kind: "keepAbsence"; eventId: string }
+  | { kind: "cancelAbsence"; eventId: string }
 
 const LABEL: Record<Action["kind"], string> = {
   hidePhoto: "Rimuovi foto",
@@ -19,6 +21,8 @@ const LABEL: Record<Action["kind"], string> = {
   suspend: "Sospendi",
   unsuspend: "Riattiva",
   close: "Archivia",
+  keepAbsence: "Confermo l'assenza",
+  cancelAbsence: "Annulla l'assenza",
 }
 
 const DONE: Record<Action["kind"], string> = {
@@ -27,6 +31,8 @@ const DONE: Record<Action["kind"], string> = {
   suspend: "Profilo sospeso",
   unsuspend: "Profilo riattivato",
   close: "Segnalazione archiviata",
+  keepAbsence: "Assenza confermata",
+  cancelAbsence: "Assenza annullata",
 }
 
 /** One admin moderation button; destructive ones ask for confirmation. */
@@ -43,7 +49,8 @@ export function ModerationButton({ action, className }: { action: Action; classN
         else if (action.kind === "keepPhoto") await adminKeepPhoto({ photoId: action.photoId })
         else if (action.kind === "suspend") await adminSuspend({ playerId: action.playerId, reason: action.reason })
         else if (action.kind === "unsuspend") await adminUnsuspend({ playerId: action.playerId })
-        else await adminCloseReport({ reportId: action.reportId })
+        else if (action.kind === "close") await adminCloseReport({ reportId: action.reportId })
+        else await adminResolveAbsence({ eventId: action.eventId, keep: action.kind === "keepAbsence" })
         toast.success(DONE[action.kind])
         router.refresh()
       } catch (e) {

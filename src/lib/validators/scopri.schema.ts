@@ -149,3 +149,6 @@ export const AdminPhotoSchema = z.object({ photoId: Id }).strict()
 export const AdminSuspendSchema = z.object({ playerId: Id, reason: z.string().trim().min(2).max(200) }).strict()
 export const AdminPlayerSchema = z.object({ playerId: Id }).strict()
 export const AdminReportSchema = z.object({ reportId: Id }).strict()
+
+export const DisputeAbsenceSchema = z.object({ eventId: Id, note: z.string().trim().min(3, "Scrivi due parole").max(300) }).strict()
+export const AdminAbsenceSchema = z.object({ eventId: Id, keep: z.boolean() }).strict()

@@ -10,6 +10,7 @@ import {
   AdminSuspendSchema,
   AdminPlayerSchema,
   AdminReportSchema,
+  AdminAbsenceSchema,
 } from "@/lib/validators/scopri.schema"
 
 /* Admin moderation for Scopri. Every action checks the caller is an admin. */
@@ -79,5 +80,23 @@ export async function adminCloseReport(input: unknown) {
   const { reportId } = AdminReportSchema.parse(input)
   await db.playerBlock.update({ where: { id: reportId }, data: { reviewedAt: new Date() } })
   refresh()
+  return { ok: true as const }
+}
+
+/** Decide on a contested absence: keep it (it counts again) or cancel it. */
+export async function adminResolveAbsence(input: unknown) {
+  await requireAdmin()
+  const { eventId, keep } = AdminAbsenceSchema.parse(input)
+  const ev = await db.attendanceEvent.findUnique({ where: { id: eventId }, select: { playerId: true, disputedAt: true } })
+  if (!ev?.disputedAt) throw new Error("Contestazione non trovata")
+  if (keep) await db.attendanceEvent.update({ where: { id: eventId }, data: { resolvedAt: new Date() } })
+  else await db.attendanceEvent.delete({ where: { id: eventId } })
+  await notify([ev.playerId], {
+    title: keep ? "Assenza confermata" : "Assenza annullata",
+    body: keep ? "Dopo la verifica l'assenza resta nelle tue presenze." : "Avevi ragione: l'assenza è stata tolta dalle tue presenze.",
+    url: "/profile/presenze",
+  })
+  refresh()
+  revalidatePath("/profile/presenze")
   return { ok: true as const }
 }

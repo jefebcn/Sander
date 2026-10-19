@@ -21,7 +21,7 @@ import {
   YOUR_TURN_LIMIT,
 } from "@/lib/scopri/rules"
 import { isBlockedPair } from "@/lib/scopri/blocks"
-import { freeSlotLabel } from "@/lib/scopri/reliability"
+import { freeSlotLabel, DISPUTE_DAYS } from "@/lib/scopri/reliability"
 import { PLAY_AGAIN_FLAG_NOS } from "@/lib/scopri/playAgain"
 import { recentNoVoters } from "@/lib/scopri/playAgainServer"
 import {
@@ -54,6 +54,7 @@ import {
   FreeTodaySchema,
   QuickStartSchema,
   PlayAgainSchema,
+  DisputeAbsenceSchema,
 } from "@/lib/validators/scopri.schema"
 
 /* ────────────────────────────────────────────────────────────────────────── */
@@ -711,5 +712,27 @@ export async function votePlayAgain(input: unknown) {
   }
   revalidatePath("/")
   revalidatePath(`/sessions/${sessionId}`)
+  return { ok: true as const }
+}
+
+/**
+ * "Ero presente": contest a no-show the organiser marked. Until an admin
+ * looks at it, it no longer lowers your attendance.
+ */
+export async function disputeAbsence(input: unknown) {
+  const { eventId, note } = DisputeAbsenceSchema.parse(input)
+  const me = await requireMe()
+  const ev = await db.attendanceEvent.findUnique({ where: { id: eventId } })
+  if (!ev || ev.playerId !== me.id) throw new Error("Assenza non trovata")
+  if (ev.kind !== "NO_SHOW") throw new Error("Si possono contestare solo le assenze segnate dall'organizzatore")
+  if (ev.disputedAt) throw new Error("L'hai già contestata")
+  if (Date.now() - ev.createdAt.getTime() > DISPUTE_DAYS * 86_400_000) throw new Error(`Si può contestare entro ${DISPUTE_DAYS} giorni`)
+  await db.attendanceEvent.update({ where: { id: eventId }, data: { disputedAt: new Date(), disputeNote: note } })
+  const emails = adminEmails()
+  if (emails.length) {
+    const admins = await db.player.findMany({ where: { user: { email: { in: emails, mode: "insensitive" } } }, select: { id: true } })
+    await notify(admins.map((a) => a.id), { title: "Assenza contestata", body: `${firstName(me)}: «${note.slice(0, 80)}»`, url: "/admin/segnalazioni" })
+  }
+  revalidatePath("/profile/presenze")
   return { ok: true as const }
 }

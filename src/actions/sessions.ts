@@ -898,6 +898,11 @@ export async function markNoShow(participantId: string) {
 
   await removeParticipantFromSession(participantId)
   await db.attendanceEvent.create({ data: { playerId: part.playerId, sessionId: part.sessionId, kind: "NO_SHOW" } })
+  safeNotifyPlayer(part.playerId, {
+    title: "Segnato come non presentato",
+    body: "Se c'eri, contestalo dalle tue presenze: «Ero presente».",
+    url: "/profile/presenze",
+  })
   return { ok: true as const }
 }
 
