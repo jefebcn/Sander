@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import Link from "next/link"
 import { UserPlus, UserMinus, Search, User, X, BellRing } from "lucide-react"
 import { toast } from "sonner"
+import { isLateCancel } from "@/lib/scopri/reliability"
 import { joinSession, leaveSession, assignTeam, cancelSession, removeParticipantFromSession, joinWaitlist, leaveWaitlist } from "@/actions/sessions"
 import { joinWindowOpen } from "@/lib/sessionRules"
 import { cn } from "@/lib/utils"
@@ -225,6 +226,11 @@ export function ParticipantList({ session, participants, currentPlayerId, myWait
               <UserMinus className="h-5 w-5" aria-hidden="true" />
               {armed === "leave" ? "Tocca di nuovo per lasciare" : "Lascia partita"}
             </button>
+          )}
+          {isParticipant && !isOrganizer && armed === "leave" && isLateCancel(new Date(session.date)) && (
+            <p className="text-center text-sm text-[var(--warning)]">
+              Manca poco all&apos;inizio: lasciare adesso conta come assenza nella tua affidabilità.
+            </p>
           )}
           {started && !isParticipant && !isOrganizer && session.status === "OPEN" && (
             <div className="rounded-2xl bg-[var(--surface-2)] px-4 py-4 text-center">

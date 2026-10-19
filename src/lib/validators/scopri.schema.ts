@@ -2,6 +2,7 @@ import { z } from "zod"
 import { isKnownCity } from "@/lib/cities"
 import { isPromptKey, LOOKING_FOR_KEYS, SIDE_KEYS } from "@/lib/scopri/prompts"
 import { ANSWER_MAX, COMMENT_MAX, MAX_PHOTOS, MOTTO_MAX, PROMPT_COUNT } from "@/lib/scopri/rules"
+import { FREE_SLOT_KEYS } from "@/lib/scopri/reliability"
 
 const Id = z.string().trim().min(1).max(64)
 const Comment = z.string().trim().max(COMMENT_MAX).optional()
@@ -113,5 +114,26 @@ export const DuoGameSchema = z
     location: z.string().trim().min(2).max(100),
     city: z.string().refine(isKnownCity, "Comune non riconosciuto").optional(),
     date: z.coerce.date(),
+  })
+  .strict()
+
+export const FreeTodaySchema = z.object({ slot: z.enum(FREE_SLOT_KEYS).nullable() }).strict()
+
+/** The one-minute Scopri step right after sign-up. */
+export const QuickStartSchema = z
+  .object({
+    birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato data non valido").optional(),
+    prompts: z
+      .array(
+        z.object({
+          promptKey: z.string().refine(isPromptKey, "Domanda non valida"),
+          answer: z.string().trim().min(2, "Scrivi almeno due lettere").max(ANSWER_MAX),
+        }),
+      )
+      .min(1)
+      .max(PROMPT_COUNT)
+      .refine((list) => new Set(list.map((p) => p.promptKey)).size === list.length, "Domande ripetute"),
+    lookingFor: z.array(z.enum(LOOKING_FOR_KEYS)).max(5).optional(),
+    useAvatar: z.boolean().optional(),
   })
   .strict()

@@ -23,6 +23,7 @@ import {
   isActiveStatus,
   JOIN_GRACE_MS,
 } from "@/lib/sessionRules"
+import { isLateCancel } from "@/lib/scopri/reliability"
 import { rewardInvitesAfterMatch } from "@/lib/referralRedeem"
 import { refundSessionCredits } from "@/lib/sessionRefunds"
 import { updateGlickoAfterSession } from "@/lib/rating"
@@ -464,9 +465,14 @@ export async function leaveSession(sessionId: string) {
 
     const session = await tx.session.findUnique({
       where: { id: sessionId },
-      select: { status: true },
+      select: { status: true, date: true },
     })
     wasFull = session?.status === "FULL"
+    // Leaving in the last hours leaves the others short: it counts against
+    // your attendance on Scopri (lib/scopri/reliability).
+    if (session && isActiveStatus(session.status) && isLateCancel(session.date)) {
+      await tx.attendanceEvent.create({ data: { playerId: player.id, sessionId, kind: "LATE_CANCEL" } })
+    }
 
     // Refund exactly what this player paid — never a flat quota, or anyone the
     // organiser added for free could farm credits by joining and leaving.

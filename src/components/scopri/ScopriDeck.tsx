@@ -11,6 +11,8 @@ import { ProfileCard } from "./ProfileCard"
 import { LikeSheet, type LikeResult } from "./LikeSheet"
 import { MatchOverlay } from "./MatchOverlay"
 import { ExtrasSheet } from "./ExtrasSheet"
+import { FreeTodayButton } from "./FreeTodayButton"
+import type { FreeSlot } from "@/lib/scopri/reliability"
 import type { Allowance, GroupGame, LikeTarget, ScopriCard } from "./types"
 
 type Item = { kind: "player"; card: ScopriCard } | { kind: "game"; game: GroupGame }
@@ -38,11 +40,13 @@ export function ScopriDeck({
   initialAllowance,
   games,
   myPhoto,
+  myFree,
 }: {
   initialCards: ScopriCard[]
   initialAllowance: Allowance
   games: GroupGame[]
   myPhoto: string | null
+  myFree: FreeSlot | null
 }) {
   const [items, setItems] = useState<Item[]>(() => weave(initialCards, games))
   const [allowance, setAllowance] = useState(initialAllowance)
@@ -150,8 +154,11 @@ export function ScopriDeck({
             <Crown className="h-4 w-4 text-[var(--ace)]" aria-hidden="true" /> {allowance.aces}
           </span>
         </button>
-        <p className="text-sm text-[var(--muted-text)]">Trascina → per il like, ← per passare</p>
+        <FreeTodayButton initial={myFree} />
       </div>
+      {current?.kind === "player" && (
+        <p className="-mt-1 mb-3 text-sm text-[var(--muted-text)]">Trascina a destra per il like, a sinistra per passare.</p>
+      )}
 
       {!current ? (
         <EmptyDeck loading={loading} />
@@ -271,6 +278,9 @@ function EmptyDeck({ loading }: { loading: boolean }) {
       </p>
       <Link href="/scopri/profilo#preferenze" className="mt-2 flex min-h-[3.5rem] items-center rounded-full bg-[var(--surface-4)] px-6 text-base font-bold text-white">
         Cambia preferenze
+      </Link>
+      <Link href="/profile?tab=invita" className="flex min-h-[3.5rem] items-center px-6 text-base font-bold text-[var(--accent)]">
+        Invita i tuoi compagni su Scopri
       </Link>
     </div>
   )

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 import { after } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
-import { formatWhen } from "@/lib/datetime"
+import { formatWhen, dayKey } from "@/lib/datetime"
 import { romeDayStart, romeWeekStart } from "@/lib/romeMonth"
 import { sessionDateError } from "@/lib/sessionRules"
 import { nudgeForSession } from "@/lib/nudges"
@@ -20,6 +20,7 @@ import {
   YOUR_TURN_LIMIT,
 } from "@/lib/scopri/rules"
 import { isBlockedPair } from "@/lib/scopri/blocks"
+import { freeSlotLabel } from "@/lib/scopri/reliability"
 import {
   loadCardRow,
   readiness,
@@ -30,6 +31,7 @@ import {
   postMessages,
   notify,
   waitingCount,
+  markReadyIfComplete,
   type CardRow,
 } from "@/lib/scopri/server"
 import {
@@ -46,6 +48,8 @@ import {
   PhotoRefSchema,
   ReorderPhotosSchema,
   ProposeGameSchema,
+  FreeTodaySchema,
+  QuickStartSchema,
 } from "@/lib/validators/scopri.schema"
 
 /* ────────────────────────────────────────────────────────────────────────── */
@@ -436,6 +440,7 @@ export async function saveDiscoverSettings(input: unknown) {
     create: { playerId: me.id, ...profileData },
     update: profileData,
   })
+  await markReadyIfComplete(me.id)
   refreshScopri()
   revalidatePath("/scopri/profilo")
   return { ok: true as const }
@@ -455,6 +460,7 @@ export async function savePrompt(input: unknown) {
     update: { promptKey: data.promptKey, answer: data.answer },
   })
   await db.discoverProfile.upsert({ where: { playerId: me.id }, create: { playerId: me.id }, update: {} })
+  await markReadyIfComplete(me.id)
   revalidatePath("/scopri/profilo")
   revalidatePath("/scopri")
   return { ok: true as const }
@@ -501,6 +507,7 @@ export async function addAvatarAsPhoto() {
   if (count >= MAX_PHOTOS) throw new Error(`Al massimo ${MAX_PHOTOS} foto`)
   const already = await db.playerPhoto.findFirst({ where: { playerId: me.id, url: me.avatarUrl }, select: { id: true } })
   if (!already) await db.playerPhoto.create({ data: { playerId: me.id, url: me.avatarUrl, position: count } })
+  await markReadyIfComplete(me.id)
   revalidatePath("/scopri/profilo")
   return { ok: true as const }
 }
@@ -564,4 +571,88 @@ export async function getScopriBadge(): Promise<number> {
     waitingCount(me.id),
   ])
   return likes + waiting
+}
+
+/**
+ * "Libero oggi": put yourself forward in decks for today, in a slot. Turning it
+ * on also tells your matches once a day, since they're the quickest game.
+ */
+export async function setFreeToday(input: unknown) {
+  const { slot } = FreeTodaySchema.parse(input)
+  const me = await requireMe()
+  const today = dayKey(new Date())
+  const profile = await db.discoverProfile.upsert({
+    where: { playerId: me.id },
+    create: { playerId: me.id },
+    update: {},
+    select: { freeNotifiedDay: true },
+  })
+  if (!slot) {
+    await db.discoverProfile.update({ where: { playerId: me.id }, data: { freeDay: null, freeSlot: null } })
+    refreshScopri()
+    return { ok: true as const, notified: 0 }
+  }
+  await db.discoverProfile.update({ where: { playerId: me.id }, data: { freeDay: today, freeSlot: slot } })
+
+  let notified = 0
+  if (profile.freeNotifiedDay !== today) {
+    const matches = await db.playerMatch.findMany({
+      where: { OR: [{ aId: me.id }, { bId: me.id }], endedAt: null },
+      select: { aId: true, bId: true },
+      orderBy: { createdAt: "desc" },
+      take: 15,
+    })
+    const ids = matches.map((m) => (m.aId === me.id ? m.bId : m.aId))
+    if (ids.length) {
+      const when = freeSlotLabel(slot).toLowerCase()
+      await notify(ids, {
+        title: `${firstName(me)} è libero oggi`,
+        body: slot === "ANY" ? "Tutto il giorno: proponi la partita, siete già in match." : `Di ${when}: proponi la partita, siete già in match.`,
+        url: "/scopri/match",
+      })
+      notified = ids.length
+    }
+    await db.discoverProfile.update({ where: { playerId: me.id }, data: { freeNotifiedDay: today } })
+  }
+  refreshScopri()
+  return { ok: true as const, notified }
+}
+
+/**
+ * Sign-up's last (optional) step: profile photo as first Scopri photo, three
+ * answers, age, what you look for. Returns whether you're live on Scopri.
+ */
+export async function saveScopriQuickStart(input: unknown) {
+  const data = QuickStartSchema.parse(input)
+  const me = await requireMe()
+  if (data.birthDate) {
+    const d = new Date(`${data.birthDate}T00:00:00Z`)
+    const age = ageOn(d)
+    if (Number.isNaN(d.getTime()) || age < 0 || age > 100) throw new Error("Data di nascita non valida")
+    await db.player.update({ where: { id: me.id }, data: { birthDate: d } })
+  }
+  await db.discoverProfile.upsert({
+    where: { playerId: me.id },
+    create: { playerId: me.id, lookingFor: data.lookingFor ?? [] },
+    update: data.lookingFor ? { lookingFor: data.lookingFor } : {},
+  })
+  if (data.useAvatar && me.avatarUrl) {
+    const count = await db.playerPhoto.count({ where: { playerId: me.id } })
+    const already = await db.playerPhoto.findFirst({ where: { playerId: me.id, url: me.avatarUrl }, select: { id: true } })
+    if (!already && count < MAX_PHOTOS) {
+      await db.playerPhoto.create({ data: { playerId: me.id, url: me.avatarUrl, position: count } })
+    }
+  }
+  await db.$transaction(
+    data.prompts.map((p, position) =>
+      db.playerPrompt.upsert({
+        where: { playerId_position: { playerId: me.id, position } },
+        create: { playerId: me.id, position, promptKey: p.promptKey, answer: p.answer },
+        update: { promptKey: p.promptKey, answer: p.answer },
+      }),
+    ),
+  )
+  const ready = await markReadyIfComplete(me.id)
+  refreshScopri()
+  return { ready }
 }

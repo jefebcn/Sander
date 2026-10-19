@@ -49,10 +49,15 @@ export function SetupGate({ missing }: { missing: MissingStep[] }) {
       </ol>
       {!minor && (
         <Link
-          href="/scopri/profilo"
+          href="/onboarding/scopri"
           className="pressable flex min-h-[3.75rem] items-center justify-center rounded-full bg-[var(--accent)] text-lg font-extrabold text-black shadow-[var(--shadow-glow)]"
         >
-          Crea il tuo profilo Scopri
+          Crea il profilo in un minuto
+        </Link>
+      )}
+      {!minor && (
+        <Link href="/profile?tab=invita" className="flex min-h-[3.5rem] items-center justify-center text-base font-bold text-[var(--accent)]">
+          Porta i tuoi compagni su Scopri
         </Link>
       )}
     </section>

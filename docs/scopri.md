@@ -54,6 +54,27 @@ In più, solo SANDER:
   senza coppia viene abbinato con il miglior punteggio reciproco. Le scelte sono
   simmetriche e salvate in `DailyPick`, una per giorno.
 
+## Affidabilità, "Libero oggi", ingresso
+
+- **Affidabilità** (`lib/scopri/reliability.ts`):
+  - Le presenze sono le partite completate (`Player.sessionsPlayed`).
+  - Le assenze sono le uscite da una partita a meno di 3 ore dall'inizio, salvate in `AttendanceEvent`. Prima del secondo tocco su "Lascia partita" l'utente viene avvisato.
+  - **Verificato** vuol dire almeno 3 partite e almeno l'80% di presenze; la carta mostra il badge e la percentuale.
+  - Nell'ordine del mazzo pesano anche le presenze e il badge. L'affinità mostrata resta la stessa.
+- **Libero oggi**:
+  - Si sceglie la fascia: mattina, pomeriggio, sera o tutto il giorno. Vale fino a mezzanotte.
+  - Nel mazzo si passa avanti di 12 punti, o di 25 se anche chi guarda è libero nella stessa fascia.
+  - I propri match vengono avvisati una volta al giorno.
+  - Il colore è il lime del logo.
+- **Ingresso**:
+  - Dopo il profilo base, il nuovo iscritto vede un passo facoltativo di un minuto (`/onboarding/scopri`), già precompilato con la foto profilo e tre domande suggerite.
+  - I minorenni saltano il passo.
+- **Richiami** (`lib/scopri/digest.ts`, eseguiti dal cron del mattino):
+  - Chi è già su Scopri riceve "N nuovi giocatori a {comune}", al massimo una volta al giorno.
+  - Chi non c'è ancora riceve "{N} giocatori di {comune} sono su Scopri", al massimo una volta a settimana e solo se nel comune ce ne sono almeno 3.
+  - Il richiamo non arriva a chi ha disattivato gli avvisi né ai minorenni.
+  - Massimo 400 notifiche per esecuzione.
+
 ## Dove sta il codice
 
 - `prisma/schema.prisma`: modelli `PlayerPhoto`, `PlayerPrompt`,

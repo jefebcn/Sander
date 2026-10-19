@@ -7,6 +7,7 @@ import { notifyPlayer } from "@/lib/push"
 import { isAdminEmail } from "@/lib/isAdmin"
 import { nudgeSweep } from "@/lib/nudges"
 import { cancelStaleSessions } from "@/lib/sessionRefunds"
+import { scopriDigest } from "@/lib/scopri/digest"
 
 export const runtime = "nodejs"
 
@@ -50,5 +51,11 @@ export async function GET(req: NextRequest) {
     return 0
   })
 
-  return NextResponse.json({ ok: true, created, nudged, staleCancelled })
+  // Scopri reminders: newcomers in your comune, or how many already are there.
+  const scopri = await scopriDigest().catch((e) => {
+    console.error("[cron] scopri digest failed", e)
+    return 0
+  })
+
+  return NextResponse.json({ ok: true, created, nudged, staleCancelled, scopri })
 }

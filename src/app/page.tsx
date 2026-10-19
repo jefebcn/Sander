@@ -265,7 +265,7 @@ export default async function Home() {
           <NextMatchCard match={nextMatch} />
         </div>
       )}
-      {scopri && (
+      {scopri && !scopri.minor && (
         <div {...rise()}>
           <ScopriHomeCard {...scopri} city={player.homeCity} />
         </div>

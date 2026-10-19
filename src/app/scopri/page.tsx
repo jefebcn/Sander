@@ -16,6 +16,7 @@ import {
   incomingLikes,
 } from "@/lib/scopri/server"
 import { openGamesNear } from "@/lib/scopri/games"
+import { freeToday } from "@/lib/scopri/reliability"
 import { ScopriNav } from "@/components/scopri/ScopriNav"
 import { SetupGate } from "@/components/scopri/SetupGate"
 import { ScopriDeck } from "@/components/scopri/ScopriDeck"
@@ -103,7 +104,13 @@ export default async function ScopriPage() {
           <DailyPickCard card={pick.card} seen={pick.seen} allowance={left} myPhoto={myPhoto} />
         </div>
       )}
-      <ScopriDeck initialCards={deck.filter((c) => c.id !== pick?.card.id)} initialAllowance={left} games={games} myPhoto={myPhoto} />
+      <ScopriDeck
+        initialCards={deck.filter((c) => c.id !== pick?.card.id)}
+        initialAllowance={left}
+        games={games}
+        myPhoto={myPhoto}
+        myFree={freeToday(me.discoverProfile?.freeDay, me.discoverProfile?.freeSlot, now)}
+      />
     </div>
   )
 }

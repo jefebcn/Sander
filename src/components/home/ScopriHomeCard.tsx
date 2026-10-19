@@ -21,7 +21,7 @@ export function ScopriHomeCard({
   if (!ready) {
     return (
       <Link
-        href="/scopri"
+        href="/onboarding/scopri"
         className="pressable relative block overflow-hidden rounded-[var(--radius-lg)] p-5 shadow-[var(--shadow-card)]"
         style={{ background: "linear-gradient(140deg, color-mix(in srgb, var(--accent) 34%, var(--surface-2)), color-mix(in srgb, var(--love) 14%, var(--surface-2)) 75%)" }}
       >
@@ -33,7 +33,7 @@ export function ScopriHomeCard({
           {nearby > 0 ? `${nearby} giocatori ${city ? `a ${city}` : "vicino a te"} sono già su Scopri.` : "Foto, tre risposte, e sei in campo."}
         </p>
         <span className="mt-4 flex min-h-[3.5rem] items-center justify-center gap-1 rounded-full bg-white text-base font-extrabold text-black">
-          Crea il tuo profilo <ChevronRight className="h-5 w-5" aria-hidden="true" />
+          Crea il profilo in un minuto <ChevronRight className="h-5 w-5" aria-hidden="true" />
         </span>
       </Link>
     )

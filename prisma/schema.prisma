@@ -208,6 +208,7 @@ model Player {
   creditSpends         CreditSpend[]
   duosFormed           Duo[]              @relation("DuoA")
   duosJoined           Duo[]              @relation("DuoB")
+  attendanceEvents     AttendanceEvent[]
 
   @@map("players")
 }
@@ -840,6 +841,17 @@ model DiscoverProfile {
   /// "Ti vogliono" shows everyone at once until this instant (bought with SC).
   likesUnlockedUntil DateTime?
 
+  /// "Libero oggi": the Rome day (YYYY-MM-DD) and slot (MORNING | AFTERNOON |
+  /// EVENING | ANY). Stale once the day is over, no cleanup needed.
+  freeDay         String?
+  freeSlot        String?
+  /// Day matches were last told you're free, so they hear it once a day.
+  freeNotifiedDay String?
+  /// When the profile first became complete (for "new on Scopri" digests).
+  readyAt         DateTime?
+  /// Last Scopri reminder push, so nobody gets more than one a few days.
+  nudgedAt        DateTime?
+
   player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@map("discover_profiles")
@@ -1004,4 +1016,25 @@ model DuoMatch {
   @@unique([aDuoId, bDuoId])
   @@index([bDuoId])
   @@map("duo_matches")
+}
+
+// ─── Affidabilità ───────────────────────────────────────────────────────────
+
+enum AttendanceKind {
+  LATE_CANCEL
+}
+
+/// Something that lowers a player's attendance: for now, leaving a match in
+/// the last hours before it starts. Presences come from Player.sessionsPlayed.
+model AttendanceEvent {
+  id        String         @id @default(cuid())
+  playerId  String
+  sessionId String?
+  kind      AttendanceKind
+  createdAt DateTime       @default(now())
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId, kind])
+  @@map("attendance_events")
 }

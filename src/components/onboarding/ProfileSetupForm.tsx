@@ -296,8 +296,9 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
         })
         localStorage.setItem("sander_onboarded", "1")
         localStorage.setItem("sander_has_profile", "1")
-        // Editing from the profile goes back there; a brand-new player starts at home.
-        router.push(initialData ? "/profile" : "/")
+        // Editing from the profile goes back there; a brand-new player gets the
+        // optional one-minute Scopri step (it skips itself for minors).
+        router.push(initialData ? "/profile" : "/onboarding/scopri")
         router.refresh()
       } catch (err) {
         setError(err instanceof Error ? err.message : "Errore durante il salvataggio")

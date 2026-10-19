@@ -22,6 +22,7 @@ import {
 import { discoverScore, stableJitter, type DiscoverPerson, type DiscoverScore } from "./score"
 import { dailyPairs } from "./stableMatch"
 import { blockedWith } from "./blocks"
+import { reliabilityPct, isVerified, freeToday, rankKey, type FreeSlot } from "./reliability"
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  Scopri on the server: who is in the pool, the deck, matches, daily pick.   */
@@ -43,6 +44,8 @@ export const CARD_SELECT = {
   matchesLost: true,
   level: true,
   userId: true,
+  sessionsPlayed: true,
+  _count: { select: { attendanceEvents: true } },
   discoverProfile: true,
   discoverPhotos: { orderBy: { position: "asc" }, select: { id: true, url: true } },
   discoverPrompts: { orderBy: { position: "asc" }, select: { id: true, promptKey: true, answer: true, position: true } },
@@ -63,6 +66,13 @@ export interface ScopriCard {
   rating: number
   division: string
   games: number
+  /** Completed matches on SANDER (presences). */
+  played: number
+  /** Share of presences 0–100, null with no history. */
+  reliability: number | null
+  verified: boolean
+  /** "Libero oggi" slot, null if not free today. */
+  freeToday: FreeSlot | null
   photos: { id: string; url: string }[]
   prompts: { id: string; key: string; question: string; answer: string }[]
   score?: number
@@ -86,10 +96,18 @@ export function toCard(row: CardRow, now: Date = new Date(), score?: DiscoverSco
     rating: Math.round(row.glickoRating),
     division: getDivision(row.glickoRating).name,
     games: ratedGames(row),
+    played: row.sessionsPlayed,
+    reliability: reliabilityOf(row),
+    verified: isVerified(row.sessionsPlayed, reliabilityOf(row)),
+    freeToday: freeToday(row.discoverProfile?.freeDay, row.discoverProfile?.freeSlot, now),
     photos,
     prompts: row.discoverPrompts.map((p) => ({ id: p.id, key: p.promptKey, question: promptText(p.promptKey), answer: p.answer })),
     ...(score ? { score: score.score, reasons: score.reasons } : {}),
   }
+}
+
+export function reliabilityOf(row: Pick<CardRow, "sessionsPlayed" | "_count">): number | null {
+  return reliabilityPct(row.sessionsPlayed, row._count.attendanceEvents)
 }
 
 export function readiness(row: CardRow, now: Date = new Date()) {
@@ -166,16 +184,32 @@ export async function hiddenFor(meId: string, now: Date = new Date()): Promise<S
   return out
 }
 
-/** The next cards for `me`, best first, with a little daily shuffle among close scores. */
+/**
+ * The next cards for `me`, best first. Order = affinity, weighted by showing
+ * up, verified, and "libero oggi" (see rankKey), with a small daily shuffle.
+ */
 export async function buildDeck(me: CardRow, now: Date = new Date(), limit = 12): Promise<ScopriCard[]> {
   const [pool, hidden] = await Promise.all([loadPool(now), hiddenFor(me.id, now)])
   const meSide = sideOf(me)
   const mePerson = personOf(me)
+  const meFree = freeToday(me.discoverProfile?.freeDay, me.discoverProfile?.freeSlot, now)
   const day = dayKey(now)
   return pool
     .filter((r) => !hidden.has(r.id) && mutuallyEligible(meSide, sideOf(r)))
-    .map((r) => ({ r, s: discoverScore(mePerson, personOf(r)), j: stableJitter(`${day}:${me.id}:${r.id}`) }))
-    .sort((a, b) => b.s.score + b.j - (a.s.score + a.j) || (a.r.id < b.r.id ? -1 : 1))
+    .map((r) => {
+      const s = discoverScore(mePerson, personOf(r))
+      const reliability = reliabilityOf(r)
+      const key = rankKey({
+        score: s.score,
+        jitter: stableJitter(`${day}:${me.id}:${r.id}`),
+        reliability,
+        verified: isVerified(r.sessionsPlayed, reliability),
+        themFree: freeToday(r.discoverProfile?.freeDay, r.discoverProfile?.freeSlot, now),
+        meFree,
+      })
+      return { r, s, key }
+    })
+    .sort((a, b) => b.key - a.key || (a.r.id < b.r.id ? -1 : 1))
     .slice(0, limit)
     .map(({ r, s }) => toCard(r, now, s))
 }
@@ -525,5 +559,21 @@ export async function scopriSummary(playerId: string, city: string | null, now: 
       : Promise.resolve(0),
   ])
   const ready = !!me && readiness(me, now).length === 0 && !me.discoverProfile?.paused
-  return { ready, likes, waiting, nearby }
+  // Scopri is adults only: minors never see the card.
+  const minor = !!me?.birthDate && ageOn(me.birthDate, now) < MIN_AGE
+  return { ready, likes, waiting, nearby, minor }
+}
+
+/** Stamp readyAt the first time a profile becomes complete (for "nuovi su Scopri"). */
+export async function markReadyIfComplete(playerId: string, now: Date = new Date()): Promise<boolean> {
+  const row = await loadCardRow(playerId)
+  if (!row || readiness(row, now).length > 0) return false
+  if (!row.discoverProfile?.readyAt) {
+    await db.discoverProfile.upsert({
+      where: { playerId },
+      create: { playerId, readyAt: now },
+      update: { readyAt: now },
+    })
+  }
+  return true
 }

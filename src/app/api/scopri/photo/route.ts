@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { imageExtension, verifiedImageType } from "@/lib/imageUpload"
 import { MAX_PHOTOS } from "@/lib/scopri/rules"
+import { markReadyIfComplete } from "@/lib/scopri/server"
 
 /** Add a photo to the signed-in player's Scopri card (up to MAX_PHOTOS). */
 export async function POST(req: Request) {
@@ -44,6 +45,7 @@ export async function POST(req: Request) {
     data: { playerId: player.id, url: blob.url, position: count },
     select: { id: true, url: true, position: true },
   })
+  await markReadyIfComplete(player.id)
   revalidatePath("/scopri/profilo")
   return NextResponse.json({ photo })
 }
