@@ -29,7 +29,7 @@ export async function sendPasswordResetEmail(to: string, token: string) {
     <tr><td align="center">
       <table width="100%" style="max-width:480px;background:#181818;border-radius:20px;padding:40px;border:1px solid #2a2a2a;">
         <tr><td align="center" style="padding-bottom:28px;">
-          <img src="${APP_URL}/sander-logo.png" alt="Sander" height="64" style="object-fit:contain;" />
+          <img src="${APP_URL}/sander-logo-coral.png" alt="Sander" height="64" style="object-fit:contain;" />
         </td></tr>
         <tr><td style="padding-bottom:12px;">
           <h1 style="margin:0;font-size:22px;font-weight:900;color:#ffffff;text-align:center;">

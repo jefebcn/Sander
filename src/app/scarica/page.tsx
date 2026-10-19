@@ -28,7 +28,7 @@ export default function DownloadPage() {
       {/* Hero */}
       <div className="flex flex-col items-center text-center">
         <Image
-          src="/sander-logo.png"
+          src="/sander-logo-coral.png"
           alt="SANDER"
           width={96}
           height={96}

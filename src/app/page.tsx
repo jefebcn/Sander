@@ -243,7 +243,7 @@ export default async function Home() {
             sessions: fullPlayer.sessionsPlayed,
             winPct,
             rating: Math.round(glicko),
-            division: { name: division.name, next: getNextDivision(glicko)?.name ?? null, pointsToNext: pointsToNext(glicko) },
+            division: { name: division.name, color: division.color, next: getNextDivision(glicko)?.name ?? null, pointsToNext: pointsToNext(glicko) },
             insight: isNew ? null : recs.performanceInsight?.label ?? null,
           }}
         />
@@ -349,8 +349,8 @@ export default async function Home() {
 
       {/* ── Discover ───────────────────────────────────────────────────── */}
       <section {...rise()} aria-labelledby="discover-title">
-        <div className="flex flex-col gap-3">
-          <CrestHeading id="discover-title" eyebrow="Classifiche" title="Scopri" />
+        <div className="tone-compete flex flex-col gap-3">
+          <CrestHeading id="discover-title" eyebrow="Classifiche" title="Esplora" />
           <div className="grid grid-cols-2 gap-2">
             {[
               { href: "/settimana", icon: TrendingUp, label: "La settimana", sub: "Chi ha giocato di più" },
@@ -363,7 +363,7 @@ export default async function Home() {
                 href={d.href}
                 className="pressable flex min-h-[5.5rem] flex-col justify-between rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-4 ring-1 ring-[var(--crest-hair)] active:bg-[var(--surface-3)]"
               >
-                <d.icon className="h-6 w-6 text-[var(--accent)]" aria-hidden="true" />
+                <d.icon className="h-6 w-6 text-[var(--tone)]" aria-hidden="true" />
                 <span>
                   <span className="block text-base font-extrabold leading-tight text-white">{d.label}</span>
                   <span className="block text-xs text-[var(--muted-text)]">{d.sub}</span>
@@ -397,12 +397,12 @@ export default async function Home() {
 }
 
 /**
- * The home wears the logo's colours (see .theme-crest): brand black instead
- * of the sea at dusk, white hairlines, lime only where it counts.
+ * The home sits on the same Riviera night sky as every page (AppBackground
+ * shows through) and adds the crest's white hairlines (.theme-crest).
  */
 function HomeShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="theme-crest relative min-h-dvh overflow-x-hidden bg-[var(--background)]">
+    <div className="theme-crest relative min-h-dvh overflow-x-hidden">
       <div
         className="relative z-10 flex flex-col gap-6 px-4 pb-8"
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}

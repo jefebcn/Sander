@@ -84,7 +84,7 @@ export function ShareableStory({
       {/* Faint logo watermark */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/sander-logo.png"
+        src="/sander-logo-coral.png"
         alt=""
         crossOrigin="anonymous"
         style={{
@@ -112,7 +112,7 @@ export function ShareableStory({
         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/sander-logo.png"
+            src="/sander-logo-coral.png"
             alt="SANDER"
             crossOrigin="anonymous"
             style={{ width: 72, height: 72, objectFit: "contain" }}

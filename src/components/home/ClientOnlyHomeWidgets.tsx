@@ -23,7 +23,7 @@ export function ClientOnlyHomeWidgets({ currentLevel, playerName, cardData }: Pr
   return (
     <>
       <LevelUpCelebration currentLevel={currentLevel} playerName={playerName} cardData={cardData} />
-      <section className="flex flex-col gap-3" aria-labelledby="videos-title">
+      <section className="tone-sand flex flex-col gap-3" aria-labelledby="videos-title">
         <CrestHeading id="videos-title" eyebrow="Dalla spiaggia" title="Video della community" />
         <VideoCarousel />
       </section>

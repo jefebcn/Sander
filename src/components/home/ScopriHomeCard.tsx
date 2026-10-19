@@ -40,7 +40,7 @@ export function ScopriHomeCard({
   }
   return (
     <section className="grid grid-cols-[1fr_auto_auto] items-center gap-2 rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-3 shadow-[var(--shadow-card)]">
-      <Link href="/scopri" className="pressable flex min-h-[3.5rem] items-center gap-3 rounded-[var(--radius-md)] px-2">
+      <Link href="/scopri" className="pressable flex min-h-[3.5rem] min-w-0 items-center gap-3 rounded-[var(--radius-md)] px-2">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-black">
           <HeartHandshake className="h-6 w-6" aria-hidden="true" />
         </span>
