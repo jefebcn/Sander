@@ -91,7 +91,7 @@ export function PWAInstallBanner() {
             className="flex min-h-[2.75rem] min-w-0 flex-1 items-center gap-3 text-left"
           >
             <Image
-              src="/sander-logo-coral.png"
+              src="/sander-logo.png"
               alt=""
               width={24}
               height={24}
@@ -132,7 +132,7 @@ export function PWAInstallBanner() {
       >
         <div className="flex items-center gap-3 mb-3">
           <Image
-            src="/sander-logo-coral.png"
+            src="/sander-logo.png"
             alt="Sander"
             width={36}
             height={36}

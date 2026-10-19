@@ -67,7 +67,7 @@ export default async function SignInPage({
         {/* Logo centrato */}
         <div className="flex flex-col items-center gap-4">
           <Image
-            src="/sander-logo-coral.png"
+            src="/sander-logo.png"
             alt="SANDER"
             width={140}
             height={140}

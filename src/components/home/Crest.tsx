@@ -101,11 +101,11 @@ export function CrestHeading({
   )
 }
 
-/** Logo + wordmark: the crest (in the Riviera coral) and SANDER in capitals. */
+/** Logo + wordmark: the crest and SANDER in capitals. */
 export function CrestWordmark() {
   return (
     <Link href="/" className="flex min-h-[2.75rem] items-center gap-2.5" aria-label="SANDER, home">
-      <Image src="/icon-coral-192.png" alt="" width={40} height={40} className="rounded-[0.7rem] ring-1 ring-[var(--crest-hair)]" loading="eager" />
+      <Image src="/icon-192.png" alt="" width={40} height={40} className="rounded-[0.7rem] ring-1 ring-[var(--crest-hair)]" loading="eager" />
       <span className="font-display text-[1.3rem] font-extrabold uppercase leading-none tracking-[0.16em] text-white">
         Sander
       </span>
