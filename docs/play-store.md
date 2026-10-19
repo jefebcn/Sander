@@ -61,6 +61,7 @@ Arriva Scopri: trova con chi giocare a colpi di swipe. Like a una foto o a una r
 ## Grafica
 
 Generata con `scripts/store-scopri.mjs` dalle schermate vere, su dati demo (vedi l'intestazione dello script).
+Le foto dei giocatori demo (`public/demo/players/`) e lo sfondo della grafica in evidenza (`scripts/store-assets/hero-2v2.jpg`) sono generate con Higgsfield: persone inventate, nessun marchio sui vestiti. Per usarle nel database locale, i profili demo puntano a `/demo/players/<nome>-<n>.webp`.
 La prova end-to-end (`scripts/e2e/smoke.mjs`) controlla anche che nell'app Android non compaia niente da comprare.
 
 | File | Uso |
