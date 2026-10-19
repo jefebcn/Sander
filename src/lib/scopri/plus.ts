@@ -74,3 +74,27 @@ export async function refreshPlusIfStale(playerId: string, now: Date = new Date(
     console.error("[plus] refresh failed", e)
   }
 }
+
+/**
+ * Stop SANDER+ for good (account deletion). Throws if Stripe can't confirm,
+ * so an account is never deleted while its subscription keeps charging.
+ */
+export async function cancelPlusNow(playerId: string): Promise<void> {
+  const p = await db.discoverProfile.findUnique({ where: { playerId }, select: { stripeSubscriptionId: true } })
+  if (!p?.stripeSubscriptionId) return
+  if (!process.env.STRIPE_SECRET_KEY) throw new Error("Stripe non configurato: impossibile disdire SANDER+")
+  let sub: Stripe.Subscription | null = null
+  try {
+    sub = await stripe.subscriptions.retrieve(p.stripeSubscriptionId)
+  } catch (e) {
+    // Gone on Stripe's side: nothing left to charge.
+    if (e && typeof e === "object" && "code" in e && e.code === "resource_missing") return
+    throw new Error("Non riesco a raggiungere Stripe per disdire SANDER+: riprova")
+  }
+  if (sub.status === "canceled" || sub.status === "incomplete_expired") return
+  try {
+    await stripe.subscriptions.cancel(sub.id)
+  } catch {
+    throw new Error("Non riesco a disdire SANDER+ su Stripe: riprova o disdici dal pannello Stripe")
+  }
+}

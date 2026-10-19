@@ -4,7 +4,7 @@ import { LEGAL_EMAIL } from "@/lib/legal"
 
 export const metadata = { title: "Termini di servizio — SANDER" }
 
-const LAST_UPDATED = "27 marzo 2026"
+const LAST_UPDATED = "19 ottobre 2026"
 
 export default function TermsPage() {
   return (
@@ -89,6 +89,43 @@ export default function TermsPage() {
           <p className="mt-2">
             SANDER non è responsabile per rimborsi di quote già versate per sessioni cancellate
             da organizzatori terzi; in tale caso si applica la policy di rimborso specifica della sessione.
+          </p>
+        </Section>
+
+        <Section title="6-bis. Scopri, coppie e sicurezza">
+          <p>
+            Scopri serve a trovare compagni e avversari per giocare. È riservato ai maggiorenni: la data di
+            nascita, una volta inserita, non si può cambiare e dichiarare un&apos;età falsa comporta la
+            sospensione. Le foto devono ritrarre te e rispettare la decenza; profili falsi, messaggi
+            offensivi o molesti e l&apos;uso di Scopri per scopi diversi dal gioco non sono ammessi.
+          </p>
+          <p className="mt-2">
+            Puoi bloccare o segnalare chiunque: la segnalazione è anonima. SANDER può rimuovere foto e
+            sospendere profili Scopri che violano queste regole. Uscire da una partita nelle ultime ore o
+            non presentarsi abbassa la tua affidabilità, visibile agli altri in percentuale.
+          </p>
+          <p className="mt-2">
+            Ci si vede sempre in luoghi pubblici: i campi e i bagni. SANDER mette in contatto i giocatori ma
+            non risponde del comportamento degli utenti fuori dall&apos;app.
+          </p>
+        </Section>
+
+        <Section title="6-ter. SANDER+ ed extra con gli SC">
+          <p>
+            <strong className="text-white">SANDER+</strong> è un abbonamento mensile al prezzo indicato al momento
+            dell&apos;attivazione, pagato tramite Stripe. Si rinnova automaticamente ogni mese finché non lo disdici.
+            Puoi disdire in qualsiasi momento dalla pagina SANDER+: resta attivo fino alla fine del mese già
+            pagato e non sono previsti rimborsi per periodi parziali. Eventuali variazioni di prezzo ti saranno
+            comunicate prima del rinnovo successivo, con la possibilità di disdire.
+          </p>
+          <p className="mt-2">
+            Attivando SANDER+ chiedi che il servizio inizi subito e prendi atto che, per il mese iniziato,
+            perdi il diritto di recesso previsto per i contratti a distanza (art. 59 del Codice del Consumo),
+            fermo restando il diritto di disdire i rinnovi successivi.
+          </p>
+          <p className="mt-2">
+            Gli extra di Scopri acquistati con i SanderCredits (like, Ace, &quot;vedi tutti&quot;) si usano
+            subito e non sono rimborsabili.
           </p>
         </Section>
 

@@ -4,7 +4,7 @@ import { LEGAL_EMAIL } from "@/lib/legal"
 
 export const metadata = { title: "Privacy Policy — SANDER" }
 
-const LAST_UPDATED = "27 marzo 2026"
+const LAST_UPDATED = "19 ottobre 2026"
 
 export default function PrivacyPage() {
   return (
@@ -54,10 +54,31 @@ export default function PrivacyPage() {
               <strong className="text-white">Dati tecnici:</strong> indirizzo IP, tipo di browser/dispositivo,
               dati di sessione, cookie tecnici necessari al funzionamento
             </li>
+            <li>
+              <strong className="text-white">Profilo Scopri (se lo crei):</strong> fino a 6 foto, le tue risposte,
+              data di nascita (agli altri mostriamo solo l&apos;età), comune, ruolo, lato, cosa cerchi, disponibilità,
+              &quot;Libero oggi&quot; e le tue preferenze. Il genere è facoltativo, resta privato e serve solo a
+              rispettare le preferenze tue e degli altri.
+            </li>
+            <li>
+              <strong className="text-white">Attività su Scopri:</strong> like e commenti inviati e ricevuti,
+              giocatori saltati, match, coppie e sfide, chat, voti &quot;rigiocheresti&quot; dati e ricevuti,
+              presenze e assenze alle partite (uscite all&apos;ultimo momento, mancate presenze segnate
+              dall&apos;organizzatore).
+            </li>
+            <li>
+              <strong className="text-white">Segnalazioni e blocchi:</strong> chi blocchi o segnali, il motivo e
+              l&apos;eventuale nota. Le segnalazioni sono anonime per chi viene segnalato.
+            </li>
+            <li>
+              <strong className="text-white">Pagamenti:</strong> per i pacchetti di SanderCredits e per
+              l&apos;abbonamento SANDER+ conserviamo importi, date e gli identificativi di cliente e abbonamento
+              di Stripe. I dati della carta li gestisce solo Stripe: non passano mai da noi.
+            </li>
           </ul>
           <p className="mt-2">
             Non raccogliamo dati sensibili (salute, etnia, opinioni politiche, ecc.)
-            né dati di minori di 16 anni.
+            né dati di minori di 16 anni. Scopri è riservato ai maggiorenni.
           </p>
         </Section>
 
@@ -88,7 +109,29 @@ export default function PrivacyPage() {
               label="Comunicazioni di marketing (newsletter, offerte)"
               basis="Consenso (art. 6.1.a GDPR) — puoi revocare in qualsiasi momento"
             />
+            <Row
+              label="Scopri: proporti giocatori e coppie compatibili, il più compatibile del giorno, i promemoria"
+              basis="Esecuzione del contratto (art. 6.1.b GDPR), solo se crei il profilo Scopri"
+            />
+            <Row
+              label="Affidabilità e voti &quot;rigiocheresti&quot; mostrati in forma aggregata (percentuali)"
+              basis="Legittimo interesse a una community affidabile (art. 6.1.f GDPR)"
+            />
+            <Row
+              label="Sicurezza: segnalazioni, blocchi, moderazione delle foto, sospensioni, verifica della maggiore età dichiarata"
+              basis="Legittimo interesse alla sicurezza degli utenti (art. 6.1.f GDPR)"
+            />
+            <Row
+              label="Pagamenti, abbonamento SANDER+ e obblighi fiscali"
+              basis="Esecuzione del contratto e obbligo di legge (art. 6.1.b e 6.1.c GDPR)"
+            />
           </div>
+          <p className="mt-3">
+            <strong className="text-white">Come funziona l&apos;ordine su Scopri.</strong> L&apos;ordine in cui vedi
+            i giocatori è calcolato in automatico da livello, ruolo, comune, orari liberi, obiettivi, presenze,
+            voti &quot;rigiocheresti&quot; e &quot;Libero oggi&quot;. Non produce effetti giuridici e non decide
+            nulla al posto tuo: puoi metterti in pausa o eliminare il profilo Scopri in qualsiasi momento.
+          </p>
         </Section>
 
         <Section title="4. Cookie">
@@ -115,7 +158,12 @@ export default function PrivacyPage() {
               riceviamo nome, email e foto profilo dal tuo account Google
             </li>
             <li>
-              <strong className="text-white">Vercel:</strong> hosting dell&apos;applicazione web
+              <strong className="text-white">Vercel:</strong> hosting dell&apos;applicazione web e
+              archiviazione delle foto (Vercel Blob)
+            </li>
+            <li>
+              <strong className="text-white">Stripe:</strong> pagamenti dei SanderCredits e
+              dell&apos;abbonamento SANDER+
             </li>
             <li>
               <strong className="text-white">Autorità competenti:</strong> esclusivamente in caso di
@@ -138,6 +186,12 @@ export default function PrivacyPage() {
           <p className="mt-2">
             I dati aggregati e anonimizzati (statistiche aggregate sulla piattaforma) possono essere
             conservati a tempo indeterminato.
+          </p>
+          <p className="mt-2">
+            Il profilo Scopri, le foto, i like, i voti e lo storico presenze vengono eliminati insieme
+            all&apos;account; l&apos;eventuale abbonamento SANDER+ viene disdetto prima. Le segnalazioni
+            ricevute da altri utenti possono essere conservate per il tempo necessario a tutelare la
+            sicurezza della community.
           </p>
         </Section>
 
