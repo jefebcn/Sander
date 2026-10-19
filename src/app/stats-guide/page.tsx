@@ -32,7 +32,7 @@ export default function StatsGuidePage() {
         {/* Intro */}
         <div
           className="rounded-2xl p-4"
-          style={{ background: "rgba(255,107,74,0.06)", border: "1px solid rgba(255,107,74,0.15)" }}
+          style={{ background: "rgba(198,247,54,0.06)", border: "1px solid rgba(198,247,54,0.15)" }}
         >
           <p className="text-sm text-white leading-relaxed">
             La tua card si basa su <strong className="text-[var(--accent)]">due elementi</strong>:
@@ -90,7 +90,7 @@ export default function StatsGuidePage() {
           <p className="font-black text-white text-base">Come si calcola ogni stat</p>
           <div
             className="rounded-xl p-4 text-center"
-            style={{ background: "rgba(255,107,74,0.08)", border: "1px solid rgba(255,107,74,0.2)" }}
+            style={{ background: "rgba(198,247,54,0.08)", border: "1px solid rgba(198,247,54,0.2)" }}
           >
             <p className="text-xs text-[var(--muted-text)] mb-1 uppercase tracking-wider">Formula</p>
             <p className="text-lg font-black text-white">
@@ -169,7 +169,7 @@ export default function StatsGuidePage() {
 
           <div
             className="rounded-xl p-3 text-xs leading-relaxed"
-            style={{ background: "rgba(255,107,74,0.06)", color: "rgba(255,255,255,0.55)" }}
+            style={{ background: "rgba(198,247,54,0.06)", color: "rgba(255,255,255,0.55)" }}
           >
             <span className="text-[var(--accent)] font-semibold">Nota:</span> Le percentuali servono
             anche a trovare compagni e avversari compatibili. Mostra i tuoi punti di forza reali.
@@ -311,7 +311,7 @@ function SimpleStatCard({
       <div className="flex items-center gap-3">
         <div
           className="flex h-10 w-10 items-center justify-center rounded-xl flex-shrink-0"
-          style={{ background: "rgba(255,107,74,0.1)" }}
+          style={{ background: "rgba(198,247,54,0.1)" }}
         >
           <Icon className="h-5 w-5" style={{ color }} />
         </div>

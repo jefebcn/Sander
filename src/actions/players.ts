@@ -10,6 +10,7 @@ import { PUBLIC_PLAYER_SELECT, DELETED_PLAYER_NAME, NOT_DELETED_PLAYER, type Pub
 import { romeMonthRange } from "@/lib/romeMonth"
 import { z } from "zod"
 import { refundSessionCredits } from "@/lib/sessionRefunds"
+import { cancelPlusNow } from "@/lib/scopri/plus"
 
 const PlayerIdSchema = z.string().trim().min(1).max(64)
 
@@ -372,6 +373,9 @@ export async function deletePlayer(id: string) {
   const player = await db.player.findUnique({ where: { id: playerId }, select: { userId: true } })
   if (!player) throw new Error("Giocatore non trovato")
 
+  // SANDER+ is stopped on Stripe first: never a deleted account still paying.
+  await cancelPlusNow(playerId)
+
   // Deleting the Player row is not an option: sessions they organised point at
   // it with no cascade (the delete failed for any organiser), and the cascade on
   // match/standing rows would rewrite other people's tournament history. So the
@@ -413,6 +417,10 @@ export async function deletePlayer(id: string) {
     await tx.dailyPick.deleteMany({ where: { OR: [{ playerId }, { pickId: playerId }] } })
     await tx.playerMatch.updateMany({ where: { OR: [{ aId: playerId }, { bId: playerId }], endedAt: null }, data: { endedAt: new Date() } })
     await tx.duo.updateMany({ where: { OR: [{ aId: playerId }, { bId: playerId }], status: { not: "ENDED" } }, data: { status: "ENDED", endedAt: new Date() } })
+    await tx.playAgainVote.deleteMany({ where: { OR: [{ voterId: playerId }, { targetId: playerId }] } })
+    await tx.attendanceEvent.deleteMany({ where: { playerId } })
+    // Blocks they made go; reports others made about them stay for safety.
+    await tx.playerBlock.deleteMany({ where: { blockerId: playerId } })
 
     await tx.player.update({
       where: { id: playerId },

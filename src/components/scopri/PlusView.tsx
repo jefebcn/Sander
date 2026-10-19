@@ -21,6 +21,8 @@ export function PlusView({
 }) {
   const router = useRouter()
   const [busy, setBusy] = useState(false)
+  // Express request to start now (needed to start a paid digital service at once).
+  const [consent, setConsent] = useState(false)
   const date = until ? new Date(until).toLocaleDateString("it-IT", { day: "numeric", month: "long", timeZone: "Europe/Rome" }) : null
 
   async function go(fn: () => Promise<unknown>, ok?: string) {
@@ -71,10 +73,26 @@ export function PlusView({
         ))}
       </ul>
 
+      {!active && (
+        <label className="flex items-start gap-3 rounded-[var(--radius-md)] bg-[var(--surface-2)] p-4 text-sm text-white">
+          <input
+            type="checkbox"
+            checked={consent}
+            onChange={(e) => setConsent(e.target.checked)}
+            className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--ace)]"
+          />
+          <span>
+            Chiedo di attivare SANDER+ subito e so che per il mese iniziato perdo il diritto di recesso.
+            Si rinnova ogni mese finché non lo disdico.{" "}
+            <a href="/terms" className="font-bold text-[var(--ace)] underline">Termini</a>
+          </span>
+        </label>
+      )}
+
       {!active ? (
         <button
           type="button"
-          disabled={busy}
+          disabled={busy || !consent}
           onClick={() =>
             go(async () => {
               const { url } = await startPlusCheckout()

@@ -149,8 +149,8 @@ export function ShareStoryButton({
               ? "color-mix(in srgb, var(--danger) 10%, transparent)"
               : primary
                 ? "var(--accent)"
-                : "rgba(255,107,74,0.08)",
-          border: primary ? "none" : "1px solid rgba(255,107,74,0.25)",
+                : "rgba(198,247,54,0.08)",
+          border: primary ? "none" : "1px solid rgba(198,247,54,0.25)",
           color: status === "error" ? "var(--danger)" : primary ? "#000" : "var(--accent)",
           opacity: status === "loading" ? 0.6 : 1,
           cursor: status === "loading" ? "wait" : "pointer",

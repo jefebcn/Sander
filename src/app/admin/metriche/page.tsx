@@ -2,12 +2,13 @@ export const dynamic = "force-dynamic"
 
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { ChevronLeft, Wallet, Receipt, Coins, UserPlus, Repeat, Sun } from "lucide-react"
+import { ChevronLeft, Wallet, Receipt, Coins, UserPlus, Repeat, Sun, HeartHandshake } from "lucide-react"
 import type { ReactNode } from "react"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { isAdminEmail } from "@/lib/isAdmin"
 import { getAdminMetrics, SC_PER_EURO } from "@/lib/adminMetrics"
 import { formatDate } from "@/lib/utils"
+import { getScopriMetrics } from "@/lib/scopri/metrics"
 
 const eur = new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" })
 const euro = (cents: number | null) => (cents === null ? "—" : eur.format(cents / 100))
@@ -48,7 +49,7 @@ export default async function AdminMetricsPage() {
   if (!session?.user?.id) redirect("/auth/signin?callbackUrl=/admin/metriche")
   if (!isAdminEmail(session.user.email)) redirect("/")
 
-  const m = await getAdminMetrics()
+  const [m, sc] = await Promise.all([getAdminMetrics(), getScopriMetrics()])
   const { revenue, averages, credits, acquisition, retention } = m
 
   return (
@@ -68,6 +69,32 @@ export default async function AdminMetricsPage() {
       </div>
 
       <div className="space-y-4 px-4">
+        {/* ── Scopri ─────────────────────────────────────────────────── */}
+        <Section icon={<HeartHandshake className="h-4 w-4 text-[var(--accent)]" />} title="Scopri">
+          <div className="grid grid-cols-2 gap-2">
+            <Stat label="Profili attivi" value={String(sc.profiles)} hint="completi, non in pausa né sospesi" />
+            <Stat label="Attivi negli ultimi 7 giorni" value={String(sc.active7)} hint="hanno messo like o saltato" />
+            <Stat label="Like in 7 giorni" value={String(sc.likes7)} hint={`${sc.skips7} saltati`} />
+            <Stat label="Match in 7 giorni" value={String(sc.matches7)} hint={`${pct(sc.matchRate7)} dei like`} />
+            <Stat label="Match con chat avviata" value={pct(sc.chatRate)} hint={`su ${sc.matchesTotal} match`} />
+            <Stat label="Hanno giocato insieme" value={String(sc.playedYes)} hint="risposte «sì» dopo un match" />
+            <Stat label="Rigiocherebbero" value={pct(sc.againRate)} hint={`${sc.againYes} sì`} />
+            <Stat label="Liberi oggi" value={String(sc.freeToday)} />
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <Stat label="Coppie attive" value={String(sc.duosActive)} hint={`${sc.challenges7} sfide in 7 giorni`} />
+            <Stat label="Sfide accettate" value={String(sc.duoMatches)} hint={`${sc.duoGames} 2v2 in calendario`} />
+            <Stat label="SANDER+ attivi" value={String(sc.plusActive)} hint={`${euro(sc.plusMrrCents)} al mese`} />
+            <Stat label="SC spesi in extra" value={`${sc.scSpent30} SC`} hint="ultimi 30 giorni" />
+          </div>
+          {(sc.openReports > 0 || sc.suspended > 0) && (
+            <Note>
+              Segnalazioni aperte: {sc.openReports} · profili sospesi: {sc.suspended}.{" "}
+              <Link href="/admin/segnalazioni" className="font-bold text-[var(--accent)] underline">Moderazione</Link>
+            </Note>
+          )}
+        </Section>
+
         {/* ── Ricavi ─────────────────────────────────────────────────── */}
         <Section icon={<Wallet className="h-4 w-4 text-[var(--accent)]" />} title="Incassi">
           <div className="overflow-x-auto">

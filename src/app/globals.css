@@ -1,23 +1,23 @@
 @import "tailwindcss";
 
 /* ─── SANDER · Riviera di notte ───────────────────────────────────────────── */
-/* Ink night sky, coral sunset, aqua sea, sun gold. Dark only: readable under */
-/* direct sun, and the white of the crest stays white.                        */
+/* Graphite night, the logo's yellow-green, aqua sea, sun gold. Dark only:    */
+/* readable under direct sun, and the white of the crest stays white.         */
 
 :root {
-  /* Ink with a violet hint: the sky just after sunset */
-  --background: #0d0c12;
+  /* Graphite, as black as the logo's background */
+  --background: #0b0b0c;
   --foreground: #ffffff;
 
-  --surface-1: #15131c;
-  --surface-2: #1b1924;
-  --surface-3: #23202e;
-  --surface-4: #2c2939;
+  --surface-1: #141416;
+  --surface-2: #1a1b1e;
+  --surface-3: #222327;
+  --surface-4: #2b2c31;
 
-  /* Corallo — the primary action, the like, the brand voice */
-  --accent: #ff6b4a;
-  --accent-dim: #e85636;
-  --accent-fg: #160a06;
+  /* The logo's yellow-green — the primary action, the like, the brand voice */
+  --accent: #c6f736;
+  --accent-dim: #a9d61e;
+  --accent-fg: #0b0b0c;
 
   /* Acqua — the sea */
   --sky: #49d9c9;
@@ -42,9 +42,9 @@
   --silver: #c9c6d6;
   --bronze: #d08a52;
 
-  --border: #26232f;
-  --muted: #312d3d;
-  --muted-text: #b1acc0;
+  --border: #26272b;
+  --muted: #323338;
+  --muted-text: #aeb0b8;
 
   /* Interaction */
   --interactive: var(--surface-2);
@@ -55,8 +55,9 @@
 
   /* ── Area colours — "a colour tells you where you are" ───────────────────
      Every part of the app has one tone, used for its nav highlight, icons,
-     eyebrows and accents. Coral stays the brand and the primary action.
-       play     → partite, crea, gioca, scopri    (coral, brand)
+     eyebrows and accents. The logo's yellow-green is the brand and the
+     primary action.
+       play     → partite, crea, gioca, scopri    (yellow-green, brand)
        compete  → tornei, classifiche, podi       (sun gold)
        social   → match, chat, coppie, inviti     (aqua)
        sand     → bagni, comuni, territorio       (warm sand)          */
@@ -68,14 +69,14 @@
   /* Scopri: the match moment and the weekly Ace. */
   --love: #ff4f7b;
   --ace: #ffc247;
-  /* The logo's crown: kept for the crest and live dots. */
-  --lime: #c6f432;
+  /* The logo's crown: the same colour as the accent. */
+  --lime: var(--accent);
 
   /* Atmosphere: Riviera at night (AppBackground). */
-  --sea-deep: #14111f;
-  --sea-night: #0f0d16;
-  --sunset: #ff6b4a;
-  --sunset-deep: #ff4f7b;
+  --sea-deep: #0f1214;
+  --sea-night: #0c0d0f;
+  --sunset: #c6f736;
+  --sunset-deep: #49d9c9;
 
   /* Soft fills / hairlines derived from a tone (set --tone on a parent). */
   --tone: var(--accent);
@@ -106,7 +107,7 @@
 /* Area tones — put one on a page or card; children read var(--tone).
    The derived fills are re-declared here on purpose: a custom property that
    references another is resolved where it is declared, so defining them only
-   on :root would freeze them to coral for every area. */
+   on :root would freeze them to the accent for every area. */
 .tone-play    { --tone: var(--play); }
 .tone-compete { --tone: var(--compete); }
 .tone-social  { --tone: var(--social); }
@@ -212,34 +213,34 @@ body {
 .app-bg { background: var(--background); }
 .app-bg__glow, .app-bg__grain { position: absolute; inset: 0; }
 
-/* Night: plain ink, lit only by a faint coral haze. */
+/* Night: plain graphite, lit only by a faint yellow-green haze. */
 .app-bg--night .app-bg__glow {
   background: radial-gradient(ellipse 90% 45% at 85% -5%, color-mix(in srgb, var(--accent) 9%, transparent) 0%, transparent 70%);
 }
 
-/* Sunset: ink base, the coral-pink last light at the top, a touch of sea. */
+/* Sunset: graphite base, a faint yellow-green light at the top, a touch of sea. */
 .app-bg--sunset {
   background: linear-gradient(180deg, var(--sea-deep) 0%, var(--sea-night) 38%, var(--background) 72%);
 }
 .app-bg--sunset .app-bg__glow {
   background:
-    radial-gradient(ellipse 120% 38% at 50% -6%, color-mix(in srgb, var(--sunset) 20%, transparent) 0%, color-mix(in srgb, var(--sunset-deep) 8%, transparent) 40%, transparent 72%),
+    radial-gradient(ellipse 120% 38% at 50% -6%, color-mix(in srgb, var(--sunset) 10%, transparent) 0%, color-mix(in srgb, var(--sunset-deep) 6%, transparent) 40%, transparent 72%),
     radial-gradient(ellipse 70% 30% at 100% 0%, color-mix(in srgb, var(--sky) 7%, transparent) 0%, transparent 70%);
 }
 
 /* Sunset theme: same ink surfaces, the sky does the talking. */
 body[data-bg="sunset"] {
-  --surface-1: #15131c;
-  --surface-2: #1b1924;
-  --surface-3: #23202e;
-  --surface-4: #2c2939;
-  --border: #26232f;
-  --muted: #312d3d;
-  --muted-text: #b1acc0;
+  --surface-1: #141416;
+  --surface-2: #1a1b1e;
+  --surface-3: #222327;
+  --surface-4: #2b2c31;
+  --border: #26272b;
+  --muted: #323338;
+  --muted-text: #aeb0b8;
 }
 body[data-bg="sunset"] .app-bg__glow {
   background:
-    radial-gradient(ellipse 130% 42% at 50% -8%, color-mix(in srgb, var(--sunset) 34%, transparent) 0%, color-mix(in srgb, var(--sunset-deep) 14%, transparent) 38%, transparent 70%),
+    radial-gradient(ellipse 130% 42% at 50% -8%, color-mix(in srgb, var(--sunset) 12%, transparent) 0%, color-mix(in srgb, var(--sunset-deep) 8%, transparent) 38%, transparent 70%),
     radial-gradient(ellipse 60% 26% at 100% 0%, color-mix(in srgb, var(--sky) 8%, transparent) 0%, transparent 70%);
 }
 
@@ -273,7 +274,7 @@ body[data-bg="sunset"] .app-bg__glow {
   );
 }
 
-/* The sunset light from the top: a soft coral glow behind a hero. */
+/* The light from the top: a soft yellow-green glow behind a hero. */
 .crest-sun {
   background: radial-gradient(ellipse 70% 90% at 50% 0%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 70%);
 }

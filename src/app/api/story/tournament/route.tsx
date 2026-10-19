@@ -4,7 +4,7 @@ import { db } from "@/lib/db"
 
 export const runtime = "nodejs"
 
-const ACCENT = "#ff6b4a"
+const ACCENT = "#c6f736"
 
 const TYPE_LABEL: Record<string, string> = {
   KING_OF_THE_BEACH: "King of the Beach",
@@ -49,8 +49,8 @@ export async function GET(req: NextRequest) {
           color: "#fff",
           fontFamily: "sans-serif",
           background:
-            "radial-gradient(ellipse 80% 45% at 0% 0%, rgba(255,107,74,0.18) 0%, transparent 60%)," +
-            "linear-gradient(160deg, #1b1420 0%, #0f0d16 50%, #08070c 100%)",
+            "radial-gradient(ellipse 80% 45% at 0% 0%, rgba(198,247,54,0.18) 0%, transparent 60%)," +
+            "linear-gradient(160deg, #161a12 0%, #0c0d0f 50%, #070708 100%)",
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>

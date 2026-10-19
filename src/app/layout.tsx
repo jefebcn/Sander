@@ -90,7 +90,7 @@ export const metadata: Metadata = {
 // Pinch-zoom stays enabled: blocking it locks out anyone who needs larger text
 // (WCAG 1.4.4). Inputs are ≥16px, so iOS doesn't auto-zoom on focus anyway.
 export const viewport: Viewport = {
-  themeColor: "#0d0c12",
+  themeColor: "#0b0b0c",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",

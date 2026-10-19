@@ -29,7 +29,7 @@ export function ForgotPasswordForm() {
       <div className="space-y-5 text-center">
         <div
           className="mx-auto flex h-16 w-16 items-center justify-center rounded-full"
-          style={{ background: "rgba(255,107,74,0.12)" }}
+          style={{ background: "rgba(198,247,54,0.12)" }}
         >
           <Mail className="h-8 w-8 text-[var(--accent)]" />
         </div>

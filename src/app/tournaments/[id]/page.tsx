@@ -682,12 +682,12 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               className="flex items-center gap-4 rounded-2xl p-4 transition-colors hover:opacity-90 active:scale-[0.98]"
               style={{
                 background: "var(--surface-1)",
-                border: "1px solid rgba(255,107,74,0.25)",
+                border: "1px solid rgba(198,247,54,0.25)",
               }}
             >
               <div
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-                style={{ background: "rgba(255,107,74,0.1)" }}
+                style={{ background: "rgba(198,247,54,0.1)" }}
               >
                 <Trophy className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />
               </div>

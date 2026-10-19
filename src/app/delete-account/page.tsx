@@ -44,6 +44,9 @@ export default function DeleteAccountPage() {
             <li>✓ Statistiche, punti, livello XP e badge</li>
             <li>✓ SanderCredits residui</li>
             <li>✓ Partite in programma che organizzi (annullate, con rimborso agli iscritti)</li>
+            <li>✓ Profilo Scopri: foto, risposte, preferenze, like, match e coppie</li>
+            <li>✓ Voti &quot;rigiocheresti&quot; dati e ricevuti e storico presenze</li>
+            <li>✓ Abbonamento SANDER+, disdetto su Stripe prima dell&apos;eliminazione</li>
           </ul>
         </div>
 

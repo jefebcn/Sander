@@ -59,7 +59,7 @@ export default function DownloadPage() {
           >
             <div
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-              style={{ background: "rgba(255,107,74,0.12)" }}
+              style={{ background: "rgba(198,247,54,0.12)" }}
             >
               <f.icon className="h-5 w-5 text-[var(--accent)]" />
             </div>

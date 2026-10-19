@@ -89,7 +89,7 @@ export function PlayerCrest({ p }: { p: PlayerCrestData }) {
             <span className="block h-2.5 overflow-hidden rounded-full bg-black/35" aria-hidden="true">
               <span
                 className="xp-bar-fill block h-full rounded-full"
-                style={{ width: `${Math.max(4, p.xpPct)}%`, background: "linear-gradient(90deg, var(--accent), var(--love))" }}
+                style={{ width: `${Math.max(4, p.xpPct)}%`, background: "linear-gradient(90deg, var(--accent), var(--sky))" }}
               />
             </span>
           </Link>

@@ -20,9 +20,9 @@ export function CommunityStrip() {
             href={s.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="pressable flex min-h-[5.5rem] flex-col items-center justify-center gap-1.5 rounded-[var(--radius-lg)] bg-[var(--surface-2)] px-2 text-center active:bg-[var(--surface-3)]"
+            className="pressable flex min-h-[3.5rem] items-center justify-center gap-2 rounded-full bg-[var(--surface-2)] px-2 text-center active:bg-[var(--surface-3)]"
           >
-            <s.icon className="h-6 w-6 text-[var(--tone)]" aria-hidden="true" />
+            <s.icon className="h-5 w-5 text-[var(--tone)]" aria-hidden="true" />
             <span className="text-sm font-extrabold text-white">{s.label}</span>
             <span className="sr-only">{s.sub}</span>
           </a>

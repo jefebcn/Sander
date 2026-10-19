@@ -30,7 +30,6 @@ import { TournamentSpotlight, type SpotlightTournament } from "@/components/home
 import { InviteCard } from "@/components/home/InviteCard"
 import { CommunityStrip } from "@/components/home/CommunityStrip"
 import { GuestLanding } from "@/components/home/GuestLanding"
-import { ListRow } from "@/components/ui/ListRow"
 import { QuickActionsButton } from "@/components/layout/QuickActionsButton"
 import { ScopriHomeCard } from "@/components/home/ScopriHomeCard"
 import { scopriSummary } from "@/lib/scopri/server"
@@ -208,6 +207,8 @@ export default async function Home() {
   const rise = () => ({ className: "rise-in", style: { "--i": section++ } as React.CSSProperties })
 
   const nothingNow = !unscored && !recap && !nextMatch
+  // Three matches in: the home leads with the race, not the onboarding.
+  const regular = fullPlayer.sessionsPlayed >= 3
   // "Segna" goes where a score actually gets saved: the match waiting for its
   // result, or the live board of the one being played; else a practice board.
   const scopri = await scopriP
@@ -274,123 +275,82 @@ export default async function Home() {
           <PlayAgainCard ask={playAgain} />
         </div>
       )}
-      {scopri && !scopri.minor && (
-        <div {...rise()}>
-          <ScopriHomeCard {...scopri} city={player.homeCity} />
-        </div>
-      )}
+      {(() => {
+        const race = (
+          <YourRace
+            city={cityRank}
+            division={{
+              name: division.name,
+              next: getNextDivision(glicko)?.name ?? null,
+              pointsToNext: pointsToNext(glicko),
+              progress: divisionProgress(glicko),
+            }}
+            streak={streak}
+          />
+        )
+        const scopriCard = scopri && !scopri.minor ? <ScopriHomeCard {...scopri} city={player.homeCity} /> : null
+        const rail = (eyebrow?: string) =>
+          openMatches.length > 0 ? <OpenMatchesRail matches={openMatches} title={railTitle} eyebrow={eyebrow} /> : null
+        // Someone who already plays wants their race and the next game first;
+        // a newcomer wants the first steps and a reason to start.
+        const blocks: { key: string; node: React.ReactNode }[] = regular
+          ? [
+              { key: "race", node: race },
+              { key: "scopri", node: scopriCard },
+              { key: "quick", node: nothingNow ? <QuickStart score={score} eyebrow="Nessuna partita in programma" title="Pronto a giocare?" /> : null },
+              { key: "rail", node: rail() },
+              { key: "tournament", node: tournament ? <TournamentSpotlight t={tournament} /> : null },
+            ]
+          : [
+              { key: "steps", node: showFirstSteps ? <FirstSteps steps={firstSteps} /> : null },
+              { key: "scopri", node: scopriCard },
+              { key: "rail", node: rail(nextMatch ? "Posti liberi" : "La tua prima partita") },
+              { key: "quick", node: <QuickStart score={score} /> },
+              { key: "why", node: isNew ? <WhySander variant="player" hasOpenMatches={openMatches.length > 0} /> : race },
+              { key: "tournament", node: tournament ? <TournamentSpotlight t={tournament} /> : null },
+              { key: "invite", node: !(showFirstSteps && invited === 0) ? <InviteCard invited={invited} /> : null },
+            ]
+        return blocks
+          .filter((b) => b.node)
+          .map((b) => (
+            <div key={b.key} {...rise()}>
+              {b.node}
+            </div>
+          ))
+      })()}
 
-      {isNew ? (
-        <>
-          {showFirstSteps && (
-            <div {...rise()}>
-              <FirstSteps steps={firstSteps} />
-            </div>
-          )}
-          {openMatches.length > 0 && (
-            <div {...rise()}>
-              <OpenMatchesRail
-                matches={openMatches}
-                title={railTitle}
-                eyebrow={nextMatch ? "Posti liberi" : "La tua prima partita"}
-              />
-            </div>
-          )}
-          <div {...rise()}>
-            <WhySander variant="player" hasOpenMatches={openMatches.length > 0} />
-          </div>
-          <div {...rise()}>
-            <QuickStart score={score} />
-          </div>
-        </>
-      ) : (
-        <>
-          {/* Nothing booked: the quick actions come first, as "ready to play?". */}
-          {nothingNow && (
-            <div {...rise()}>
-              <QuickStart score={score} eyebrow="Nessuna partita in programma" title="Pronto a giocare?" />
-            </div>
-          )}
-          {openMatches.length > 0 && (
-            <div {...rise()}>
-              <OpenMatchesRail matches={openMatches} title={railTitle} />
-            </div>
-          )}
-          {showFirstSteps && (
-            <div {...rise()}>
-              <FirstSteps steps={firstSteps} />
-            </div>
-          )}
-          {!nothingNow && (
-            <div {...rise()}>
-              <QuickStart score={score} />
-            </div>
-          )}
-        </>
-      )}
-
-      {/* ── Why come back ──────────────────────────────────────────────── */}
-      <div {...rise()}>
-        <YourRace
-          city={cityRank}
-          division={{
-            name: division.name,
-            next: getNextDivision(glicko)?.name ?? null,
-            pointsToNext: pointsToNext(glicko),
-            progress: divisionProgress(glicko),
-          }}
-          streak={streak}
-        />
-      </div>
-
-      {tournament && (
-        <div {...rise()}>
-          <TournamentSpotlight t={tournament} />
-        </div>
-      )}
-
-      {/* ── Bring friends (unless "Porta un amico" is still a first step) ─ */}
-      {!(showFirstSteps && invited === 0) && (
-        <div {...rise()}>
-          <InviteCard invited={invited} />
-        </div>
-      )}
-
-      {/* ── Discover ───────────────────────────────────────────────────── */}
+      {/* ── Esplora: one compact row instead of four big tiles ─────────── */}
       <section {...rise()} aria-labelledby="discover-title">
         <div className="tone-compete flex flex-col gap-3">
           <CrestHeading id="discover-title" eyebrow="Classifiche" title="Esplora" />
-          <div className="grid grid-cols-2 gap-2">
+          <div className="rail -mx-4 flex gap-2 overflow-x-auto px-4">
             {[
-              { href: "/settimana", icon: TrendingUp, label: "La settimana", sub: "Chi ha giocato di più" },
-              { href: "/stagione", icon: Waves, label: "Stagione", sub: "Divisioni e promozioni" },
-              { href: "/players?tab=podio", icon: Medal, label: "Podio del mese", sub: "I migliori di adesso" },
-              { href: "/feed", icon: Activity, label: "Feed", sub: "Cosa succede ora" },
+              { href: "/settimana", icon: TrendingUp, label: "La settimana" },
+              { href: "/stagione", icon: Waves, label: "Stagione" },
+              { href: "/players?tab=podio", icon: Medal, label: "Podio del mese" },
+              { href: "/feed", icon: Activity, label: "Feed" },
+              ...(recentTournament && recentTournament.standings[0]
+                ? [{ href: `/tournaments/${recentTournament.id}`, icon: Trophy, label: recentTournament.name }]
+                : []),
             ].map((d) => (
               <Link
                 key={d.href}
                 href={d.href}
-                className="pressable flex min-h-[5.5rem] flex-col justify-between rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-4 ring-1 ring-[var(--crest-hair)] active:bg-[var(--surface-3)]"
+                className="pressable flex min-h-[3.5rem] shrink-0 items-center gap-2 rounded-full bg-[var(--surface-2)] px-4 text-base font-bold text-white ring-1 ring-[var(--crest-hair)]"
               >
-                <d.icon className="h-6 w-6 text-[var(--tone)]" aria-hidden="true" />
-                <span>
-                  <span className="block text-base font-extrabold leading-tight text-white">{d.label}</span>
-                  <span className="block text-xs text-[var(--muted-text)]">{d.sub}</span>
-                </span>
+                <d.icon className="h-5 w-5 text-[var(--tone)]" aria-hidden="true" />
+                <span className="max-w-[12rem] truncate">{d.label}</span>
               </Link>
             ))}
           </div>
-          {recentTournament && recentTournament.standings[0] && (
-            <ListRow
-              href={`/tournaments/${recentTournament.id}`}
-              tone="compete"
-              icon={Trophy}
-              title={recentTournament.name}
-              subtitle={`Vinto da ${recentTournament.standings[0].player.name}`}
-            />
-          )}
         </div>
       </section>
+
+      {regular && !(showFirstSteps && invited === 0) && (
+        <div {...rise()}>
+          <InviteCard invited={invited} />
+        </div>
+      )}
 
       <div {...rise()}>
         <CommunityStrip />

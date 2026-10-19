@@ -65,9 +65,9 @@ export function LevelUpCelebration({ currentLevel, playerName, cardData }: Level
       <div
         className="celebrate relative w-full max-w-sm rounded-3xl p-8 text-center"
         style={{
-          background: "linear-gradient(145deg, #3a1a14 0%, #1a1424 100%)",
+          background: "linear-gradient(145deg, #2a3410 0%, #141a12 100%)",
           border: "2px solid var(--accent)",
-          boxShadow: "0 0 60px rgba(255,107,74,0.25)",
+          boxShadow: "0 0 60px rgba(198,247,54,0.25)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -107,7 +107,7 @@ export function LevelUpCelebration({ currentLevel, playerName, cardData }: Level
         {/* XP info */}
         <div
           className="rounded-xl px-4 py-3 mb-6 text-xs text-[var(--muted-text)]"
-          style={{ background: "rgba(255,107,74,0.08)" }}
+          style={{ background: "rgba(198,247,54,0.08)" }}
         >
           Ogni <strong className="text-[var(--accent)]">100 XP</strong> = +1 Livello.
           Gioca, vinci e ricevi Super Vote per salire.

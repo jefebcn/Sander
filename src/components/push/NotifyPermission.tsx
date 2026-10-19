@@ -80,7 +80,7 @@ export function NotifyPermission() {
       >
         <BellOff className="h-4 w-4 text-[var(--muted-text)]" />
         <span className="flex-1 text-left">Notifiche attive</span>
-        <span className="text-xs rounded-full px-2 py-0.5 font-bold" style={{ background: "rgba(255,107,74,0.12)", color: "var(--accent)" }}>
+        <span className="text-xs rounded-full px-2 py-0.5 font-bold" style={{ background: "rgba(198,247,54,0.12)", color: "var(--accent)" }}>
           ON
         </span>
       </button>

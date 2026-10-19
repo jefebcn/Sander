@@ -143,8 +143,8 @@ export function NotificationCenter({ open, onClose }: NotificationCenterProps) {
                 onClick={() => handleClickNotification(n)}
                 className="flex w-full items-start gap-3 rounded-2xl p-4 text-left active:opacity-70"
                 style={{
-                  background: n.readAt ? "rgba(255,255,255,0.05)" : "rgba(255,107,74,0.10)",
-                  border: n.readAt ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(255,107,74,0.30)",
+                  background: n.readAt ? "rgba(255,255,255,0.05)" : "rgba(198,247,54,0.10)",
+                  border: n.readAt ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(198,247,54,0.30)",
                 }}
               >
                 {/* Unread dot */}
