@@ -20,7 +20,7 @@ const LEVEL_MILESTONES = [
     description: "Ti tuffi su ogni palla. Continua così.",
     icon: Zap,
     color: "var(--accent)",
-    bg: "rgba(255,107,74,0.1)",
+    bg: "rgba(198,247,54,0.1)",
   },
   {
     level: 5,
@@ -60,7 +60,7 @@ const XP_ACTIONS = [
   {
     icon: ClipboardList,
     color: "text-[var(--accent)]",
-    bg: "rgba(255,107,74,0.1)",
+    bg: "rgba(198,247,54,0.1)",
     label: "Completa una sessione",
     xp: "+10 XP",
     detail: "Ogni volta che partecipi a una partita completata",
@@ -84,7 +84,7 @@ const XP_ACTIONS = [
   {
     icon: Trophy,
     color: "text-[var(--accent)]",
-    bg: "rgba(255,107,74,0.1)",
+    bg: "rgba(198,247,54,0.1)",
     label: "Vinci un torneo",
     xp: "+50 XP",
     detail: "Aggiudicandoti il primo posto in un torneo",
@@ -187,7 +187,7 @@ export default async function LevelInfoPage() {
         {/* Formula */}
         <div
           className="rounded-2xl px-4 py-3 flex items-center gap-3 slide-up stagger-1"
-          style={{ background: "rgba(255,107,74,0.08)", border: "1px solid rgba(255,107,74,0.2)" }}
+          style={{ background: "rgba(198,247,54,0.08)", border: "1px solid rgba(198,247,54,0.2)" }}
         >
           <Zap className="h-5 w-5 shrink-0 text-[var(--accent)]" />
           <p className="text-sm text-white/80">
@@ -252,7 +252,7 @@ export default async function LevelInfoPage() {
                     {isReached && (
                       <span
                         className="rounded-full px-1.5 py-0.5 text-xs font-black"
-                        style={{ background: "rgba(255,107,74,0.15)", color: "var(--accent)" }}
+                        style={{ background: "rgba(198,247,54,0.15)", color: "var(--accent)" }}
                       >
                         RAGGIUNTO
                       </span>

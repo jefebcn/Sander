@@ -3,7 +3,7 @@ import { getWeeklyRecap } from "@/actions/recap"
 
 export const runtime = "nodejs"
 
-const ACCENT = "#ff6b4a"
+const ACCENT = "#c6f736"
 
 function initials(name: string) {
   return name.slice(0, 2).toUpperCase()
@@ -22,7 +22,7 @@ export async function GET() {
           height: 1920,
           display: "flex",
           flexDirection: "column",
-          background: "linear-gradient(170deg, #14111f 0%, #0f0d16 45%, #08070c 100%)",
+          background: "linear-gradient(170deg, #101214 0%, #0c0d0f 45%, #070708 100%)",
           color: "#fff",
           fontFamily: "sans-serif",
           padding: "90px 72px",
@@ -58,8 +58,8 @@ export async function GET() {
               marginTop: 50,
               padding: 40,
               borderRadius: 36,
-              background: "rgba(255,107,74,0.12)",
-              border: "2px solid rgba(255,107,74,0.3)",
+              background: "rgba(198,247,54,0.12)",
+              border: "2px solid rgba(198,247,54,0.3)",
             }}
           >
             <div

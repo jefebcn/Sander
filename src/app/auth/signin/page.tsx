@@ -53,7 +53,7 @@ export default async function SignInPage({
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 70% 35% at 50% 0%, rgba(255,107,74,0.10) 0%, transparent 60%)",
+            "radial-gradient(ellipse 70% 35% at 50% 0%, rgba(198,247,54,0.10) 0%, transparent 60%)",
         }}
         aria-hidden="true"
       />

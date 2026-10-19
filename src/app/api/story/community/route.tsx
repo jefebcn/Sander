@@ -3,7 +3,7 @@ import { db } from "@/lib/db"
 
 export const runtime = "nodejs"
 
-const ACCENT = "#ff6b4a"
+const ACCENT = "#c6f736"
 
 export async function GET() {
   const [players, sessions, tournaments] = await Promise.all([
@@ -30,8 +30,8 @@ export async function GET() {
           color: "#fff",
           fontFamily: "sans-serif",
           background:
-            "radial-gradient(ellipse 75% 45% at 100% 0%, rgba(255,107,74,0.2) 0%, transparent 60%)," +
-            "linear-gradient(170deg, #14111f 0%, #0f0d16 45%, #08070c 100%)",
+            "radial-gradient(ellipse 75% 45% at 100% 0%, rgba(198,247,54,0.2) 0%, transparent 60%)," +
+            "linear-gradient(170deg, #101214 0%, #0c0d0f 45%, #070708 100%)",
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -61,7 +61,7 @@ export async function GET() {
                 padding: "48px 56px",
                 borderRadius: 36,
                 background: "rgba(255,255,255,0.05)",
-                border: "2px solid rgba(255,107,74,0.15)",
+                border: "2px solid rgba(198,247,54,0.15)",
               }}
             >
               <span style={{ fontSize: 40, fontWeight: 800, color: "rgba(255,255,255,0.6)", letterSpacing: 3 }}>

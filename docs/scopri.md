@@ -124,12 +124,11 @@ In più, solo SANDER:
 
 La palette si chiama "Riviera di notte" ed è sempre scura:
 
-- inchiostro `#0d0c12` per lo sfondo;
-- corallo `#ff6b4a`, l'azione principale;
+- grafite `#0b0b0c` come il fondo del logo;
+- giallo-verde `#c6f736` del logo per l'azione principale, il like e i momenti "live";
 - acqua `#49d9c9` per match e coppie;
 - sole `#ffc247` per classifiche e Ace;
-- `--love` `#ff4f7b` per il momento del match;
-- il lime del logo resta in `--lime`.
+- `--love` `#ff4f7b` per il momento del match.
 
 I font sono tre:
 

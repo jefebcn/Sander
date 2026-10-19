@@ -44,14 +44,14 @@ export async function sendPasswordResetEmail(to: string, token: string) {
         </td></tr>
         <tr><td align="center" style="padding-bottom:32px;">
           <a href="${url}"
-             style="display:inline-block;background:#ff6b4a;color:#000;font-weight:900;font-size:16px;padding:16px 40px;border-radius:14px;text-decoration:none;letter-spacing:0.02em;">
+             style="display:inline-block;background:#c6f736;color:#000;font-weight:900;font-size:16px;padding:16px 40px;border-radius:14px;text-decoration:none;letter-spacing:0.02em;">
             Reimposta password
           </a>
         </td></tr>
         <tr><td>
           <p style="margin:0;font-size:12px;color:#555;text-align:center;line-height:1.6;">
             Se non hai richiesto questo, ignora questa email — la tua password rimarrà invariata.<br/>
-            Link diretto: <a href="${url}" style="color:#ff6b4a;word-break:break-all;">${url}</a>
+            Link diretto: <a href="${url}" style="color:#c6f736;word-break:break-all;">${url}</a>
           </p>
         </td></tr>
       </table>

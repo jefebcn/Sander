@@ -78,7 +78,7 @@ function MatchCard({
           border: isFinal ? "1px solid var(--accent)" : "1px solid var(--border)",
           borderRadius: "0.75rem",
           overflow: "hidden",
-          boxShadow: isFinal ? "0 0 12px rgba(255,107,74,0.2)" : undefined,
+          boxShadow: isFinal ? "0 0 12px rgba(198,247,54,0.2)" : undefined,
         }}
       >
         {/* Team A row */}
@@ -87,7 +87,7 @@ function MatchCard({
           style={{
             height: 34,
             borderBottom: "1px solid var(--border)",
-            background: aWon ? "rgba(255,107,74,0.1)" : "var(--surface-2)",
+            background: aWon ? "rgba(198,247,54,0.1)" : "var(--surface-2)",
           }}
         >
           <div className="flex items-center gap-1 min-w-0 flex-1">
@@ -123,7 +123,7 @@ function MatchCard({
           className="flex items-center justify-between gap-2 px-3"
           style={{
             height: 34,
-            background: bWon ? "rgba(255,107,74,0.1)" : "var(--surface-2)",
+            background: bWon ? "rgba(198,247,54,0.1)" : "var(--surface-2)",
           }}
         >
           <div className="flex items-center gap-1 min-w-0 flex-1">

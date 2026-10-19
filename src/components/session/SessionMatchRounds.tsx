@@ -134,7 +134,7 @@ export function SessionMatchRounds({ sessionId, matches, isOrganizer, sessionSta
             disabled={pending}
             onClick={handleGenerate}
             className="flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold text-[var(--accent)] disabled:opacity-50"
-            style={{ background: "rgba(255,107,74,0.1)" }}
+            style={{ background: "rgba(198,247,54,0.1)" }}
           >
             <Shuffle className="h-3.5 w-3.5" />
             Rigenera
@@ -157,7 +157,7 @@ export function SessionMatchRounds({ sessionId, matches, isOrganizer, sessionSta
           <div
             key={round}
             className="overflow-hidden rounded-2xl"
-            style={{ background: "var(--surface-2)", border: isOpen ? "1px solid rgba(255,107,74,0.25)" : "1px solid transparent" }}
+            style={{ background: "var(--surface-2)", border: isOpen ? "1px solid rgba(198,247,54,0.25)" : "1px solid transparent" }}
           >
             <button
               type="button"
@@ -171,7 +171,7 @@ export function SessionMatchRounds({ sessionId, matches, isOrganizer, sessionSta
                 className="rounded-full px-2 py-0.5 text-xs font-bold uppercase"
                 style={
                   allDone
-                    ? { background: "rgba(255,107,74,0.15)", color: "var(--accent)" }
+                    ? { background: "rgba(198,247,54,0.15)", color: "var(--accent)" }
                     : { background: "var(--surface-1)", color: "var(--muted-text)" }
                 }
               >

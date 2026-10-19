@@ -103,7 +103,7 @@ function RadarChart({ player, community }: { player: StatPcts; community: StatPc
       {/* Player polygon */}
       <polygon
         points={polygonPoints(playerValues, max)}
-        fill="rgba(255,107,74,0.12)"
+        fill="rgba(198,247,54,0.12)"
         stroke="var(--accent)"
         strokeWidth={2}
         strokeLinejoin="round"

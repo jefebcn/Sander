@@ -294,8 +294,8 @@ function SeasonRow({
       href={`/players/${s.id}`}
       className="flex min-h-[3.5rem] items-center gap-3 rounded-2xl px-4 py-3 active:opacity-80"
       style={{
-        background: isMe ? "rgba(255,107,74,0.08)" : "var(--surface-2)",
-        border: isMe ? "1px solid rgba(255,107,74,0.3)" : "1px solid transparent",
+        background: isMe ? "rgba(198,247,54,0.08)" : "var(--surface-2)",
+        border: isMe ? "1px solid rgba(198,247,54,0.3)" : "1px solid transparent",
       }}
     >
       <span className="w-6 text-center">

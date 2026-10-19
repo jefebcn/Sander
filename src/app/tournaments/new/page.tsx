@@ -35,8 +35,8 @@ export default async function NewTournamentPage() {
           <div
             className="flex items-center gap-3 rounded-2xl p-4"
             style={{
-              background: canAfford ? "rgba(255,107,74,0.08)" : "color-mix(in srgb, var(--danger) 8%, transparent)",
-              border: `1px solid ${canAfford ? "rgba(255,107,74,0.25)" : "color-mix(in srgb, var(--danger) 30%, transparent)"}`,
+              background: canAfford ? "rgba(198,247,54,0.08)" : "color-mix(in srgb, var(--danger) 8%, transparent)",
+              border: `1px solid ${canAfford ? "rgba(198,247,54,0.25)" : "color-mix(in srgb, var(--danger) 30%, transparent)"}`,
             }}
           >
             <Coins

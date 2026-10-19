@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 
 /**
  * The home's card: rounded like everything else in the Riviera style, with a
- * hairline and, for the card that holds the main action, a coral glow from
+ * hairline and, for the card that holds the main action, a yellow-green glow from
  * the top corner instead of a heavy frame.
  */
 export function Crest({
