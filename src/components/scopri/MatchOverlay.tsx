@@ -4,6 +4,7 @@
 import Link from "next/link"
 import { MessageCircle } from "lucide-react"
 import { useEffect } from "react"
+import { resizedPhoto } from "@/lib/photo"
 
 /** "È un match!": both faces, one button to write, one to keep going. */
 export function MatchOverlay({
@@ -61,7 +62,7 @@ export function MatchOverlay({
 function Face({ url, className }: { url: string | null; className?: string }) {
   return (
     <div className={`h-36 w-28 overflow-hidden rounded-[1.25rem] bg-[var(--surface-3)] ring-4 ring-white ${className ?? ""}`}>
-      {url && <img src={url} alt="" className="h-full w-full object-cover" />}
+      {url && <img src={resizedPhoto(url, "card")} alt="" className="h-full w-full object-cover" />}
     </div>
   )
 }

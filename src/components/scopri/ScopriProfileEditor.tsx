@@ -21,6 +21,8 @@ import { cn } from "@/lib/utils"
 import { useIsNativeApp } from "@/lib/native"
 import { ProfileCard } from "./ProfileCard"
 import type { ScopriCard } from "./types"
+import { resizedPhoto } from "@/lib/photo"
+import { shrinkImage } from "@/lib/shrinkImage"
 
 export interface EditorData {
   photos: { id: string; url: string }[]
@@ -100,7 +102,7 @@ export function ScopriProfileEditor({ data }: { data: EditorData }) {
     setUploading(true)
     try {
       const body = new FormData()
-      body.append("file", file)
+      body.append("file", await shrinkImage(file))
       const res = await fetch("/api/scopri/photo", { method: "POST", body })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error ?? "Caricamento non riuscito")
@@ -200,7 +202,7 @@ export function ScopriProfileEditor({ data }: { data: EditorData }) {
             }
             return (
               <li key={p.id} className="relative">
-                <img src={p.url} alt={`Foto ${i + 1}`} className="aspect-[3/4] w-full rounded-[var(--radius-md)] object-cover" />
+                <img src={resizedPhoto(p.url, "card")} alt={`Foto ${i + 1}`} className="aspect-[3/4] w-full rounded-[var(--radius-md)] object-cover" />
                 {i === 0 && <span className="absolute left-1.5 top-1.5 rounded-full bg-black/70 px-2 py-0.5 text-xs font-bold text-white">Principale</span>}
                 <div className="absolute inset-x-1 bottom-1 flex justify-between">
                   {i > 0 ? (

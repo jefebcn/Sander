@@ -7,6 +7,7 @@ import { SanderCardMini } from "@/components/player/SanderCardMini"
 import { ProvisionalBadge, ProvisionalSectionHeading } from "@/components/player/ProvisionalBadge"
 import { splitLeaderboard, ratedGames } from "@/lib/rankingEligibility"
 import type { PublicPlayer as Player } from "@/lib/publicPlayer"
+import { resizedPhoto } from "@/lib/photo"
 
 interface Props {
   players: Player[]
@@ -148,7 +149,7 @@ function RankRow({ player, pos }: { player: Player; pos: number | null }) {
         {player.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={player.avatarUrl}
+            src={resizedPhoto(player.avatarUrl, "thumb")}
             alt={player.name}
             className="h-full w-full rounded-full object-cover"
           />

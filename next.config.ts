@@ -16,6 +16,14 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
+  images: {
+    // Uploaded photos (lib/photo.ts): full camera shots, resized and turned
+    // into WebP on the way out. Only our blob store, never arbitrary hosts.
+    remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com", pathname: "/**", search: "" }],
+    qualities: [75],
+    // Every upload gets a new timestamped path, so a resized copy never goes stale.
+    minimumCacheTTL: 2678400,
+  },
   experimental: {
     serverActions: {
       // Default is 1MB. File uploads go through API routes (/api/avatar,

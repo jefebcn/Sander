@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils"
 import { canGoBackInApp } from "@/lib/navHistory"
 import { CITY_NAMES } from "@/lib/cities"
 import { START_LEVELS, type StartLevel } from "@/lib/startLevel"
+import { resizedPhoto } from "@/lib/photo"
+import { shrinkImage } from "@/lib/shrinkImage"
 
 // ─── Countries list ────────────────────────────────────────────────────────────
 const COUNTRIES = [
@@ -279,7 +281,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
     if (!avatarFile) return null
     try {
       const fd = new FormData()
-      fd.append("file", avatarFile)
+      fd.append("file", await shrinkImage(avatarFile))
       const res = await fetch("/api/avatar", { method: "POST", body: fd })
       const json = await res.json()
       return json.url ?? null
@@ -372,7 +374,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
           >
             {avatarPreview ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatarPreview} alt="Avatar" className="h-full w-full object-cover" />
+              <img src={resizedPhoto(avatarPreview, "card")} alt="Avatar" className="h-full w-full object-cover" />
             ) : (
               <User className="h-14 w-14 text-black/65" strokeWidth={2.25} aria-hidden="true" />
             )}

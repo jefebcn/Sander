@@ -7,6 +7,7 @@ import { INVITE_MILESTONES, nextInviteMilestone } from "@/lib/inviteMilestones"
 import { QRCodeButton } from "@/components/ui/QRCode"
 import { trackEvent } from "@/lib/analytics"
 import { cn } from "@/lib/utils"
+import { resizedPhoto } from "@/lib/photo"
 
 const APP_URL = "https://www.sanderbv.it"
 
@@ -208,7 +209,7 @@ export function InviteTab({ promoCode, inviteCount, leaderboard = [] }: InviteTa
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-1)] text-xs font-black text-[var(--muted-text)]">
                   {l.avatarUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={l.avatarUrl} alt="" className="h-full w-full object-cover" />
+                    <img src={resizedPhoto(l.avatarUrl, "thumb")} alt="" className="h-full w-full object-cover" />
                   ) : (
                     l.name.slice(0, 2).toUpperCase()
                   )}

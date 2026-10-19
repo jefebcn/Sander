@@ -9,6 +9,8 @@ import { saveScopriQuickStart } from "@/actions/scopri"
 import { PROMPTS, LOOKING_FOR, promptText } from "@/lib/scopri/prompts"
 import { ANSWER_MAX, MIN_AGE } from "@/lib/scopri/rules"
 import { cn } from "@/lib/utils"
+import { resizedPhoto } from "@/lib/photo"
+import { shrinkImage } from "@/lib/shrinkImage"
 
 const DEFAULT_KEYS = ["best_shot", "partner_who", "after_match"]
 
@@ -59,7 +61,7 @@ export function ScopriQuickStart({
     setUploading(true)
     try {
       const body = new FormData()
-      body.append("file", file)
+      body.append("file", await shrinkImage(file))
       const res = await fetch("/api/scopri/photo", { method: "POST", body })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error ?? "Caricamento non riuscito")
@@ -129,7 +131,7 @@ export function ScopriQuickStart({
           {avatarUrl || uploaded || hasPhotos ? (
             <div className="mt-4 flex items-center gap-5">
               {sticker ? (
-                <img src={sticker} alt="" className="h-28 w-24 shrink-0 -rotate-[4deg] rounded-[1rem] object-cover shadow-[0_14px_28px_-12px_rgb(0_0_0/0.8)] ring-[5px] ring-white" />
+                <img src={resizedPhoto(sticker, "card")} alt="" className="h-28 w-24 shrink-0 -rotate-[4deg] rounded-[1rem] object-cover shadow-[0_14px_28px_-12px_rgb(0_0_0/0.8)] ring-[5px] ring-white" />
               ) : (
                 <span className="flex h-28 w-24 shrink-0 -rotate-[4deg] items-center justify-center rounded-[1rem] bg-white/5 ring-[5px] ring-white/20">
                   <Camera className="h-7 w-7 text-white/50" aria-hidden="true" />

@@ -11,6 +11,7 @@ import { ProfileCard } from "./ProfileCard"
 import { MatchOverlay } from "./MatchOverlay"
 import { ExtrasSheet } from "./ExtrasSheet"
 import type { IncomingLike } from "./types"
+import { resizedPhoto } from "@/lib/photo"
 
 /**
  * Everyone who liked you, Aces first. Free: one at a time, so each gets a
@@ -126,7 +127,7 @@ export function LikesYouView({
                     className="relative block aspect-[3/4] w-full overflow-hidden rounded-[var(--radius-md)] bg-[var(--surface-3)]"
                   >
                     {l.card.photos[0] && (
-                      <img src={l.card.photos[0].url} alt="" className={`h-full w-full object-cover ${revealed ? "" : "scale-110 blur-xl"}`} />
+                      <img src={resizedPhoto(l.card.photos[0].url, "card")} alt="" className={`h-full w-full object-cover ${revealed ? "" : "scale-110 blur-xl"}`} />
                     )}
                     {l.isAce && (
                       <span className="absolute left-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-[var(--ace)] text-black">
@@ -172,7 +173,7 @@ function LikeContext({ like }: { like: IncomingLike }) {
       {like.target === "PROMPT" && like.targetLabel && <p className="mt-1 font-serif text-xl leading-snug text-white">«{like.targetLabel}»</p>}
       {like.target === "PHOTO" && like.targetLabel && (
         <div className="mt-2 flex items-center gap-3">
-          <img src={like.targetLabel} alt="La tua foto" className="h-16 w-12 rounded-lg object-cover" />
+          <img src={resizedPhoto(like.targetLabel, "thumb")} alt="La tua foto" className="h-16 w-12 rounded-lg object-cover" />
           <p className="text-base text-white">la tua foto</p>
         </div>
       )}

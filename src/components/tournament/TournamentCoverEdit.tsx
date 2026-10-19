@@ -3,6 +3,8 @@
 import { useTransition, useRef, useState } from "react"
 import { Camera, Loader2, X } from "lucide-react"
 import { updateTournamentMeta } from "@/actions/tournaments"
+import { resizedPhoto } from "@/lib/photo"
+import { shrinkImage } from "@/lib/shrinkImage"
 
 interface Props {
   tournamentId: string
@@ -22,7 +24,7 @@ export function TournamentCoverEdit({ tournamentId, currentCoverUrl }: Props) {
     setUploading(true)
     try {
       const fd = new FormData()
-      fd.append("file", file)
+      fd.append("file", await shrinkImage(file))
       const res = await fetch(`/api/tournament-cover?tournamentId=${tournamentId}`, { method: "POST", body: fd })
       let json: { url?: string; error?: string } = {}
       try { json = await res.json() } catch { /* non-JSON */ }
@@ -45,7 +47,7 @@ export function TournamentCoverEdit({ tournamentId, currentCoverUrl }: Props) {
     <div className="mx-4 mb-3">
       {preview ? (
         <div className="relative rounded-2xl overflow-hidden h-44">
-          <img src={preview} alt="Cover" className="h-full w-full object-cover" />
+          <img src={resizedPhoto(preview, "full")} alt="Cover" className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           <div className="absolute bottom-2 right-2 flex gap-2">
             <button

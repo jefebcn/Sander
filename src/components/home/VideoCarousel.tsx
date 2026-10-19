@@ -3,10 +3,11 @@
 import { useRef, useState, useEffect, useEffectEvent } from "react"
 import { Play, Pause, ChevronLeft, ChevronRight } from "lucide-react"
 
-// Newest first — add new videos at the beginning of the array.
+// Newest first — add new videos at the beginning of the array, encoded at
+// 720 px wide (a 4K phone clip is ~18 MB, the same clip at 720 px ~2 MB).
 // `heavy` clips (several MB) never autoplay: they load only when tapped.
 const VIDEOS: { src: string; heavy?: boolean }[] = [
-  { src: "/videos/IMG_2937.mp4", heavy: true }, // ~18 MB
+  { src: "/videos/IMG_2937.mp4" },
   { src: "/videos/clip3.mp4" },
   { src: "/videos/clip1.mp4" },
   { src: "/videos/clip2.mp4" },

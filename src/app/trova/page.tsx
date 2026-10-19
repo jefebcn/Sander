@@ -13,6 +13,7 @@ import { MessageButton } from "@/components/chat/MessageButton"
 import { ProvisionalBadge } from "@/components/player/ProvisionalBadge"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { SectionTabs, PLAY_TABS } from "@/components/layout/SectionTabs"
+import { resizedPhoto } from "@/lib/photo"
 
 export const metadata: Metadata = {
   title: "Trova giocatori al tuo livello — SANDER",
@@ -26,7 +27,7 @@ function Avatar({ name, url }: { name: string; url: string | null }) {
     <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-1)] text-xs font-black text-[var(--muted-text)]">
       {url ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={url} alt={name} className="h-full w-full object-cover" />
+        <img src={resizedPhoto(url, "thumb")} alt={name} className="h-full w-full object-cover" />
       ) : (
         name.slice(0, 2).toUpperCase()
       )}

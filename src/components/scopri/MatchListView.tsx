@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils"
 import { ProposeGameSheet } from "./ProposeGameSheet"
 import { ReportSheet } from "./ReportSheet"
 import type { MatchRow } from "./types"
+import { resizedPhoto } from "@/lib/photo"
 
 const SECTIONS: { turn: MatchRow["turn"]; title: string; hint: string }[] = [
   { turn: "tocca-a-te", title: "Tocca a te", hint: "Ti hanno scritto: rispondi prima che si raffreddi" },
@@ -95,7 +96,7 @@ export function MatchListView({ matches, myCity }: { matches: MatchRow[]; myCity
                 <li key={m.id} className="flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--surface-2)] p-2 pr-1">
                   <Link href={m.threadId ? `/messaggi/${m.threadId}` : "/messaggi"} className="flex min-h-[3.5rem] min-w-0 flex-1 items-center gap-3">
                     <span className={cn("relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-[var(--surface-4)]", s.turn === "tocca-a-te" && "ring-2 ring-[var(--accent)]")}>
-                      {m.other.photo && <img src={m.other.photo} alt="" className="h-full w-full object-cover" />}
+                      {m.other.photo && <img src={resizedPhoto(m.other.photo, "thumb")} alt="" className="h-full w-full object-cover" />}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-2">

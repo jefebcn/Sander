@@ -5,6 +5,7 @@ import { createPortal } from "react-dom"
 import { useRouter } from "next/navigation"
 import { X, LogOut, Trash2 } from "lucide-react"
 import { leaveGroup, deleteGroup } from "@/actions/messages"
+import { resizedPhoto } from "@/lib/photo"
 
 type Member = { id: string; name: string; avatarUrl: string | null }
 
@@ -87,7 +88,7 @@ export function GroupInfoSheet({
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-3)]">
                   {m.avatarUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={m.avatarUrl} alt={m.name} className="h-full w-full object-cover" />
+                    <img src={resizedPhoto(m.avatarUrl, "thumb")} alt={m.name} className="h-full w-full object-cover" />
                   ) : (
                     <span className="text-xs font-black text-[var(--muted-text)]">
                       {m.name.slice(0, 2).toUpperCase()}

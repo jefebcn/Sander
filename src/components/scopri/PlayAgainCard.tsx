@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { votePlayAgain } from "@/actions/scopri"
 import { formatWhen } from "@/lib/datetime"
 import type { PlayAgainAsk } from "@/lib/scopri/playAgainServer"
+import { resizedPhoto } from "@/lib/photo"
 
 /**
  * "Rigiocheresti con…?" — one tap per person after a match. Private: nobody
@@ -41,7 +42,7 @@ export function PlayAgainCard({ ask }: { ask: PlayAgainAsk }) {
         {left.map((p) => (
           <li key={p.id} className="flex items-center gap-3 rounded-[var(--radius-md)] bg-black/20 p-2">
             <span className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-[var(--surface-4)]">
-              {p.photo && <img src={p.photo} alt="" className="h-full w-full object-cover" />}
+              {p.photo && <img src={resizedPhoto(p.photo, "thumb")} alt="" className="h-full w-full object-cover" />}
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-base font-extrabold text-white">{p.name}</span>

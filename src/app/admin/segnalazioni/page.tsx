@@ -11,6 +11,7 @@ import { PLAY_AGAIN_FLAG_NOS } from "@/lib/scopri/playAgain"
 import { flaggedByVotes } from "@/lib/scopri/playAgainServer"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { ModerationButton } from "@/components/admin/ScopriModeration"
+import { resizedPhoto } from "@/lib/photo"
 
 export const metadata: Metadata = { title: "Moderazione Scopri — Admin" }
 
@@ -149,7 +150,7 @@ export default async function AdminReportsPage() {
           <ul className="grid grid-cols-2 gap-2">
             {photos.map((p) => (
               <li key={p.id} className="overflow-hidden rounded-[var(--radius-md)] bg-[var(--surface-2)]">
-                <img src={p.url} alt={`Foto di ${p.player.name}`} className="aspect-[3/4] w-full object-cover" />
+                <img src={resizedPhoto(p.url, "card")} alt={`Foto di ${p.player.name}`} className="aspect-[3/4] w-full object-cover" />
                 <div className="p-2">
                   <p className="truncate text-sm font-bold text-white">{p.player.name}</p>
                   <p className={p.reportedAt ? "text-xs font-bold text-[var(--danger)]" : "text-xs text-[var(--muted-text)]"}>

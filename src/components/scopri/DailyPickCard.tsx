@@ -9,6 +9,7 @@ import { ProfileCard } from "./ProfileCard"
 import { LikeSheet, type LikeResult } from "./LikeSheet"
 import { MatchOverlay } from "./MatchOverlay"
 import type { Allowance, LikeTarget, ScopriCard } from "./types"
+import { resizedPhoto } from "@/lib/photo"
 
 /**
  * "Il più compatibile di oggi": one person a day, from a stable pairing of
@@ -52,7 +53,7 @@ export function DailyPickCard({
         style={{ background: "linear-gradient(120deg, color-mix(in srgb, var(--ace) 22%, var(--surface-2)), var(--surface-2) 60%)" }}
       >
         <span className="film relative h-24 w-20 shrink-0 overflow-hidden rounded-[var(--radius-md)] bg-[var(--surface-4)] ring-2 ring-[var(--ace)]">
-          {photo && <img src={photo} alt="" className="h-full w-full object-cover" />}
+          {photo && <img src={resizedPhoto(photo, "thumb")} alt="" className="h-full w-full object-cover" />}
         </span>
         <span className="min-w-0 flex-1">
           <span className="eyebrow flex items-center gap-1 text-[var(--ace)]">

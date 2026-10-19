@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { lookingForLabel, sideLabel } from "@/lib/scopri/prompts"
 import { freeSlotLabel, VERIFIED_MIN_GAMES, VERIFIED_MIN_RELIABILITY } from "@/lib/scopri/reliability"
 import type { ScopriCard, LikeTarget } from "./types"
+import { resizedPhoto } from "@/lib/photo"
 
 /**
  * A player as Scopri shows them: photos and prompt answers woven together,
@@ -118,7 +119,7 @@ function LikeButton({ onClick, label }: { onClick: () => void; label: string }) 
 function PhotoBlock({ url, name, onLike }: { url: string; name: string; onLike?: () => void }) {
   return (
     <div className="film relative overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-2)]">
-      <img src={url} alt={`Foto di ${name}`} loading="lazy" draggable={false} className="aspect-[4/5] w-full select-none object-cover" />
+      <img src={resizedPhoto(url, "full")} alt={`Foto di ${name}`} loading="lazy" draggable={false} className="aspect-[4/5] w-full select-none object-cover" />
       {onLike && <LikeButton onClick={onLike} label={`Metti like a questa foto di ${name}`} />}
     </div>
   )
