@@ -100,6 +100,8 @@ In più, solo SANDER:
     - i profili sospesi (riattiva).
   - Chi è sospeso esce dal pool e non può mandare like.
   - L'organizzatore può segnare "Non si è presentato" tra l'inizio e le 48 ore successive: conta come assenza.
+  - Il giocatore riceve un avviso e, entro 14 giorni, può contestarla da `/profile/presenze` ("Ero presente", con una nota). Da quel momento l'assenza non conta più.
+  - L'admin decide in `/admin/segnalazioni` → "Assenze contestate": "Annulla l'assenza" la cancella, "Confermo l'assenza" la fa contare di nuovo. Il giocatore riceve l'esito.
   - La data di nascita si inserisce una volta sola e poi non si può più cambiare.
 - **SANDER+** (`/scopri/plus`):
   - Abbonamento Stripe a €4,99 al mese, con like illimitati, "vedi tutti" sempre attivo, 3 Ace a settimana e i filtri "solo verificati" e "solo liberi oggi".

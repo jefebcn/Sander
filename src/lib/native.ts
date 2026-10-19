@@ -1,5 +1,7 @@
 "use client"
 
+import { useSyncExternalStore } from "react"
+
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  Native capabilities bridge (Capacitor).                                    */
 /*                                                                             */
@@ -78,4 +80,16 @@ export async function capturePhoto(): Promise<Blob | null> {
   } catch {
     return null
   }
+}
+
+function noopSubscribe() {
+  return () => {}
+}
+
+/**
+ * React hook form of isNativeApp(): false on the server and the first paint,
+ * then the real value, without a set-state-in-effect.
+ */
+export function useIsNativeApp(): boolean {
+  return useSyncExternalStore(noopSubscribe, isNativeApp, () => false)
 }

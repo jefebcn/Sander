@@ -47,7 +47,8 @@ export const CARD_SELECT = {
   level: true,
   userId: true,
   sessionsPlayed: true,
-  _count: { select: { attendanceEvents: true } },
+  // Contested absences ("Ero presente") don't count until an admin confirms them.
+  _count: { select: { attendanceEvents: { where: { OR: [{ disputedAt: null }, { resolvedAt: { not: null } }] } } } },
   discoverProfile: true,
   discoverPhotos: { where: { hiddenAt: null }, orderBy: { position: "asc" }, select: { id: true, url: true } },
   discoverPrompts: { orderBy: { position: "asc" }, select: { id: true, promptKey: true, answer: true, position: true } },

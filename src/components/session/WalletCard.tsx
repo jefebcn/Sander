@@ -124,47 +124,50 @@ export function WalletCard({ credits, playerName }: WalletCardProps) {
             <span className="flex-1 text-sm font-bold text-white">Guadagna SC gratis invitando un amico</span>
           </Link>
 
-          {/* Manual methods: kept for whoever prefers them; credited by the admin. */}
-          <details className="group rounded-[var(--radius-md)] bg-[var(--surface-3)]">
-            <summary className="flex min-h-[3.5rem] cursor-pointer list-none items-center justify-between px-4 text-sm font-bold text-white">
-              Altri metodi: PayPal o bonifico
-              <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden="true" />
-            </summary>
-            <div className="flex flex-col gap-3 px-4 pb-4">
-              <a
-                href={`https://${PAYPAL}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex min-h-[3rem] items-center justify-between rounded-[var(--radius-sm)] bg-[var(--surface-2)] px-4"
-              >
-                <span className="text-sm font-bold text-white">PayPal</span>
-                <span className="flex items-center gap-1.5 text-xs text-[var(--muted-text)]">
-                  {PAYPAL} <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-                </span>
-              </a>
-              <div className="flex flex-col gap-2 rounded-[var(--radius-sm)] bg-[var(--surface-2)] px-4 py-3">
-                <div className="flex items-center justify-between">
-                  <p className="eyebrow text-[var(--muted-text)]">Bonifico</p>
-                  <button
-                    onClick={copyIban}
-                    className={cn(
-                      "flex min-h-[2.25rem] items-center gap-1 rounded-full px-3 text-xs font-bold",
-                      copied ? "bg-[var(--live)]/20 text-[var(--live)]" : "bg-[var(--surface-3)] text-[var(--accent)]",
-                    )}
-                  >
-                    {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                    {copied ? "Copiato" : "Copia IBAN"}
-                  </button>
+          {/* Manual methods: kept for whoever prefers them; credited by the admin.
+              Hidden in the Android app too: Google Play forbids outside payments for digital credits. */}
+          {!native && (
+            <details className="group rounded-[var(--radius-md)] bg-[var(--surface-3)]">
+              <summary className="flex min-h-[3.5rem] cursor-pointer list-none items-center justify-between px-4 text-sm font-bold text-white">
+                Altri metodi: PayPal o bonifico
+                <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden="true" />
+              </summary>
+              <div className="flex flex-col gap-3 px-4 pb-4">
+                <a
+                  href={`https://${PAYPAL}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex min-h-[3rem] items-center justify-between rounded-[var(--radius-sm)] bg-[var(--surface-2)] px-4"
+                >
+                  <span className="text-sm font-bold text-white">PayPal</span>
+                  <span className="flex items-center gap-1.5 text-xs text-[var(--muted-text)]">
+                    {PAYPAL} <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                  </span>
+                </a>
+                <div className="flex flex-col gap-2 rounded-[var(--radius-sm)] bg-[var(--surface-2)] px-4 py-3">
+                  <div className="flex items-center justify-between">
+                    <p className="eyebrow text-[var(--muted-text)]">Bonifico</p>
+                    <button
+                      onClick={copyIban}
+                      className={cn(
+                        "flex min-h-[2.25rem] items-center gap-1 rounded-full px-3 text-xs font-bold",
+                        copied ? "bg-[var(--live)]/20 text-[var(--live)]" : "bg-[var(--surface-3)] text-[var(--accent)]",
+                      )}
+                    >
+                      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                      {copied ? "Copiato" : "Copia IBAN"}
+                    </button>
+                  </div>
+                  <p className="text-sm font-black tracking-wider text-white">{IBAN}</p>
+                  <p className="text-xs text-[var(--muted-text)]">{INTESTATARIO} · BIC: {BIC}</p>
                 </div>
-                <p className="text-sm font-black tracking-wider text-white">{IBAN}</p>
-                <p className="text-xs text-[var(--muted-text)]">{INTESTATARIO} · BIC: {BIC}</p>
+                <p className="text-sm text-[var(--muted-text)]">
+                  Causale: <strong className="text-[var(--accent)]">SC - {playerName}</strong>. Poi scrivi all&apos;admin
+                  per l&apos;accredito.
+                </p>
               </div>
-              <p className="text-sm text-[var(--muted-text)]">
-                Causale: <strong className="text-[var(--accent)]">SC - {playerName}</strong>. Poi scrivi all&apos;admin
-                per l&apos;accredito.
-              </p>
-            </div>
-          </details>
+            </details>
+          )}
         </div>
       )}
     </div>

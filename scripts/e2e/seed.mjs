@@ -43,5 +43,24 @@ await q(
   `INSERT INTO player_swipes (id,"fromId","toId",liked,target,"targetId","targetLabel",comment,"isAce",status)
    VALUES ('sw_ace','anna','me',true,'PROMPT','pr_me_0','Il mio colpo migliore è… La diagonale','Giochiamo sabato?',true,'PENDING')`,
 )
+
+// Yesterday Marco and Luca beat Anna and Sara: "Rigiocheresti con…" on the home.
+await q(
+  `INSERT INTO sessions (id,"createdAt","updatedAt","organizerId",title,location,city,date,"maxPlayers",status)
+   VALUES ('s_done',now(),now(),'anna','Partita di ieri','Bagno 26','Rimini',now() - interval '1 day',4,'COMPLETED')`,
+)
+for (const [id, team] of [["me", 0], ["luca", 0], ["anna", 1], ["sara", 1]]) {
+  await q(`INSERT INTO session_participants (id,"sessionId","playerId",team) VALUES ($1,'s_done',$2,$3)`, [`sp_done_${id}`, id, team])
+}
+// Two days ago Luca marked Marco "non presentato": Marco contests it, an admin decides.
+await q(
+  `INSERT INTO sessions (id,"createdAt","updatedAt","organizerId",title,location,city,date,"maxPlayers",status)
+   VALUES ('s_noshow',now(),now(),'luca','Partita del giovedì','Bagno 62','Rimini',now() - interval '2 days',4,'OPEN')`,
+)
+await q(`INSERT INTO attendance_events (id,"playerId","sessionId",kind,"createdAt") VALUES ('ae_noshow','me','s_noshow','NO_SHOW',now() - interval '1 day')`)
+// Luca and Sara are already a pair: someone to challenge in Coppie.
+await q(
+  `INSERT INTO duos (id,"aId","bId",status,name,motto,"acceptedAt") VALUES ('duo_ls','luca','sara','ACTIVE','Onda Lunga','Muro alto, difesa che non molla',now())`,
+)
 console.log("e2e seed ok")
 await c.end()

@@ -42,7 +42,7 @@ export default async function AdminReportsPage() {
   if (!isAdminEmail(session.user.email)) redirect("/")
 
   const weekAgo = daysAgo(7)
-  const [reports, photos, flagged, suspended] = await Promise.all([
+  const [reports, photos, flagged, suspended, disputes] = await Promise.all([
     db.playerBlock.findMany({
       where: { reported: true, reviewedAt: null },
       orderBy: { createdAt: "desc" },
@@ -69,7 +69,18 @@ export default async function AdminReportsPage() {
       take: 50,
       select: { playerId: true, suspendedAt: true, suspendedReason: true, player: { select: { name: true } } },
     }),
+    db.attendanceEvent.findMany({
+      where: { kind: "NO_SHOW", disputedAt: { not: null }, resolvedAt: null },
+      orderBy: { disputedAt: "asc" },
+      take: 50,
+      select: { id: true, disputeNote: true, disputedAt: true, sessionId: true, player: { select: { name: true } } },
+    }),
   ])
+  const disputeSessions = await db.session.findMany({
+    where: { id: { in: disputes.map((d) => d.sessionId).filter((x): x is string => !!x) } },
+    select: { id: true, title: true, date: true, organizer: { select: { name: true } } },
+  })
+  const sessionOf = new Map(disputeSessions.map((x) => [x.id, x]))
   const counts = new Map<string, number>()
   for (const r of reports) counts.set(r.blocked.id, (counts.get(r.blocked.id) ?? 0) + 1)
 
@@ -103,6 +114,30 @@ export default async function AdminReportsPage() {
                 </div>
               </li>
             ))}
+          </ul>
+        )}
+
+        <H2 count={disputes.length}>Assenze contestate</H2>
+        {disputes.length === 0 ? (
+          <p className="rounded-[var(--radius-md)] bg-[var(--surface-2)] p-4 text-base text-[var(--muted-text)]">Nessuna.</p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {disputes.map((d) => {
+              const s = d.sessionId ? sessionOf.get(d.sessionId) : undefined
+              return (
+                <li key={d.id} className="rounded-[var(--radius-md)] bg-[var(--surface-2)] p-4">
+                  <p className="text-base font-extrabold text-white">{d.player.name}</p>
+                  <p className="text-sm text-[var(--muted-text)]">
+                    {s ? `${s.title} · ${formatWhen(s.date)} · organizzata da ${s.organizer.name}` : "Partita"}
+                  </p>
+                  {d.disputeNote && <p className="mt-1 text-base text-white">«{d.disputeNote}»</p>}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <ModerationButton action={{ kind: "cancelAbsence", eventId: d.id }} />
+                    <ModerationButton action={{ kind: "keepAbsence", eventId: d.id }} />
+                  </div>
+                </li>
+              )
+            })}
           </ul>
         )}
 

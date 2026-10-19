@@ -49,5 +49,5 @@ next-env.d.ts
 /scripts/tiktok-carousels/*.html
 
 # E2E artifacts
-e2e-failure.png
+e2e-failure*.png
 next.log

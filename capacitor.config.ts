@@ -11,27 +11,27 @@ const config: CapacitorConfig = {
   },
   ios: {
     contentInset: "always",
-    backgroundColor: "#07090a",
+    backgroundColor: "#0b0b0c",
     preferredContentMode: "mobile",
     limitsNavigationsToAppBoundDomains: true,
   },
   android: {
-    backgroundColor: "#07090a",
+    backgroundColor: "#0b0b0c",
   },
   webDir: "out",
   plugins: {
     SplashScreen: {
       launchShowDuration: 1500,
-      backgroundColor: "#07090a",
+      backgroundColor: "#0b0b0c",
       androidSplashResourceName: "splash",
       androidScaleType: "CENTER_CROP",
       showSpinner: false,
       iosSpinnerStyle: "small",
-      spinnerColor: "#c8ff00",
+      spinnerColor: "#c6f736",
     },
     StatusBar: {
       style: "Dark",
-      backgroundColor: "#07090a",
+      backgroundColor: "#0b0b0c",
     },
     PushNotifications: {
       presentationOptions: ["badge", "sound", "alert"],

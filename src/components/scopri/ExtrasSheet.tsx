@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { Sheet } from "@/components/ui/Sheet"
 import { buyScopriExtra } from "@/actions/scopri"
 import { SC_OFFERS, type ScOfferId } from "@/lib/scopri/rules"
+import { useIsNativeApp } from "@/lib/native"
 import type { Allowance } from "./types"
 
 const ICONS: Record<ScOfferId, LucideIcon> = { likes: Heart, ace: Crown, reveal: Eye }
@@ -25,6 +26,8 @@ export function ExtrasSheet({
   onBought?: (allowance: Allowance) => void
 }) {
   const [busy, setBusy] = useState<ScOfferId | null>(null)
+  // No SANDER+ upsell inside the Android app (Google Play billing rules).
+  const native = useIsNativeApp()
   const offers = (Object.keys(SC_OFFERS) as ScOfferId[]).filter((k) => !only || only.includes(k))
 
   async function buy(id: ScOfferId) {
@@ -43,6 +46,7 @@ export function ExtrasSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange} title="Extra con gli SC" description="Si pagano con i SanderCredits del tuo profilo.">
+      {!native && (
       <Link
         href="/scopri/plus"
         onClick={() => onOpenChange(false)}
@@ -55,6 +59,7 @@ export function ExtrasSheet({
           <span className="block text-sm text-[var(--muted-text)]">Like illimitati, vedi tutti, 3 Ace a settimana</span>
         </span>
       </Link>
+      )}
       <ul className="flex flex-col gap-2">
         {offers.map((id) => {
           const o = SC_OFFERS[id]
