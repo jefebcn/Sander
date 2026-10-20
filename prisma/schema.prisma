@@ -1097,3 +1097,26 @@ model PlayAgainVote {
   @@index([targetId, again])
   @@map("play_again_votes")
 }
+
+/// Errors seen by players or by the server, grouped: the same error on the
+/// same page is one row with a counter (see lib/errorLog.ts, /admin/sistema).
+model AppError {
+  id          String   @id @default(cuid())
+  /// sha1 of source + message + where: one row per distinct error.
+  fingerprint String   @unique
+  /// "client" (a player's browser) or "server".
+  source      String
+  message     String
+  /// Page or route where it happened.
+  path        String?
+  stack       String?
+  /// Next.js error digest, to find the matching server log line.
+  digest      String?
+  userAgent   String?
+  count       Int      @default(1)
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+
+  @@index([lastSeenAt])
+  @@map("app_errors")
+}

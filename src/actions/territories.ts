@@ -1,6 +1,8 @@
 "use server"
 
+import { unstable_cache } from "next/cache"
 import { db } from "@/lib/db"
+import { LEADERBOARDS_TAG } from "@/lib/cacheTags"
 import { canonicalLocation, parseBagno } from "@/lib/bagni"
 import { parseCity } from "@/lib/cities"
 import { NOT_DELETED_PLAYER } from "@/lib/publicPlayer"
@@ -75,7 +77,7 @@ export interface Territory {
   totalMatches: number
 }
 
-export async function getLocationLeaderboards(): Promise<Territory[]> {
+async function computeLocationLeaderboards(): Promise<Territory[]> {
   const sessions = await db.session.findMany({
     where: { status: "COMPLETED", sets: { some: {} } },
     orderBy: { date: "desc" },
@@ -149,7 +151,7 @@ export interface CityLeaderboard {
  * reading it out of the location text, and anything still unrecognised is left
  * out rather than filed under a guess.
  */
-export async function getCityLeaderboards(): Promise<CityLeaderboard[]> {
+async function computeCityLeaderboards(): Promise<CityLeaderboard[]> {
   const sessions = await db.session.findMany({
     where: { status: "COMPLETED", sets: { some: {} } },
     orderBy: { date: "desc" },
@@ -205,4 +207,20 @@ export async function getCityLeaderboards(): Promise<CityLeaderboard[]> {
   }
 
   return boards.sort((a, b) => b.totalMatches - a.totalMatches)
+}
+
+/* Both boards scan the last 400 matches with their sets and players, and the
+   home, the bagni page and every match page ask for them. They change only when
+   a match is closed (completeSession revalidates the tag), so one scan a minute
+   serves everyone. Plain JSON (no Dates), safe to cache. */
+const BOARD_CACHE = { revalidate: 60, tags: [LEADERBOARDS_TAG] }
+const cachedLocationBoards = unstable_cache(computeLocationLeaderboards, ["location-leaderboards"], BOARD_CACHE)
+const cachedCityBoards = unstable_cache(computeCityLeaderboards, ["city-leaderboards"], BOARD_CACHE)
+
+export async function getLocationLeaderboards(): Promise<Territory[]> {
+  return cachedLocationBoards()
+}
+
+export async function getCityLeaderboards(): Promise<CityLeaderboard[]> {
+  return cachedCityBoards()
 }

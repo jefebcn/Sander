@@ -1,6 +1,7 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { revalidatePath, revalidateTag } from "next/cache"
+import { LEADERBOARDS_TAG } from "@/lib/cacheTags"
 import { db } from "@/lib/db"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import {
@@ -793,6 +794,8 @@ export async function completeSession(
 
   revalidatePath(`/sessions/${sessionId}`)
   revalidatePath("/sessions")
+  // The boards just changed: the recap's "Nº a Riccione" must read fresh.
+  revalidateTag(LEADERBOARDS_TAG, { expire: 0 })
 }
 
 export async function addPlayerToSession(sessionId: string, playerId: string) {

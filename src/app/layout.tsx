@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next"
 import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Figtree, Bricolage_Grotesque, Instrument_Serif, Mansalva } from "next/font/google"
 import "./globals.css"
 import { Providers } from "@/lib/providers"
@@ -10,6 +11,7 @@ import { ClientOnlyBanners } from "@/components/layout/ClientOnlyBanners"
 import { SwRegistrar } from "@/components/push/SwRegistrar"
 import { PageWrapper } from "@/components/layout/PageWrapper"
 import { RefTracker } from "@/components/analytics/RefTracker"
+import { ErrorReporter } from "@/components/analytics/ErrorReporter"
 import { AppBackground, type BackgroundVariant } from "@/components/layout/AppBackground"
 
 // Body: Figtree, round and very legible in the sun.
@@ -137,8 +139,11 @@ export default function RootLayout({
           </div>
           <Toaster />
           <RefTracker />
+          <ErrorReporter />
         </Providers>
         <Analytics />
+        {/* Real load times from the players' phones (Vercel → Speed Insights). */}
+        <SpeedInsights />
       </body>
     </html>
   )

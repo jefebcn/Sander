@@ -2,9 +2,11 @@ export const dynamic = "force-dynamic"
 
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import { unstable_cache } from "next/cache"
 import { TrendingUp, Waves, Activity, Medal, Trophy } from "lucide-react"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
+import { LANDING_TAG } from "@/lib/cacheTags"
 import { getDivision, getNextDivision, pointsToNext, divisionProgress } from "@/lib/divisions"
 import { getPersonalizedRecommendations } from "@/actions/recommendations"
 import { getCityLeaderboards, type CityLeaderboard } from "@/actions/territories"
@@ -75,6 +77,22 @@ async function getSpotlightTournament(): Promise<SpotlightTournament | null> {
   }
 }
 
+/* What a visitor sees is the same for everyone: two counts and the poster
+   tournament, cached for two minutes so the landing never waits on the
+   database. The cache stores JSON, so the date travels as a string. */
+const getLandingData = unstable_cache(
+  async () => {
+    const [players, matches, tournament] = await Promise.all([
+      db.player.count(),
+      db.session.count({ where: { status: "COMPLETED" } }),
+      getSpotlightTournament(),
+    ])
+    return { players, matches, tournament: tournament && { ...tournament, date: tournament.date.toISOString() } }
+  },
+  ["landing"],
+  { revalidate: 120, tags: [LANDING_TAG] },
+)
+
 export default async function Home() {
   const session = await getCurrentSession()
   const player = await getCurrentPlayer()
@@ -86,14 +104,13 @@ export default async function Home() {
 
   /* ── Visitor ─────────────────────────────────────────────────────────── */
   if (!player) {
-    const [players, matches, tournament] = await Promise.all([
-      db.player.count(),
-      db.session.count({ where: { status: "COMPLETED" } }),
-      getSpotlightTournament(),
-    ])
+    const { players, matches, tournament } = await getLandingData()
     return (
       <HomeShell>
-        <GuestLanding stats={{ players, matches }} tournament={tournament} />
+        <GuestLanding
+          stats={{ players, matches }}
+          tournament={tournament && { ...tournament, date: new Date(tournament.date) }}
+        />
       </HomeShell>
     )
   }

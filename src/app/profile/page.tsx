@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic"
 
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { ArrowUpRight, MapPin, Calendar, Settings, ShieldCheck, Users, Trophy, Pencil, MessageCircle, ChartColumn, ChevronRight, HeartHandshake, CalendarCheck } from "lucide-react"
+import { ArrowUpRight, MapPin, Calendar, Settings, ShieldCheck, Users, Trophy, Pencil, MessageCircle, ChartColumn, Bug, ChevronRight, HeartHandshake, CalendarCheck } from "lucide-react"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { SanderCardFut, playerToCardData } from "@/components/player/SanderCardFut"
@@ -530,30 +530,6 @@ export default async function ProfilePage({ searchParams }: Props) {
           </Link>
 
           <NotifyPermission />
-
-          {/* Support banner */}
-          <a
-            href="https://ko-fi.com/sanderbv"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex w-full flex-col gap-2 rounded-2xl p-4 active:opacity-80"
-            style={{ background: "var(--surface-2)", border: "1px solid rgba(198,247,54,0.15)" }}
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-xl">☕</span>
-              <span className="font-bold text-white">Supporta il Progetto</span>
-            </div>
-            <p className="text-sm text-[var(--muted-text)]">
-              Aiuta a mantenere l&apos;app attiva e a finanziare nuovi tornei e aggiornamenti.
-            </p>
-            <div
-              className="flex min-h-[3.5rem] w-full items-center justify-center rounded-xl font-bold text-sm text-black"
-              style={{ background: "var(--accent)" }}
-            >
-              Dona su Ko-fi →
-            </div>
-          </a>
-
         </div>
       )}
 
@@ -785,6 +761,19 @@ export default async function ProfilePage({ searchParams }: Props) {
             <span className="flex-1">
               <span className="block text-base font-bold text-white">Moderazione Scopri</span>
               <span className="block text-sm text-[var(--muted-text)]">Segnalazioni, foto, sospensioni</span>
+            </span>
+            <ChevronRight className="h-5 w-5 text-[var(--muted-text)]" />
+          </Link>
+
+          {/* Errors and maintenance */}
+          <Link
+            href="/admin/sistema"
+            className="flex min-h-[3.5rem] items-center gap-3 rounded-2xl bg-[var(--surface-2)] px-4 py-3 active:bg-[var(--surface-3)]"
+          >
+            <Bug className="h-5 w-5 shrink-0 text-[var(--accent)]" />
+            <span className="flex-1">
+              <span className="block text-base font-bold text-white">Sistema</span>
+              <span className="block text-sm text-[var(--muted-text)]">Errori dell'app, pulizia foto</span>
             </span>
             <ChevronRight className="h-5 w-5 text-[var(--muted-text)]" />
           </Link>
