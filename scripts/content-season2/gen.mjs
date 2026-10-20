@@ -12,14 +12,10 @@ import { fileURLToPath } from "url"
 import { createElement } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 import { HeartHandshake, Trophy, Lightbulb, Star, Heart, MessageCircle, CalendarCheck, Search, Volleyball, TrendingUp, ScanFace, Sun } from "lucide-react"
-import { CSS, FONTS, top, bot, photo, logo } from "../content-grid/style.mjs"
+import { CSS, FONTS, top, bot, photo, dim, logo } from "../content-grid/style.mjs"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const OUT = join(__dirname, "out")
-
-/* Text-heavy pages sit on a darkened, blurred beach photo (or lime), never
-   on plain graphite: grey backgrounds break the summer mood. */
-const dim = (n) => photo(n, "filter:blur(7px) brightness(.5) saturate(1.1);transform:scale(1.08)")
 
 const icon = (I, size, color = "#c6f736", stroke = 1.6) => renderToStaticMarkup(createElement(I, { size, color, strokeWidth: stroke }))
 

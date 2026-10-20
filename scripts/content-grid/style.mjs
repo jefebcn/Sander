@@ -57,4 +57,6 @@ td:last-child,th:last-child{text-align:right}
 export const top = (a, b, c) => `<div class="meta top"><div>${a}</div><div>${b}</div><div>${c}</div></div>`
 export const bot = (a, b, c) => `<div class="meta bot"><div>${a}</div><div>${b}</div><div>${c}</div></div>`
 export const photo = (n, extra = "") => `<div class="photo" style="background-image:url(${img(n)});${extra}"></div><div class="veil"></div>`
-
+// Text-heavy pages sit on a darkened, blurred beach photo (or lime), never on
+// plain graphite: grey backgrounds break the summer mood.
+export const dim = (n) => photo(n, "filter:blur(7px) brightness(.5) saturate(1.1);transform:scale(1.08)")

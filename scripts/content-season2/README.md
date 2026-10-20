@@ -6,6 +6,7 @@ di solo testo stanno su una foto di spiaggia sfocata e scurita, oppure sul lime.
 
 ```bash
 CHROME=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node scripts/content-season2/gen.mjs
+python3 scripts/content-season2/pack.py /percorso/SANDER-pubblicazione   # tutto in ordine di pubblicazione, una cartella per giorno
 ```
 
 | Cartella | Cosa | Formato |

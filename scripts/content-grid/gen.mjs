@@ -1,6 +1,6 @@
 /**
  * Instagram grid for SANDER (12 posts, 1080×1350): blurred film photos,
- * hand-drawn marker type, grainy graphite and SANDER lime, small corner info.
+ * hand-drawn marker type, SANDER lime, small corner info.
  * Photos in photos/ are generated (Higgsfield): fictional people, barefoot, no brands.
  *   node scripts/content-grid/gen.mjs        (CHROME=… to pick a Chromium binary)
  * Output: scripts/content-grid/out/*.jpg. Captions in README.md.
@@ -9,7 +9,7 @@ import { chromium } from "playwright"
 import { mkdirSync } from "fs"
 import { join, dirname } from "path"
 import { fileURLToPath } from "url"
-import { CSS, FONTS, top, bot, photo, img, logo } from "./style.mjs"
+import { CSS, FONTS, top, bot, photo, dim, img, logo } from "./style.mjs"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const OUT = join(__dirname, "out")
@@ -20,16 +20,16 @@ const POSTS = [
   ["01-sander", "", photo("dive.jpg") + top("Community<br>beach volley", "Gratis", "@sanderbeachvolley") +
     `<div class="abs center hand out lime" style="top:440px;font-size:260px">Sander</div>
      <div class="rows"><div><span>Dove</span><span>Riviera Romagnola</span></div><div><span>Quando</span><span>Tutti i giorni</span></div><div><span>Come</span><span>sanderbv.it</span></div></div>`],
-  // 2 · dark: Scopri
-  ["02-scopri", "dark", top("Novità", "Scopri", "Gratis") +
+  // 2 · text: Scopri
+  ["02-scopri", "", dim("group.jpg") + top("Novità", "Scopri", "Gratis") +
     `<div class="abs hand" style="left:56px;top:330px;font-size:250px">Scopri</div>
      <div class="abs body" style="left:60px;top:640px;width:520px">Trova con chi giocare. Like a una foto o a una risposta, con un commento. Se è match, si gioca.</div>
      <div class="abs hand out lime" style="right:56px;bottom:90px;font-size:300px">2v2</div>`],
   // 3 · photo + stickers
   ["03-sticker", "", photo("feet.jpg") +
     `<img class="abs" src="${img("stickers.webp")}" style="left:90px;top:90px;width:900px;filter:drop-shadow(0 12px 24px rgba(0,0,0,.45))">`],
-  // 4 · dark: schedule
-  ["04-giornata", "dark", top("Scopri", "Un giorno qualunque", "Riviera") +
+  // 4 · text: schedule
+  ["04-giornata", "", dim("set.jpg") + top("Scopri", "Un giorno qualunque", "Riviera") +
     `<div class="abs center hand" style="top:190px;font-size:150px">La giornata<br>tipo</div>
      <div class="abs sched" style="left:120px;right:120px;top:560px">
        <div><b class="t">08:00</b><span>Apri SANDER: il più compatibile di oggi</span></div>
@@ -44,7 +44,7 @@ const POSTS = [
      <div class="abs center hand lime" style="top:640px;font-size:260px">oggi?</div>
      <div class="abs lime" style="left:56px;bottom:60px;font-size:54px;letter-spacing:6px">✺✺✺</div>
      <div class="abs pill fill" style="right:56px;bottom:62px">Un tap</div>`],
-  // 6 · dark: score
+  // 6 · text: score
   ["06-punteggio", "limebg", `<div class="abs center" style="top:56px;font-style:italic;font-size:24px">ogni punto conta.</div>
      <div class="abs center hand" style="top:300px;font-size:360px">21</div>
      <div class="abs center hand out" style="top:640px;font-size:360px">19</div>
@@ -57,8 +57,8 @@ const POSTS = [
      <div class="abs hand" style="left:330px;top:470px;font-size:220px">fino al</div>
      <div class="abs hand lime" style="left:60px;top:760px;font-size:250px">tramonto</div>
      <div class="abs" style="right:60px;top:430px;font-size:21px;text-transform:uppercase;letter-spacing:.06em;text-align:right">Dove vuoi<br>con chi vuoi</div>`],
-  // 8 · dark: divisions table
-  ["08-livelli", "dark", top("Stagione 2026", "", "Rating") +
+  // 8 · text: divisions table
+  ["08-livelli", "", dim("spike.jpg") + top("Stagione 2026", "", "Rating") +
     `<div class="abs center hand lime" style="top:220px;font-size:190px">Livelli</div>
      <div class="abs" style="left:150px;right:150px;top:520px"><table>
        <tr><th>Divisione</th><th>Rating</th></tr>
@@ -71,7 +71,7 @@ const POSTS = [
      <div class="abs" style="left:60px;top:560px;font-size:24px;line-height:1.6;text-transform:uppercase;letter-spacing:.05em"><b>Dove</b>&nbsp;&nbsp; Rimini · Riccione · Cervia<br><b>Chi</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Chiunque abbia voglia di giocare</div>
      <div class="abs caps lime" style="left:56px;bottom:40px;font-size:260px">2v2</div>
      <div class="abs" style="right:56px;bottom:62px;font-size:21px;text-transform:uppercase;letter-spacing:.06em;text-align:right">Pronti<br>a giocare</div>`],
-  // 10 · dark: month changelog
+  // 10 · text: month changelog
   ["10-ottobre", "limebg", `<div class="abs caps" style="left:-20px;top:-40px;font-size:330px;white-space:nowrap">Ottobre</div>
      <div class="abs" style="left:56px;top:330px;font-size:24px;text-transform:uppercase;letter-spacing:.08em;opacity:.8">Le novità del mese</div>
      <div class="abs sched" style="left:56px;right:56px;top:420px;font-size:34px">
@@ -86,8 +86,8 @@ const POSTS = [
        <img src="${logo}" style="width:72px;height:72px;border-radius:18px"><span>×</span><span class="hand" style="-webkit-text-stroke:1px #fff;font-size:64px">te</span></div>
      <div class="abs center caps" style="bottom:200px;font-size:170px">Porta<br><span class="lime">un amico</span></div>
      <div class="abs center" style="bottom:110px;font-size:26px;letter-spacing:.06em;text-transform:uppercase">SC in regalo a tutti e due</div>`],
-  // 12 · dark: scattered letters
-  ["12-piedi-nudi", "dark", top("Community", "Gratis", "@sanderbeachvolley") +
+  // 12 · text: scattered letters
+  ["12-piedi-nudi", "", dim("rally.jpg") + top("Community", "Gratis", "@sanderbeachvolley") +
     `<div class="abs hand" style="left:70px;top:220px;font-size:270px">A</div>
      <div class="abs hand" style="left:330px;top:300px;font-size:250px;transform:rotate(-6deg)">piedi</div>
      <div class="abs hand lime" style="left:120px;top:640px;font-size:290px;transform:rotate(4deg)">nudi</div>
