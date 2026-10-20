@@ -12,6 +12,7 @@ import { flaggedByVotes } from "@/lib/scopri/playAgainServer"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { ModerationButton } from "@/components/admin/ScopriModeration"
 import { resizedPhoto } from "@/lib/photo"
+import { gestureByKey } from "@/lib/scopri/selfie"
 
 export const metadata: Metadata = { title: "Moderazione Scopri — Admin" }
 
@@ -43,7 +44,7 @@ export default async function AdminReportsPage() {
   if (!isAdminEmail(session.user.email)) redirect("/")
 
   const weekAgo = daysAgo(7)
-  const [reports, photos, flagged, suspended, disputes] = await Promise.all([
+  const [reports, photos, flagged, suspended, disputes, selfies] = await Promise.all([
     db.playerBlock.findMany({
       where: { reported: true, reviewedAt: null },
       orderBy: { createdAt: "desc" },
@@ -76,6 +77,20 @@ export default async function AdminReportsPage() {
       take: 50,
       select: { id: true, disputeNote: true, disputedAt: true, sessionId: true, player: { select: { name: true } } },
     }),
+    db.selfieCheck.findMany({
+      where: { status: "PENDING" },
+      orderBy: { createdAt: "asc" },
+      take: 30,
+      select: {
+        id: true,
+        imageUrl: true,
+        gesture: true,
+        createdAt: true,
+        player: {
+          select: { name: true, discoverPhotos: { where: { hiddenAt: null }, orderBy: { position: "asc" }, take: 3, select: { id: true, url: true } } },
+        },
+      },
+    }),
   ])
   const disputeSessions = await db.session.findMany({
     where: { id: { in: disputes.map((d) => d.sessionId).filter((x): x is string => !!x) } },
@@ -89,6 +104,45 @@ export default async function AdminReportsPage() {
     <div className="pb-10">
       <PageHeader eyebrow="Admin" title="Moderazione Scopri" backHref="/profile?tab=admin" />
       <div className="px-4">
+        <H2 count={selfies.length}>Verifiche foto</H2>
+        <p className="mb-2 text-sm text-[var(--muted-text)]">
+          Il selfie deve mostrare la stessa persona delle foto e il gesto richiesto. Dopo la decisione il selfie viene cancellato.
+        </p>
+        {selfies.length === 0 ? (
+          <p className="rounded-[var(--radius-md)] bg-[var(--surface-2)] p-4 text-base text-[var(--muted-text)]">Nessuna verifica in attesa.</p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {selfies.map((c) => {
+              const g = gestureByKey(c.gesture)
+              return (
+                <li key={c.id} className="rounded-[var(--radius-md)] bg-[var(--surface-2)] p-4">
+                  <p className="text-base font-extrabold text-white">{c.player.name}</p>
+                  <p className="text-sm text-[var(--accent)]">
+                    Gesto richiesto: {g ? `${g.emoji} ${g.text}` : c.gesture}
+                  </p>
+                  <div className="mt-3 grid grid-cols-4 gap-2">
+                    {c.imageUrl && (
+                      <div className="col-span-2 overflow-hidden rounded-lg ring-2 ring-[var(--accent)]">
+                        <img src={c.imageUrl} alt={`Selfie di ${c.player.name}`} className="aspect-[3/4] w-full object-cover" />
+                      </div>
+                    )}
+                    <div className="col-span-2 grid grid-cols-2 gap-2">
+                      {c.player.discoverPhotos.map((ph) => (
+                        <img key={ph.id} src={resizedPhoto(ph.url, "thumb")} alt="" className="aspect-[3/4] w-full rounded-lg object-cover" />
+                      ))}
+                    </div>
+                  </div>
+                  <p className="mt-2 text-xs text-[var(--muted-text)]">{formatWhen(c.createdAt)}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <ModerationButton action={{ kind: "approveSelfie", checkId: c.id }} />
+                    <ModerationButton action={{ kind: "rejectSelfie", checkId: c.id }} />
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+
         <H2 count={reports.length}>Segnalazioni aperte</H2>
         {reports.length === 0 ? (
           <p className="rounded-[var(--radius-md)] bg-[var(--surface-2)] p-4 text-base text-[var(--muted-text)]">Nessuna segnalazione aperta.</p>

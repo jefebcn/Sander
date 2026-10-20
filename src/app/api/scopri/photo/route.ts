@@ -45,6 +45,8 @@ export async function POST(req: Request) {
     data: { playerId: player.id, url: blob.url, position: count },
     select: { id: true, url: true, position: true },
   })
+  // A new face on the card: the selfie check no longer covers it.
+  await db.discoverProfile.updateMany({ where: { playerId: player.id, photoVerifiedAt: { not: null } }, data: { photoVerifiedAt: null } })
   await markReadyIfComplete(player.id)
   revalidatePath("/scopri/profilo")
   return NextResponse.json({ photo })

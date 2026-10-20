@@ -3,12 +3,12 @@
 /* eslint-disable @next/next/no-img-element -- user photos from Blob, any size */
 import { useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Plus, Trash2, ChevronLeft, Loader2, Eye, Pause, Play, UserRound, Pencil, Crown } from "lucide-react"
+import { Plus, Trash2, ChevronLeft, Loader2, Eye, Pause, Play, UserRound, Pencil, Crown, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 import { Sheet } from "@/components/ui/Sheet"
 import { CITY_NAMES } from "@/lib/cities"
-import { PROMPTS, LOOKING_FOR, SIDES, promptText } from "@/lib/scopri/prompts"
-import { ANSWER_MAX, MAX_PHOTOS, PROMPT_COUNT, type MissingStep } from "@/lib/scopri/rules"
+import { PROMPTS, LOOKING_FOR, SIDES, promptText, type LookingFor } from "@/lib/scopri/prompts"
+import { ANSWER_MAX, MAX_PHOTOS, PROMPT_COUNT, SHOW_ME, type MissingStep, type ShowMe } from "@/lib/scopri/rules"
 import {
   saveDiscoverSettings,
   savePrompt,
@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils"
 import { useIsNativeApp } from "@/lib/native"
 import { ProfileCard } from "./ProfileCard"
+import { SelfieVerify, type SelfieState } from "./SelfieVerify"
 import type { ScopriCard } from "./types"
 import { resizedPhoto } from "@/lib/photo"
 import { shrinkImage } from "@/lib/shrinkImage"
@@ -42,6 +43,12 @@ export interface EditorData {
   plus: boolean
   onlyVerified: boolean
   onlyFreeToday: boolean
+  openToMeet: boolean
+  showMe: string | null
+  meetOnly: boolean
+  /** Consent already given once: no checkbox needed to switch it back on. */
+  meetConsented: boolean
+  selfie: SelfieState
   missing: MissingStep[]
   preview: ScopriCard
 }
@@ -97,6 +104,10 @@ export function ScopriProfileEditor({ data }: { data: EditorData }) {
   const [maxGap, setMaxGap] = useState(data.maxGap)
   const [onlyVerified, setOnlyVerified] = useState(data.onlyVerified)
   const [onlyFreeToday, setOnlyFreeToday] = useState(data.onlyFreeToday)
+  const [openToMeet, setOpenToMeet] = useState(data.openToMeet)
+  const [showMe, setShowMe] = useState<string | null>(data.showMe)
+  const [meetOnly, setMeetOnly] = useState(data.meetOnly)
+  const [meetConsent, setMeetConsent] = useState(false)
 
   async function upload(file: File) {
     setUploading(true)
@@ -135,12 +146,22 @@ export function ScopriProfileEditor({ data }: { data: EditorData }) {
           gender: (gender || undefined) as "Uomo" | "Donna" | "Altro" | undefined,
           preferredRole: role,
           side: side as "SINISTRA" | "DESTRA" | "ENTRAMBI" | null,
-          lookingFor: lookingFor as ("COMPAGNO" | "PARTITE" | "ALLENAMENTO" | "TORNEI" | "MISTO")[],
+          lookingFor: lookingFor as LookingFor[],
           prefCities,
           prefGender: prefGender as "Uomo" | "Donna" | null,
           prefRole,
           maxGap,
           ...(data.plus ? { onlyVerified, onlyFreeToday } : {}),
+          ...(openToMeet
+            ? {
+                openToMeet: true,
+                showMe: showMe as ShowMe | null,
+                meetOnly,
+                ...(meetConsent ? { meetConsent: true as const } : {}),
+              }
+            : data.openToMeet
+              ? { openToMeet: false }
+              : {}),
         }),
       "Salvato",
     )
@@ -152,12 +173,13 @@ export function ScopriProfileEditor({ data }: { data: EditorData }) {
   const stored = JSON.stringify([
     data.birthDate ?? "", data.homeCity ?? "", data.gender ?? "", data.role, data.side,
     [...data.lookingFor].sort(), [...data.prefCities].sort(), data.prefGender, data.prefRole, data.maxGap,
-    data.onlyVerified, data.onlyFreeToday,
+    data.onlyVerified, data.onlyFreeToday, data.openToMeet, data.showMe, data.meetOnly,
   ])
   const edited = JSON.stringify([
     birthDate, homeCity, gender, role, side, [...lookingFor].sort(), [...prefCities].sort(), prefGender, prefRole, maxGap,
-    onlyVerified, onlyFreeToday,
+    onlyVerified, onlyFreeToday, openToMeet, openToMeet ? showMe : null, openToMeet ? meetOnly : false,
   ])
+  const needsConsent = openToMeet && !data.meetConsented && !meetConsent
   const dirty = stored !== edited
 
   return (
@@ -253,6 +275,10 @@ export function ScopriProfileEditor({ data }: { data: EditorData }) {
       </Section>
 
       {/* ── Risposte ── */}
+      <Section title="Foto verificata" hint="Il badge dice a tutti che sei davvero tu: chi lo ha riceve più like.">
+        <SelfieVerify state={data.selfie} hasPhotos={data.photos.length > 0} />
+      </Section>
+
       <Section title="Le tue risposte" hint="Tre domande. È lì che arrivano i like con un commento.">
         <ul className="flex flex-col gap-2">
           {Array.from({ length: PROMPT_COUNT }).map((_, i) => {
@@ -340,6 +366,65 @@ export function ScopriProfileEditor({ data }: { data: EditorData }) {
         </div>
       </Section>
 
+      {/* ── Oltre al campo ── */}
+      <Section
+        title="Oltre al campo"
+        hint="Qui si viene per giocare. Se poi nasce qualcosa, meglio ancora: dillo solo se ti va."
+      >
+        <div className="flex flex-col gap-4">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={openToMeet}
+            onClick={() => setOpenToMeet(!openToMeet)}
+            className="flex min-h-[3.5rem] items-center justify-between gap-3 rounded-[var(--radius-md)] bg-[var(--surface-2)] px-4 py-3 text-left ring-1 ring-[var(--border)]"
+          >
+            <span className="flex items-center gap-3">
+              <Sparkles className="h-5 w-5 shrink-0 text-[var(--love)]" aria-hidden="true" />
+              <span>
+                <span className="block text-base font-bold text-white">Aperto a conoscersi</span>
+                <span className="block text-sm text-[var(--muted-text)]">Lo vede solo chi è aperto anche lui e ti piacerebbe conoscere</span>
+              </span>
+            </span>
+            <span className={cn("relative h-7 w-12 shrink-0 rounded-full transition-colors", openToMeet ? "bg-[var(--accent)]" : "bg-[var(--surface-4)]")}>
+              <span className={cn("absolute top-1 h-5 w-5 rounded-full bg-white transition-all", openToMeet ? "left-6" : "left-1")} />
+            </span>
+          </button>
+          {openToMeet && (
+            <>
+              <div>
+                <p className="mb-2 text-sm font-bold text-[var(--muted-text)]">Mostrami</p>
+                <div className="flex flex-wrap gap-2">
+                  {SHOW_ME.map((o) => (
+                    <Chip key={o.key} on={showMe === o.key} onClick={() => setShowMe(o.key)}>{o.label}</Chip>
+                  ))}
+                </div>
+                {!gender && (
+                  <p className="mt-2 text-sm text-[var(--muted-text)]">
+                    Senza il genere (sopra, in «In campo») ti vede solo chi ha scelto «Tutti».
+                  </p>
+                )}
+              </div>
+              <label className="flex min-h-[3.5rem] items-center gap-3 rounded-[var(--radius-md)] bg-[var(--surface-2)] px-4 py-3 ring-1 ring-[var(--border)]">
+                <input type="checkbox" checked={meetOnly} onChange={(e) => setMeetOnly(e.target.checked)} className="h-5 w-5 accent-[var(--accent)]" />
+                <span className="text-base text-white">Nel mazzo mostrami solo chi è aperto a conoscersi</span>
+              </label>
+              {!data.meetConsented && (
+                <label className="flex items-start gap-3 rounded-[var(--radius-md)] bg-[var(--surface-2)] p-4 ring-1 ring-[var(--love)]/40">
+                  <input type="checkbox" checked={meetConsent} onChange={(e) => setMeetConsent(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--accent)]" />
+                  <span className="text-sm text-white">
+                    Acconsento a che SANDER usi questa preferenza e il mio genere per mostrarmi alle persone giuste. Non li vede
+                    nessuno: solo chi è compatibile vede «Aperto a conoscersi». Puoi disattivarlo quando vuoi e la preferenza viene
+                    cancellata.{" "}
+                    <a href="/privacy#scopri" className="font-bold text-[var(--accent)] underline">Privacy</a>
+                  </span>
+                </label>
+              )}
+            </>
+          )}
+        </div>
+      </Section>
+
       <a href="/profile/presenze" className="-mt-4 flex min-h-[3.5rem] items-center justify-between rounded-[var(--radius-md)] bg-[var(--surface-2)] px-4 text-base font-bold text-white">
         Le tue presenze e assenze <span className="text-[var(--accent)]">›</span>
       </a>
@@ -399,11 +484,12 @@ export function ScopriProfileEditor({ data }: { data: EditorData }) {
       {dirty && (
         <button
           type="button"
-          disabled={saving}
+          disabled={saving || needsConsent || (openToMeet && !showMe)}
           onClick={saveDetails}
           className="pressable fade-in sticky bottom-24 z-20 flex min-h-[3.75rem] items-center justify-center gap-2 rounded-full bg-[var(--accent)] text-lg font-extrabold text-black shadow-[var(--shadow-glow)] disabled:opacity-60"
         >
-          {saving && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />} Salva le modifiche
+          {saving && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}{" "}
+          {openToMeet && !showMe ? "Scegli chi mostrarti" : needsConsent ? "Serve il tuo consenso" : "Salva le modifiche"}
         </button>
       )}
 

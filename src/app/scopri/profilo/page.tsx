@@ -6,6 +6,8 @@ import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { DEFAULT_MAX_GAP, isPlus } from "@/lib/scopri/rules"
 import { loadCardRow, readiness, toCard } from "@/lib/scopri/server"
+import { gestureFor } from "@/lib/scopri/selfie"
+import { dayKey } from "@/lib/datetime"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { ScopriProfileEditor } from "@/components/scopri/ScopriProfileEditor"
 
@@ -18,6 +20,8 @@ export default async function ScopriProfilePage() {
   const me = await loadCardRow(player.id)
   if (!me) redirect("/onboarding/profile")
   const p = me.discoverProfile
+  const lastSelfie = await db.selfieCheck.findFirst({ where: { playerId: player.id }, orderBy: { createdAt: "desc" }, select: { status: true } })
+  const gesture = gestureFor(player.id, dayKey(new Date()))
 
   return (
     <div className="pb-10">
@@ -42,6 +46,15 @@ export default async function ScopriProfilePage() {
             plus: isPlus(p?.plusUntil),
             onlyVerified: p?.onlyVerified ?? false,
             onlyFreeToday: p?.onlyFreeToday ?? false,
+            openToMeet: p?.openToMeet ?? false,
+            showMe: p?.showMe ?? null,
+            meetOnly: p?.meetOnly ?? false,
+            meetConsented: !!p?.meetConsentAt,
+            selfie: {
+              verified: !!p?.photoVerifiedAt,
+              last: (lastSelfie?.status as "PENDING" | "APPROVED" | "REJECTED" | undefined) ?? null,
+              gesture: { emoji: gesture.emoji, text: gesture.text },
+            },
             missing: readiness(me),
             preview: toCard(me),
           }}

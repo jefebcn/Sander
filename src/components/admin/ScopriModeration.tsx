@@ -3,7 +3,7 @@
 import { useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { adminHidePhoto, adminKeepPhoto, adminSuspend, adminUnsuspend, adminCloseReport, adminResolveAbsence } from "@/actions/scopriAdmin"
+import { adminHidePhoto, adminKeepPhoto, adminSuspend, adminUnsuspend, adminCloseReport, adminResolveAbsence, adminReviewSelfie } from "@/actions/scopriAdmin"
 import { cn } from "@/lib/utils"
 
 type Action =
@@ -14,6 +14,8 @@ type Action =
   | { kind: "close"; reportId: string }
   | { kind: "keepAbsence"; eventId: string }
   | { kind: "cancelAbsence"; eventId: string }
+  | { kind: "approveSelfie"; checkId: string }
+  | { kind: "rejectSelfie"; checkId: string }
 
 const LABEL: Record<Action["kind"], string> = {
   hidePhoto: "Rimuovi foto",
@@ -23,6 +25,8 @@ const LABEL: Record<Action["kind"], string> = {
   close: "Archivia",
   keepAbsence: "Confermo l'assenza",
   cancelAbsence: "Annulla l'assenza",
+  approveSelfie: "È la stessa persona",
+  rejectSelfie: "Non corrisponde",
 }
 
 const DONE: Record<Action["kind"], string> = {
@@ -33,13 +37,15 @@ const DONE: Record<Action["kind"], string> = {
   close: "Segnalazione archiviata",
   keepAbsence: "Assenza confermata",
   cancelAbsence: "Assenza annullata",
+  approveSelfie: "Foto verificata",
+  rejectSelfie: "Verifica rifiutata",
 }
 
 /** One admin moderation button; destructive ones ask for confirmation. */
 export function ModerationButton({ action, className }: { action: Action; className?: string }) {
   const router = useRouter()
   const [pending, start] = useTransition()
-  const danger = action.kind === "hidePhoto" || action.kind === "suspend"
+  const danger = action.kind === "hidePhoto" || action.kind === "suspend" || action.kind === "rejectSelfie"
 
   function run() {
     if (danger && !window.confirm(`${LABEL[action.kind]}?`)) return
@@ -50,6 +56,8 @@ export function ModerationButton({ action, className }: { action: Action; classN
         else if (action.kind === "suspend") await adminSuspend({ playerId: action.playerId, reason: action.reason })
         else if (action.kind === "unsuspend") await adminUnsuspend({ playerId: action.playerId })
         else if (action.kind === "close") await adminCloseReport({ reportId: action.reportId })
+        else if (action.kind === "approveSelfie" || action.kind === "rejectSelfie")
+          await adminReviewSelfie({ checkId: action.checkId, approve: action.kind === "approveSelfie" })
         else await adminResolveAbsence({ eventId: action.eventId, keep: action.kind === "keepAbsence" })
         toast.success(DONE[action.kind])
         router.refresh()

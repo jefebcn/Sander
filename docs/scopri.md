@@ -109,6 +109,27 @@ In più, solo SANDER:
   - Se la scadenza è passata, la si ricontrolla su Stripe.
   - La disdetta vale a fine mese.
 
+## Aperto a conoscersi, foto verificata, proposte in chat
+
+- **Aperto a conoscersi** (`lib/scopri/rules.ts`: `meetCompatible`, `showMeAccepts`):
+  - Si attiva da «Oltre al campo» nel profilo Scopri.
+  - Insieme si sceglie «Mostrami»: donne, uomini o tutti. Il confronto avviene con `Player.gender`, quindi chi non ha indicato il genere rientra solo in «Tutti».
+  - La prima volta serve un consenso esplicito (`meetConsentAt`), perché il dato può rivelare l'orientamento (art. 9 GDPR). Disattivandolo si cancellano preferenza e consenso.
+  - Il badge «Aperto a conoscersi» compare solo se entrambi sono aperti e ognuno rientra nel «Mostrami» dell'altro. Per tutti gli altri non esiste.
+  - Nel mazzo le coppie compatibili salgono di 10 punti.
+  - «Solo chi è aperto a conoscersi» (`meetOnly`) limita il mazzo nei due sensi.
+  - Tra le cose che si cercano c'è anche «Nuove amicizie».
+- **Foto verificata** (`lib/scopri/selfie.ts`, `/api/scopri/selfie`):
+  - Si invia un selfie con il gesto del giorno, calcolato da giocatore e data e non scelto dall'utente. Massimo 3 tentativi al giorno.
+  - L'admin lo confronta con le foto in `/admin/segnalazioni` → «Verifiche foto».
+  - Sia con l'approvazione sia con il rifiuto il selfie viene cancellato dal blob.
+  - Il badge `ScanFace` è diverso da «Verificato», che riguarda le presenze.
+  - Aggiungere una nuova foto azzera la verifica.
+- **Proponi una partita in chat** (`actions/proposals.ts`, `GameProposal`):
+  - Nelle chat private la proposta indica quando, dove e comune, e diventa una carta.
+  - «Ci sto» crea il 2v2 con i due in coppia e due posti liberi, e avvisa chi gioca vicino. «Non posso» o «Annulla» chiudono la proposta.
+  - Una proposta già passata risulta scaduta. Ce ne possono essere al massimo 3 in attesa per chat.
+
 ## Dove sta il codice
 
 - `prisma/schema.prisma`: modelli `PlayerPhoto`, `PlayerPrompt`,

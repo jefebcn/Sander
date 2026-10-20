@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { isKnownCity } from "@/lib/cities"
 import { isPromptKey, LOOKING_FOR_KEYS, SIDE_KEYS } from "@/lib/scopri/prompts"
+import { SHOW_ME_KEYS } from "@/lib/scopri/rules"
 import { ANSWER_MAX, COMMENT_MAX, MAX_PHOTOS, MOTTO_MAX, PROMPT_COUNT } from "@/lib/scopri/rules"
 import { FREE_SLOT_KEYS } from "@/lib/scopri/reliability"
 
@@ -45,12 +46,17 @@ export const BuyExtraSchema = z.object({ offer: z.enum(["likes", "ace", "reveal"
 export const DiscoverSettingsSchema = z
   .object({
     side: z.enum(SIDE_KEYS).nullable().optional(),
-    lookingFor: z.array(z.enum(LOOKING_FOR_KEYS)).max(5).optional(),
+    lookingFor: z.array(z.enum(LOOKING_FOR_KEYS)).max(LOOKING_FOR_KEYS.length).optional(),
     paused: z.boolean().optional(),
     prefCities: z.array(z.string().refine(isKnownCity, "Comune non riconosciuto")).max(20).optional(),
     prefGender: z.enum(["Uomo", "Donna"]).nullable().optional(),
     prefRole: z.enum(["BLOCKER", "DEFENDER"]).nullable().optional(),
     maxGap: z.number().int().min(100).max(1000).optional(),
+    // "Aperto a conoscersi": the first time needs explicit consent (meetConsent).
+    openToMeet: z.boolean().optional(),
+    showMe: z.enum(SHOW_ME_KEYS).nullable().optional(),
+    meetOnly: z.boolean().optional(),
+    meetConsent: z.literal(true).optional(),
     // SANDER+ deck filters.
     onlyVerified: z.boolean().optional(),
     onlyFreeToday: z.boolean().optional(),
@@ -136,7 +142,7 @@ export const QuickStartSchema = z
       .min(1)
       .max(PROMPT_COUNT)
       .refine((list) => new Set(list.map((p) => p.promptKey)).size === list.length, "Domande ripetute"),
-    lookingFor: z.array(z.enum(LOOKING_FOR_KEYS)).max(5).optional(),
+    lookingFor: z.array(z.enum(LOOKING_FOR_KEYS)).max(LOOKING_FOR_KEYS.length).optional(),
     useAvatar: z.boolean().optional(),
   })
   .strict()
@@ -152,3 +158,5 @@ export const AdminReportSchema = z.object({ reportId: Id }).strict()
 
 export const DisputeAbsenceSchema = z.object({ eventId: Id, note: z.string().trim().min(3, "Scrivi due parole").max(300) }).strict()
 export const AdminAbsenceSchema = z.object({ eventId: Id, keep: z.boolean() }).strict()
+
+export const AdminSelfieSchema = z.object({ checkId: Id, approve: z.boolean() }).strict()
