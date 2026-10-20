@@ -37,7 +37,7 @@ export default async function AdminSystemPage() {
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.5rem)" }}
       >
         <Link
-          href="/profile?tab=admin"
+          href="/admin"
           aria-label="Indietro"
           className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-2)] text-white active:bg-[var(--surface-3)]"
         >

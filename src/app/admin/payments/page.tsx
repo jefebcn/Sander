@@ -19,7 +19,7 @@ export default async function AdminPaymentsPage() {
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.5rem)" }}
       >
         <Link
-          href="/profile"
+          href="/admin"
           aria-label="Indietro"
           className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-3)] text-white active:bg-[var(--surface-4)]"
         >

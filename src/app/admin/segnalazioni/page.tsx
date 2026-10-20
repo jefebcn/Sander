@@ -102,7 +102,7 @@ export default async function AdminReportsPage() {
 
   return (
     <div className="pb-10">
-      <PageHeader eyebrow="Admin" title="Moderazione Scopri" backHref="/profile?tab=admin" />
+      <PageHeader eyebrow="Admin" title="Moderazione Scopri" backHref="/admin" />
       <div className="px-4">
         <H2 count={selfies.length}>Verifiche foto</H2>
         <p className="mb-2 text-sm text-[var(--muted-text)]">
