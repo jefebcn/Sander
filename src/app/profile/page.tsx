@@ -530,30 +530,6 @@ export default async function ProfilePage({ searchParams }: Props) {
           </Link>
 
           <NotifyPermission />
-
-          {/* Support banner */}
-          <a
-            href="https://ko-fi.com/sanderbv"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex w-full flex-col gap-2 rounded-2xl p-4 active:opacity-80"
-            style={{ background: "var(--surface-2)", border: "1px solid rgba(198,247,54,0.15)" }}
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-xl">☕</span>
-              <span className="font-bold text-white">Supporta il Progetto</span>
-            </div>
-            <p className="text-sm text-[var(--muted-text)]">
-              Aiuta a mantenere l&apos;app attiva e a finanziare nuovi tornei e aggiornamenti.
-            </p>
-            <div
-              className="flex min-h-[3.5rem] w-full items-center justify-center rounded-xl font-bold text-sm text-black"
-              style={{ background: "var(--accent)" }}
-            >
-              Dona su Ko-fi →
-            </div>
-          </a>
-
         </div>
       )}
 
