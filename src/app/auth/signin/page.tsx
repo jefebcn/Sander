@@ -33,17 +33,20 @@ export default async function SignInPage({
         muted
         loop
         playsInline
+        preload="auto"
+        poster="/beach-volley-poster.webp"
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-40"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover"
       >
+        <source src="/beach-volley.webm" type="video/webm" />
         <source src="/beach-volley.mp4" type="video/mp4" />
       </video>
-      {/* Readability overlay: darker toward the bottom where the form sits */}
+      {/* Readability overlay: the player stays visible up top, the form below sits on near-black */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "linear-gradient(to bottom, rgba(10,10,10,0.55) 0%, rgba(10,10,10,0.8) 55%, rgba(10,10,10,0.95) 100%)",
+            "linear-gradient(to bottom, rgba(10,10,10,0.25) 0%, rgba(10,10,10,0.45) 30%, rgba(10,10,10,0.85) 52%, rgba(10,10,10,0.95) 100%)",
         }}
         aria-hidden="true"
       />

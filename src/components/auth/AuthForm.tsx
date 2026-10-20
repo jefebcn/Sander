@@ -9,6 +9,7 @@ import { registerWithEmail } from "@/actions/auth"
 import { trackEvent } from "@/lib/analytics"
 import { cn } from "@/lib/utils"
 import { safeCallbackUrl } from "@/lib/safeRedirect"
+import { useIsNativeApp } from "@/lib/native"
 
 type Mode = "login" | "register"
 
@@ -31,6 +32,7 @@ export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInvit
   const [showPwd, setShowPwd] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const native = useIsNativeApp()
   const router = useRouter()
   // Re-checked here too: this value ends up in router.push and signIn.
   const callbackUrl = safeCallbackUrl(rawCallbackUrl)
@@ -188,15 +190,6 @@ export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInvit
           )}
         </button>
 
-        {mode === "register" && (
-          <p className="text-center text-sm leading-relaxed text-[var(--muted-text)]">
-            Registrandoti accetti i{" "}
-            <Link href="/terms" className="font-bold text-white underline underline-offset-2">Termini</Link> e confermi di aver letto
-            la{" "}
-            <Link href="/privacy" className="font-bold text-white underline underline-offset-2">Privacy</Link>.
-          </p>
-        )}
-
         {mode === "login" && (
           <Link
             href="/auth/forgot-password"
@@ -207,22 +200,25 @@ export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInvit
         )}
       </form>
 
-      {/* Divider */}
-      <div className="flex items-center gap-3">
-        <div className="h-px flex-1 bg-[var(--border)]" />
-        <span className="text-xs text-[var(--muted-text)]">oppure</span>
-        <div className="h-px flex-1 bg-[var(--border)]" />
-      </div>
-
-      {/* Google */}
-      <button
-        type="button"
-        onClick={() => signIn("google", { callbackUrl })}
-        className="flex min-h-[3.5rem] w-full items-center justify-center gap-3 rounded-2xl bg-[var(--surface-2)] font-semibold text-white transition-all active:bg-[var(--surface-3)]"
-      >
-        <LogIn className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />
-        Continua con Google
-      </button>
+      {/* Google: not inside the Android/iOS app, where Google refuses to sign in
+          from an embedded web view (the login would land in Chrome, not the app). */}
+      {!native && (
+        <>
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-[var(--border)]" />
+            <span className="text-xs text-[var(--muted-text)]">oppure</span>
+            <div className="h-px flex-1 bg-[var(--border)]" />
+          </div>
+          <button
+            type="button"
+            onClick={() => signIn("google", { callbackUrl })}
+            className="flex min-h-[3.5rem] w-full items-center justify-center gap-3 rounded-2xl bg-[var(--surface-2)] font-semibold text-white transition-all active:bg-[var(--surface-3)]"
+          >
+            <LogIn className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />
+            Continua con Google
+          </button>
+        </>
+      )}
     </div>
   )
 }
