@@ -93,3 +93,36 @@ function noopSubscribe() {
 export function useIsNativeApp(): boolean {
   return useSyncExternalStore(noopSubscribe, isNativeApp, () => false)
 }
+
+/** True in app builds that include native Google sign-in (older installs don't). */
+export function hasNativeGoogle(): boolean {
+  try {
+    if (!isNativeApp()) return false
+    const cap = (window as { Capacitor?: { isPluginAvailable?: (name: string) => boolean } }).Capacitor
+    return Boolean(cap?.isPluginAvailable?.("SocialLogin"))
+  } catch {
+    return false
+  }
+}
+
+export function useHasNativeGoogle(): boolean {
+  return useSyncExternalStore(noopSubscribe, hasNativeGoogle, () => false)
+}
+
+/**
+ * Google sign-in with the phone's own account picker (Credential Manager).
+ * Google refuses OAuth inside the app's web view, so this is the only way in
+ * from the app. Returns the ID token for the "google-native" provider, or null
+ * when the user closes the picker. Throws on other failures.
+ */
+export async function nativeGoogleIdToken(webClientId: string): Promise<string | null> {
+  const { SocialLogin } = await import("@capgo/capacitor-social-login")
+  await SocialLogin.initialize({ google: { webClientId, mode: "online" } })
+  try {
+    const res = await SocialLogin.login({ provider: "google", options: { scopes: ["email", "profile"] } })
+    return (res.result as { idToken?: string | null }).idToken ?? null
+  } catch (e) {
+    if (/cancel/i.test(e instanceof Error ? e.message : String(e))) return null
+    throw e
+  }
+}

@@ -1,0 +1,9 @@
+# Not part of the website: keep Vercel uploads and builds lean.
+# Native app projects (built from Android Studio / Xcode, not by Vercel).
+android/
+ios/
+# Social and store material (images, videos, generators).
+scripts/content-grid/
+scripts/content-scopri/
+scripts/store-assets/
+scripts/store-screenshots/

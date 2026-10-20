@@ -5,6 +5,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter"
 import bcrypt from "bcryptjs"
 import { db } from "@/lib/db"
 import { findUserByEmail } from "@/lib/userByEmail"
+import { userFromGoogleIdToken } from "@/lib/googleNative"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
@@ -29,6 +30,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           )
           return ok ? user : null
         } catch {
+          return null
+        }
+      },
+    }),
+    // Google from inside the Android app: the native sign-in hands over an ID token.
+    Credentials({
+      id: "google-native",
+      name: "Google (app)",
+      credentials: { idToken: { label: "ID token", type: "text" } },
+      async authorize(credentials) {
+        if (typeof credentials?.idToken !== "string" || credentials.idToken.length > 4096) return null
+        try {
+          return await userFromGoogleIdToken(credentials.idToken)
+        } catch (e) {
+          console.error("google-native sign-in refused", e instanceof Error ? e.message : e)
           return null
         }
       },

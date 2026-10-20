@@ -9,7 +9,7 @@ import { registerWithEmail } from "@/actions/auth"
 import { trackEvent } from "@/lib/analytics"
 import { cn } from "@/lib/utils"
 import { safeCallbackUrl } from "@/lib/safeRedirect"
-import { useIsNativeApp } from "@/lib/native"
+import { useIsNativeApp, useHasNativeGoogle, nativeGoogleIdToken } from "@/lib/native"
 
 type Mode = "login" | "register"
 
@@ -17,13 +17,15 @@ interface AuthFormProps {
   callbackUrl: string
   inviteCode?: string
   defaultMode?: Mode
+  /** Google Web client id: the native app's sign-in asks Google for a token for it. */
+  googleClientId?: string
 }
 
 const INPUT =
   "w-full rounded-2xl bg-[var(--surface-2)] px-4 py-3.5 text-base text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
 const LABEL = "mb-1 block px-1 text-sm font-semibold text-[var(--muted-text)]"
 
-export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInviteCode, defaultMode = "login" }: AuthFormProps) {
+export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInviteCode, defaultMode = "login", googleClientId }: AuthFormProps) {
   const [mode, setMode] = useState<Mode>(defaultMode)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -33,6 +35,10 @@ export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInvit
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const native = useIsNativeApp()
+  const nativeGoogle = useHasNativeGoogle()
+  // On the web: Google's own page. In the app: the phone's account picker, only
+  // in builds that ship it (older installs keep email and password).
+  const showGoogle = !native || (nativeGoogle && !!googleClientId)
   const router = useRouter()
   // Re-checked here too: this value ends up in router.push and signIn.
   const callbackUrl = safeCallbackUrl(rawCallbackUrl)
@@ -70,6 +76,29 @@ export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInvit
         router.refresh()
       } catch (err) {
         setError(err instanceof Error ? err.message : "Errore imprevisto")
+      }
+    })
+  }
+
+  function googleSignIn() {
+    if (!native) {
+      signIn("google", { callbackUrl })
+      return
+    }
+    setError(null)
+    startTransition(async () => {
+      try {
+        const idToken = await nativeGoogleIdToken(googleClientId!)
+        if (!idToken) return
+        const result = await signIn("google-native", { idToken, redirect: false })
+        if (!result || result.error) {
+          setError("Accesso con Google non riuscito. Riprova o usa email e password.")
+          return
+        }
+        router.push(callbackUrl)
+        router.refresh()
+      } catch {
+        setError("Accesso con Google non riuscito. Riprova o usa email e password.")
       }
     })
   }
@@ -200,9 +229,9 @@ export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInvit
         )}
       </form>
 
-      {/* Google: not inside the Android/iOS app, where Google refuses to sign in
-          from an embedded web view (the login would land in Chrome, not the app). */}
-      {!native && (
+      {/* Google: inside the app only through the native account picker, since
+          Google refuses to sign in from an embedded web view. */}
+      {showGoogle && (
         <>
           <div className="flex items-center gap-3">
             <div className="h-px flex-1 bg-[var(--border)]" />
@@ -211,8 +240,9 @@ export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInvit
           </div>
           <button
             type="button"
-            onClick={() => signIn("google", { callbackUrl })}
-            className="flex min-h-[3.5rem] w-full items-center justify-center gap-3 rounded-2xl bg-[var(--surface-2)] font-semibold text-white transition-all active:bg-[var(--surface-3)]"
+            onClick={googleSignIn}
+            disabled={isPending}
+            className="flex min-h-[3.5rem] w-full items-center justify-center gap-3 rounded-2xl bg-[var(--surface-2)] font-semibold text-white transition-all active:bg-[var(--surface-3)] disabled:opacity-60"
           >
             <LogIn className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />
             Continua con Google

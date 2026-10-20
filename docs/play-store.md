@@ -55,7 +55,7 @@ Fatto in Romagna, da chi gioca, per chi gioca. Ci vediamo in spiaggia.
 ## Novità di questa versione (max 500)
 
 ```
-Arriva Scopri: trova con chi giocare a colpi di swipe. Like a una foto o a una risposta con un commento, match e chat per fissare la partita. Nuove Coppie 2v2 con sfide e classifica, «Il più compatibile di oggi», «Libero oggi», badge per i giocatori affidabili e la possibilità di contestare un'assenza. Nuovi colori e nuovi caratteri.
+Versione 1.1: accedi con Google direttamente dall'app. Fotocamera, vibrazione e condivisione native. Su Scopri arrivano «Aperto a conoscersi», la foto verificata con un selfie e le proposte di partita in chat: «Ci sto» e la partita si crea da sola. Nuovo sfondo e la mascotte Gabbo.
 ```
 
 ## Grafica

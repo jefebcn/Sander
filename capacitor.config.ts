@@ -20,6 +20,12 @@ const config: CapacitorConfig = {
   },
   webDir: "out",
   plugins: {
+    // Native Google sign-in (Google refuses OAuth inside the web view). Only
+    // the Google provider is bundled: no Facebook SDK, nothing unused.
+    SocialLogin: {
+      providers: { google: true, facebook: false, apple: false, twitter: false },
+      logLevel: 1,
+    },
     SplashScreen: {
       launchShowDuration: 1500,
       backgroundColor: "#0b0b0c",
