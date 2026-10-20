@@ -188,6 +188,15 @@ export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInvit
           )}
         </button>
 
+        {mode === "register" && (
+          <p className="text-center text-sm leading-relaxed text-[var(--muted-text)]">
+            Registrandoti accetti i{" "}
+            <Link href="/terms" className="font-bold text-white underline underline-offset-2">Termini</Link> e confermi di aver letto
+            la{" "}
+            <Link href="/privacy" className="font-bold text-white underline underline-offset-2">Privacy</Link>.
+          </p>
+        )}
+
         {mode === "login" && (
           <Link
             href="/auth/forgot-password"
