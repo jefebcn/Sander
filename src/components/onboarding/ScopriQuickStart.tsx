@@ -103,7 +103,7 @@ export function ScopriQuickStart({
   return (
     <div className="fixed inset-0 z-[200] flex flex-col overflow-y-auto bg-[var(--background)]">
       {/* The poster backdrop: grainy graphite, like the rest of the app. */}
-      <div aria-hidden="true" className="app-bg app-bg--night pointer-events-none fixed inset-0 -z-10">
+      <div aria-hidden="true" className="app-bg app-bg--aurora pointer-events-none fixed inset-0 -z-10">
         <div className="app-bg__glow" />
         <div className="app-bg__grain" />
       </div>
@@ -255,7 +255,7 @@ export function ScopriQuickStart({
             type="button"
             disabled={!canSave || saving}
             onClick={save}
-            className="pressable flex min-h-[3.75rem] items-center justify-center gap-2 rounded-full bg-[var(--accent)] text-lg font-extrabold text-black shadow-[var(--shadow-glow)] disabled:bg-white/10 disabled:text-white/50 disabled:shadow-none"
+            className="pressable flex min-h-[3.75rem] items-center justify-center gap-2 rounded-full bg-[var(--accent)] text-lg font-extrabold text-black shadow-[var(--shadow-glow)] disabled:bg-[var(--surface-3)] disabled:text-[var(--muted-text)] disabled:shadow-none"
           >
             {saving ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <HeartHandshake className="h-5 w-5" aria-hidden="true" />}
             Entra in Scopri

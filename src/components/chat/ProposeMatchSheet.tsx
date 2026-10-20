@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react"
 import { createPortal } from "react-dom"
 import Link from "next/link"
-import { X, MapPin, Calendar, Plus } from "lucide-react"
+import { X, MapPin, Calendar, Plus, Send, Loader2 } from "lucide-react"
+import { toast } from "sonner"
+import { proposeGameInChat } from "@/actions/proposals"
+import { CITY_NAMES } from "@/lib/cities"
 import { getMyUpcomingSessions, sendMessage } from "@/actions/messages"
 
 type Sess = Awaited<ReturnType<typeof getMyUpcomingSessions>>[number]
@@ -18,15 +21,46 @@ function dateLabel(iso: string): string {
   })
 }
 
+/** Two hours from now on the hour, as a datetime-local value in the phone's time. */
+function soonLocal(): string {
+  const d = new Date()
+  d.setMinutes(0, 0, 0)
+  d.setHours(d.getHours() + 2)
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 export function ProposeMatchSheet({
   threadId,
+  canPropose = false,
   onClose,
   onSent,
 }: {
   threadId: string
+  /** Private chats: a new proposal the other can accept with "Ci sto". */
+  canPropose?: boolean
   onClose: () => void
   onSent: () => void
 }) {
+  const [date, setDate] = useState(soonLocal)
+  const [location, setLocation] = useState("")
+  const [city, setCity] = useState("")
+  const [proposing, setProposing] = useState(false)
+
+  async function sendProposal(e: React.FormEvent) {
+    e.preventDefault()
+    if (location.trim().length < 2) return toast.error("Scrivi dove giocate (es. Bagno 26)")
+    setProposing(true)
+    try {
+      await proposeGameInChat({ threadId, date: new Date(date), location: location.trim(), city: city || undefined })
+      onSent()
+      onClose()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Non riuscito")
+      setProposing(false)
+    }
+  }
+
   const [sessions, setSessions] = useState<Sess[] | null>(null)
   const [sending, setSending] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -80,6 +114,54 @@ export function ProposeMatchSheet({
         </div>
 
         <div className="overflow-y-auto px-4">
+          {canPropose && (
+            <form onSubmit={sendProposal} className="mb-5 flex flex-col gap-2 rounded-2xl bg-[var(--surface-2)] p-3">
+              <p className="text-sm text-[var(--muted-text)]">
+                Scegli quando e dove: se risponde «Ci sto», la partita si crea da sola con voi due in coppia.
+              </p>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Quando</span>
+                <input
+                  type="datetime-local"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="min-h-[3.5rem] rounded-xl bg-[var(--surface-3)] px-3 text-base text-white outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Dove</span>
+                <input
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="Es. Bagno 26"
+                  maxLength={100}
+                  className="min-h-[3.5rem] rounded-xl bg-[var(--surface-3)] px-3 text-base text-white placeholder:text-[var(--muted-text)] outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                />
+              </label>
+              <select
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                aria-label="Comune"
+                className="min-h-[3.5rem] rounded-xl bg-[var(--surface-3)] px-3 text-base text-white outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              >
+                <option value="">Comune (facoltativo)</option>
+                {CITY_NAMES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+              <button
+                type="submit"
+                disabled={proposing}
+                className="flex min-h-[3.5rem] items-center justify-center gap-2 rounded-full bg-[var(--accent)] text-base font-extrabold text-black disabled:opacity-60"
+              >
+                {proposing ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Send className="h-5 w-5" aria-hidden="true" />}
+                Invia la proposta
+              </button>
+            </form>
+          )}
+          {canPropose && (
+            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">Oppure condividi una tua partita</p>
+          )}
           {sessions === null ? (
             <p className="py-10 text-center text-sm text-[var(--muted-text)]">Carico…</p>
           ) : sessions.length === 0 ? (

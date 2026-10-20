@@ -197,6 +197,7 @@ model Player {
   discoverPhotos       PlayerPhoto[]
   discoverPrompts      PlayerPrompt[]
   discoverProfile      DiscoverProfile?
+  selfieChecks         SelfieCheck[]
   swipesSent           PlayerSwipe[]      @relation("SwipesSent")
   swipesReceived       PlayerSwipe[]      @relation("SwipesReceived")
   matchesAsA           PlayerMatch[]      @relation("PlayerMatchA")
@@ -588,8 +589,12 @@ model ChatMessage {
   sender    Player     @relation(fields: [senderId], references: [id], onDelete: Cascade)
 
   body      String
+  /// A "proponi una partita" card instead of plain text (the body stays as fallback).
+  proposalId String?
+  proposal   GameProposal? @relation(fields: [proposalId], references: [id], onDelete: SetNull)
 
   @@index([threadId, createdAt])
+  @@index([proposalId])
   @@map("chat_messages")
 }
 
@@ -871,6 +876,18 @@ model DiscoverProfile {
   onlyVerified         Boolean   @default(false)
   onlyFreeToday        Boolean   @default(false)
 
+  /// "Aperto a conoscersi": besides playing, open to something more. Shown only
+  /// to people who are open too and whose "mostrami" fits (lib/scopri/rules).
+  openToMeet           Boolean   @default(false)
+  /// UOMINI | DONNE | TUTTI: who they'd like to meet. Only with openToMeet.
+  showMe               String?
+  /// Deck limited to people who are open to meeting and fit both ways.
+  meetOnly             Boolean   @default(false)
+  /// Explicit consent to process this preference (it can reveal orientation).
+  meetConsentAt        DateTime?
+  /// Selfie with the requested gesture approved by an admin (SelfieCheck).
+  photoVerifiedAt      DateTime?
+
   player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@index([stripeSubscriptionId])
@@ -1119,4 +1136,47 @@ model AppError {
 
   @@index([lastSeenAt])
   @@map("app_errors")
+}
+
+/// Selfie taken with a random gesture, compared by an admin with the Scopri
+/// photos. The image is deleted once decided; only the outcome is kept.
+model SelfieCheck {
+  id         String    @id @default(cuid())
+  createdAt  DateTime  @default(now())
+  playerId   String
+  player     Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  /// Blob url while PENDING, null after the decision.
+  imageUrl   String?
+  /// Key of the requested gesture (lib/scopri/selfie.ts).
+  gesture    String
+  /// PENDING | APPROVED | REJECTED
+  status     String    @default("PENDING")
+  reviewedAt DateTime?
+  note       String?
+
+  @@index([status, createdAt])
+  @@index([playerId, createdAt])
+  @@map("selfie_checks")
+}
+
+/// "Proponi una partita" in a private chat: when and where. Accepting creates a
+/// 2v2 with the two of them as a pair and two seats open.
+model GameProposal {
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now())
+  threadId    String
+  fromId      String
+  toId        String
+  date        DateTime
+  location    String
+  city        String?
+  /// PENDING | ACCEPTED | DECLINED | CANCELLED
+  status      String    @default("PENDING")
+  respondedAt DateTime?
+  sessionId   String?
+  messages    ChatMessage[]
+
+  @@index([threadId])
+  @@index([toId, status])
+  @@map("game_proposals")
 }

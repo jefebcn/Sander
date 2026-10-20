@@ -33,17 +33,20 @@ export default async function SignInPage({
         muted
         loop
         playsInline
+        preload="auto"
+        poster="/beach-volley-poster.webp"
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-40"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover"
       >
+        <source src="/beach-volley.webm" type="video/webm" />
         <source src="/beach-volley.mp4" type="video/mp4" />
       </video>
-      {/* Readability overlay: darker toward the bottom where the form sits */}
+      {/* Readability overlay: the player stays visible up top, the form below sits on near-black */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "linear-gradient(to bottom, rgba(10,10,10,0.55) 0%, rgba(10,10,10,0.8) 55%, rgba(10,10,10,0.95) 100%)",
+            "linear-gradient(to bottom, rgba(10,10,10,0.25) 0%, rgba(10,10,10,0.45) 30%, rgba(10,10,10,0.85) 52%, rgba(10,10,10,0.95) 100%)",
         }}
         aria-hidden="true"
       />
@@ -70,8 +73,9 @@ export default async function SignInPage({
             src="/sander-logo.png"
             alt="SANDER"
             width={140}
-            height={140}
-            className="object-contain"
+            height={120}
+            preload
+            className="h-auto w-[140px] object-contain"
           />
           <div className="space-y-1 text-center">
             <h1 className="font-hand text-[2.75rem] leading-none text-white">

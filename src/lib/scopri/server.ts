@@ -10,6 +10,7 @@ import {
   ageOn,
   missingSteps,
   mutuallyEligible,
+  meetCompatible,
   swipeHides,
   likesLeft,
   acesLeft,
@@ -74,6 +75,11 @@ export interface ScopriCard {
   /** Share of presences 0–100, null with no history. */
   reliability: number | null
   verified: boolean
+  /** Selfie checked by an admin against the photos. */
+  photoVerified: boolean
+  /** Both "aperti a conoscersi" and fitting each other's "mostrami". Only ever
+   *  true for a viewer who fits: everyone else never learns it. */
+  openToMeet: boolean
   /** "Libero oggi" slot, null if not free today. */
   freeToday: FreeSlot | null
   /** Share of "rigiocherei" from people who played with them, null below 3 votes. */
@@ -86,7 +92,14 @@ export interface ScopriCard {
 
 export type AgainVotes = Map<string, { yes: number; no: number }>
 
-export function toCard(row: CardRow, now: Date = new Date(), score?: DiscoverScore, votes?: AgainVotes): ScopriCard {
+export function toCard(
+  row: CardRow,
+  now: Date = new Date(),
+  score?: DiscoverScore,
+  votes?: AgainVotes,
+  /** Who is looking: needed to tell whether "aperto a conoscersi" may show. */
+  viewer?: DealbreakerSide,
+): ScopriCard {
   const v = votes?.get(row.id)
   const photos = row.discoverPhotos.length > 0
     ? row.discoverPhotos
@@ -107,6 +120,8 @@ export function toCard(row: CardRow, now: Date = new Date(), score?: DiscoverSco
     played: row.sessionsPlayed,
     reliability: reliabilityOf(row),
     verified: isVerified(row.sessionsPlayed, reliabilityOf(row)),
+    photoVerified: !!row.discoverProfile?.photoVerifiedAt,
+    openToMeet: viewer ? meetCompatible(viewer, sideOf(row)) : false,
     freeToday: freeToday(row.discoverProfile?.freeDay, row.discoverProfile?.freeSlot, now),
     again: v ? againPct(v.yes, v.no) : null,
     photos,
@@ -143,6 +158,9 @@ export function sideOf(row: CardRow): DealbreakerSide {
     prefGender: p?.prefGender ?? null,
     prefRole: p?.prefRole ?? null,
     maxGap: p?.maxGap ?? DEFAULT_MAX_GAP,
+    openToMeet: p?.openToMeet ?? false,
+    showMe: p?.showMe ?? null,
+    meetOnly: p?.meetOnly ?? false,
   }
 }
 
@@ -237,6 +255,9 @@ export async function hiddenFor(meId: string, now: Date = new Date()): Promise<S
   return out
 }
 
+/** Deck boost for two people both "aperti a conoscersi" who fit each other. */
+const MEET_RANK_BONUS = 10
+
 /**
  * The next cards for `me`, best first. Order = affinity, weighted by showing
  * up, verified, and "libero oggi" (see rankKey), with a small daily shuffle.
@@ -277,11 +298,13 @@ export async function buildDeck(me: CardRow, now: Date = new Date(), limit = 12)
         meFree,
         again: againBonus(v ? againPct(v.yes, v.no) : null),
       })
-      return { r, s, key }
+      // Both open to meeting: a little further up, never above a much better fit.
+      const meet = meetCompatible(meSide, sideOf(r)) ? MEET_RANK_BONUS : 0
+      return { r, s, key: key + meet }
     })
     .sort((a, b) => b.key - a.key || (a.r.id < b.r.id ? -1 : 1))
     .slice(0, limit)
-    .map(({ r, s }) => toCard(r, now, s, votes))
+    .map(({ r, s }) => toCard(r, now, s, votes, meSide))
 }
 
 /** Likes, Aces and "vedi tutti" left for `meId`. */
@@ -522,7 +545,7 @@ export async function incomingLikes(meId: string, now: Date = new Date()): Promi
       targetLabel: r.targetLabel,
       comment: r.comment,
       createdAt: r.createdAt.toISOString(),
-      card: toCard(r.from, now, mePerson ? discoverScore(mePerson, personOf(r.from)) : undefined, votes),
+      card: toCard(r.from, now, mePerson ? discoverScore(mePerson, personOf(r.from)) : undefined, votes, me ? sideOf(me) : undefined),
     }))
 }
 
@@ -617,7 +640,7 @@ export async function dailyPickFor(me: CardRow, now: Date = new Date()): Promise
   ])
   if (!pick || blocked.has(pick.id) || readiness(pick, now).length > 0 || pick.discoverProfile?.paused || pick.discoverProfile?.suspendedAt) return null
   return {
-    card: toCard(pick, now, { score: row.score, reasons: row.reasons }, await againVotes([pick.id])),
+    card: toCard(pick, now, { score: row.score, reasons: row.reasons }, await againVotes([pick.id]), sideOf(me)),
     seen: !!match || (!!swipe && swipe.createdAt >= romeDayStart(now)),
   }
 }

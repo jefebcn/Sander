@@ -10,7 +10,7 @@
  *
  * Variants exist so the look can be compared and switched in one place.
  */
-export type BackgroundVariant = "night" | "sunset"
+export type BackgroundVariant = "night" | "sunset" | "aurora"
 
 export function AppBackground({ variant = "sunset" }: { variant?: BackgroundVariant }) {
   return (

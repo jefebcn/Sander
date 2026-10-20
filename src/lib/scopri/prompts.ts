@@ -46,6 +46,7 @@ export const LOOKING_FOR = [
   { key: "ALLENAMENTO", label: "Allenamento" },
   { key: "TORNEI", label: "Tornei" },
   { key: "MISTO", label: "Misto" },
+  { key: "AMICIZIE", label: "Nuove amicizie" },
 ] as const
 
 export type LookingFor = (typeof LOOKING_FOR)[number]["key"]

@@ -232,6 +232,24 @@ body {
 }
 .app-bg--night .app-bg__grain { opacity: 0.11; }
 
+/* Aurora: the sea at night in the top corner, the logo's yellow-green rising
+   from the bottom, graphite in between. Surfaces lean cool to match. */
+.app-bg--aurora {
+  background: linear-gradient(160deg, #0f2124 0%, #0e1517 30%, #0d0f10 62%, #10140b 100%);
+}
+.app-bg--aurora .app-bg__glow {
+  background:
+    radial-gradient(ellipse 90% 34% at 15% -4%, color-mix(in srgb, var(--sky) 15%, transparent) 0%, transparent 70%),
+    radial-gradient(ellipse 80% 30% at 100% 105%, color-mix(in srgb, var(--accent) 10%, transparent) 0%, transparent 70%);
+}
+.app-bg--aurora .app-bg__grain { opacity: 0.11; }
+body[data-bg="aurora"] {
+  --surface-1: #15191a;
+  --surface-2: #1b2021;
+  --surface-3: #232829;
+  --surface-4: #2c3233;
+}
+
 /* Sunset: graphite base, a faint yellow-green light at the top, a touch of sea. */
 .app-bg--sunset {
   background: linear-gradient(180deg, var(--sea-deep) 0%, var(--sea-night) 38%, var(--background) 72%);

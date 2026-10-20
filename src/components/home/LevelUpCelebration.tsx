@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useSyncExternalStore } from "react"
-import { X, Zap } from "lucide-react"
+import { X } from "lucide-react"
 import { ShareStoryButton } from "@/components/share/ShareStoryButton"
 import type { PlayerCardData } from "@/components/player/SanderCardFut"
+import { Gabbo } from "@/components/ui/Gabbo"
 
 const STORAGE_KEY = "sander_level_celebrated"
 
@@ -80,13 +81,8 @@ export function LevelUpCelebration({ currentLevel, playerName, cardData }: Level
           <X className="h-5 w-5" />
         </button>
 
-        {/* Icon */}
-        <div
-          className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl"
-          style={{ background: "var(--accent)" }}
-        >
-          <Zap className="h-8 w-8 text-black" />
-        </div>
+        {/* Gabbo cheering, breaking out of the top of the card */}
+        <Gabbo pose="vittoria" size={150} priority className="mx-auto -mt-24 mb-2" />
 
         <p className="text-sm font-bold uppercase tracking-widest text-[var(--accent)] mb-1">
           Sei salito di livello!

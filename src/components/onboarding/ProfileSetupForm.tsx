@@ -323,7 +323,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
   return (
     <div className="fixed inset-0 z-[200] flex flex-col overflow-y-auto bg-[var(--background)]">
       {/* The poster backdrop: grainy graphite, like the rest of the app. */}
-      <div aria-hidden="true" className="app-bg app-bg--night pointer-events-none fixed inset-0 -z-10">
+      <div aria-hidden="true" className="app-bg app-bg--aurora pointer-events-none fixed inset-0 -z-10">
         <div className="app-bg__glow" />
         <div className="app-bg__grain" />
       </div>
@@ -547,7 +547,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
             disabled={!isValid || isPending}
             className={cn(
               "flex min-h-[3.75rem] w-full items-center justify-center rounded-full text-lg font-black transition-all",
-              isValid && !isPending ? "bg-[var(--accent)] text-black" : "bg-white/10 text-white/50",
+              isValid && !isPending ? "bg-[var(--accent)] text-black" : "bg-[var(--surface-3)] text-[var(--muted-text)]",
             )}
           >
             {isPending ? (

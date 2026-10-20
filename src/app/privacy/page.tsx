@@ -60,6 +60,23 @@ export default function PrivacyPage() {
               &quot;Libero oggi&quot; e le tue preferenze. Il genere è facoltativo, resta privato e serve solo a
               rispettare le preferenze tue e degli altri.
             </li>
+            <li id="scopri">
+              <strong className="text-white">&quot;Aperto a conoscersi&quot; (facoltativo):</strong> se lo attivi,
+              registriamo la preferenza &quot;mostrami&quot; (donne, uomini, tutti) e la data del tuo consenso.
+              Insieme al genere può rivelare il tuo orientamento, quindi la trattiamo solo con il tuo consenso
+              esplicito: non la mostriamo a nessuno, e &quot;Aperto a conoscersi&quot; compare solo a chi l&apos;ha
+              attivato anche lui e rientra nella tua scelta (e tu nella sua). Disattivandolo cancelliamo
+              preferenza e consenso.
+            </li>
+            <li>
+              <strong className="text-white">Verifica della foto (facoltativa):</strong> un selfie con un gesto
+              richiesto, che un admin confronta con le tue foto. Il selfie viene cancellato appena deciso; teniamo
+              solo l&apos;esito e la data.
+            </li>
+            <li>
+              <strong className="text-white">Proposte di partita in chat:</strong> giorno, ora, luogo e la
+              risposta, per creare la partita quando l&apos;altro accetta.
+            </li>
             <li>
               <strong className="text-white">Attività su Scopri:</strong> like e commenti inviati e ricevuti,
               giocatori saltati, match, coppie e sfide, chat, voti &quot;rigiocheresti&quot; dati e ricevuti,
@@ -112,6 +129,14 @@ export default function PrivacyPage() {
             <Row
               label="Scopri: proporti giocatori e coppie compatibili, il più compatibile del giorno, i promemoria"
               basis="Esecuzione del contratto (art. 6.1.b GDPR), solo se crei il profilo Scopri"
+            />
+            <Row
+              label="Scopri, &quot;Aperto a conoscersi&quot;: mostrarti a chi vorrebbe conoscerti ed è compatibile"
+              basis="Consenso esplicito (art. 9.2.a GDPR) — revocabile in qualsiasi momento dal profilo Scopri"
+            />
+            <Row
+              label="Verifica della foto con selfie"
+              basis="Consenso (art. 6.1.a GDPR), dato inviando il selfie; il selfie è cancellato dopo la verifica"
             />
             <Row
               label="Affidabilità e voti &quot;rigiocheresti&quot; mostrati in forma aggregata (percentuali)"

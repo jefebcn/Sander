@@ -1,11 +1,12 @@
 import Link from "next/link"
-import { Plus, Trophy } from "lucide-react"
+import { Plus } from "lucide-react"
 import { listTournaments } from "@/actions/tournaments"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { TournamentsInfoSheet } from "@/components/tournament/TournamentsInfoSheet"
 import { TournamentCard } from "@/components/tournament/TournamentCard"
 import { SectionTabs, PLAY_TABS } from "@/components/layout/SectionTabs"
+import { Gabbo } from "@/components/ui/Gabbo"
 
 export const dynamic = "force-dynamic"
 
@@ -43,7 +44,7 @@ export default async function TournamentsPage() {
 
       {tournaments.length === 0 ? (
         <div className="flex flex-col items-center gap-4 px-6 py-20 text-center">
-          <Trophy className="h-16 w-16 text-[var(--muted)]" />
+          <Gabbo pose="attesa" size={128} />
           <div>
             <p className="text-lg font-semibold">Nessun torneo ancora</p>
             <p className="text-sm text-[var(--muted-text)]">

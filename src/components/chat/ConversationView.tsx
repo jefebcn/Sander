@@ -7,6 +7,7 @@ import { ChevronLeft, Send, Volleyball } from "lucide-react"
 import { getThread, sendMessage, markThreadRead } from "@/actions/messages"
 import { ProposeMatchSheet } from "./ProposeMatchSheet"
 import { GroupInfoSheet } from "./GroupInfoSheet"
+import { ProposalCard } from "./ProposalCard"
 
 type ThreadData = Awaited<ReturnType<typeof getThread>>
 
@@ -137,7 +138,11 @@ export function ConversationView({
             Nessun messaggio. Scrivi per primo 👋
           </p>
         ) : (
-          messages.map((m) => (
+          messages.map((m) => m.proposal ? (
+            <div key={m.id} className={`flex ${m.mine ? "justify-end" : "justify-start"}`}>
+              <ProposalCard p={m.proposal} onAnswered={() => qc.invalidateQueries({ queryKey: ["thread", threadId] })} />
+            </div>
+          ) : (
             <div key={m.id} className={`flex ${m.mine ? "justify-end" : "justify-start"}`}>
               <div
                 className={`max-w-[78%] rounded-2xl px-3.5 py-2 ${
@@ -180,6 +185,7 @@ export function ConversationView({
       {proposeOpen && (
         <ProposeMatchSheet
           threadId={threadId}
+          canPropose={thread.kind === "DM"}
           onClose={() => setProposeOpen(false)}
           onSent={() => qc.invalidateQueries({ queryKey: ["thread", threadId] })}
         />

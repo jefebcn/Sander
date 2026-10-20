@@ -9,6 +9,8 @@ import {
   missingSteps,
   meetsDealbreakers,
   mutuallyEligible,
+  meetCompatible,
+  showMeAccepts,
   swipeHides,
   chatTurn,
   waitingOnMe,
@@ -97,6 +99,36 @@ describe("dealbreakers", () => {
     const b = side({ prefGender: "Donna" })
     expect(meetsDealbreakers(a, b)).toBe(true)
     expect(mutuallyEligible(a, b)).toBe(false)
+  })
+})
+
+describe("aperto a conoscersi", () => {
+  const him = (o: Partial<DealbreakerSide> = {}) => side({ gender: "Uomo", openToMeet: true, showMe: "DONNE", ...o })
+  const her = (o: Partial<DealbreakerSide> = {}) => side({ gender: "Donna", openToMeet: true, showMe: "UOMINI", ...o })
+
+  it("matches who would like to meet each other", () => {
+    expect(meetCompatible(him(), her())).toBe(true)
+    expect(meetCompatible(her({ showMe: "TUTTI" }), him())).toBe(true)
+    expect(meetCompatible(her({ showMe: "DONNE" }), her({ showMe: "DONNE" }))).toBe(true)
+  })
+  it("needs both open: one-sided interest stays invisible", () => {
+    expect(meetCompatible(him(), her({ openToMeet: false }))).toBe(false)
+    expect(meetCompatible(him({ openToMeet: false }), her())).toBe(false)
+  })
+  it("needs each to fit the other's mostrami", () => {
+    expect(meetCompatible(him({ showMe: "UOMINI" }), her())).toBe(false)
+    expect(meetCompatible(him(), her({ showMe: "DONNE" }))).toBe(false)
+  })
+  it("only 'tutti' accepts someone without a stated gender", () => {
+    expect(showMeAccepts("TUTTI", null)).toBe(true)
+    expect(showMeAccepts("DONNE", null)).toBe(false)
+    expect(showMeAccepts(null, "Donna")).toBe(false)
+  })
+  it("'solo chi è aperto' hides everyone else, both ways", () => {
+    expect(mutuallyEligible(him({ meetOnly: true }), her())).toBe(true)
+    expect(mutuallyEligible(him({ meetOnly: true }), side({ gender: "Donna" }))).toBe(false)
+    expect(mutuallyEligible(side({ gender: "Donna" }), him({ meetOnly: true }))).toBe(false)
+    expect(mutuallyEligible(him(), side({ gender: "Donna" }))).toBe(true)
   })
 })
 

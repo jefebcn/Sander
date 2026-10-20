@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic"
 
-import { Trophy, Volleyball, Activity } from "lucide-react"
+import { Trophy, Volleyball } from "lucide-react"
 import Link from "next/link"
 import { getRecentMatchResults, getRecentSessions, getRecentTournamentEvents } from "@/actions/feed"
 import { getReactionSummary, type ReactionTargetType } from "@/actions/reactions"
@@ -9,6 +9,7 @@ import { KudosButton } from "@/components/feed/KudosButton"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { formatDate } from "@/lib/utils"
 import { db } from "@/lib/db"
+import { Gabbo } from "@/components/ui/Gabbo"
 
 // ─── Type label helpers ───────────────────────────────────────────────────────
 
@@ -253,7 +254,7 @@ export default async function FeedPage() {
       <div className="space-y-3 px-4">
         {feed.length === 0 && (
           <div className="flex flex-col items-center gap-3 pt-16 text-center">
-            <Activity className="h-12 w-12 opacity-20" aria-hidden="true" />
+            <Gabbo pose="attesa" size={120} />
             <p className="text-[var(--muted-text)]">Nessuna attività recente</p>
           </div>
         )}

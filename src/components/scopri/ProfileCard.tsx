@@ -1,7 +1,7 @@
 "use client"
 
 /* eslint-disable @next/next/no-img-element -- user photos from Blob, any size */
-import { Heart, MapPin, Shield, Hand, ArrowLeftRight, Target, Sparkles, BadgeCheck, CalendarCheck, Sun, Repeat, Flag } from "lucide-react"
+import { Heart, MapPin, Shield, Hand, ArrowLeftRight, Target, Sparkles, BadgeCheck, CalendarCheck, Sun, Repeat, Flag, ScanFace } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { lookingForLabel, sideLabel } from "@/lib/scopri/prompts"
 import { freeSlotLabel, VERIFIED_MIN_GAMES, VERIFIED_MIN_RELIABILITY } from "@/lib/scopri/reliability"
@@ -59,6 +59,9 @@ export function ProfileCard({
             {card.verified && (
               <BadgeCheck className="h-7 w-7 shrink-0 text-[var(--social)]" aria-label="Giocatore verificato" role="img" />
             )}
+            {card.photoVerified && (
+              <ScanFace className="h-7 w-7 shrink-0 text-[var(--accent)]" aria-label="Foto verificata" role="img" />
+            )}
           </h2>
           <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-base text-[var(--muted-text)]">
             {card.homeCity && (
@@ -69,6 +72,11 @@ export function ProfileCard({
             {card.freeToday && (
               <span className="flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--lime)_16%,transparent)] px-2.5 py-0.5 text-sm font-extrabold text-[var(--lime)]">
                 <Sun className="h-4 w-4" aria-hidden="true" /> Libero oggi · {freeSlotLabel(card.freeToday).toLowerCase()}
+              </span>
+            )}
+            {card.openToMeet && (
+              <span className="flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--love)_16%,transparent)] px-2.5 py-0.5 text-sm font-extrabold text-[var(--love)]">
+                <Sparkles className="h-4 w-4" aria-hidden="true" /> Aperto a conoscersi
               </span>
             )}
           </p>
@@ -197,6 +205,12 @@ function DetailsBlock({ card }: { card: ScopriCard }) {
         <p className="mt-4 flex items-start gap-2 rounded-[var(--radius-md)] bg-[color-mix(in_srgb,var(--social)_12%,transparent)] px-3 py-2 text-sm text-white">
           <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-[var(--social)]" aria-hidden="true" />
           Verificato: almeno {VERIFIED_MIN_GAMES} partite registrate su SANDER e {VERIFIED_MIN_RELIABILITY}% di presenze.
+        </p>
+      )}
+      {card.photoVerified && (
+        <p className="mt-2 flex items-start gap-2 rounded-[var(--radius-md)] bg-[var(--accent-soft)] px-3 py-2 text-sm text-white">
+          <ScanFace className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]" aria-hidden="true" />
+          Foto verificata: un selfie dal vivo, controllato da SANDER, corrisponde alle foto.
         </p>
       )}
       {card.lookingFor.length > 0 && (

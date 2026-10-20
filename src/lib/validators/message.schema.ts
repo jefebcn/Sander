@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { isKnownCity } from "@/lib/cities"
 
 export const SendMessageSchema = z.object({
   threadId: z.string().min(1),
@@ -11,3 +12,16 @@ export const CreateGroupSchema = z.object({
   name: z.string().trim().max(60).optional(),
 })
 export type CreateGroupInput = z.infer<typeof CreateGroupSchema>
+
+export const ProposeInChatSchema = z
+  .object({
+    threadId: z.string().min(1),
+    date: z.coerce.date(),
+    location: z.string().trim().min(2, "Scrivi dove giocate (es. Bagno 26)").max(100),
+    city: z.string().refine(isKnownCity, "Comune non riconosciuto").optional(),
+  })
+  .strict()
+
+export const ProposalAnswerSchema = z
+  .object({ proposalId: z.string().min(1), answer: z.enum(["accept", "decline", "cancel"]) })
+  .strict()

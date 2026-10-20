@@ -112,6 +112,42 @@ export interface DealbreakerSide {
   prefGender: string | null
   prefRole: Role | null
   maxGap: number
+  /** "Aperto a conoscersi" (see meetCompatible). */
+  openToMeet?: boolean
+  showMe?: string | null
+  /** Deck limited to people who fit "aperto a conoscersi" both ways. */
+  meetOnly?: boolean
+}
+
+/* "Aperto a conoscersi": playing comes first for everyone, and some people are
+   also open to something more. That side shows only between two people who are
+   both open and each fit the other's "mostrami"; to everyone else nothing about
+   it is visible, so nobody gets flirted at in a sports app without asking. */
+
+export const SHOW_ME = [
+  { key: "DONNE", label: "Donne" },
+  { key: "UOMINI", label: "Uomini" },
+  { key: "TUTTI", label: "Tutti" },
+] as const
+export type ShowMe = (typeof SHOW_ME)[number]["key"]
+export const SHOW_ME_KEYS = SHOW_ME.map((s) => s.key) as [ShowMe, ...ShowMe[]]
+
+/** Does `gender` (Player.gender: "Uomo" | "Donna" | "Altro" | null) fit `showMe`? */
+export function showMeAccepts(showMe: string | null | undefined, gender: string | null): boolean {
+  if (showMe === "TUTTI") return true
+  if (showMe === "DONNE") return gender === "Donna"
+  if (showMe === "UOMINI") return gender === "Uomo"
+  return false
+}
+
+/** Both open to meeting, and each one is someone the other would like to meet. */
+export function meetCompatible(a: DealbreakerSide, b: DealbreakerSide): boolean {
+  return (
+    !!a.openToMeet &&
+    !!b.openToMeet &&
+    showMeAccepts(a.showMe, b.gender) &&
+    showMeAccepts(b.showMe, a.gender)
+  )
 }
 
 /** Does `other` meet every dealbreaker `viewer` set? */
@@ -125,6 +161,7 @@ export function meetsDealbreakers(viewer: DealbreakerSide, other: DealbreakerSid
 
 /** Two players are shown to each other only if each meets the other's dealbreakers. */
 export function mutuallyEligible(a: DealbreakerSide, b: DealbreakerSide): boolean {
+  if ((a.meetOnly || b.meetOnly) && !meetCompatible(a, b)) return false
   return meetsDealbreakers(a, b) && meetsDealbreakers(b, a)
 }
 

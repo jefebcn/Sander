@@ -1,15 +1,11 @@
 import Link from "next/link"
-import { Home, Volleyball } from "lucide-react"
+import { Home } from "lucide-react"
+import { Gabbo } from "@/components/ui/Gabbo"
 
 export default function NotFound() {
   return (
     <div className="mx-auto flex min-h-[70dvh] max-w-md flex-col items-center justify-center gap-5 px-6 text-center">
-      <div
-        className="flex h-20 w-20 items-center justify-center rounded-3xl"
-        style={{ background: "rgba(198,247,54,0.1)", border: "1px solid rgba(198,247,54,0.25)" }}
-      >
-        <Volleyball className="h-10 w-10 text-[var(--accent)]" />
-      </div>
+      <Gabbo pose="triste" size={150} />
       <div>
         <p className="text-5xl font-black text-white">404</p>
         <p className="mt-2 text-lg font-bold text-white">Palla fuori campo</p>

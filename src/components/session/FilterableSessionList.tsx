@@ -2,9 +2,10 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Volleyball, Calendar, Plus } from "lucide-react"
+import { Calendar, Plus } from "lucide-react"
 import { SessionCard } from "@/components/session/SessionCard"
 import { cn } from "@/lib/utils"
+import { Gabbo } from "@/components/ui/Gabbo"
 
 const FORMAT_LABEL: Record<string, string> = {
   TWO_VS_TWO: "2v2",
@@ -104,7 +105,7 @@ export function FilterableSessionList({ sessions, isLoggedIn = false }: Filterab
 
         {!anyVisible && (
           <div className="flex flex-col items-center gap-3 px-6 pt-16 text-center">
-            <Volleyball className="h-12 w-12 opacity-20" />
+            <Gabbo pose="attesa" size={120} />
             {format ? (
               /* Filter returned nothing — not a cold-start, keep it simple */
               <p className="text-[var(--muted-text)]">Nessuna partita per questo formato</p>

@@ -1,5 +1,5 @@
 import { db } from "@/lib/db"
-import { notifyPlayers } from "@/lib/push"
+import { notifyAdmins } from "@/lib/adminNotify"
 import { errorFingerprint } from "@/lib/errorFingerprint"
 
 /* ────────────────────────────────────────────────────────────────────────── */
@@ -66,22 +66,9 @@ export async function recordError(r: ErrorReport): Promise<void> {
 }
 
 async function alertAdmins(source: ErrorSource, message: string, path?: string | null) {
-  const emails = (process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean)
-  if (!emails.length) return
-  const admins = await db.player.findMany({
-    where: { user: { email: { in: emails, mode: "insensitive" } } },
-    select: { id: true },
+  await notifyAdmins({
+    title: source === "server" ? "Nuovo errore del server" : "Nuovo errore in app",
+    body: `${path ? `${path.split("?")[0]}: ` : ""}${message}`.slice(0, 140),
+    url: "/admin/sistema",
   })
-  if (!admins.length) return
-  await notifyPlayers(
-    admins.map((a) => a.id),
-    {
-      title: source === "server" ? "Nuovo errore del server" : "Nuovo errore in app",
-      body: `${path ? `${path.split("?")[0]}: ` : ""}${message}`.slice(0, 140),
-      url: "/admin/sistema",
-    },
-  )
 }

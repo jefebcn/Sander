@@ -441,11 +441,37 @@ export async function saveDiscoverSettings(input: unknown) {
   if (data.preferredRole) playerData.preferredRole = data.preferredRole
   if (Object.keys(playerData).length) await db.player.update({ where: { id: me.id }, data: playerData })
 
-  if (data.onlyVerified || data.onlyFreeToday) {
-    const plus = await db.discoverProfile.findUnique({ where: { playerId: me.id }, select: { plusUntil: true } })
-    if (!isPlus(plus?.plusUntil)) throw new Error("Questi filtri sono di SANDER+")
+  const current = await db.discoverProfile.findUnique({
+    where: { playerId: me.id },
+    select: { plusUntil: true, openToMeet: true, showMe: true, meetConsentAt: true },
+  })
+  if ((data.onlyVerified || data.onlyFreeToday) && !isPlus(current?.plusUntil)) {
+    throw new Error("Questi filtri sono di SANDER+")
+  }
+  // "Aperto a conoscersi" can reveal orientation: explicit consent the first
+  // time, and switching it off erases the preference and the consent.
+  let meetData: { openToMeet?: boolean; showMe?: string | null; meetOnly?: boolean; meetConsentAt?: Date | null } = {}
+  if (data.openToMeet === false) {
+    meetData = { openToMeet: false, showMe: null, meetOnly: false, meetConsentAt: null }
+  } else {
+    const open = data.openToMeet ?? current?.openToMeet ?? false
+    if (data.openToMeet === true) {
+      if (!current?.meetConsentAt && !data.meetConsent) throw new Error("Serve il tuo consenso per «Aperto a conoscersi»")
+      meetData.openToMeet = true
+      if (!current?.meetConsentAt) meetData.meetConsentAt = new Date()
+    }
+    if (data.showMe !== undefined) {
+      if (!open) throw new Error("«Mostrami» vale solo se sei aperto a conoscersi")
+      meetData.showMe = data.showMe
+    }
+    if (data.meetOnly !== undefined) {
+      if (data.meetOnly && !open) throw new Error("Prima attiva «Aperto a conoscersi»")
+      meetData.meetOnly = data.meetOnly
+    }
+    if (open && !(meetData.showMe ?? current?.showMe)) throw new Error("Scegli chi ti piacerebbe conoscere")
   }
   const profileData = {
+    ...meetData,
     ...(data.onlyVerified !== undefined ? { onlyVerified: data.onlyVerified } : {}),
     ...(data.onlyFreeToday !== undefined ? { onlyFreeToday: data.onlyFreeToday } : {}),
     ...(data.side !== undefined ? { side: data.side } : {}),

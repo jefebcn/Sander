@@ -2,8 +2,9 @@
 
 import { useEffect } from "react"
 import Link from "next/link"
-import { CloudOff, RefreshCw } from "lucide-react"
+import { RefreshCw } from "lucide-react"
 import { reportError } from "@/lib/reportError"
+import { Gabbo } from "@/components/ui/Gabbo"
 
 export default function GlobalError({
   error,
@@ -19,9 +20,7 @@ export default function GlobalError({
 
   return (
     <div className="flex min-h-[70vh] flex-col items-center justify-center gap-4 px-6 text-center">
-      <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--surface-2)]">
-        <CloudOff className="h-8 w-8 text-[var(--muted-text)]" aria-hidden="true" />
-      </span>
+      <Gabbo pose="triste" size={150} />
       <h2 className="font-hand text-[2.3rem] text-white">Palla fuori</h2>
       <p className="max-w-xs text-base text-[var(--muted-text)]">
         Qualcosa non ha funzionato. Riprova: di solito basta. Se succede ancora, torna alla home.

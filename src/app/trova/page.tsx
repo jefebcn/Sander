@@ -14,6 +14,7 @@ import { ProvisionalBadge } from "@/components/player/ProvisionalBadge"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { SectionTabs, PLAY_TABS } from "@/components/layout/SectionTabs"
 import { resizedPhoto } from "@/lib/photo"
+import { Gabbo } from "@/components/ui/Gabbo"
 
 export const metadata: Metadata = {
   title: "Trova giocatori al tuo livello — SANDER",
@@ -107,7 +108,7 @@ export default async function FindPage({ searchParams }: Props) {
       {/* Candidates */}
       {candidates.length === 0 ? (
         <div className="mx-4 rounded-2xl bg-[var(--surface-2)] p-8 text-center">
-          <Users className="mx-auto mb-3 h-10 w-10 text-[var(--muted-text)] opacity-40" />
+          <Gabbo pose="attesa" size={112} className="mx-auto mb-3" />
           <p className="font-bold text-white">Nessuno nel tuo range al momento</p>
           <p className="mt-1 text-sm text-[var(--muted-text)]">
             Gioca qualche partita: più giochi, più i tuoi punti si affinano e il match migliora.

@@ -1,6 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { del } from "@vercel/blob"
 import { db } from "@/lib/db"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { isAdminEmail } from "@/lib/isAdmin"
@@ -11,6 +12,7 @@ import {
   AdminPlayerSchema,
   AdminReportSchema,
   AdminAbsenceSchema,
+  AdminSelfieSchema,
 } from "@/lib/validators/scopri.schema"
 
 /* Admin moderation for Scopri. Every action checks the caller is an admin. */
@@ -98,5 +100,29 @@ export async function adminResolveAbsence(input: unknown) {
   })
   refresh()
   revalidatePath("/profile/presenze")
+  return { ok: true as const }
+}
+
+/** Decide a selfie check: the badge on approval, then the selfie is deleted either way. */
+export async function adminReviewSelfie(input: unknown) {
+  await requireAdmin()
+  const { checkId, approve } = AdminSelfieSchema.parse(input)
+  const check = await db.selfieCheck.findUnique({ where: { id: checkId }, select: { playerId: true, imageUrl: true, status: true } })
+  if (!check || check.status !== "PENDING") throw new Error("Verifica già decisa")
+  const now = new Date()
+  await db.$transaction([
+    db.selfieCheck.update({
+      where: { id: checkId },
+      data: { status: approve ? "APPROVED" : "REJECTED", reviewedAt: now, imageUrl: null },
+    }),
+    ...(approve
+      ? [db.discoverProfile.update({ where: { playerId: check.playerId }, data: { photoVerifiedAt: now } })]
+      : []),
+  ])
+  if (check.imageUrl) await del(check.imageUrl).catch((e) => console.error("selfie delete failed", e))
+  await notify([check.playerId], approve
+    ? { title: "Foto verificata ✓", body: "Sul tuo profilo Scopri ora c'è il badge «Foto verificata».", url: "/scopri/profilo" }
+    : { title: "Verifica non riuscita", body: "Il selfie non corrispondeva alle foto o al gesto richiesto. Puoi riprovare dal profilo Scopri.", url: "/scopri/profilo" })
+  refresh()
   return { ok: true as const }
 }
