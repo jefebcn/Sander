@@ -13,7 +13,7 @@ async function newPage({ android = false } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })
   await ctx.addInitScript(() => {
     try {
-      for (const [k, v] of [["cookie_consent", "accepted"], ["pwa_install_dismissed", "1"], ["sander_onboarded", "1"], ["sander_has_profile", "1"], ["sander_level_celebrated", "99"]]) localStorage.setItem(k, v)
+      for (const [k, v] of [["cookie_consent", "accepted"], ["pwa_install_dismissed", "1"], ["sander_onboarded", "1"], ["sander_has_profile", "1"], ["sander_level_celebrated", "99"], ["scopri-welcome-v1", "1"]]) localStorage.setItem(k, v)
     } catch {}
   })
   // What the Capacitor shell of the Android app injects before the page loads.
