@@ -132,7 +132,7 @@ export function AfterMatchRecap({
         </div>
         {recap.outcome === "loss" && (
           <div className="relative mt-3 flex items-center gap-3">
-            <Gabbo pose="triste" size={84} className="shrink-0" />
+            <Gabbo pose="triste" size={84} priority className="shrink-0" />
             <p className="text-base text-[var(--muted-text)]">
               Capita. Una vittoria contro avversari più forti vale di più: rimettiti in campo.
             </p>

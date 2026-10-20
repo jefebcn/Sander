@@ -73,8 +73,9 @@ export default async function SignInPage({
             src="/sander-logo.png"
             alt="SANDER"
             width={140}
-            height={140}
-            className="object-contain"
+            height={120}
+            preload
+            className="h-auto w-[140px] object-contain"
           />
           <div className="space-y-1 text-center">
             <h1 className="font-hand text-[2.75rem] leading-none text-white">
