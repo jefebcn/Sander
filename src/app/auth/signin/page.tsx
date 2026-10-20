@@ -88,7 +88,7 @@ export default async function SignInPage({
         </div>
 
         {/* Form */}
-        <AuthForm callbackUrl={resolvedCallback} inviteCode={invite} defaultMode={defaultMode} />
+        <AuthForm callbackUrl={resolvedCallback} inviteCode={invite} defaultMode={defaultMode} googleClientId={process.env.AUTH_GOOGLE_ID} />
 
         <p className="text-center text-sm text-[var(--muted-text)]">
           Accedendo accetti i nostri{" "}
