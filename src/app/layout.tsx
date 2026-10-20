@@ -5,6 +5,7 @@ import { Figtree, Bricolage_Grotesque, Instrument_Serif, Mansalva } from "next/f
 import "./globals.css"
 import { Providers } from "@/lib/providers"
 import { MobileNav } from "@/components/layout/MobileNav"
+import { IosViewportFix } from "@/components/layout/IosViewportFix"
 import { Toaster } from "@/components/ui/Toaster"
 import { OnboardingGate } from "@/components/onboarding/OnboardingGate"
 import { ClientOnlyBanners } from "@/components/layout/ClientOnlyBanners"
@@ -133,6 +134,7 @@ export default function RootLayout({
             <PageWrapper>{children}</PageWrapper>
           </main>
           <MobileNav />
+          <IosViewportFix />
           {/* Banners stacked just above the navbar — client-only, lazy loaded */}
           <div className="fixed bottom-[4.5rem] left-0 right-0 z-30 mx-auto flex flex-col md:max-w-[560px] gap-2 pointer-events-none [&>*]:pointer-events-auto">
             <ClientOnlyBanners />
