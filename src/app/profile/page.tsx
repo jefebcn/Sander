@@ -44,6 +44,7 @@ import { getActiveSeason } from "@/actions/seasons"
 import { ContentQueue } from "@/components/admin/ContentQueue"
 import { listContent } from "@/actions/content"
 import { NOT_DELETED_PLAYER } from "@/lib/publicPlayer"
+import { Gabbo } from "@/components/ui/Gabbo"
 
 const MONTH_NAMES_IT = [
   "", "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
@@ -537,7 +538,8 @@ export default async function ProfilePage({ searchParams }: Props) {
       {activeTab === "partite" && (
         <div className="px-4 space-y-2">
           {playerSessions.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 pt-16 text-center">
+            <div className="flex flex-col items-center gap-3 pt-12 text-center">
+              <Gabbo pose="attesa" size={120} />
               <p className="text-[var(--muted-text)]">Nessuna sessione ancora</p>
               <Link
                 href="/sessions"

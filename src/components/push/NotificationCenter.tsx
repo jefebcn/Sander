@@ -3,8 +3,9 @@
 import { useEffect, useState, useTransition } from "react"
 import { createPortal } from "react-dom"
 import { useRouter } from "next/navigation"
-import { Bell, BellOff, X, Check } from "lucide-react"
+import { Bell, X, Check } from "lucide-react"
 import { getNotifications, markAllRead, markRead } from "@/actions/notifications"
+import { Gabbo } from "@/components/ui/Gabbo"
 
 type Notification = {
   id: string
@@ -133,7 +134,7 @@ export function NotificationCenter({ open, onClose }: NotificationCenterProps) {
             </div>
           ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-16 text-center">
-              <BellOff className="h-10 w-10 opacity-20" />
+              <Gabbo pose="attesa" size={104} />
               <p className="text-sm text-white/50">Nessuna notifica ancora</p>
             </div>
           ) : (

@@ -8,6 +8,7 @@ import { ProvisionalBadge, ProvisionalSectionHeading } from "@/components/player
 import { ShareButton } from "@/components/ui/ShareButton"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { SectionTabs, RANK_TABS } from "@/components/layout/SectionTabs"
+import { Gabbo } from "@/components/ui/Gabbo"
 
 export const metadata: Metadata = {
   title: "La settimana su SANDER — Classifica Beach Volley",
@@ -83,7 +84,7 @@ export default async function WeeklyPage() {
 
       {recap.activePlayers === 0 ? (
         <div className="mx-4 rounded-2xl bg-[var(--surface-2)] p-8 text-center">
-          <Flame className="mx-auto mb-3 h-10 w-10 text-[var(--muted-text)] opacity-40" />
+          <Gabbo pose="attesa" size={112} className="mx-auto mb-3" />
           <p className="font-bold text-white">Nessuna partita questa settimana</p>
           <p className="mt-1 text-sm text-[var(--muted-text)]">
             Organizza una partita e comincia a scalare la classifica.

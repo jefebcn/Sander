@@ -7,6 +7,7 @@ import type { PlayerCardData } from "@/components/player/SanderCardFut"
 import { ShareStoryButton } from "@/components/share/ShareStoryButton"
 import { cn } from "@/lib/utils"
 import { Crest } from "./Crest"
+import { Gabbo } from "@/components/ui/Gabbo"
 
 const ENTRY_COPY: Record<ResultEntry["kind"], { text: string; cta: string }> = {
   organizer: {
@@ -130,9 +131,12 @@ export function AfterMatchRecap({
           )}
         </div>
         {recap.outcome === "loss" && (
-          <p className="relative mt-3 text-base text-[var(--muted-text)]">
-            Capita. Una vittoria contro avversari più forti vale di più: rimettiti in campo.
-          </p>
+          <div className="relative mt-3 flex items-center gap-3">
+            <Gabbo pose="triste" size={84} className="shrink-0" />
+            <p className="text-base text-[var(--muted-text)]">
+              Capita. Una vittoria contro avversari più forti vale di più: rimettiti in campo.
+            </p>
+          </div>
         )}
 
         <div className="relative mt-4 grid grid-cols-[1fr_auto] gap-2">
