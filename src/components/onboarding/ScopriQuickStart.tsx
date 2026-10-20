@@ -115,7 +115,7 @@ export function ScopriQuickStart({
         <header className="px-5 pb-2">
           <div className="flex min-h-[2.75rem] items-center justify-between text-xs font-semibold uppercase tracking-[0.12em] text-white/70">
             <span>SANDER</span>
-            <span>Passo 2 di 2</span>
+            <span>Scopri · 1 minuto</span>
             <span>Facoltativo</span>
           </div>
           <h1 className="font-hand mt-4 text-[3rem] leading-[0.92] text-white">

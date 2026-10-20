@@ -310,9 +310,11 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
         })
         localStorage.setItem("sander_onboarded", "1")
         localStorage.setItem("sander_has_profile", "1")
-        // Editing from the profile goes back there; a brand-new player gets the
-        // optional one-minute Scopri step (it skips itself for minors).
-        router.push(initialData ? "/profile" : "/onboarding/scopri")
+        // Editing from the profile goes back there; a brand-new player goes
+        // straight into the app. Sign-up stays one step: the Scopri profile is
+        // offered afterwards (home card, Scopri tab, morning reminder), never
+        // in the way of getting in.
+        router.push(initialData ? "/profile" : "/")
         router.refresh()
       } catch (err) {
         setError(err instanceof Error ? err.message : "Errore durante il salvataggio")
@@ -345,7 +347,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
           ) : (
             <span>SANDER</span>
           )}
-          <span>{initialData ? "Profilo" : "Passo 1 di 2"}</span>
+          <span>{initialData ? "Profilo" : "Ultimo passo"}</span>
           <span>Gratis</span>
         </div>
         <h1 className="font-hand mt-4 text-[3.25rem] leading-[0.92] text-white">
