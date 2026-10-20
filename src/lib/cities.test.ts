@@ -20,10 +20,8 @@ describe("parseCity", () => {
     expect(parseCity("Portoverde")).toBe("Misano Adriatico")
   })
 
-  it("riconosce San Marino e i suoi castelli, senza confonderlo con San Mauro", () => {
+  it("riconosce San Marino senza confonderlo con San Mauro", () => {
     expect(parseCity("Campi sabbia, San Marino")).toBe("San Marino")
-    expect(parseCity("Serravalle")).toBe("San Marino")
-    expect(parseCity("Borgo Maggiore")).toBe("San Marino")
     expect(parseCity("San Mauro Mare")).toBe("San Mauro Mare")
   })
 

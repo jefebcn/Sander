@@ -42,15 +42,8 @@ export const CITIES: City[] = [
   },
   { name: "Gatteo a Mare", aliases: ["gatteo"] },
   { name: "San Mauro Mare", aliases: ["san mauro"] },
-  {
-    // A republic, not a comune, but its players share the Riviera courts.
-    // Castelli only where the name can't be mistaken for something else.
-    name: "San Marino",
-    aliases: [
-      "san marino", "serravalle", "borgo maggiore", "domagnano",
-      "faetano", "chiesanuova", "montegiardino", "dogana",
-    ],
-  },
+  // A republic, not a comune, but its players share the Riviera courts.
+  { name: "San Marino", aliases: ["san marino"] },
 ]
 
 /**
