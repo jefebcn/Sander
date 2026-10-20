@@ -1,6 +1,7 @@
-"""Packs the Instagram material into publishing order: one folder per day,
-images plus a .txt with the caption to paste.
-  python3 scripts/content-season2/pack.py <output-dir>
+"""Packs the social material into publishing order: one folder per day,
+images or video plus a .txt with the caption to paste.
+  python3 scripts/content-season2/pack.py <output-dir>            Instagram
+  python3 scripts/content-season2/pack.py <output-dir> tiktok     TikTok
 """
 import re, shutil, sys, os
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
@@ -17,6 +18,49 @@ def w(path, text):
 def cp(src, dst):
     os.makedirs(os.path.dirname(dst), exist_ok=True); shutil.copy(src, dst)
 car=sorted(os.listdir(f'{N}/carosello'))
+
+def tiktok():
+    """Same days as the Instagram plan, so both accounts move together:
+    photo carousels (TikTok "Foto") between the three videos."""
+    tags = "#beachvolley #rivieraromagnola #rimini #riccione #sander"
+    howto_photo = ("\n\n---\nTikTok → ＋ → Foto → seleziona le immagini in ordine (01, 02, …).\n"
+                   "Aggiungi un suono di tendenza a volume basso. Orario consigliato: 18–21.")
+    howto_video = ("\n\n---\nTikTok → ＋ → carica il video. È senza audio: aggiungi un suono di tendenza a volume basso.\n"
+                   "Orario consigliato: 18–21.")
+    plan = [
+        (1, "carosello-stagione-2", [f'{N}/carosello/{f}' for f in car],
+         f"stagione 2 di SANDER ☀️ il beach volley della Riviera in un'app: trova con chi giocare, tornei, classifica del tuo comune. gratis\n{tags} #stagione2"),
+        (3, "video-sander", [f'{G}/tiktok/01-sander.mp4'], tcap['01']),
+        (5, "carosello-scopri", [f'{N}/storie/scopri-{i}.jpg' for i in (1, 2, 3)],
+         f"manca sempre il quarto? 👀 su Scopri trovi chi gioca vicino a te: like, match e si va in spiaggia\n{tags} #2vs2"),
+        (7, "video-libero-oggi", [f'{G}/tiktok/02-libero-oggi.mp4'], tcap['02']),
+        (9, "carosello-come-funziona", [f'{N}/storie/come-{i}.jpg' for i in (1, 2, 3)],
+         f"come funziona SANDER in 3 foto 🏐 entri in un minuto, trovi una partita (o la crei), giochi e sali di livello\n{tags}"),
+        (11, "video-piedi-nudi", [f'{G}/tiktok/03-piedi-nudi.mp4'], tcap['03']),
+    ]
+    lines = []
+    for day, slug, files, caption in plan:
+        D = f'{R}/GIORNO-{day:02d}-{slug}'
+        video = files[0].endswith('.mp4')
+        for i, f in enumerate(files, 1):
+            cp(f, f'{D}/{slug}.mp4' if video else f'{D}/{i:02d}.jpg')
+        w(f'{D}/didascalia.txt', caption + (howto_video if video else howto_photo))
+        lines.append(f"GIORNO {day:02d} · {'video' if video else f'foto ({len(files)})'} · {slug.split('-', 1)[1]}")
+    w(f'{R}/00-LEGGIMI-PRIMA.txt', """SANDER · TikTok · sequenza di pubblicazione
+
+Segui le cartelle in ordine. I giorni sono gli stessi del piano Instagram:
+pubblica su TikTok lo stesso giorno, a un altro orario se vuoi.
+In ogni cartella: le immagini o il video + didascalia.txt da copiare.
+Se salti un giorno, riprendi dalla cartella dopo: conta l'ordine, non la data.
+
+"""+"\n".join(lines)+"""
+
+Link nel profilo TikTok: https://www.sanderbv.it/?ref=tiktok
+(il link in bio richiede un account aziendale o 1000 follower; fino ad allora scrivi sanderbv.it nella bio)""")
+
+if sys.argv[2:] == ["tiktok"]:
+    tiktok()
+    sys.exit()
 
 # Giorno 1 · lancio
 D=f'{R}/GIORNO-01-lancio'

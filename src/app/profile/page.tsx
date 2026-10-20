@@ -78,13 +78,6 @@ const SUPPORTERS: { name: string; banner?: string; logo?: string; logoBg?: strin
     tagline: "Fisioterapia & Riabilitazione",
   },
   {
-    name: "Flexeno",
-    logo: "/sponsors/flexeno.png",
-    logoBg: "#000000",
-    href: "https://flexenofitness.com/",
-    tagline: "Fitness & Performance",
-  },
-  {
     name: "Pepitos Eyewear",
     logo: "/sponsors/pepitos-logo.png",
     logoBg: "#eeeeee", // the logo file's own background
