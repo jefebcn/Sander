@@ -107,8 +107,8 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 }
 
-/** App-wide background: "sunset" (sea at dusk) or "night" (grainy graphite). */
-const BG: BackgroundVariant = "night"
+/** App-wide background: "aurora" (night sea + lime), "night" (grainy graphite) or "sunset". */
+const BG: BackgroundVariant = "aurora"
 
 export default function RootLayout({
   children,

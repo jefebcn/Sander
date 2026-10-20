@@ -103,7 +103,7 @@ export function ScopriQuickStart({
   return (
     <div className="fixed inset-0 z-[200] flex flex-col overflow-y-auto bg-[var(--background)]">
       {/* The poster backdrop: grainy graphite, like the rest of the app. */}
-      <div aria-hidden="true" className="app-bg app-bg--night pointer-events-none fixed inset-0 -z-10">
+      <div aria-hidden="true" className="app-bg app-bg--aurora pointer-events-none fixed inset-0 -z-10">
         <div className="app-bg__glow" />
         <div className="app-bg__grain" />
       </div>
