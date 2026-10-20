@@ -34,6 +34,14 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "10mb",
     },
   },
+  // Addresses people type by habit: both land on the sign-up form.
+  async redirects() {
+    return ["/auth/signup", "/auth/register", "/registrati"].map((source) => ({
+      source,
+      destination: "/auth/signin?mode=register",
+      permanent: false,
+    }))
+  },
   async headers() {
     return [
       {

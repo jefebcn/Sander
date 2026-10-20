@@ -23,6 +23,7 @@ import { SetupGate } from "@/components/scopri/SetupGate"
 import { ScopriDeck } from "@/components/scopri/ScopriDeck"
 import { DailyPickCard } from "@/components/scopri/DailyPickCard"
 import { ScopriGuest } from "@/components/scopri/ScopriGuest"
+import { ScopriWelcome } from "@/components/scopri/ScopriWelcome"
 
 export const metadata: Metadata = {
   title: "Scopri — trova con chi giocare a beach volley | SANDER",
@@ -128,6 +129,7 @@ export default async function ScopriPage() {
         myPhoto={myPhoto}
         myFree={freeToday(me.discoverProfile?.freeDay, me.discoverProfile?.freeSlot, now)}
       />
+      <ScopriWelcome />
     </div>
   )
 }

@@ -7,6 +7,7 @@ import { lookingForLabel, sideLabel } from "@/lib/scopri/prompts"
 import { freeSlotLabel, VERIFIED_MIN_GAMES, VERIFIED_MIN_RELIABILITY } from "@/lib/scopri/reliability"
 import type { ScopriCard, LikeTarget } from "./types"
 import { resizedPhoto } from "@/lib/photo"
+import { shownAffinity } from "@/lib/scopri/score"
 
 /**
  * A player as Scopri shows them: photos and prompt answers woven together,
@@ -81,7 +82,7 @@ export function ProfileCard({
             )}
           </p>
         </div>
-        {typeof card.score === "number" && (
+        {shownAffinity(card.score) !== null && (
           <div className="shrink-0 text-right">
             <p className="num text-3xl leading-none text-[var(--accent)]">{card.score}%</p>
             <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">affinità</p>

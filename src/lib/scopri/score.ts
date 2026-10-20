@@ -19,6 +19,15 @@ export const SCORE_WEIGHTS = {
   side: 5,
 } as const
 
+/** Below this the percentage stays off the card: "35%" next to "Fai match"
+ *  reads as "don't bother", while the reasons below it still say what you share. */
+export const AFFINITY_SHOWN_FROM = 50
+
+/** The affinity number to show on a card, or null to show only the reasons. */
+export function shownAffinity(score: number | null | undefined): number | null {
+  return typeof score === "number" && score >= AFFINITY_SHOWN_FROM ? score : null
+}
+
 /** Rating gap at which the level part reaches zero. */
 export const LEVEL_BAND = 300
 

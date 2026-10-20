@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { discoverScore, duoScore, stableJitter, type DiscoverPerson } from "./score"
+import { discoverScore, duoScore, stableJitter, shownAffinity, type DiscoverPerson } from "./score"
 
 const p = (o: Partial<DiscoverPerson> = {}): DiscoverPerson => ({
   id: "x",
@@ -67,5 +67,15 @@ describe("stableJitter", () => {
       expect(j).toBeGreaterThanOrEqual(0)
       expect(j).toBeLessThan(5)
     }
+  })
+})
+
+describe("shownAffinity", () => {
+  it("mostra la percentuale solo da 50 in su", () => {
+    expect(shownAffinity(67)).toBe(67)
+    expect(shownAffinity(50)).toBe(50)
+    expect(shownAffinity(35)).toBeNull()
+    expect(shownAffinity(null)).toBeNull()
+    expect(shownAffinity(undefined)).toBeNull()
   })
 })

@@ -13,7 +13,9 @@ export function CookieBanner() {
   useEffect(() => {
     // Never on sign-up/sign-in or the profile step: it sat on top of their
     // main button ("Conferma") at the exact moment people are signing up.
-    if (pathname.startsWith("/auth") || pathname.startsWith("/onboarding")) {
+    // Same on Scopri and in a chat, where it covered the ✕ / ♥ buttons and the
+    // message box; it shows on the next ordinary page instead.
+    if (["/auth", "/onboarding", "/scopri", "/messaggi/"].some((p) => pathname.startsWith(p))) {
       setVisible(false)
       return
     }

@@ -55,7 +55,10 @@ export function ScopriQuickStart({
 
   const filled = prompts.filter((p) => p.answer.trim().length >= 2)
   const hasPhoto = hasPhotos || !!uploaded || (useAvatar && !!avatarUrl)
-  const canSave = filled.length > 0 && (hasBirthDate || !!birthDate)
+  // The photo is required here: without one the profile isn't shown in the
+  // deck, and "Entra in Scopri" used to drop people in the editor instead.
+  const missing = !hasPhoto ? "Aggiungi una foto per entrare" : !(hasBirthDate || birthDate) ? "Manca la data di nascita" : filled.length === 0 ? "Scrivi almeno una risposta" : null
+  const canSave = !missing
 
   async function upload(file: File) {
     setUploading(true)
@@ -260,7 +263,7 @@ export function ScopriQuickStart({
             {saving ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <HeartHandshake className="h-5 w-5" aria-hidden="true" />}
             Entra in Scopri
           </button>
-          {!hasPhoto && <p className="text-center text-sm text-white/60">Senza foto puoi aggiungerla dopo dal profilo Scopri.</p>}
+          {missing && <p className="text-center text-sm text-white/60">{missing}</p>}
           <button type="button" onClick={() => router.push("/")} className="min-h-[3.5rem] text-base font-bold text-white/60">
             Più tardi
           </button>

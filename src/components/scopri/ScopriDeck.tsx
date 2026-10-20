@@ -149,17 +149,20 @@ export function ScopriDeck({
           className="flex min-h-[2.75rem] items-center gap-3 rounded-full bg-[var(--surface-2)] px-4 text-sm font-bold text-white"
           aria-label={`${allowance.likes.unlimited ? "Like illimitati" : `${likesLeft} like`} e ${allowance.aces} Ace rimasti. Prendi extra.`}
         >
+          {/* Words next to the icons: a bare "♡ 8 👑 1" meant nothing to a newcomer. */}
           <span className="flex items-center gap-1">
-            <Heart className="h-4 w-4 text-[var(--accent)]" aria-hidden="true" /> {allowance.likes.unlimited ? "∞" : likesLeft}
+            <Heart className="h-4 w-4 text-[var(--accent)]" aria-hidden="true" /> {allowance.likes.unlimited ? "∞" : likesLeft} like
           </span>
           <span className="flex items-center gap-1">
-            <Crown className="h-4 w-4 text-[var(--ace)]" aria-hidden="true" /> {allowance.aces}
+            <Crown className="h-4 w-4 text-[var(--ace)]" aria-hidden="true" /> {allowance.aces} Ace
           </span>
         </button>
         <FreeTodayButton initial={myFree} />
       </div>
       {current?.kind === "player" && (
-        <p className="-mt-1 mb-3 text-sm text-[var(--muted-text)]">Trascina a destra per il like, a sinistra per passare.</p>
+        <p className="-mt-1 mb-3 text-sm text-[var(--muted-text)]">
+          Tocca <Heart className="inline h-3.5 w-3.5 align-[-2px] text-[var(--accent)]" aria-hidden="true" /> su una foto o una risposta e scrivi due parole: diventano il primo messaggio. <X className="inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" /> per passare.
+        </p>
       )}
 
       {!current ? (

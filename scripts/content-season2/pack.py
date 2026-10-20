@@ -120,7 +120,7 @@ for d,f in enumerate(order,2):
 
 OBIETTIVO: Traffico (verso il sito)
 CONTENUTO: carosello con immagini/slide-1,3,4,6  OPPURE  video-01-sander.mp4
-LINK: https://www.sanderbv.it/?ref=ig_ads
+LINK: https://www.sanderbv.it/scopri?ref=ig_ads
 PUBBLICO: 18–35 anni · Rimini, Riccione, Cervia + 25–30 km · interessi: beach volley, pallavolo
 BUDGET: 5–10 € al giorno per 7 giorni. Dopo 3 giorni spegni il testo che rende meno.
 POSIZIONAMENTI: Feed + Storie + Reels Instagram

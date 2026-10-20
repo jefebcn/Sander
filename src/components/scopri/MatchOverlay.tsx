@@ -2,11 +2,11 @@
 
 /* eslint-disable @next/next/no-img-element -- user photos from Blob, any size */
 import Link from "next/link"
-import { MessageCircle } from "lucide-react"
+import { MessageCircle, Volleyball } from "lucide-react"
 import { useEffect } from "react"
 import { resizedPhoto } from "@/lib/photo"
 
-/** "È un match!": both faces, one button to write, one to keep going. */
+/** "È un match!": both faces, then straight to a game, a message, or more cards. */
 export function MatchOverlay({
   name,
   photo,
@@ -45,6 +45,13 @@ export function MatchOverlay({
         <p className="mt-3 font-serif text-2xl text-white/90">Tu e {name} volete giocare insieme.</p>
       </div>
       <div className="flex w-full max-w-sm flex-col gap-2">
+        {/* The point of a match is a game: propose one in a tap. */}
+        <Link
+          href={`/messaggi/${threadId}?proponi=1`}
+          className="pressable flex min-h-[3.75rem] items-center justify-center gap-2 rounded-full bg-[var(--accent)] text-lg font-extrabold text-black"
+        >
+          <Volleyball className="h-5 w-5" aria-hidden="true" /> Proponi una partita
+        </Link>
         <Link
           href={`/messaggi/${threadId}`}
           className="pressable flex min-h-[3.75rem] items-center justify-center gap-2 rounded-full bg-white text-lg font-extrabold text-black"

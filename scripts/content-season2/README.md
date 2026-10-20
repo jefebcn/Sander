@@ -74,7 +74,7 @@ Parti quando ci sono 3–4 post nuovi in griglia, così chi arriva dal profilo t
 
 **Obiettivo:** Traffico (verso il sito) o Interazione col profilo se vuoi follower.
 **Contenuto:** il carosello (slide 1, 3, 6 le più forti) oppure un video `scripts/content-grid/out/tiktok/`.
-**Link:** `https://www.sanderbv.it/?ref=ig_ads` (gli arrivi da questo link vengono contati come evento `landing` con `ref=ig_ads`).
+**Link:** `https://www.sanderbv.it/scopri?ref=ig_ads`: la pagina Scopri spiega il match in 4 passi e porta alla registrazione, poi dritti nel mazzo (gli arrivi da questo link vengono contati come evento `landing` con `ref=ig_ads`).
 **Pubblico:** 18–35 anni · Rimini, Riccione, Cervia + 25–30 km · interessi: beach volley, pallavolo, sport in spiaggia.
 **Budget:** 5–10 € al giorno per 7 giorni. Dopo 3 giorni spegni la variante che rende meno.
 **Posizionamenti:** Feed + Storie + Reels Instagram.

@@ -23,6 +23,7 @@ import { ProposeGameSheet } from "./ProposeGameSheet"
 import type { DuoCard, DuoMember, DuoMatchRow, IncomingDuoLike } from "./types"
 import type { DuoRankRow } from "@/lib/scopri/duos"
 import { resizedPhoto } from "@/lib/photo"
+import { shownAffinity } from "@/lib/scopri/score"
 
 export interface CoppieData {
   meId: string
@@ -509,7 +510,7 @@ function DuoProfile({ duo }: { duo: DuoCard }) {
           <p className="font-hand text-[2.3rem] leading-tight text-white">{duo.name}</p>
           {duo.motto && <p className="mt-1 font-serif text-xl leading-snug text-white/90">«{duo.motto}»</p>}
         </div>
-        {typeof duo.score === "number" && <p className="num shrink-0 text-3xl text-[var(--social)]">{duo.score}%</p>}
+        {shownAffinity(duo.score) !== null && <p className="num shrink-0 text-3xl text-[var(--social)]">{duo.score}%</p>}
       </div>
       {duo.reasons && duo.reasons.length > 0 && (
         <ul className="mt-3 flex flex-wrap gap-2">

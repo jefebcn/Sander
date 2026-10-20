@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { ChevronLeft, Send, Volleyball } from "lucide-react"
 import { getThread, sendMessage, markThreadRead } from "@/actions/messages"
 import { ProposeMatchSheet } from "./ProposeMatchSheet"
+import { resizedPhoto } from "@/lib/photo"
 import { GroupInfoSheet } from "./GroupInfoSheet"
 import { ProposalCard } from "./ProposalCard"
 
@@ -35,15 +36,18 @@ export function ConversationView({
   initial,
   embedded = false,
   backHref,
+  openPropose = false,
 }: {
   threadId: string
   initial: ThreadData
   embedded?: boolean
   backHref?: string
+  /** Open "Proponi una partita" straight away (from the match screen). */
+  openPropose?: boolean
 }) {
   const qc = useQueryClient()
   const [text, setText] = useState("")
-  const [proposeOpen, setProposeOpen] = useState(false)
+  const [proposeOpen, setProposeOpen] = useState(openPropose && initial.kind === "DM")
   const [groupInfoOpen, setGroupInfoOpen] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -63,7 +67,9 @@ export function ConversationView({
       ? "Chat della partita"
       : thread.kind === "GROUP"
         ? "Gruppo"
-        : "Messaggio diretto"
+        : thread.scopriMatch
+          ? "Match da Scopri · vedi profilo"
+          : "Messaggio diretto · vedi profilo"
 
   const send = useMutation({
     mutationFn: (body: string) => sendMessage({ threadId, body }),
@@ -110,6 +116,19 @@ export function ConversationView({
               {thread.members.length} membri · tocca per info
             </p>
           </button>
+        ) : thread.other ? (
+          <Link href={`/players/${thread.other.id}`} className="flex min-w-0 items-center gap-2.5 active:opacity-70">
+            <span className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-[var(--surface-3)]">
+              {thread.other.avatarUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={resizedPhoto(thread.other.avatarUrl, "thumb")} alt="" className="h-full w-full object-cover" />
+              )}
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-base font-black text-white">{thread.title}</span>
+              <span className={`block text-xs ${thread.scopriMatch ? "text-[var(--love)]" : "text-[var(--muted-text)]"}`}>{subtitle}</span>
+            </span>
+          </Link>
         ) : (
           <div className="min-w-0">
             <p className="truncate text-base font-black text-white">{thread.title}</p>
