@@ -1,5 +1,5 @@
 /* ────────────────────────────────────────────────────────────────────────── */
-/*  Riviera Romagnola towns.                                                   */
+/*  Riviera Romagnola towns, plus San Marino just inland.                      */
 /*                                                                             */
 /*  Bagno numbers are assigned per comune (Rimini runs ~1–150, and the other   */
 /*  towns restart their own count), so a number alone cannot tell you the      */
@@ -42,6 +42,15 @@ export const CITIES: City[] = [
   },
   { name: "Gatteo a Mare", aliases: ["gatteo"] },
   { name: "San Mauro Mare", aliases: ["san mauro"] },
+  {
+    // A republic, not a comune, but its players share the Riviera courts.
+    // Castelli only where the name can't be mistaken for something else.
+    name: "San Marino",
+    aliases: [
+      "san marino", "serravalle", "borgo maggiore", "domagnano",
+      "faetano", "chiesanuova", "montegiardino", "dogana",
+    ],
+  },
 ]
 
 /**
