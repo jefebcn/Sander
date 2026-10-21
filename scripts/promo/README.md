@@ -41,3 +41,16 @@ Per le sponsorizzate usa il link `sanderbv.it/scopri?ref=ig_ads`.
 - Gancio sul problema (la chat che non si riempie) prima della soluzione; titoli che entrano sfocati e vanno a fuoco sul battito; dietro il telefono la schermata stessa, ingrandita e scurita.
 - Audio normalizzato a -16 LUFS (true peak -1,5 dB), il livello dei social.
 
+
+## Versione pubblicità (musica libera)
+
+`out/sander-promo-ads.mp4` (+ `-senzatesto`): stesso video, con sotto "Summer Pop" di The Mountain
+(Pixabay, licenza Pixabay: uso commerciale e pubblicità consentiti, attribuzione non richiesta).
+Il brano parte da 15,0s così il suo drop (18,3s) cade a 3,3s, quando entra l'app; la pausa
+prima del drop sta sotto "Manca sempre uno.". Effetti al 70%, dissolvenza sul finale, -14 LUFS.
+
+```bash
+ffmpeg -i out/sander-promo.mp4 -ss 15.0 -t 20.09 -i summer-pop.mp3 -filter_complex \
+ "[1:a]aresample=48000,loudnorm=I=-15:TP=-2:LRA=11,afade=t=in:d=0.15,afade=t=out:st=18.6:d=1.49[m];[0:a]volume=0.7[s];[m][s]amix=inputs=2:normalize=0:duration=first,alimiter=limit=0.89,loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000[a]" \
+ -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 192k -movflags +faststart out/sander-promo-ads.mp4
+```
