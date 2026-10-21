@@ -39,8 +39,8 @@ const IMG = {
 /* Details lifted out of the phone: crop of a screen in app CSS px [x, y, w, h],
    where it lands in the frame, and when. */
 const CALLS = [
-  { id: "k1", img: "like", crop: [13, 503, 364, 112], w: 640, x: 40, y: 1230, rot: -3, from: 5.5, to: 6.75 },
-  { id: "k2", img: "sent", crop: [85, 185, 296, 245], w: 540, x: 500, y: 760, rot: 3, from: 13.0, to: 13.85 },
+  { id: "k1", img: "like", crop: [13, 503, 364, 112], w: 620, x: 70, y: 1230, rot: -3, from: 5.5, to: 6.75 },
+  { id: "k2", img: "sent", crop: [85, 185, 296, 245], w: 540, x: 410, y: 760, rot: 3, from: 13.0, to: 13.85 },
   { id: "k3", img: "done", crop: [10, 768, 372, 58], w: 780, x: 150, y: 1300, rot: -2, from: 15.75, to: 16.85, noLink: true },
 ]
 
@@ -69,8 +69,14 @@ body{width:1080px;height:1920px;overflow:hidden;position:relative;font-family:In
 #screen img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;opacity:0}
 #tap{position:absolute;width:96px;height:96px;margin:-48px 0 0 -48px;border-radius:50%;border:5px solid #c6f736;background:rgba(198,247,54,.25);opacity:0}
 .dot{position:absolute;border-radius:50%}
-#people{position:absolute;left:0;right:0;top:820px;display:flex;justify-content:center;gap:34px}
-#people svg{width:200px;height:200px}
+#chat{position:absolute;left:80px;right:130px;top:300px;display:flex;flex-direction:column;gap:26px;z-index:4}
+.bub{align-self:flex-start;max-width:86%;background:rgba(30,36,38,.94);border-radius:40px 40px 40px 12px;padding:24px 38px;font-size:56px;font-weight:600;box-shadow:0 16px 34px rgba(0,0,0,.45)}
+.bub .who{display:block;font-size:30px;font-weight:800;color:#c6f736;margin-bottom:6px}
+.bub.me{align-self:flex-end;background:#33421a;border-radius:36px 36px 10px 36px}
+#big{position:absolute;left:60px;right:60px;top:820px;text-align:center;z-index:4}
+#big .h{font-size:150px}
+#ghost{position:absolute;left:50%;top:1200px;width:220px;height:220px;margin-left:-110px;z-index:4}
+#fill img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(70px) brightness(.32) saturate(1.5);transform:scale(1.35);opacity:0}
 #cta{position:absolute;left:70px;right:70px;top:300px;text-align:center}
 #cta .logo{width:170px;height:170px;border-radius:40px;margin:0 auto 46px;display:block;box-shadow:0 20px 50px rgba(0,0,0,.5)}
 #cta .h{font-size:150px}
@@ -80,16 +86,17 @@ body{width:1080px;height:1920px;overflow:hidden;position:relative;font-family:In
 #fx{position:absolute;inset:0;z-index:6;pointer-events:none;overflow:visible}
 .call{position:absolute;z-index:5;border-radius:24px;background-repeat:no-repeat;opacity:0;
   box-shadow:0 0 0 4px #c6f736,0 30px 60px rgba(0,0,0,.6),0 0 60px rgba(198,247,54,.35)}
-#rail{position:absolute;left:42px;top:760px;width:44px;height:640px;z-index:5;opacity:0}
+#rail{position:absolute;left:70px;top:760px;width:44px;height:640px;z-index:5;opacity:0}
 #rail .track,#rail .fill{position:absolute;left:20px;top:22px;width:4px;height:596px;border-radius:4px;background:rgba(255,255,255,.18)}
 #rail .fill{background:#c6f736;transform-origin:top;box-shadow:0 0 14px rgba(198,247,54,.7)}
 #rail .n{position:absolute;left:0;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   font-size:22px;font-weight:900;background:#1b2224;color:rgba(255,255,255,.6);border:3px solid rgba(255,255,255,.25)}
 #rail .n.on{background:#c6f736;color:#0b0b0c;border-color:#c6f736;box-shadow:0 0 20px rgba(198,247,54,.6)}
 </style></head><body>
-<div class="layer" id="beach"></div><div class="layer glow"></div>
-<div id="hook" class="cap" style="top:300px"><div class="h hand" id="h1">Siete in tre?</div><div class="h hand lime" id="h2" style="margin-top:30px">Manca sempre uno.</div></div>
-<div id="people">${[0, 1, 2, 3].map((i) => `<svg id="p${i}" viewBox="0 0 24 24" fill="none" stroke="${i === 3 ? "#c6f736" : "#fff"}" stroke-width="1.6" ${i === 3 ? 'stroke-dasharray="2.2 2"' : ""} stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg>`).join("")}</div>
+<div class="layer" id="beach"></div><div class="layer" id="fill">${Object.keys(IMG).filter((k) => !["beach", "gabbo", "logo"].includes(k)).map((k) => `<img id="f-${k}" src="${IMG[k]}">`).join("")}</div><div class="layer glow"></div>
+<div id="chat">${[["Luca", "Chi gioca sabato?"], ["Sara", "io forse"], ["Marco", "dipende dal meteo"], ["Tu", "siamo in tre…", "me"]].map(([who, txt, me], i) => `<div class="bub ${me ?? ""}" id="b${i}"><span class="who">${who}</span>${txt}</div>`).join("")}</div>
+<div id="big"><div class="h hand" id="h2">Manca sempre<br><span class="lime">uno.</span></div></div>
+<svg id="ghost" viewBox="0 0 24 24" fill="none" stroke="#c6f736" stroke-width="1.4" stroke-dasharray="2.2 2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg>
 ${[
   ["c1", "1 · Scopri", "Chi gioca<br>vicino a te"],
   ["c2", "2 · Like", "Un cuore e<br>due parole"],
@@ -125,7 +132,8 @@ const CAPS = [["c1", 2.0, 5.0], ["c2", 5.0, 8.0], ["c3", 8.0, 10.5], ["c4", 10.5
 const TAPLIST = [["deckHeart", 4.0], ["sendLike", 7.0], ["propose", 9.5], ["send", 12.0], ["ciSto", 15.0]]
 // Arrows only where the title changes; each draws while the phone is still,
 // lands next to where the new title appears, then fades as the title pops.
-const ARROWS = [["deckHeart", 4.0], ["sendLike", 7.0], ["propose", 9.5]]
+// [tap, second, corridor x]: right of the phone when there is room, else left
+const ARROWS = [["deckHeart", 4.0, 915], ["sendLike", 7.0, 170], ["propose", 9.5, 175]]
 const IN = 0.22 // seconds a screen takes to come in
 const BEAT = ${BEAT} // 120 BPM: every cut, tap, arrow and title lands on a beat
 // [from second, x offset, tilt]: the phone swings to make room for the details
@@ -139,17 +147,19 @@ window.render = (t) => {
   // 1 · hook on the beach: quick pops over a slow push-in
   $("beach").style.opacity = 1 - ease(win(t, 1.85, 2.1))
   $("beach").style.transform = "scale(" + (1.08 + 0.07 * clamp(t / 2.1)) + ")"
-  $("hook").style.opacity = NO_TEXT ? 0 : env(t, 0, 2.05, 0.12)
-  $("h1").style.transform = "scale(" + (0.7 + 0.3 * back(win(t, 0, 0.25))) + ")"
-  $("h1").style.opacity = ease(win(t, 0, 0.1))
-  $("h2").style.opacity = ease(win(t, 1.0, 1.1))
-  $("h2").style.transform = "scale(" + (0.75 + 0.25 * back(win(t, 1.0, 1.25))) + ")"
-  $("people").style.opacity = env(t, 0.2, 2.05, 0.12)
+  // the group chat that never fills the court: a bubble per beat…
   for (let i = 0; i < 4; i++) {
-    const p = $("p" + i), a = 0.25 + i * 0.25
-    p.style.opacity = i === 3 ? ease(win(t, 1.0, 1.1)) * (0.55 + 0.45 * Math.abs(Math.sin(t * 2 * Math.PI))) : ease(win(t, a, a + 0.12))
-    p.style.transform = "translateY(" + (1 - back(win(t, a, a + 0.25))) * 90 + "px)"
+    const at = i * 0.25, k = win(t, at, at + 0.22), out = win(t, 0.95, 1.12)
+    $("b" + i).style.opacity = ease(k * 2) * (1 - ease(out))
+    $("b" + i).style.transform = "translateY(" + (1 - back(k)) * 60 + "px) scale(" + (0.92 + 0.08 * back(k)) + ")"
+    $("b" + i).style.filter = out > 0 ? "blur(" + out * 14 + "px)" : "none"
   }
+  // …then the line lands on beat 3, blurred in like the titles
+  const hb = win(t, 1.0, 1.3), hout = win(t, 1.9, 2.05)
+  $("big").style.opacity = NO_TEXT ? 0 : ease(hb * 1.6) * (1 - ease(hout))
+  $("h2").style.transform = "scale(" + (1.08 - 0.08 * ease(hb)) + ")"
+  $("h2").style.filter = "blur(" + ((1 - ease(hb)) * 22 + hout * 14) + "px)"
+  $("ghost").style.opacity = ease(win(t, 1.25, 1.4)) * (1 - ease(hout)) * (0.5 + 0.5 * Math.abs(Math.cos((t - 1.25) * 2 * Math.PI)))
   // phone: flies in at 1.85s, leaves at 16.25s; between screens it travels
   // across the frame (side, tilt), blurred by its own speed.
   const pose = (t) => {
@@ -198,9 +208,12 @@ window.render = (t) => {
     img.style.filter = "brightness(" + (1 - 0.45 * leave) + ")"
     img.style.opacity = how === "pop" ? ease(win(t, a, a + 0.12)) : 1
   })
+  // behind the phone: the current screen itself, blown up and darkened
+  for (const [k, a, b] of SCREENS) $("f-" + k).style.opacity = env(t, a, b + 0.2, 0.3) * 0.9
   for (const [id, a, b] of CAPS) {
     const e = NO_TEXT ? 0 : env(t, a, b, 0.1)
     $(id).style.opacity = e
+    $(id).style.filter = e < 1 ? "blur(" + ((1 - e) * 18).toFixed(1) + "px)" : "none"
     $(id).style.transform = "translateY(" + (1 - e) * 24 + "px) scale(" + (0.88 + 0.12 * back(win(t, a, a + 0.3))) + ")"
   }
   // tap ripples on what gets pressed
@@ -224,19 +237,20 @@ window.render = (t) => {
     d.style.top = 1010 + Math.sin(ang) * r * 0.9 * ease(bx) - s / 2 + "px"
     d.style.opacity = bx > 0 && bx < 1 ? Math.min(1, bx * 6) * (1 - bx) : 0
   })
-  // hand-drawn arrow from what was tapped, out along the right edge (never
-  // across the screens) and up to where the next title appears
+  // hand-drawn arrow from what was tapped, out along a free corridor beside
+  // the phone (inside the safe zone, x 60–960) and up to the next title; the
+  // tip stops under the title, never on it
   const arrow = $("arrow"), head = $("head")
   arrow.style.opacity = head.style.opacity = 0
-  if (!NO_TEXT) for (const [k, at] of ARROWS) {
+  if (!NO_TEXT) for (const [k, at, m] of ARROWS) {
     const d = win(t, at, at + 0.45), out = win(t, at + 0.85, at + 1.05)
     if (d <= 0 || out >= 1) continue
-    const a = spot(...TAPS[k]), m = 1010, e = { x: 845, y: 545 }
-    arrow.setAttribute("d", "M" + a.x + " " + a.y + " Q" + m + " " + a.y + " " + m + " " + (a.y - 180) + " L" + m + " " + (e.y + 150) + " Q" + m + " " + e.y + " " + e.x + " " + e.y)
+    const a = spot(...TAPS[k]), e = { x: m, y: 600 }
+    arrow.setAttribute("d", "M" + a.x + " " + a.y + " Q" + m + " " + a.y + " " + m + " " + (a.y - 160) + " L" + e.x + " " + e.y)
     const len = arrow.getTotalLength()
     arrow.style.strokeDasharray = len; arrow.style.strokeDashoffset = len * (1 - ease(d))
     const hl = 40
-    head.setAttribute("d", "M" + (e.x + hl * 0.85) + " " + (e.y - hl * 0.6) + " L" + e.x + " " + e.y + " L" + (e.x + hl * 0.85) + " " + (e.y + hl * 0.6))
+    head.setAttribute("d", "M" + (e.x - hl * 0.6) + " " + (e.y + hl * 0.85) + " L" + e.x + " " + e.y + " L" + (e.x + hl * 0.6) + " " + (e.y + hl * 0.85))
     arrow.style.opacity = 1 - ease(out); head.style.opacity = d > 0.92 ? 1 - ease(out) : 0
   }
   // details lifted out of the phone, tied to where they come from
@@ -317,7 +331,7 @@ const LEN = { kick: 0.3, hat: 0.06, click: 0.12, pop: 0.2, blip: 0.14, blipHi: 0
 const FILTER = { hat: ",highpass=f=7000", whoosh: ",bandpass=f=900:width_type=o:w=1.4,volume=1.8", scribble: ",highpass=f=1800,lowpass=f=6500" }
 // [second, sound, volume] — in step with the timeline in the page above
 const EVENTS = [
-  [0, "pop", 0.8], [0.25, "blip", 0.7], [0.5, "blip", 0.7], [0.75, "blip", 0.7], [1.0, "pop", 0.9], [1.0, "blipHi", 0.7],
+  [0, "blip", 0.8], [0.25, "blip", 0.8], [0.5, "blip", 0.8], [0.75, "blipHi", 0.8], [1.0, "pop", 1], [1.25, "scribble", 0.4],
   [1.85, "whoosh", 0.9],
   [4.0, "click", 1], [4.0, "scribble", 0.8], [4.9, "whoosh", 0.7],
   [5.5, "pop", 0.7], [7.0, "click", 1], [7.0, "scribble", 0.8],
@@ -338,7 +352,7 @@ function encode(file, events) {
   execFileSync(FFMPEG, [
     "-loglevel", "error", "-y", "-framerate", String(FPS), "-i", join(FRAMES, "f%04d.jpg"),
     ...used.flatMap((k) => ["-i", join(SFX_DIR, `${k}.wav`)]),
-    "-filter_complex", `${mix};${events.map((_, i) => `[e${i}]`).join("")}amix=inputs=${events.length}:normalize=0,apad=whole_dur=${DURATION},alimiter=limit=0.9[a]`,
+    "-filter_complex", `${mix};${events.map((_, i) => `[e${i}]`).join("")}amix=inputs=${events.length}:normalize=0,apad=whole_dur=${DURATION},loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000[a]`,
     "-map", "0:v", "-map", "[a]", "-c:v", "libx264", "-preset", "slow", "-crf", "18", "-profile:v", "high", "-pix_fmt", "yuv420p",
     "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", join(OUT, file),
   ])
