@@ -21,10 +21,10 @@ const NO_TEXT = process.argv.includes("--no-text")
 const OUT = join(HERE, "out")
 const FPS = 60
 const BEAT = 0.5 // seconds per beat of the timeline below (120 BPM)
-// The timeline is written at 120 BPM and played 17% faster: 17 s, 140 BPM.
+// The timeline is written at 120 BPM and played 6% faster: ~20 s, ~127 BPM.
 // One knob for the whole edit: cuts, motion and sound all scale with it.
-const SPEED = 1.17
-const DURATION = +(20 / SPEED).toFixed(2)
+const SPEED = 1.06
+const DURATION = +(21 / SPEED).toFixed(2)
 const FRAMES = join(tmpdir(), `sander-promo-${process.pid}`)
 mkdirSync(OUT, { recursive: true })
 mkdirSync(FRAMES, { recursive: true })
@@ -43,8 +43,8 @@ const IMG = {
    where it lands in the frame, and when. */
 const CALLS = [
   { id: "k1", img: "like", crop: [13, 503, 364, 112], w: 620, x: 70, y: 1230, rot: -3, from: 5.5, to: 6.75 },
-  { id: "k2", img: "sent", crop: [85, 185, 296, 245], w: 540, x: 410, y: 760, rot: 3, from: 13.0, to: 13.85 },
-  { id: "k3", img: "done", crop: [10, 768, 372, 58], w: 780, x: 150, y: 1300, rot: -2, from: 15.75, to: 16.85, noLink: true },
+  { id: "k2", img: "sent", crop: [85, 185, 296, 245], w: 540, x: 410, y: 760, rot: 3, from: 12.9, to: 14.3 },
+  { id: "k3", img: "done", crop: [10, 768, 372, 58], w: 780, x: 150, y: 1300, rot: -2, from: 16.55, to: 17.9, noLink: true },
 ]
 
 /* Tap targets in app (CSS px of the 390×844 screen), from the screenshots. */
@@ -125,7 +125,7 @@ const ease = (x) => 1 - Math.pow(1 - clamp(x), 3)
 const back = (x) => { x = clamp(x); const c = 1.6; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2) }
 // Motion tokens (motion-foundations): springs as a step response from rest,
 // and the "smooth" cubic-bezier [0.22, 1, 0.36, 1] for things that slide.
-const SPRINGS = { snappy: [300, 30], gentle: [120, 14], bouncy: [400, 10] }
+const SPRINGS = { snappy: [300, 30], gentle: [120, 14], bouncy: [400, 10], glide: [170, 26] } // glide: critically damped, no bounce
 const spring = (dt, name = "snappy") => {
   if (dt <= 0) return 0
   const [k, c] = SPRINGS[name], w = Math.sqrt(k), z = c / (2 * w)
@@ -144,19 +144,18 @@ const win = (t, a, b) => clamp((t - a) / (b - a))
 const env = (t, a, b, f = 0.3) => Math.min(ease(win(t, a, a + f)), 1 - ease(win(t, b - f, b)))
 // [screen, start, end, how it comes in: "x" slides in from the side like a new
 // page, "y" rises like a sheet, "pop" lands with a zoom punch]
-const SCREENS = [["deck", 2.0, 5.0, "pop"], ["like", 5.0, 8.0, "y"], ["match", 8.0, 10.5, "pop"], ["propose", 10.5, 12.5, "x"], ["sent", 12.5, 14.0, "y"], ["ask", 14.0, 15.5, "x"], ["done", 15.5, 17.0, "y"]]
+const SCREENS = [["deck", 2.0, 5.0, "pop"], ["like", 5.0, 8.0, "y"], ["match", 8.0, 10.5, "pop"], ["propose", 10.5, 12.5, "x"], ["sent", 12.5, 14.5, "y"], ["ask", 14.5, 16.25, "x"], ["done", 16.25, 18.0, "y"]]
 // [from second, zoom, focus y in app CSS px]
-const FOCUS = [[2.0, 1.28, 540], [5.0, 1.42, 560], [8.0, 1.12, 430], [10.5, 1.42, 470], [12.5, 1.5, 300], [15.5, 1.42, 330]]
-const CAPS = [["c1", 2.0, 5.0], ["c2", 5.0, 8.0], ["c3", 8.0, 10.5], ["c4", 10.5, 14.0], ["c5", 14.0, 17.0]]
-const TAPLIST = [["deckHeart", 4.0], ["sendLike", 7.0], ["propose", 9.5], ["send", 12.0], ["ciSto", 15.0]]
+const FOCUS = [[2.0, 1.28, 540], [5.0, 1.42, 560], [8.0, 1.12, 430], [10.5, 1.42, 470], [12.5, 1.5, 300], [16.25, 1.42, 330]]
+const CAPS = [["c1", 2.0, 5.0], ["c2", 5.0, 8.0], ["c3", 8.0, 10.5], ["c4", 10.5, 14.5], ["c5", 14.5, 18.0]]
+const TAPLIST = [["deckHeart", 4.0], ["sendLike", 7.0], ["propose", 9.5], ["send", 12.0], ["ciSto", 15.75]]
 // Arrows only where the title changes; each draws while the phone is still,
 // lands next to where the new title appears, then fades as the title pops.
 // [tap, second, corridor x]: right of the phone when there is room, else left
 const ARROWS = [["deckHeart", 4.0, 915], ["sendLike", 7.0, 170], ["propose", 9.5, 175]]
-const IN = 0.22 // seconds a screen takes to come in
-const BEAT = ${BEAT} // every cut, tap, arrow and title lands on a beat (timeline time)
+const IN = 0.3 // seconds a screen takes to come in
 // [from second, x offset, tilt]: the phone swings to make room for the details
-const POSE = [[2.0, 0, -2], [5.0, 110, 2.5], [8.0, 0, 0], [10.5, -60, -2], [12.5, -150, -3], [14.0, 60, 2], [15.5, 0, 0]]
+const POSE = [[2.0, 0, -1], [5.0, 80, 1.2], [8.0, 0, 0], [10.5, -40, -1], [12.5, -110, -1.5], [14.5, 40, 1], [16.25, 0, 0]]
 const swing = (x) => { x = clamp(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2 }
 // a point of the app (CSS px) → where it is in the frame right now
 const spot = (cx, cy) => { const m = $("mk"); m.style.left = cx * 1.2 + "px"; m.style.top = cy * 1.2 + "px"; const r = m.getBoundingClientRect(); return { x: r.left, y: r.top } }
@@ -183,23 +182,21 @@ window.render = (real) => {
   // phone: flies in at 1.85s, leaves at 16.25s; between screens it travels
   // across the frame (side, tilt), blurred by its own speed.
   const pose = (t) => {
-    const pin = back(win(t, 1.9, 2.2)), pout = ease(win(t, 16.9, 17.15))
+    const pin = back(win(t, 1.9, 2.2)), pout = ease(win(t, 17.9, 18.15))
     let z = FOCUS[0][1], fy = FOCUS[0][2], px = POSE[0][1], pr = POSE[0][2]
     for (let i = 1; i < FOCUS.length; i++) {
-      const k = Math.min(1.04, spring(t - FOCUS[i][0] + 0.1, "snappy"))
+      const k = spring(t - FOCUS[i][0] + 0.12, "glide")
       z += (FOCUS[i][1] - z) * k; fy += (FOCUS[i][2] - fy) * k
     }
     for (let i = 1; i < POSE.length; i++) {
-      const k = spring(t - POSE[i][0] + 0.12, "snappy")
+      const k = spring(t - POSE[i][0] + 0.14, "glide")
       px += (POSE[i][1] - px) * k; pr += (POSE[i][2] - pr) * k
     }
     let scene = 0
     for (let i = 0; i < SCREENS.length; i++) if (t >= SCREENS[i][1]) scene = i
     const [, sa, sb] = SCREENS[scene]
     z *= 1 + 0.035 * win(t, sa, sb)
-    z *= 1 + 0.07 * Math.sin(Math.PI * win(t, 8.0, 8.35)) // punch on the match
-    // a small kick on every beat (140 BPM once sped up), so the frame moves with the music
-    if (t >= 2.0 && t < 17.0) z *= 1 + 0.014 * Math.exp(-(((t - 2.0) % BEAT) / BEAT) * 7)
+    z *= 1 + 0.04 * Math.sin(Math.PI * win(t, 8.0, 8.4)) // a soft punch on the match
     const oy = 16 + fy * 1.2
     return { z, oy, x: px, r: pr + (1 - pin) * -8, y: (1130 - (640 + oy)) * pin + (1 - pin) * 1400 + pout * 1600 }
   }
@@ -207,9 +204,9 @@ window.render = (real) => {
   const speed = Math.abs(P.x - Q.x) + Math.abs(P.y - Q.y) * 0.25 + Math.abs(P.r - Q.r) * 12 + Math.abs(P.z - Q.z) * 900
   $("phone").style.transformOrigin = "50% " + P.oy + "px"
   $("phone").style.transform = "translate(" + P.x + "px," + P.y + "px) rotate(" + P.r + "deg) scale(" + P.z + ")"
-  $("phone").style.opacity = t < 1.88 || t > 17.2 ? 0 : 1 // off-frame before it flies in and after it leaves
-  $("phone").style.filter = speed > 1.5 ? "blur(" + Math.min(9, speed * 0.35).toFixed(1) + "px)" : "none"
-  $("topfade").style.opacity = ease(win(t, 1.9, 2.15)) * (1 - ease(win(t, 16.95, 17.2)))
+  $("phone").style.opacity = t < 1.88 || t > 18.2 ? 0 : 1 // off-frame before it flies in and after it leaves
+  $("phone").style.filter = speed > 3 ? "blur(" + Math.min(3.5, (speed - 3) * 0.15).toFixed(1) + "px)" : "none" // just a hint of motion blur
+  $("topfade").style.opacity = ease(win(t, 1.9, 2.15)) * (1 - ease(win(t, 17.95, 18.2)))
   // screens: each comes in over the last one, the way the app moves
   SCREENS.forEach(([k, a, b, how], i) => {
     const img = $("s-" + k), next = SCREENS[i + 1]
@@ -220,7 +217,7 @@ window.render = (real) => {
     let tf = ""
     if (how === "x") tf = "translateX(" + (1 - e) * 100 + "%)"
     if (how === "y") tf = "translateY(" + (1 - e) * 100 + "%)"
-    if (how === "pop") tf = "scale(" + (0.82 + 0.18 * spring(t - a, "bouncy")) + ")"
+    if (how === "pop") tf = "scale(" + (0.9 + 0.1 * spring(t - a, "gentle")) + ")"
     // pushed back while the next one comes in
     const leave = next ? ease(win(t, next[1], next[1] + IN)) : 0
     if (next && next[3] === "x") tf += " translateX(" + -leave * 30 + "%)"
@@ -283,28 +280,28 @@ window.render = (real) => {
     const h = (c.w * c.crop[3]) / c.crop[2]
     const tx = (src.x - (c.x + c.w / 2)) * (1 - ease(k)), ty = (src.y - (c.y + h / 2)) * (1 - ease(k))
     el.style.opacity = Math.min(1, k * 4) * (1 - ease(out))
-    el.style.transform = "translate(" + tx + "px," + ty + "px) rotate(" + c.rot * ease(k) + "deg) scale(" + (0.6 + 0.4 * spring(t - c.from, "bouncy")) + ")"
+    el.style.transform = "translate(" + tx + "px," + ty + "px) rotate(" + c.rot * ease(k) + "deg) scale(" + (0.75 + 0.25 * spring(t - c.from, "gentle")) + ")"
     const end = { x: c.x + c.w / 2, y: c.y + h / 2 }
     link.setAttribute("d", "M" + src.x + " " + src.y + " Q" + (src.x + end.x) / 2 + " " + (Math.min(src.y, end.y) - 80) + " " + end.x + " " + end.y)
     link.style.opacity = k >= 1 && !c.noLink ? 0.9 * (1 - ease(out)) : 0
   }
   // progress 1 → 5 along the left edge
-  const stepAt = [2.0, 5.0, 8.0, 10.5, 14.0]
-  $("rail").style.opacity = env(t, 2.0, 17.0, 0.2)
+  const stepAt = [2.0, 5.0, 8.0, 10.5, 14.5]
+  $("rail").style.opacity = env(t, 2.0, 18.0, 0.2)
   let fill = 0
   stepAt.forEach((a, i) => {
     const on = t >= a
     $("rn" + i).className = "n" + (on ? " on" : "")
-    $("rn" + i).style.transform = "scale(" + (1 + 0.35 * Math.sin(Math.PI * win(t, a, a + 0.25)) + (on && t < 17 ? 0.08 * Math.exp(-(((t - 2.0) % BEAT) / BEAT) * 7) : 0)) + ")"
+    $("rn" + i).style.transform = "scale(" + (1 + 0.25 * Math.sin(Math.PI * win(t, a, a + 0.35))) + ")" // one pop when the step is reached, no beat pulse
     if (i > 0) fill += ease(win(t, a - 0.3, a + 0.1)) / 4
   })
   $("railfill").style.transform = "scaleY(" + fill + ")"
   // CTA
-  const c = win(t, 17.0, 17.35)
+  const c = win(t, 18.0, 18.35)
   $("cta").style.opacity = ease(c * 2)
-  $("cta").style.transform = "scale(" + (0.85 + 0.15 * spring(t - 17.0, "gentle")) + ")"
-  $("gabbo").style.opacity = ease(win(t, 17.5, 17.6))
-  $("gabbo").style.transform = "translateY(" + (1 - spring(t - 17.5, "bouncy")) * 300 + "px) rotate(" + Math.sin(t * 4) * 4 + "deg)"
+  $("cta").style.transform = "scale(" + (0.85 + 0.15 * spring(t - 18.0, "gentle")) + ")"
+  $("gabbo").style.opacity = ease(win(t, 18.5, 18.6))
+  $("gabbo").style.transform = "translateY(" + (1 - spring(t - 18.5, "bouncy")) * 300 + "px) rotate(" + Math.sin(t * 4) * 4 + "deg)"
 }
 </script></body></html>`
 
@@ -355,9 +352,9 @@ const EVENTS = [
   [5.5, "pop", 0.7], [7.0, "click", 1], [7.0, "scribble", 0.8],
   [7.9, "whoosh", 0.6], [8.0, "sparkle", 0.9],
   [9.5, "click", 1], [9.5, "scribble", 0.8], [10.4, "whoosh", 0.7],
-  [12.0, "click", 1], [12.4, "whoosh", 0.6], [13.0, "pop", 0.7],
-  [13.9, "whoosh", 0.6], [15.0, "click", 1], [15.5, "ding", 0.8], [15.75, "pop", 0.7],
-  [16.85, "whoosh", 0.9], [17.0, "chime", 0.8], [17.5, "boing", 0.7],
+  [12.0, "click", 1], [12.4, "whoosh", 0.6], [12.9, "pop", 0.7],
+  [14.4, "whoosh", 0.6], [15.75, "click", 1], [16.25, "ding", 0.8], [16.55, "pop", 0.7],
+  [17.85, "whoosh", 0.9], [18.0, "chime", 0.8], [18.5, "boing", 0.7],
 ]
 const SFX_DIR = join(FRAMES, "sfx")
 mkdirSync(SFX_DIR, { recursive: true })
