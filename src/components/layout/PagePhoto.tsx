@@ -8,14 +8,14 @@ import { usePathname } from "next/navigation"
  * no brands), so the photo also tells you where you are.
  *
  * It scrolls away with the page (absolute, not fixed) so text further down
- * never sits on the photo. Hidden where a page brings its own full-screen
- * imagery or needs a calm background: the Scopri deck and an open chat.
+ * never sits on the photo. Profilo and Scopri have no photo: there the player
+ * card and the people are the picture, on the plain night background.
  */
 const PHOTOS: { photo: string; paths: string[] }[] = [
   { photo: "set", paths: ["/sessions", "/tournaments", "/segna", "/trova"] },
   { photo: "rally", paths: ["/players", "/settimana", "/stagione", "/bagni"] },
-  { photo: "feet", paths: ["/profile", "/messaggi", "/admin"] },
 ]
+const NO_PHOTO = ["/profile", "/messaggi", "/admin", "/scopri"]
 
 function photoFor(pathname: string) {
   const area = PHOTOS.find(({ paths }) => paths.some((p) => pathname === p || pathname.startsWith(`${p}/`)))
@@ -24,7 +24,7 @@ function photoFor(pathname: string) {
 
 export function PagePhoto() {
   const pathname = usePathname()
-  if (pathname === "/scopri" || pathname.startsWith("/messaggi/")) return null
+  if (NO_PHOTO.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return null
   const photo = photoFor(pathname)
   return (
     <div aria-hidden="true" className="page-photo pointer-events-none absolute inset-x-0 top-0 z-0 mx-auto md:max-w-[560px]">

@@ -8,13 +8,16 @@ import { WhySander } from "./WhySander"
 import { CrestHeading } from "./Crest"
 import { GuestWelcome } from "./GuestWelcome"
 
-const DEMO_CARD: PlayerCardData = {
-  name: "Il tuo nome",
-  glicko2: 1620,
-  nationalityCode: "IT",
-  role: "DEFENDER",
-  stats: { att: 78, dif: 84, ric: 81, mur: 62, alz: 74, sta: 80 },
-}
+/* Three empty frames, one per tier: the card is shown, not someone's numbers. */
+const TIERS = [1000, 1600, 2100].map(
+  (glicko2): PlayerCardData => ({
+    name: "",
+    glicko2,
+    nationalityCode: "",
+    role: "DEFENDER",
+    stats: { att: 0, dif: 0, ric: 0, mur: 0, alz: 0, sta: 0 },
+  }),
+)
 
 /**
  * Landing for visitors: the welcome screen first (crest, cards, one promise,
@@ -56,8 +59,11 @@ export function GuestLanding({
         <CrestHeading id="scopri-title" eyebrow="Novità" title="Trova con chi giocare" />
         <Link
           href="/scopri"
-          className="pressable relative block overflow-hidden rounded-[var(--radius-lg)] p-5 shadow-[var(--shadow-card)]"
-          style={{ background: "linear-gradient(140deg, color-mix(in srgb, var(--accent) 34%, var(--surface-2)), color-mix(in srgb, var(--love) 14%, var(--surface-2)) 75%)" }}
+          className="pressable relative flex min-h-[26rem] flex-col justify-end overflow-hidden rounded-[var(--radius-lg)] p-5 shadow-[var(--shadow-card)]"
+          style={{
+            background:
+              "linear-gradient(180deg, rgb(0 0 0 / 0) 10%, rgb(0 0 0 / 0.55) 45%, rgb(0 0 0 / 0.9) 100%), url(/demo/players/sara-1.webp) center 25% / cover",
+          }}
         >
           <HeartHandshake className="h-8 w-8 text-white" aria-hidden="true" />
           <p className="font-hand mt-2 text-[2.3rem] leading-tight text-white">Swipe, match, e sabato si gioca.</p>
@@ -66,7 +72,7 @@ export function GuestLanding({
             <li className="flex items-center gap-2"><Sparkles className="h-4 w-4" aria-hidden="true" /> Ogni giorno il giocatore più compatibile con te</li>
             <li className="flex items-center gap-2"><Users className="h-4 w-4" aria-hidden="true" /> In coppia per sfidare le altre coppie nel 2v2</li>
           </ul>
-          <span className="mt-4 flex min-h-[3.5rem] items-center justify-center gap-1 rounded-full bg-white text-base font-extrabold text-black">
+          <span className="btn btn-secondary mt-4 gap-1 self-start">
             Scopri come funziona <ChevronRight className="h-5 w-5" aria-hidden="true" />
           </span>
         </Link>
@@ -75,11 +81,18 @@ export function GuestLanding({
       {/* After every match: the card is what you come back to. */}
       <section className="flex flex-col gap-3" aria-labelledby="card-title">
         <CrestHeading id="card-title" eyebrow="Dopo ogni partita" title="La tua carta cresce" />
-        <div className="relative flex items-center gap-5 overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-5 ring-1 ring-[var(--crest-hair)]">
-          <div aria-hidden="true" className="relative w-[10rem] shrink-0">
-            <div className="float-y" style={{ filter: "drop-shadow(0 18px 24px rgb(0 0 0 / 0.55))" }}>
-              <SanderCardFut playerData={DEMO_CARD} frameLoading="lazy" />
-            </div>
+        <div className="relative flex items-center gap-4 overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-5 shadow-[var(--shadow-card)]">
+          {/* Bronze, silver, gold fanned out like a hand of cards. */}
+          <div aria-hidden="true" className="float-y relative h-[9.5rem] w-[10.5rem] shrink-0" style={{ filter: "drop-shadow(0 18px 24px rgb(0 0 0 / 0.55))" }}>
+            {TIERS.map((t, i) => (
+              <div
+                key={t.glicko2}
+                className="absolute top-0 w-[7.5rem]"
+                style={{ left: `${i * 1.5}rem`, transform: `rotate(${(i - 1) * 9}deg)`, transformOrigin: "50% 100%", zIndex: i }}
+              >
+                <SanderCardFut playerData={t} blank cutout frameLoading="lazy" />
+              </div>
+            ))}
           </div>
           <div className="relative min-w-0">
             <p className="font-hand text-[1.9rem] leading-none text-white">
@@ -96,7 +109,7 @@ export function GuestLanding({
 
       <Link
         href="/auth/signin?mode=register"
-        className="pressable flex min-h-[3.75rem] items-center justify-center gap-2 rounded-full bg-[var(--accent)] text-lg font-extrabold text-black"
+        className="pressable btn btn-primary min-h-[3.75rem] gap-2 text-lg"
       >
         <Sparkles className="h-5 w-5" aria-hidden="true" /> Crea la tua carta gratis
       </Link>
@@ -112,18 +125,18 @@ export function GuestLanding({
             <Link
               key={l.href}
               href={l.href}
-              className="flex min-h-[3.5rem] items-center justify-between rounded-[var(--radius-lg)] bg-[var(--surface-2)] px-4 text-base font-bold text-white ring-1 ring-[var(--crest-hair)]"
+              className="btn btn-secondary justify-between px-5"
             >
               {l.label}
-              <ChevronRight className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />
+              <ChevronRight className="h-5 w-5" aria-hidden="true" />
             </Link>
           ))}
         </div>
         <Link
           href="/scarica"
-          className="flex min-h-[3.5rem] items-center justify-center gap-2 rounded-[var(--radius-lg)] text-base font-bold text-white ring-1 ring-[var(--crest-hair)]"
+          className="btn btn-secondary w-full gap-2"
         >
-          <Download className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" /> Scarica l&apos;app
+          <Download className="h-5 w-5" aria-hidden="true" /> Scarica l&apos;app
         </Link>
       </section>
     </div>

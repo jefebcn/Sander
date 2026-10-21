@@ -316,7 +316,7 @@ export default async function ProfilePage({ searchParams }: Props) {
       {/* ══ Profilo tab ═══════════════════════════════════════ */}
       {activeTab === "profilo" && (
         <div className="px-4 space-y-3">
-          <SanderCardFut playerData={playerToCardData(fullPlayer)} />
+          <SanderCardFut playerData={playerToCardData(fullPlayer)} cutout />
           <WalletCard
             credits={fullPlayer.sanderCredits}
             playerName={fullPlayer.firstName ?? fullPlayer.name.split(" ")[0]}
