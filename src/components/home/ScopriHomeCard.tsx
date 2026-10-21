@@ -57,11 +57,11 @@ export function ScopriHomeCard({
         <p className="font-hand mt-1 text-[1.9rem] leading-[1.05] text-white">Il più compatibile di oggi ti aspetta</p>
       </div>
       <div className="relative mt-4 flex gap-2">
-        <Link href="/scopri/like" aria-label={`${likes} ti vogliono`} className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-3)] text-white ring-1 ring-white/20 backdrop-blur-md">
+        <Link href="/scopri/like" aria-label={`${likes} ti vogliono`} className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-3)] text-white ring-1 ring-white/20">
           <Heart className="h-6 w-6" aria-hidden="true" />
           {likes > 0 && <Badge n={likes} />}
         </Link>
-        <Link href="/scopri/match" aria-label={`${waiting} match ti aspettano`} className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-3)] text-white ring-1 ring-white/20 backdrop-blur-md">
+        <Link href="/scopri/match" aria-label={`${waiting} match ti aspettano`} className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-3)] text-white ring-1 ring-white/20">
           <MessageCircle className="h-6 w-6" aria-hidden="true" />
           {waiting > 0 && <Badge n={waiting} />}
         </Link>

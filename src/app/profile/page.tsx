@@ -322,7 +322,7 @@ export default async function ProfilePage({ searchParams }: Props) {
             playerName={fullPlayer.firstName ?? fullPlayer.name.split(" ")[0]}
           />
           {/* Viral share: Story-format image for Instagram/WhatsApp (primary) */}
-          <ShareStoryButton playerData={playerToCardData(fullPlayer)} variant="card" />
+          <ShareStoryButton playerData={playerToCardData(fullPlayer)} variant="card" lazy />
           {/* Square card download — kept next to the story share, one sharing block */}
           <ShareCardButton playerData={playerToCardData(fullPlayer)} />
 

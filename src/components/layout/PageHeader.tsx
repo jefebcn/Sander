@@ -22,7 +22,7 @@ export function BackButton({ href, className }: { href: string; className?: stri
       aria-label="Indietro"
       className={cn("-ml-1.5 flex h-14 w-14 shrink-0 items-center justify-center", className)}
     >
-      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-3)] text-white ring-1 ring-white/15 backdrop-blur-md transition-colors active:bg-[var(--surface-4)]">
+      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-3)] text-white ring-1 ring-white/15 transition-colors active:bg-[var(--surface-4)]">
         <ChevronLeft className="h-5 w-5" aria-hidden="true" />
       </span>
     </Link>

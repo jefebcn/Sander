@@ -43,7 +43,7 @@ export function PlayerCrest({ p }: { p: PlayerCrestData }) {
       {!p.isNew && (
         <p className="mt-2 flex flex-wrap items-center gap-1.5">
           <span className="rounded-full bg-[var(--accent)] px-2.5 py-1 text-xs font-extrabold text-black [text-shadow:none]">{p.title}</span>
-          <span className="flex items-center gap-1.5 rounded-full bg-black/35 px-2.5 py-1 text-xs font-extrabold text-white ring-1 ring-white/15 backdrop-blur-md">
+          <span className="flex items-center gap-1.5 rounded-full bg-black/35 px-2.5 py-1 text-xs font-extrabold text-white ring-1 ring-white/15">
             <span className="h-2 w-2 rounded-full" style={{ background: p.division.color }} aria-hidden="true" />
             {p.division.name}
           </span>

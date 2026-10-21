@@ -20,7 +20,7 @@ export function SectionTabs({
 }) {
   return (
     <nav aria-label="Sezioni" className={cn("px-4", toneOf(tone), className)}>
-      <div className="rail rounded-full bg-[var(--surface-2)] p-1 ring-1 ring-white/10 backdrop-blur-md">
+      <div className="rail rounded-full bg-[var(--surface-2)] p-1 ring-1 ring-white/10">
         {items.map((it) => {
           const on = it.id === active
           return (

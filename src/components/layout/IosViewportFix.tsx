@@ -14,14 +14,20 @@ const FIELD = "input, textarea, select, [contenteditable='true']"
  *    after the keyboard closes: the tab bar floats mid-screen with the page
  *    showing below it, and the header slides under the clock. Nudging the
  *    scroll position once the keyboard is gone makes WebKit lay it out again.
- * 3. No pinch-zoom: Safari ignores user-scalable=no in the viewport, so the
- *    gesture itself is cancelled (double-tap zoom is off via touch-action).
+ * 3. No pinch-zoom: Safari ignores user-scalable=no in the viewport, so its
+ *    gesture event is cancelled; touch-action: pan-x pan-y (globals.css) stops
+ *    pinch and double-tap zoom without slowing scrolling down.
  */
 export function IosViewportFix() {
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 4)
+    // Only touch React when the strip has to appear or disappear, not on every scrolled pixel.
+    let last: boolean | null = null
+    const onScroll = () => {
+      const now = window.scrollY > 4
+      if (now !== last) setScrolled((last = now))
+    }
     onScroll()
     window.addEventListener("scroll", onScroll, { passive: true })
 
@@ -51,12 +57,9 @@ export function IosViewportFix() {
     document.addEventListener("focusout", onFocusOut)
     window.visualViewport?.addEventListener("resize", onViewportResize)
     const noZoom = (e: Event) => e.preventDefault()
-    const noPinch = (e: TouchEvent) => { if (e.touches.length > 1) e.preventDefault() }
     document.addEventListener("gesturestart", noZoom)
-    document.addEventListener("touchmove", noPinch, { passive: false })
     return () => {
       document.removeEventListener("gesturestart", noZoom)
-      document.removeEventListener("touchmove", noPinch)
       window.clearTimeout(timer)
       window.removeEventListener("scroll", onScroll)
       document.removeEventListener("focusout", onFocusOut)
@@ -67,7 +70,7 @@ export function IosViewportFix() {
   return (
     <div
       aria-hidden="true"
-      className={`pointer-events-none fixed inset-x-0 top-0 z-40 bg-[var(--background)]/90 backdrop-blur-xl transition-opacity duration-200 ${scrolled ? "opacity-100" : "opacity-0"}`}
+      className={`pointer-events-none fixed inset-x-0 top-0 z-40 bg-[var(--background)]/95 transition-opacity duration-200 ${scrolled ? "opacity-100" : "opacity-0"}`}
       style={{ height: "env(safe-area-inset-top, 0px)" }}
     />
   )

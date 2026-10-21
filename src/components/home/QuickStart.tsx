@@ -33,7 +33,7 @@ export function QuickStart({
       <div className="grid grid-cols-4 gap-1">
         {actions(score).map((a) => (
           <Link key={a.label} href={a.href} className="pressable flex min-h-[5.5rem] flex-col items-center gap-2 text-center">
-            <span className="flex h-[3.75rem] w-[3.75rem] items-center justify-center rounded-full bg-[var(--surface-3)] text-white ring-1 ring-white/15 backdrop-blur-md">
+            <span className="flex h-[3.75rem] w-[3.75rem] items-center justify-center rounded-full bg-[var(--surface-3)] text-white ring-1 ring-white/15">
               <a.icon className="h-6 w-6" aria-hidden="true" />
             </span>
             <span className="text-sm font-bold leading-tight text-white">{a.label}</span>
