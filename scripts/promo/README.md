@@ -8,7 +8,7 @@ Tutto è montato a **120 BPM** (un battito ogni 0,5 s): scegli una musica a 120 
 
 | Tempo | Scena | Testo |
 |---|---|---|
-| 0–2s | Amici in spiaggia, 3 sagome + la quarta tratteggiata | «Siete in tre? Manca sempre uno.» |
+| 0–2s | La chat del gruppo, una bolla per battito («Chi gioca sabato?», «io forse», «dipende dal meteo», «siamo in tre…») | «Manca sempre uno.» + sagoma tratteggiata |
 | 2–5s | Il telefono entra al volo: mazzo di Scopri, tocco sul cuore | 1 · Scopri — «Chi gioca vicino a te» |
 | 5–8s | Sale il pannello del like, il commento esce dallo schermo | 2 · Like — «Un cuore e due parole» |
 | 8–10,5s | «È un match!» con colpo di zoom | 3 · Match — «Se ricambia, è match!» |
@@ -33,3 +33,10 @@ Gratis · link in bio
 #beachvolley #rivieraromagnola #rimini #riccione #sander
 ```
 Per le sponsorizzate usa il link `sanderbv.it/scopri?ref=ig_ads`.
+
+## Regole seguite (skill reel-studio + video-editing)
+
+- Tutti i testi, le frecce e le card stanno in x 60–960, y 250–1600 (zone sicure di Reels/TikTok) e non si toccano mai: verificato fotogramma per fotogramma con `AT=… node scripts/promo/gen.mjs`.
+- Gancio sul problema (la chat che non si riempie) prima della soluzione; titoli che entrano sfocati e vanno a fuoco sul battito; dietro il telefono la schermata stessa, ingrandita e scurita.
+- Audio normalizzato a -16 LUFS (true peak -1,5 dB), il livello dei social.
+
