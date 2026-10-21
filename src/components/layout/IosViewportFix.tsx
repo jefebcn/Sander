@@ -11,7 +11,7 @@ const FIELD = "input, textarea, select, [contenteditable='true']"
  *    scrolls under the clock. Once you scroll, a strip the height of the
  *    status bar covers it; at the top of the page heroes still bleed under.
  * 2. iOS, above all as an installed app, sometimes leaves the viewport offset
- *    after the keyboard closes: the tab bar floats mid-screen with the page
+ *    after the keyboard (or a select / date picker) closes: the tab bar floats mid-screen with the page
  *    showing below it, and the header slides under the clock. Nudging the
  *    scroll position once the keyboard is gone makes WebKit lay it out again.
  * 3. No pinch-zoom: Safari ignores user-scalable=no in the viewport, so its
@@ -33,11 +33,11 @@ export function IosViewportFix() {
 
     let timer: number | undefined
     let closingUntil = 0
-    const settle = () => {
+    const settle = (force = false) => {
       window.clearTimeout(timer)
       timer = window.setTimeout(() => {
         // Moving from one field to the next: the keyboard stays up.
-        if (document.activeElement?.matches(FIELD)) return
+        if (!force && document.activeElement?.matches(FIELD)) return
         const y = window.scrollY
         window.scrollTo(0, y + 1)
         window.scrollTo(0, y)
@@ -49,10 +49,17 @@ export function IosViewportFix() {
       settle()
     }
     // The keyboard finishes sliding away after focusout; settle again when the
-    // viewport grows back, but only right after a field lost focus, so normal
-    // scrolling (Safari's bars resize the viewport too) is never interrupted.
+    // viewport grows back right after a field lost focus. A select or date
+    // picker closes without focusout (the field keeps focus), so a big jump
+    // back in height settles too, whatever has focus. Safari's own bars change
+    // the height far less than that, so normal scrolling is never touched.
+    let height = window.visualViewport?.height ?? window.innerHeight
     const onViewportResize = () => {
-      if (Date.now() < closingUntil) settle()
+      const h = window.visualViewport?.height ?? window.innerHeight
+      const grew = h - height
+      height = h
+      if (grew > 150) settle(true)
+      else if (Date.now() < closingUntil) settle()
     }
     document.addEventListener("focusout", onFocusOut)
     window.visualViewport?.addEventListener("resize", onViewportResize)
