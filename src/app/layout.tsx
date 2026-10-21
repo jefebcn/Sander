@@ -100,12 +100,15 @@ export const metadata: Metadata = {
   },
 }
 
-// Pinch-zoom stays enabled: blocking it locks out anyone who needs larger text
-// (WCAG 1.4.4). Inputs are ≥16px, so iOS doesn't auto-zoom on focus anyway.
+// No zoom inside the app: it should feel like a native app, not a web page.
+// iOS Safari ignores user-scalable for pinches, so IosViewportFix also stops
+// the gesture. Inputs are ≥16px, so iOS doesn't auto-zoom on focus either.
 export const viewport: Viewport = {
   themeColor: "#0b0b0c",
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
 }
 

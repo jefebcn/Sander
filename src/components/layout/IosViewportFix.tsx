@@ -5,7 +5,7 @@ import { useEffect, useState } from "react"
 const FIELD = "input, textarea, select, [contenteditable='true']"
 
 /**
- * Two iPhone fixes, both no-ops elsewhere.
+ * Three iPhone fixes, all no-ops elsewhere.
  *
  * 1. With the translucent status bar (see appleWebApp in layout.tsx) the page
  *    scrolls under the clock. Once you scroll, a strip the height of the
@@ -14,6 +14,8 @@ const FIELD = "input, textarea, select, [contenteditable='true']"
  *    after the keyboard closes: the tab bar floats mid-screen with the page
  *    showing below it, and the header slides under the clock. Nudging the
  *    scroll position once the keyboard is gone makes WebKit lay it out again.
+ * 3. No pinch-zoom: Safari ignores user-scalable=no in the viewport, so the
+ *    gesture itself is cancelled (double-tap zoom is off via touch-action).
  */
 export function IosViewportFix() {
   const [scrolled, setScrolled] = useState(false)
@@ -48,7 +50,13 @@ export function IosViewportFix() {
     }
     document.addEventListener("focusout", onFocusOut)
     window.visualViewport?.addEventListener("resize", onViewportResize)
+    const noZoom = (e: Event) => e.preventDefault()
+    const noPinch = (e: TouchEvent) => { if (e.touches.length > 1) e.preventDefault() }
+    document.addEventListener("gesturestart", noZoom)
+    document.addEventListener("touchmove", noPinch, { passive: false })
     return () => {
+      document.removeEventListener("gesturestart", noZoom)
+      document.removeEventListener("touchmove", noPinch)
       window.clearTimeout(timer)
       window.removeEventListener("scroll", onScroll)
       document.removeEventListener("focusout", onFocusOut)
