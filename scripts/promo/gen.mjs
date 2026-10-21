@@ -20,7 +20,8 @@ const ROOT = join(HERE, "..", "..")
 const NO_TEXT = process.argv.includes("--no-text")
 const OUT = join(HERE, "out")
 const FPS = 60
-const DURATION = 20.5
+const BEAT = 0.5 // seconds per beat (120 BPM)
+const DURATION = 20
 const FRAMES = join(tmpdir(), `sander-promo-${process.pid}`)
 mkdirSync(OUT, { recursive: true })
 mkdirSync(FRAMES, { recursive: true })
@@ -38,9 +39,9 @@ const IMG = {
 /* Details lifted out of the phone: crop of a screen in app CSS px [x, y, w, h],
    where it lands in the frame, and when. */
 const CALLS = [
-  { id: "k1", img: "like", crop: [13, 503, 364, 112], w: 640, x: 40, y: 1230, rot: -3, from: 5.55, to: 7.3 },
-  { id: "k2", img: "sent", crop: [85, 185, 296, 245], w: 540, x: 500, y: 760, rot: 3, from: 12.8, to: 13.95 },
-  { id: "k3", img: "done", crop: [10, 768, 372, 58], w: 780, x: 150, y: 1300, rot: -2, from: 15.85, to: 16.85, noLink: true },
+  { id: "k1", img: "like", crop: [13, 503, 364, 112], w: 640, x: 40, y: 1230, rot: -3, from: 5.5, to: 6.75 },
+  { id: "k2", img: "sent", crop: [85, 185, 296, 245], w: 540, x: 500, y: 760, rot: 3, from: 13.0, to: 13.85 },
+  { id: "k3", img: "done", crop: [10, 768, 372, 58], w: 780, x: 150, y: 1300, rot: -2, from: 15.75, to: 16.85, noLink: true },
 ]
 
 /* Tap targets in app (CSS px of the 390×844 screen), from the screenshots. */
@@ -117,17 +118,18 @@ const win = (t, a, b) => clamp((t - a) / (b - a))
 const env = (t, a, b, f = 0.3) => Math.min(ease(win(t, a, a + f)), 1 - ease(win(t, b - f, b)))
 // [screen, start, end, how it comes in: "x" slides in from the side like a new
 // page, "y" rises like a sheet, "pop" lands with a zoom punch]
-const SCREENS = [["deck", 2.1, 5.05, "pop"], ["like", 5.05, 8.3, "y"], ["match", 8.3, 10.75, "pop"], ["propose", 10.75, 12.5, "x"], ["sent", 12.5, 14.15, "y"], ["ask", 14.15, 15.55, "x"], ["done", 15.55, 17.0, "y"]]
+const SCREENS = [["deck", 2.0, 5.0, "pop"], ["like", 5.0, 8.0, "y"], ["match", 8.0, 10.5, "pop"], ["propose", 10.5, 12.5, "x"], ["sent", 12.5, 14.0, "y"], ["ask", 14.0, 15.5, "x"], ["done", 15.5, 17.0, "y"]]
 // [from second, zoom, focus y in app CSS px]
-const FOCUS = [[2.1, 1.28, 540], [5.05, 1.42, 560], [8.3, 1.12, 430], [10.75, 1.42, 470], [12.5, 1.5, 300], [15.55, 1.42, 330]]
-const CAPS = [["c1", 2.2, 5.05], ["c2", 5.05, 8.3], ["c3", 8.3, 10.75], ["c4", 10.75, 14.15], ["c5", 14.15, 17.0]]
-const TAPLIST = [["deckHeart", 4.3], ["sendLike", 7.55], ["propose", 10.0], ["send", 12.25], ["ciSto", 15.25]]
+const FOCUS = [[2.0, 1.28, 540], [5.0, 1.42, 560], [8.0, 1.12, 430], [10.5, 1.42, 470], [12.5, 1.5, 300], [15.5, 1.42, 330]]
+const CAPS = [["c1", 2.0, 5.0], ["c2", 5.0, 8.0], ["c3", 8.0, 10.5], ["c4", 10.5, 14.0], ["c5", 14.0, 17.0]]
+const TAPLIST = [["deckHeart", 4.0], ["sendLike", 7.0], ["propose", 9.5], ["send", 12.0], ["ciSto", 15.0]]
 // Arrows only where the title changes; each draws while the phone is still,
 // lands next to where the new title appears, then fades as the title pops.
-const ARROWS = [["deckHeart", 4.35], ["sendLike", 7.6], ["propose", 10.05]]
-const IN = 0.28 // seconds a screen takes to come in
+const ARROWS = [["deckHeart", 4.0], ["sendLike", 7.0], ["propose", 9.5]]
+const IN = 0.22 // seconds a screen takes to come in
+const BEAT = ${BEAT} // 120 BPM: every cut, tap, arrow and title lands on a beat
 // [from second, x offset, tilt]: the phone swings to make room for the details
-const POSE = [[2.1, 0, -2], [5.05, 110, 2.5], [8.3, 0, 0], [10.75, -60, -2], [12.5, -150, -3], [14.15, 60, 2], [15.55, 0, 0]]
+const POSE = [[2.0, 0, -2], [5.0, 110, 2.5], [8.0, 0, 0], [10.5, -60, -2], [12.5, -150, -3], [14.0, 60, 2], [15.5, 0, 0]]
 const swing = (x) => { x = clamp(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2 }
 // a point of the app (CSS px) → where it is in the frame right now
 const spot = (cx, cy) => { const m = $("mk"); m.style.left = cx * 1.2 + "px"; m.style.top = cy * 1.2 + "px"; const r = m.getBoundingClientRect(); return { x: r.left, y: r.top } }
@@ -135,23 +137,23 @@ const dots = Array.from({ length: 26 }, (_, i) => { const d = document.createEle
 
 window.render = (t) => {
   // 1 · hook on the beach: quick pops over a slow push-in
-  $("beach").style.opacity = 1 - ease(win(t, 1.9, 2.3))
-  $("beach").style.transform = "scale(" + (1.08 + 0.07 * clamp(t / 2.3)) + ")"
-  $("hook").style.opacity = NO_TEXT ? 0 : env(t, 0, 2.15, 0.15)
-  $("h1").style.transform = "scale(" + (0.7 + 0.3 * back(win(t, 0.02, 0.32))) + ")"
-  $("h1").style.opacity = ease(win(t, 0.02, 0.15))
-  $("h2").style.opacity = ease(win(t, 0.55, 0.7))
-  $("h2").style.transform = "scale(" + (0.75 + 0.25 * back(win(t, 0.55, 0.85))) + ")"
-  $("people").style.opacity = env(t, 0.1, 2.1, 0.15)
+  $("beach").style.opacity = 1 - ease(win(t, 1.85, 2.1))
+  $("beach").style.transform = "scale(" + (1.08 + 0.07 * clamp(t / 2.1)) + ")"
+  $("hook").style.opacity = NO_TEXT ? 0 : env(t, 0, 2.05, 0.12)
+  $("h1").style.transform = "scale(" + (0.7 + 0.3 * back(win(t, 0, 0.25))) + ")"
+  $("h1").style.opacity = ease(win(t, 0, 0.1))
+  $("h2").style.opacity = ease(win(t, 1.0, 1.1))
+  $("h2").style.transform = "scale(" + (0.75 + 0.25 * back(win(t, 1.0, 1.25))) + ")"
+  $("people").style.opacity = env(t, 0.2, 2.05, 0.12)
   for (let i = 0; i < 4; i++) {
-    const p = $("p" + i), a = 0.15 + i * 0.12
-    p.style.opacity = i === 3 ? ease(win(t, 0.75, 0.9)) * (0.55 + 0.45 * Math.abs(Math.sin(t * 7))) : ease(win(t, a, a + 0.12))
+    const p = $("p" + i), a = 0.25 + i * 0.25
+    p.style.opacity = i === 3 ? ease(win(t, 1.0, 1.1)) * (0.55 + 0.45 * Math.abs(Math.sin(t * 2 * Math.PI))) : ease(win(t, a, a + 0.12))
     p.style.transform = "translateY(" + (1 - back(win(t, a, a + 0.25))) * 90 + "px)"
   }
   // phone: flies in at 1.85s, leaves at 16.25s; between screens it travels
   // across the frame (side, tilt), blurred by its own speed.
   const pose = (t) => {
-    const pin = back(win(t, 1.85, 2.25)), pout = ease(win(t, 16.95, 17.3))
+    const pin = back(win(t, 1.9, 2.2)), pout = ease(win(t, 16.9, 17.15))
     let z = FOCUS[0][1], fy = FOCUS[0][2], px = POSE[0][1], pr = POSE[0][2]
     for (let i = 1; i < FOCUS.length; i++) {
       const k = ease(win(t, FOCUS[i][0] - 0.12, FOCUS[i][0] + 0.3))
@@ -165,7 +167,9 @@ window.render = (t) => {
     for (let i = 0; i < SCREENS.length; i++) if (t >= SCREENS[i][1]) scene = i
     const [, sa, sb] = SCREENS[scene]
     z *= 1 + 0.035 * win(t, sa, sb)
-    z *= 1 + 0.07 * Math.sin(Math.PI * win(t, 8.3, 8.65)) // punch on the match
+    z *= 1 + 0.07 * Math.sin(Math.PI * win(t, 8.0, 8.35)) // punch on the match
+    // a small kick on every beat (120 BPM), so the frame moves with the music
+    if (t >= 2.0 && t < 17.0) z *= 1 + 0.014 * Math.exp(-(((t - 2.0) % BEAT) / BEAT) * 7)
     const oy = 16 + fy * 1.2
     return { z, oy, x: px, r: pr + (1 - pin) * -8, y: (1130 - (640 + oy)) * pin + (1 - pin) * 1400 + pout * 1600 }
   }
@@ -173,8 +177,9 @@ window.render = (t) => {
   const speed = Math.abs(P.x - Q.x) + Math.abs(P.y - Q.y) * 0.25 + Math.abs(P.r - Q.r) * 12 + Math.abs(P.z - Q.z) * 900
   $("phone").style.transformOrigin = "50% " + P.oy + "px"
   $("phone").style.transform = "translate(" + P.x + "px," + P.y + "px) rotate(" + P.r + "deg) scale(" + P.z + ")"
+  $("phone").style.opacity = t < 1.88 || t > 17.2 ? 0 : 1 // off-frame before it flies in and after it leaves
   $("phone").style.filter = speed > 1.5 ? "blur(" + Math.min(9, speed * 0.35).toFixed(1) + "px)" : "none"
-  $("topfade").style.opacity = ease(win(t, 1.9, 2.2)) * (1 - ease(win(t, 17.0, 17.25)))
+  $("topfade").style.opacity = ease(win(t, 1.9, 2.15)) * (1 - ease(win(t, 16.95, 17.2)))
   // screens: each comes in over the last one, the way the app moves
   SCREENS.forEach(([k, a, b, how], i) => {
     const img = $("s-" + k), next = SCREENS[i + 1]
@@ -194,7 +199,7 @@ window.render = (t) => {
     img.style.opacity = how === "pop" ? ease(win(t, a, a + 0.12)) : 1
   })
   for (const [id, a, b] of CAPS) {
-    const e = NO_TEXT ? 0 : env(t, a, b, 0.14)
+    const e = NO_TEXT ? 0 : env(t, a, b, 0.1)
     $(id).style.opacity = e
     $(id).style.transform = "translateY(" + (1 - e) * 24 + "px) scale(" + (0.88 + 0.12 * back(win(t, a, a + 0.3))) + ")"
   }
@@ -210,7 +215,7 @@ window.render = (t) => {
     }
   }
   // lime burst on the match
-  const bx = win(t, 8.35, 9.5)
+  const bx = win(t, 8.0, 9.1)
   dots.forEach((d, i) => {
     const ang = (i / dots.length) * Math.PI * 2 + i, r = 260 + (i * 53) % 320, s = 12 + (i * 7) % 20
     d.style.width = d.style.height = s + "px"
@@ -224,7 +229,7 @@ window.render = (t) => {
   const arrow = $("arrow"), head = $("head")
   arrow.style.opacity = head.style.opacity = 0
   if (!NO_TEXT) for (const [k, at] of ARROWS) {
-    const d = win(t, at, at + 0.55), out = win(t, at + 0.7, at + 1.0)
+    const d = win(t, at, at + 0.45), out = win(t, at + 0.85, at + 1.05)
     if (d <= 0 || out >= 1) continue
     const a = spot(...TAPS[k]), m = 1010, e = { x: 845, y: 545 }
     arrow.setAttribute("d", "M" + a.x + " " + a.y + " Q" + m + " " + a.y + " " + m + " " + (a.y - 180) + " L" + m + " " + (e.y + 150) + " Q" + m + " " + e.y + " " + e.x + " " + e.y)
@@ -250,22 +255,22 @@ window.render = (t) => {
     link.style.opacity = k >= 1 && !c.noLink ? 0.9 * (1 - ease(out)) : 0
   }
   // progress 1 → 5 along the left edge
-  const stepAt = [2.1, 5.05, 8.3, 10.75, 14.15]
-  $("rail").style.opacity = env(t, 2.0, 17.0, 0.25)
+  const stepAt = [2.0, 5.0, 8.0, 10.5, 14.0]
+  $("rail").style.opacity = env(t, 2.0, 17.0, 0.2)
   let fill = 0
   stepAt.forEach((a, i) => {
     const on = t >= a
     $("rn" + i).className = "n" + (on ? " on" : "")
-    $("rn" + i).style.transform = "scale(" + (1 + 0.35 * Math.sin(Math.PI * win(t, a, a + 0.3))) + ")"
+    $("rn" + i).style.transform = "scale(" + (1 + 0.35 * Math.sin(Math.PI * win(t, a, a + 0.25)) + (on && t < 17 ? 0.08 * Math.exp(-(((t - 2.0) % BEAT) / BEAT) * 7) : 0)) + ")"
     if (i > 0) fill += ease(win(t, a - 0.3, a + 0.1)) / 4
   })
   $("railfill").style.transform = "scaleY(" + fill + ")"
   // CTA
-  const c = win(t, 17.15, 17.55)
+  const c = win(t, 17.0, 17.35)
   $("cta").style.opacity = ease(c * 2)
   $("cta").style.transform = "scale(" + (0.85 + 0.15 * back(c)) + ")"
-  $("gabbo").style.opacity = ease(win(t, 17.6, 17.75))
-  $("gabbo").style.transform = "translateY(" + (1 - back(win(t, 17.6, 18.0))) * 300 + "px) rotate(" + Math.sin(t * 4) * 4 + "deg)"
+  $("gabbo").style.opacity = ease(win(t, 17.5, 17.6))
+  $("gabbo").style.transform = "translateY(" + (1 - back(win(t, 17.5, 17.85))) * 300 + "px) rotate(" + Math.sin(t * 4) * 4 + "deg)"
 }
 </script></body></html>`
 
@@ -305,34 +310,46 @@ const SFX = {
   ding: "0.38*sin(2*PI*1318*t)*exp(-t*6)+0.2*sin(2*PI*2637*t)*exp(-t*9)",
   chime: "0.3*sin(2*PI*784*t)*exp(-t*4)+gte(t,0.09)*0.28*sin(2*PI*988*(t-0.09))*exp(-(t-0.09)*4)+gte(t,0.18)*0.28*sin(2*PI*1175*(t-0.18))*exp(-(t-0.18)*4)+gte(t,0.27)*0.3*sin(2*PI*1568*(t-0.27))*exp(-(t-0.27)*3.5)",
   boing: "0.45*sin(2*PI*(260*t+420*t*t))*exp(-t*8)",
+  kick: "0.9*sin(2*PI*(95*t-120*t*t))*exp(-t*14)",
+  hat: "(random(0)*2-1)*exp(-t*90)*0.5",
 }
-const LEN = { click: 0.12, pop: 0.2, blip: 0.14, blipHi: 0.14, whoosh: 0.38, scribble: 0.5, sparkle: 1.1, ding: 0.8, chime: 1.4, boing: 0.45 }
-const FILTER = { whoosh: ",bandpass=f=900:width_type=o:w=1.4,volume=1.8", scribble: ",highpass=f=1800,lowpass=f=6500" }
+const LEN = { kick: 0.3, hat: 0.06, click: 0.12, pop: 0.2, blip: 0.14, blipHi: 0.14, whoosh: 0.38, scribble: 0.5, sparkle: 1.1, ding: 0.8, chime: 1.4, boing: 0.45 }
+const FILTER = { hat: ",highpass=f=7000", whoosh: ",bandpass=f=900:width_type=o:w=1.4,volume=1.8", scribble: ",highpass=f=1800,lowpass=f=6500" }
 // [second, sound, volume] — in step with the timeline in the page above
 const EVENTS = [
-  [0.02, "pop", 0.8], [0.55, "pop", 0.9], [0.15, "blip", 0.7], [0.27, "blip", 0.7], [0.39, "blip", 0.7], [0.75, "blipHi", 0.8],
+  [0, "pop", 0.8], [0.25, "blip", 0.7], [0.5, "blip", 0.7], [0.75, "blip", 0.7], [1.0, "pop", 0.9], [1.0, "blipHi", 0.7],
   [1.85, "whoosh", 0.9],
-  [4.3, "click", 1], [4.35, "scribble", 0.8], [5.0, "whoosh", 0.7],
-  [5.55, "pop", 0.7], [7.55, "click", 1], [7.6, "scribble", 0.8],
-  [8.3, "whoosh", 0.6], [8.35, "sparkle", 0.9],
-  [10.0, "click", 1], [10.05, "scribble", 0.8], [10.7, "whoosh", 0.7],
-  [12.25, "click", 1], [12.45, "whoosh", 0.6], [12.8, "pop", 0.7],
-  [14.1, "whoosh", 0.6], [15.25, "click", 1], [15.55, "ding", 0.8], [15.85, "pop", 0.7],
-  [16.95, "whoosh", 0.9], [17.15, "chime", 0.8], [17.6, "boing", 0.7],
+  [4.0, "click", 1], [4.0, "scribble", 0.8], [4.9, "whoosh", 0.7],
+  [5.5, "pop", 0.7], [7.0, "click", 1], [7.0, "scribble", 0.8],
+  [7.9, "whoosh", 0.6], [8.0, "sparkle", 0.9],
+  [9.5, "click", 1], [9.5, "scribble", 0.8], [10.4, "whoosh", 0.7],
+  [12.0, "click", 1], [12.4, "whoosh", 0.6], [13.0, "pop", 0.7],
+  [13.9, "whoosh", 0.6], [15.0, "click", 1], [15.5, "ding", 0.8], [15.75, "pop", 0.7],
+  [16.85, "whoosh", 0.9], [17.0, "chime", 0.8], [17.5, "boing", 0.7],
 ]
 const SFX_DIR = join(FRAMES, "sfx")
 mkdirSync(SFX_DIR, { recursive: true })
 for (const [k, expr] of Object.entries(SFX)) {
   execFileSync(FFMPEG, ["-loglevel", "error", "-y", "-f", "lavfi", "-i", `aevalsrc='${expr}':s=48000:d=${LEN[k]}${FILTER[k] ?? ""}`, "-ac", "2", join(SFX_DIR, `${k}.wav`)])
 }
-const used = [...new Set(EVENTS.map((e) => e[1]))]
-const mix = EVENTS.map(([at, k, v], i) => `[${1 + used.indexOf(k)}:a]adelay=${Math.round(at * 1000)}|${Math.round(at * 1000)},volume=${v}[e${i}]`).join(";")
-execFileSync(FFMPEG, [
-  "-loglevel", "error", "-y", "-framerate", String(FPS), "-i", join(FRAMES, "f%04d.jpg"),
-  ...used.flatMap((k) => ["-i", join(SFX_DIR, `${k}.wav`)]),
-  "-filter_complex", `${mix};${EVENTS.map((_, i) => `[e${i}]`).join("")}amix=inputs=${EVENTS.length}:normalize=0,apad=whole_dur=${DURATION},alimiter=limit=0.9[a]`,
-  "-map", "0:v", "-map", "[a]", "-c:v", "libx264", "-preset", "slow", "-crf", "18", "-profile:v", "high", "-pix_fmt", "yuv420p",
-  "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", join(OUT, name),
-])
+function encode(file, events) {
+  const used = [...new Set(events.map((e) => e[1]))]
+  const mix = events.map(([at, k, v], i) => `[${1 + used.indexOf(k)}:a]adelay=${Math.round(at * 1000)}|${Math.round(at * 1000)},volume=${v}[e${i}]`).join(";")
+  execFileSync(FFMPEG, [
+    "-loglevel", "error", "-y", "-framerate", String(FPS), "-i", join(FRAMES, "f%04d.jpg"),
+    ...used.flatMap((k) => ["-i", join(SFX_DIR, `${k}.wav`)]),
+    "-filter_complex", `${mix};${events.map((_, i) => `[e${i}]`).join("")}amix=inputs=${events.length}:normalize=0,apad=whole_dur=${DURATION},alimiter=limit=0.9[a]`,
+    "-map", "0:v", "-map", "[a]", "-c:v", "libx264", "-preset", "slow", "-crf", "18", "-profile:v", "high", "-pix_fmt", "yuv420p",
+    "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", join(OUT, file),
+  ])
+  console.log("saved", join(OUT, file))
+}
+encode(name, EVENTS)
+// A version with a light 120 BPM groove under the effects (kick on the beat,
+// hat off the beat), to hear the rhythm before real music goes on.
+if (!NO_TEXT) {
+  const groove = []
+  for (let at = 2.0; at < 17.0; at += BEAT) groove.push([at, "kick", 0.55], [at + BEAT / 2, "hat", 0.35])
+  encode("sander-promo-ritmo.mp4", [...EVENTS, ...groove])
+}
 rmSync(FRAMES, { recursive: true, force: true })
-console.log("saved", join(OUT, name))
