@@ -13,7 +13,7 @@
 | 13,4–16,4s | Lei tocca «Ci sto», partita creata | 5 · Fatto — «"Ci sto" e si gioca» |
 | 16,5–19,5s | Logo, Gabbo, invito | «Sabato si gioca.» · Gratis · sanderbv.it |
 
-Le schermate si muovono come l'app: le pagine nuove entrano di lato, i pannelli salgono dal basso, la camera non sta mai ferma.
+Le schermate si muovono come l'app: le pagine nuove entrano di lato, i pannelli salgono dal basso. Tra una scena e l'altra il telefono attraversa lo schermo (con effetto mosso), una freccia lime parte da ciò che viene toccato e porta al titolo successivo, i dettagli importanti (commento, proposta, «Partita creata») escono dal telefono collegati da una linea, e a sinistra un percorso 1→5 si riempie.
 
 Le scritte stanno nella fascia alta: niente sotto i 1500 px né sul lato destro, dove TikTok e Instagram mettono pulsanti e didascalia.
 

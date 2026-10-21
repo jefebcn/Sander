@@ -1,6 +1,8 @@
 /**
  * 19-second promo for TikTok / Reels (1080×1920, 60 fps, silent: the music is
- * picked in the app). Seven beats, one idea each, the real app on a phone:
+ * picked in the app). Seven beats, one idea each, the real app on a phone that
+ * travels between them, tied by hand-drawn arrows, lifted-out details and a
+ * 1→5 rail:
  * hook → Scopri → like with two words → match → propose → «Ci sto» → CTA.
  * Text stays in the top band, clear of the TikTok/Instagram buttons.
  *   node scripts/promo/shots.mjs   (app screens, see there)
@@ -32,6 +34,14 @@ const IMG = {
   gabbo: data(join(ROOT, "public/mascot/gabbo-vittoria.webp"), "image/webp"),
   logo: data(join(ROOT, "public/icon-512.png"), "image/png"),
 }
+
+/* Details lifted out of the phone: crop of a screen in app CSS px [x, y, w, h],
+   where it lands in the frame, and when. */
+const CALLS = [
+  { id: "k1", img: "like", crop: [13, 503, 364, 112], w: 640, x: 40, y: 1230, rot: -3, from: 5.6, to: 7.6 },
+  { id: "k2", img: "sent", crop: [85, 185, 296, 245], w: 540, x: 500, y: 760, rot: 3, from: 12.35, to: 13.45 },
+  { id: "k3", img: "done", crop: [10, 768, 372, 58], w: 780, x: 150, y: 1300, rot: -2, from: 15.45, to: 16.35, noLink: true },
+]
 
 /* Tap targets in app (CSS px of the 390×844 screen), from the screenshots. */
 const TAPS = { deckHeart: [333, 715], sendLike: [195, 681], propose: [195, 546], send: [195, 598], ciSto: [224, 392] }
@@ -66,6 +76,15 @@ body{width:1080px;height:1920px;overflow:hidden;position:relative;font-family:In
 #cta .sub{margin-top:40px;font-size:44px;font-weight:700;opacity:.92}
 #cta .pill{display:inline-block;margin-top:46px;padding:26px 56px;border-radius:999px;background:#c6f736;color:#0b0b0c;font-size:46px;font-weight:900}
 #gabbo{position:absolute;left:330px;top:1130px;width:420px;filter:drop-shadow(0 24px 40px rgba(0,0,0,.6))}
+#fx{position:absolute;inset:0;z-index:6;pointer-events:none;overflow:visible}
+.call{position:absolute;z-index:5;border-radius:24px;background-repeat:no-repeat;opacity:0;
+  box-shadow:0 0 0 4px #c6f736,0 30px 60px rgba(0,0,0,.6),0 0 60px rgba(198,247,54,.35)}
+#rail{position:absolute;left:42px;top:760px;width:44px;height:640px;z-index:5;opacity:0}
+#rail .track,#rail .fill{position:absolute;left:20px;top:22px;width:4px;height:596px;border-radius:4px;background:rgba(255,255,255,.18)}
+#rail .fill{background:#c6f736;transform-origin:top;box-shadow:0 0 14px rgba(198,247,54,.7)}
+#rail .n{position:absolute;left:0;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:900;background:#1b2224;color:rgba(255,255,255,.6);border:3px solid rgba(255,255,255,.25)}
+#rail .n.on{background:#c6f736;color:#0b0b0c;border-color:#c6f736;box-shadow:0 0 20px rgba(198,247,54,.6)}
 </style></head><body>
 <div class="layer" id="beach"></div><div class="layer glow"></div>
 <div id="hook" class="cap" style="top:300px"><div class="h hand" id="h1">Siete in tre?</div><div class="h hand lime" id="h2" style="margin-top:30px">Manca sempre uno.</div></div>
@@ -77,14 +96,18 @@ ${[
   ["c4", "4 · Partita", "Giorno e bagno,<br>in un tocco"],
   ["c5", "5 · Fatto", "«Ci sto»<br><span class='lime'>e si gioca</span>"],
 ].map(([id, k, h]) => `<div class="cap" id="${id}" style="opacity:0"><div class="k">${k}</div><div class="h hand">${h}</div></div>`).join("")}
-<div id="phone"><div id="screen">${Object.keys(IMG).filter((k) => !["beach", "gabbo", "logo"].includes(k)).map((k) => `<img id="s-${k}" src="${IMG[k]}">`).join("")}<div id="tap"></div></div></div>
+<div id="phone"><div id="screen">${Object.keys(IMG).filter((k) => !["beach", "gabbo", "logo"].includes(k)).map((k) => `<img id="s-${k}" src="${IMG[k]}">`).join("")}<div id="tap"></div><div id="mk" style="position:absolute;width:2px;height:2px"></div></div></div>
 <div class="topfade" id="topfade"></div><div id="burst"></div>
+<div id="rail"><div class="track"></div><div class="fill" id="railfill"></div>${[0, 1, 2, 3, 4].map((i) => `<div class="n" id="rn${i}" style="top:${i * 149}px">${i + 1}</div>`).join("")}</div>
+${CALLS.map((c) => `<div class="call" id="${c.id}" style="width:${c.w}px;height:${Math.round((c.w * c.crop[3]) / c.crop[2])}px;background-image:url(${IMG[c.img]});background-size:${Math.round((390 * c.w) / c.crop[2])}px auto;background-position:${-Math.round((c.crop[0] * c.w) / c.crop[2])}px ${-Math.round((c.crop[1] * c.w) / c.crop[2])}px"></div>`).join("")}
+<svg id="fx" viewBox="0 0 1080 1920"><path id="arrow" fill="none" stroke="#c6f736" stroke-width="10" stroke-linecap="round"/><path id="head" fill="none" stroke="#c6f736" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path id="link" fill="none" stroke="#c6f736" stroke-width="5" stroke-linecap="round" stroke-dasharray="14 12"/></svg>
 <div id="cta" style="opacity:0"><img class="logo" src="${IMG.logo}"><div class="h hand">Sabato<br><span class="lime">si gioca.</span></div><div class="sub">Il beach volley della Riviera, in un'app</div><div class="pill">Gratis · sanderbv.it</div></div>
 <img id="gabbo" src="${IMG.gabbo}" style="opacity:0">
 <div class="layer grain"></div>
 <script>
 const NO_TEXT = ${NO_TEXT}
 const TAPS = ${JSON.stringify(TAPS)}
+const CALLS = ${JSON.stringify(CALLS)}
 const $ = (id) => document.getElementById(id)
 const clamp = (x) => Math.max(0, Math.min(1, x))
 const ease = (x) => 1 - Math.pow(1 - clamp(x), 3)
@@ -100,6 +123,11 @@ const FOCUS = [[2.1, 1.28, 540], [5.0, 1.42, 560], [7.7, 1.12, 430], [10.0, 1.42
 const CAPS = [["c1", 2.2, 5.0], ["c2", 5.0, 7.7], ["c3", 7.7, 10.0], ["c4", 10.0, 13.4], ["c5", 13.4, 16.4]]
 const TAPLIST = [["deckHeart", 4.65], ["sendLike", 7.4], ["propose", 9.7], ["send", 11.8], ["ciSto", 14.9]]
 const IN = 0.28 // seconds a screen takes to come in
+// [from second, x offset, tilt]: the phone swings to make room for the details
+const POSE = [[2.1, 0, -2], [5.0, 110, 2.5], [7.7, 0, 0], [10.0, -60, -2], [12.1, -150, -3], [13.4, 60, 2], [15.2, 0, 0]]
+const swing = (x) => { x = clamp(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2 }
+// a point of the app (CSS px) → where it is in the frame right now
+const spot = (cx, cy) => { const m = $("mk"); m.style.left = cx * 1.2 + "px"; m.style.top = cy * 1.2 + "px"; const r = m.getBoundingClientRect(); return { x: r.left, y: r.top } }
 const dots = Array.from({ length: 26 }, (_, i) => { const d = document.createElement("div"); d.className = "dot"; $("burst").appendChild(d); return d })
 
 window.render = (t) => {
@@ -117,22 +145,32 @@ window.render = (t) => {
     p.style.opacity = i === 3 ? ease(win(t, 0.75, 0.9)) * (0.55 + 0.45 * Math.abs(Math.sin(t * 7))) : ease(win(t, a, a + 0.12))
     p.style.transform = "translateY(" + (1 - back(win(t, a, a + 0.25))) * 90 + "px)"
   }
-  // phone: flies in at 1.85s, leaves at 16.25s
-  const pin = back(win(t, 1.85, 2.25)), pout = ease(win(t, 16.25, 16.6))
-  // Camera: per screen, zoom on the part that matters and bring it to the
-  // middle; inside each screen a slow push so the frame never sits still.
-  let z = FOCUS[0][1], fy = FOCUS[0][2], scene = 0
-  for (let i = 1; i < FOCUS.length; i++) {
-    const k = ease(win(t, FOCUS[i][0] - 0.12, FOCUS[i][0] + 0.3))
-    z += (FOCUS[i][1] - z) * k; fy += (FOCUS[i][2] - fy) * k
+  // phone: flies in at 1.85s, leaves at 16.25s; between screens it travels
+  // across the frame (side, tilt), blurred by its own speed.
+  const pose = (t) => {
+    const pin = back(win(t, 1.85, 2.25)), pout = ease(win(t, 16.25, 16.6))
+    let z = FOCUS[0][1], fy = FOCUS[0][2], px = POSE[0][1], pr = POSE[0][2]
+    for (let i = 1; i < FOCUS.length; i++) {
+      const k = ease(win(t, FOCUS[i][0] - 0.12, FOCUS[i][0] + 0.3))
+      z += (FOCUS[i][1] - z) * k; fy += (FOCUS[i][2] - fy) * k
+    }
+    for (let i = 1; i < POSE.length; i++) {
+      const k = swing(win(t, POSE[i][0] - 0.15, POSE[i][0] + 0.35))
+      px += (POSE[i][1] - px) * k; pr += (POSE[i][2] - pr) * k
+    }
+    let scene = 0
+    for (let i = 0; i < SCREENS.length; i++) if (t >= SCREENS[i][1]) scene = i
+    const [, sa, sb] = SCREENS[scene]
+    z *= 1 + 0.035 * win(t, sa, sb)
+    z *= 1 + 0.07 * Math.sin(Math.PI * win(t, 7.7, 8.05)) // punch on the match
+    const oy = 16 + fy * 1.2
+    return { z, oy, x: px, r: pr + (1 - pin) * -8, y: (1130 - (640 + oy)) * pin + (1 - pin) * 1400 + pout * 1600 }
   }
-  for (let i = 0; i < SCREENS.length; i++) if (t >= SCREENS[i][1]) scene = i
-  const [, sa, sb] = SCREENS[scene]
-  z *= 1 + 0.035 * win(t, sa, sb)
-  z *= 1 + 0.07 * Math.sin(Math.PI * win(t, 7.7, 8.05)) // punch on the match
-  const oy = 16 + fy * 1.2, target = 1130 - (640 + oy)
-  $("phone").style.transformOrigin = "50% " + oy + "px"
-  $("phone").style.transform = "translateY(" + (target * pin + (1 - pin) * 1400 + pout * 1600) + "px) rotate(" + (1 - pin) * -8 + "deg) scale(" + z + ")"
+  const P = pose(t), Q = pose(t - 1 / 60)
+  const speed = Math.abs(P.x - Q.x) + Math.abs(P.y - Q.y) * 0.25 + Math.abs(P.r - Q.r) * 12 + Math.abs(P.z - Q.z) * 900
+  $("phone").style.transformOrigin = "50% " + P.oy + "px"
+  $("phone").style.transform = "translate(" + P.x + "px," + P.y + "px) rotate(" + P.r + "deg) scale(" + P.z + ")"
+  $("phone").style.filter = speed > 1.5 ? "blur(" + Math.min(9, speed * 0.35).toFixed(1) + "px)" : "none"
   $("topfade").style.opacity = ease(win(t, 1.9, 2.2)) * (1 - ease(win(t, 16.3, 16.55)))
   // screens: each comes in over the last one, the way the app moves
   SCREENS.forEach(([k, a, b, how], i) => {
@@ -178,6 +216,47 @@ window.render = (t) => {
     d.style.top = 1010 + Math.sin(ang) * r * 0.9 * ease(bx) - s / 2 + "px"
     d.style.opacity = bx > 0 && bx < 1 ? Math.min(1, bx * 6) * (1 - bx) : 0
   })
+  // hand-drawn arrow from what was tapped up to the next title
+  const arrow = $("arrow"), head = $("head")
+  arrow.style.opacity = head.style.opacity = 0
+  if (!NO_TEXT) for (const [k, at] of TAPLIST) {
+    const d = win(t, at - 0.05, at + 0.4), out = win(t, at + 0.55, at + 0.85)
+    if (d <= 0 || out >= 1) continue
+    const a = spot(...TAPS[k]), e = { x: 540 + (a.x < 540 ? -120 : 120), y: 560 }, side = a.x < 540 ? -1 : 1
+    const c1 = { x: a.x + side * 260, y: a.y - 200 }, c2 = { x: e.x + side * 300, y: e.y + 220 }
+    arrow.setAttribute("d", "M" + a.x + " " + a.y + " C" + c1.x + " " + c1.y + " " + c2.x + " " + c2.y + " " + e.x + " " + e.y)
+    const len = arrow.getTotalLength()
+    arrow.style.strokeDasharray = len; arrow.style.strokeDashoffset = len * (1 - ease(d))
+    const ang = Math.atan2(e.y - c2.y, e.x - c2.x), hl = 42
+    head.setAttribute("d", "M" + (e.x - hl * Math.cos(ang - 0.5)) + " " + (e.y - hl * Math.sin(ang - 0.5)) + " L" + e.x + " " + e.y + " L" + (e.x - hl * Math.cos(ang + 0.5)) + " " + (e.y - hl * Math.sin(ang + 0.5)))
+    arrow.style.opacity = 1 - ease(out); head.style.opacity = d > 0.9 ? 1 - ease(out) : 0
+  }
+  // details lifted out of the phone, tied to where they come from
+  const link = $("link"); link.style.opacity = 0
+  for (const c of CALLS) {
+    const el = $(c.id), k = win(t, c.from, c.from + 0.35), out = win(t, c.to - 0.2, c.to)
+    el.style.left = c.x + "px"; el.style.top = c.y + "px"
+    if (k <= 0 || out >= 1) { el.style.opacity = 0; continue }
+    const src = spot(c.crop[0] + c.crop[2] / 2, c.crop[1] + c.crop[3] / 2)
+    const h = (c.w * c.crop[3]) / c.crop[2]
+    const tx = (src.x - (c.x + c.w / 2)) * (1 - ease(k)), ty = (src.y - (c.y + h / 2)) * (1 - ease(k))
+    el.style.opacity = Math.min(1, k * 4) * (1 - ease(out))
+    el.style.transform = "translate(" + tx + "px," + ty + "px) rotate(" + c.rot * ease(k) + "deg) scale(" + (0.6 + 0.4 * back(k)) + ")"
+    const end = { x: c.x + c.w / 2, y: c.y + h / 2 }
+    link.setAttribute("d", "M" + src.x + " " + src.y + " Q" + (src.x + end.x) / 2 + " " + (Math.min(src.y, end.y) - 80) + " " + end.x + " " + end.y)
+    link.style.opacity = k >= 1 && !c.noLink ? 0.9 * (1 - ease(out)) : 0
+  }
+  // progress 1 → 5 along the left edge
+  const stepAt = [2.1, 5.0, 7.7, 10.0, 13.4]
+  $("rail").style.opacity = env(t, 2.0, 16.4, 0.25)
+  let fill = 0
+  stepAt.forEach((a, i) => {
+    const on = t >= a
+    $("rn" + i).className = "n" + (on ? " on" : "")
+    $("rn" + i).style.transform = "scale(" + (1 + 0.35 * Math.sin(Math.PI * win(t, a, a + 0.3))) + ")"
+    if (i > 0) fill += ease(win(t, a - 0.3, a + 0.1)) / 4
+  })
+  $("railfill").style.transform = "scaleY(" + fill + ")"
   // CTA
   const c = win(t, 16.45, 16.85)
   $("cta").style.opacity = ease(c * 2)
@@ -191,6 +270,15 @@ const b = await chromium.launch(process.env.CHROME ? { executablePath: process.e
 const p = await b.newPage({ viewport: { width: 1080, height: 1920 } })
 await p.setContent(html, { waitUntil: "networkidle" })
 await p.evaluate(() => document.fonts.ready)
+// AT=5.8,12.6 renders just those seconds as PNGs in out/ (to check a frame).
+if (process.env.AT) {
+  for (const t of process.env.AT.split(",").map(Number)) {
+    await p.evaluate((t) => window.render(t), t)
+    await p.screenshot({ path: join(OUT, `frame-${t}.png`) })
+  }
+  await b.close()
+  process.exit(0)
+}
 const total = Math.round(DURATION * FPS)
 for (let f = 0; f < total; f++) {
   await p.evaluate((t) => window.render(t), f / FPS)
