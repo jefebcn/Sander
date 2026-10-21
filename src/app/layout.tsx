@@ -9,6 +9,8 @@ import { IosViewportFix } from "@/components/layout/IosViewportFix"
 import { Toaster } from "@/components/ui/Toaster"
 import { OnboardingGate } from "@/components/onboarding/OnboardingGate"
 import { ClientOnlyBanners } from "@/components/layout/ClientOnlyBanners"
+import { NavProgress } from "@/components/layout/NavProgress"
+import { Suspense } from "react"
 import { SwRegistrar } from "@/components/push/SwRegistrar"
 import { PageWrapper } from "@/components/layout/PageWrapper"
 import { RefTracker } from "@/components/analytics/RefTracker"
@@ -139,6 +141,9 @@ export default function RootLayout({
             <PageWrapper>{children}</PageWrapper>
           </main>
           <MobileNav />
+          <Suspense fallback={null}>
+            <NavProgress />
+          </Suspense>
           <IosViewportFix />
           {/* Banners stacked just above the navbar — client-only, lazy loaded */}
           <div className="fixed bottom-[4.5rem] left-0 right-0 z-30 mx-auto flex flex-col md:max-w-[560px] gap-2 pointer-events-none [&>*]:pointer-events-auto">
