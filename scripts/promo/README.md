@@ -1,9 +1,10 @@
 # Video promo SANDER
 
-`out/sander-promo.mp4`: 20 secondi, 1080×1920, 60 fps, con effetti sonori (tocchi, passaggi, pop, match, chiusura) a volume moderato.
-`out/sander-promo-ritmo.mp4`: lo stesso con sotto una base leggera a 120 BPM (cassa e charleston).
+`out/sander-promo.mp4`: 17 secondi, 1080×1920, 60 fps, con effetti sonori (tocchi, passaggi, pop, match, chiusura) a -16 LUFS.
 
-Tutto è montato a **120 BPM** (un battito ogni 0,5 s): scegli una musica a 120 BPM e cambi scena, tocchi e titoli cadono a tempo.
+La timeline è scritta a 120 BPM e riprodotta il 17% più veloce (`SPEED` in `gen.mjs`): risultato **140 BPM**. Scegli una musica a 140 BPM e cambi scena, tocchi e titoli cadono a tempo. I movimenti usano molle (telefono e camera «snappy», card e pop «bouncy») e la curva «smooth» per le schermate che scorrono.
+
+I tempi nella tabella sono quelli della timeline: dividili per 1,17 per i secondi reali.
 `out/sander-promo-senzatesto.mp4`: stesse scene senza scritte, con la fascia in alto libera per i tuoi testi.
 
 | Tempo | Scena | Testo |
