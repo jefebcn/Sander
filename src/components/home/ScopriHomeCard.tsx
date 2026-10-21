@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { SCOPRI_PHOTO_BG } from "@/components/scopri/photoBanner"
 import { HeartHandshake, Heart, MessageCircle, ChevronRight } from "lucide-react"
 
 /**
@@ -46,11 +47,7 @@ export function ScopriHomeCard({
   return (
     <section
       className="relative flex min-h-[11rem] flex-col justify-between overflow-hidden rounded-[var(--radius-lg)] p-5 shadow-[var(--shadow-card)]"
-      style={{
-        background:
-          // Photo on the right part only, so the text on the left never sits on her face.
-          "linear-gradient(90deg, rgb(14 15 16) 41%, rgb(14 15 16 / 0) 74%), url(/demo/players/giorgia-1.webp) right top 22% / 62% auto no-repeat, rgb(14 15 16)",
-      }}
+      style={{ background: SCOPRI_PHOTO_BG }}
     >
       <Link href="/scopri" aria-label="Apri Scopri: il più compatibile di oggi ti aspetta" className="pressable absolute inset-0" />
       <div className="pointer-events-none relative max-w-[62%]">

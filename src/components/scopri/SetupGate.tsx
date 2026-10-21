@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Camera, MessageSquareQuote, CalendarHeart, ShieldAlert, MapPin, ChevronRight, Check } from "lucide-react"
 import type { MissingStep } from "@/lib/scopri/rules"
 import { PROMPT_COUNT } from "@/lib/scopri/rules"
+import { SCOPRI_PHOTO_BG } from "./photoBanner"
 
 const STEPS: Record<MissingStep, { icon: React.ReactNode; title: string; text: string }> = {
   photo: { icon: <Camera className="h-5 w-5" aria-hidden="true" />, title: "Almeno una foto", text: "Meglio se in campo: fino a 6" },
@@ -17,12 +18,14 @@ export function SetupGate({ missing }: { missing: MissingStep[] }) {
   const all: MissingStep[] = minor ? ["adult"] : ["photo", "prompts", "birthDate", "city"]
   return (
     <section className="flex flex-col gap-4">
-      <div className="rounded-[var(--radius-lg)] p-6 shadow-[var(--shadow-card)]" style={{ background: "linear-gradient(150deg, color-mix(in srgb, var(--accent) 30%, var(--surface-2)), var(--surface-2) 65%)" }}>
-        <p className="eyebrow text-[var(--accent)]">Trova con chi giocare</p>
-        <h2 className="font-hand mt-2 text-[2.75rem] leading-none text-white">Un compagno al tuo livello, a un swipe.</h2>
-        <p className="mt-3 font-serif text-2xl leading-snug text-white/90">
-          Like su una foto o su una risposta, match, chat, e sabato si gioca.
-        </p>
+      <div className="min-h-[13rem] overflow-hidden rounded-[var(--radius-lg)] p-5 shadow-[var(--shadow-card)]" style={{ background: SCOPRI_PHOTO_BG }}>
+        <div className="max-w-[62%]">
+          <p className="eyebrow text-[var(--accent)]">Trova con chi giocare</p>
+          <h2 className="font-hand mt-2 text-[2.2rem] leading-[1.02] text-white">Un compagno al tuo livello, a un swipe.</h2>
+          <p className="mt-3 font-serif text-xl leading-snug text-white/90">
+            Like su una foto o su una risposta, match, chat, e sabato si gioca.
+          </p>
+        </div>
       </div>
       <ol className="flex flex-col gap-2">
         {all.map((id) => {

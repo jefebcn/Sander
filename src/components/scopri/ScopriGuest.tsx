@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { Heart, MessageCircle, Users, Volleyball } from "lucide-react"
+import { SCOPRI_PHOTO_BG } from "./photoBanner"
 
 const STEPS = [
   { icon: Heart, title: "Like su quello che ti colpisce", text: "Una foto in campo, una risposta. Con un commento, se vuoi." },
@@ -12,12 +13,14 @@ const STEPS = [
 export function ScopriGuest() {
   return (
     <section className="flex flex-col gap-5 pt-[calc(env(safe-area-inset-top,0px)+1rem)]">
-      <div className="rounded-[var(--radius-lg)] p-6 shadow-[var(--shadow-card)]" style={{ background: "linear-gradient(150deg, color-mix(in srgb, var(--accent) 35%, var(--surface-2)), color-mix(in srgb, var(--love) 12%, var(--surface-2)) 70%)" }}>
-        <p className="eyebrow text-white/80">Nuovo su SANDER</p>
-        <h1 className="font-hand mt-2 text-[3.4rem] leading-[0.95] text-white">Scopri chi gioca con te.</h1>
-        <p className="mt-3 font-serif text-2xl leading-snug text-white/90">
-          Swipe tra i giocatori della Riviera, fai match, scendete in campo.
-        </p>
+      <div className="min-h-[14rem] overflow-hidden rounded-[var(--radius-lg)] p-5 shadow-[var(--shadow-card)]" style={{ background: SCOPRI_PHOTO_BG }}>
+        <div className="max-w-[62%]">
+          <p className="eyebrow text-white/80">Nuovo su SANDER</p>
+          <h1 className="font-hand mt-2 text-[2.6rem] leading-[0.98] text-white">Scopri chi gioca con te.</h1>
+          <p className="mt-3 font-serif text-xl leading-snug text-white/90">
+            Swipe tra i giocatori della Riviera, fai match, scendete in campo.
+          </p>
+        </div>
       </div>
       <ol className="flex flex-col gap-2">
         {STEPS.map((s, i) => (
