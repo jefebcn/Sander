@@ -1,5 +1,5 @@
 /**
- * 20-second promo for TikTok / Reels (1080×1920, 60 fps, built-in sound
+ * 17-second promo for TikTok / Reels (1080×1920, 60 fps, built-in sound
  * effects; the music goes on top later). Seven beats, one idea each, the real
  * app on a phone that travels between them, tied by hand-drawn arrows,
  * lifted-out details and a 1→5 rail:
@@ -20,8 +20,11 @@ const ROOT = join(HERE, "..", "..")
 const NO_TEXT = process.argv.includes("--no-text")
 const OUT = join(HERE, "out")
 const FPS = 60
-const BEAT = 0.5 // seconds per beat (120 BPM)
-const DURATION = 20
+const BEAT = 0.5 // seconds per beat of the timeline below (120 BPM)
+// The timeline is written at 120 BPM and played 17% faster: 17 s, 140 BPM.
+// One knob for the whole edit: cuts, motion and sound all scale with it.
+const SPEED = 1.17
+const DURATION = +(20 / SPEED).toFixed(2)
 const FRAMES = join(tmpdir(), `sander-promo-${process.pid}`)
 mkdirSync(OUT, { recursive: true })
 mkdirSync(FRAMES, { recursive: true })
@@ -120,6 +123,22 @@ const $ = (id) => document.getElementById(id)
 const clamp = (x) => Math.max(0, Math.min(1, x))
 const ease = (x) => 1 - Math.pow(1 - clamp(x), 3)
 const back = (x) => { x = clamp(x); const c = 1.6; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2) }
+// Motion tokens (motion-foundations): springs as a step response from rest,
+// and the "smooth" cubic-bezier [0.22, 1, 0.36, 1] for things that slide.
+const SPRINGS = { snappy: [300, 30], gentle: [120, 14], bouncy: [400, 10] }
+const spring = (dt, name = "snappy") => {
+  if (dt <= 0) return 0
+  const [k, c] = SPRINGS[name], w = Math.sqrt(k), z = c / (2 * w)
+  if (z >= 1) return 1 - Math.exp(-w * dt) * (1 + w * dt)
+  const wd = w * Math.sqrt(1 - z * z)
+  return 1 - Math.exp(-z * w * dt) * (Math.cos(wd * dt) + ((z * w) / wd) * Math.sin(wd * dt))
+}
+const bez = (x1, y1, x2, y2) => (x) => {
+  x = clamp(x); let u = x
+  for (let i = 0; i < 6; i++) { const cx = 3 * x1 * u * (1 - u) ** 2 + 3 * x2 * u * u * (1 - u) + u ** 3 - x; const d = 3 * x1 * (1 - u) ** 2 + 6 * (x2 - x1) * u * (1 - u) + 3 * (1 - x2) * u * u; u = clamp(u - cx / (d || 1)) }
+  return 3 * y1 * u * (1 - u) ** 2 + 3 * y2 * u * u * (1 - u) + u ** 3
+}
+const smooth = bez(0.22, 1, 0.36, 1)
 const win = (t, a, b) => clamp((t - a) / (b - a))
 // in/out envelope: fades in over [a, a+f], out over [b-f, b]
 const env = (t, a, b, f = 0.3) => Math.min(ease(win(t, a, a + f)), 1 - ease(win(t, b - f, b)))
@@ -135,7 +154,7 @@ const TAPLIST = [["deckHeart", 4.0], ["sendLike", 7.0], ["propose", 9.5], ["send
 // [tap, second, corridor x]: right of the phone when there is room, else left
 const ARROWS = [["deckHeart", 4.0, 915], ["sendLike", 7.0, 170], ["propose", 9.5, 175]]
 const IN = 0.22 // seconds a screen takes to come in
-const BEAT = ${BEAT} // 120 BPM: every cut, tap, arrow and title lands on a beat
+const BEAT = ${BEAT} // every cut, tap, arrow and title lands on a beat (timeline time)
 // [from second, x offset, tilt]: the phone swings to make room for the details
 const POSE = [[2.0, 0, -2], [5.0, 110, 2.5], [8.0, 0, 0], [10.5, -60, -2], [12.5, -150, -3], [14.0, 60, 2], [15.5, 0, 0]]
 const swing = (x) => { x = clamp(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2 }
@@ -143,7 +162,8 @@ const swing = (x) => { x = clamp(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.p
 const spot = (cx, cy) => { const m = $("mk"); m.style.left = cx * 1.2 + "px"; m.style.top = cy * 1.2 + "px"; const r = m.getBoundingClientRect(); return { x: r.left, y: r.top } }
 const dots = Array.from({ length: 26 }, (_, i) => { const d = document.createElement("div"); d.className = "dot"; $("burst").appendChild(d); return d })
 
-window.render = (t) => {
+window.render = (real) => {
+  const t = real * ${SPEED}
   // 1 · hook on the beach: quick pops over a slow push-in
   $("beach").style.opacity = 1 - ease(win(t, 1.85, 2.1))
   $("beach").style.transform = "scale(" + (1.08 + 0.07 * clamp(t / 2.1)) + ")"
@@ -166,11 +186,11 @@ window.render = (t) => {
     const pin = back(win(t, 1.9, 2.2)), pout = ease(win(t, 16.9, 17.15))
     let z = FOCUS[0][1], fy = FOCUS[0][2], px = POSE[0][1], pr = POSE[0][2]
     for (let i = 1; i < FOCUS.length; i++) {
-      const k = ease(win(t, FOCUS[i][0] - 0.12, FOCUS[i][0] + 0.3))
+      const k = Math.min(1.04, spring(t - FOCUS[i][0] + 0.1, "snappy"))
       z += (FOCUS[i][1] - z) * k; fy += (FOCUS[i][2] - fy) * k
     }
     for (let i = 1; i < POSE.length; i++) {
-      const k = swing(win(t, POSE[i][0] - 0.15, POSE[i][0] + 0.35))
+      const k = spring(t - POSE[i][0] + 0.12, "snappy")
       px += (POSE[i][1] - px) * k; pr += (POSE[i][2] - pr) * k
     }
     let scene = 0
@@ -178,12 +198,12 @@ window.render = (t) => {
     const [, sa, sb] = SCREENS[scene]
     z *= 1 + 0.035 * win(t, sa, sb)
     z *= 1 + 0.07 * Math.sin(Math.PI * win(t, 8.0, 8.35)) // punch on the match
-    // a small kick on every beat (120 BPM), so the frame moves with the music
+    // a small kick on every beat (140 BPM once sped up), so the frame moves with the music
     if (t >= 2.0 && t < 17.0) z *= 1 + 0.014 * Math.exp(-(((t - 2.0) % BEAT) / BEAT) * 7)
     const oy = 16 + fy * 1.2
     return { z, oy, x: px, r: pr + (1 - pin) * -8, y: (1130 - (640 + oy)) * pin + (1 - pin) * 1400 + pout * 1600 }
   }
-  const P = pose(t), Q = pose(t - 1 / 60)
+  const P = pose(t), Q = pose(t - ${SPEED} / 60)
   const speed = Math.abs(P.x - Q.x) + Math.abs(P.y - Q.y) * 0.25 + Math.abs(P.r - Q.r) * 12 + Math.abs(P.z - Q.z) * 900
   $("phone").style.transformOrigin = "50% " + P.oy + "px"
   $("phone").style.transform = "translate(" + P.x + "px," + P.y + "px) rotate(" + P.r + "deg) scale(" + P.z + ")"
@@ -196,11 +216,11 @@ window.render = (t) => {
     const shown = t >= a && t < (next ? next[1] + IN : b + 0.4)
     img.style.zIndex = i + 1
     if (!shown) { img.style.opacity = 0; return }
-    const e = ease(win(t, a, a + IN))
+    const e = smooth(win(t, a, a + IN))
     let tf = ""
     if (how === "x") tf = "translateX(" + (1 - e) * 100 + "%)"
     if (how === "y") tf = "translateY(" + (1 - e) * 100 + "%)"
-    if (how === "pop") tf = "scale(" + (0.82 + 0.18 * back(win(t, a, a + IN + 0.1))) + ")"
+    if (how === "pop") tf = "scale(" + (0.82 + 0.18 * spring(t - a, "bouncy")) + ")"
     // pushed back while the next one comes in
     const leave = next ? ease(win(t, next[1], next[1] + IN)) : 0
     if (next && next[3] === "x") tf += " translateX(" + -leave * 30 + "%)"
@@ -263,7 +283,7 @@ window.render = (t) => {
     const h = (c.w * c.crop[3]) / c.crop[2]
     const tx = (src.x - (c.x + c.w / 2)) * (1 - ease(k)), ty = (src.y - (c.y + h / 2)) * (1 - ease(k))
     el.style.opacity = Math.min(1, k * 4) * (1 - ease(out))
-    el.style.transform = "translate(" + tx + "px," + ty + "px) rotate(" + c.rot * ease(k) + "deg) scale(" + (0.6 + 0.4 * back(k)) + ")"
+    el.style.transform = "translate(" + tx + "px," + ty + "px) rotate(" + c.rot * ease(k) + "deg) scale(" + (0.6 + 0.4 * spring(t - c.from, "bouncy")) + ")"
     const end = { x: c.x + c.w / 2, y: c.y + h / 2 }
     link.setAttribute("d", "M" + src.x + " " + src.y + " Q" + (src.x + end.x) / 2 + " " + (Math.min(src.y, end.y) - 80) + " " + end.x + " " + end.y)
     link.style.opacity = k >= 1 && !c.noLink ? 0.9 * (1 - ease(out)) : 0
@@ -282,9 +302,9 @@ window.render = (t) => {
   // CTA
   const c = win(t, 17.0, 17.35)
   $("cta").style.opacity = ease(c * 2)
-  $("cta").style.transform = "scale(" + (0.85 + 0.15 * back(c)) + ")"
+  $("cta").style.transform = "scale(" + (0.85 + 0.15 * spring(t - 17.0, "gentle")) + ")"
   $("gabbo").style.opacity = ease(win(t, 17.5, 17.6))
-  $("gabbo").style.transform = "translateY(" + (1 - back(win(t, 17.5, 17.85))) * 300 + "px) rotate(" + Math.sin(t * 4) * 4 + "deg)"
+  $("gabbo").style.transform = "translateY(" + (1 - spring(t - 17.5, "bouncy")) * 300 + "px) rotate(" + Math.sin(t * 4) * 4 + "deg)"
 }
 </script></body></html>`
 
@@ -324,11 +344,9 @@ const SFX = {
   ding: "0.38*sin(2*PI*1318*t)*exp(-t*6)+0.2*sin(2*PI*2637*t)*exp(-t*9)",
   chime: "0.3*sin(2*PI*784*t)*exp(-t*4)+gte(t,0.09)*0.28*sin(2*PI*988*(t-0.09))*exp(-(t-0.09)*4)+gte(t,0.18)*0.28*sin(2*PI*1175*(t-0.18))*exp(-(t-0.18)*4)+gte(t,0.27)*0.3*sin(2*PI*1568*(t-0.27))*exp(-(t-0.27)*3.5)",
   boing: "0.45*sin(2*PI*(260*t+420*t*t))*exp(-t*8)",
-  kick: "0.9*sin(2*PI*(95*t-120*t*t))*exp(-t*14)",
-  hat: "(random(0)*2-1)*exp(-t*90)*0.5",
 }
-const LEN = { kick: 0.3, hat: 0.06, click: 0.12, pop: 0.2, blip: 0.14, blipHi: 0.14, whoosh: 0.38, scribble: 0.5, sparkle: 1.1, ding: 0.8, chime: 1.4, boing: 0.45 }
-const FILTER = { hat: ",highpass=f=7000", whoosh: ",bandpass=f=900:width_type=o:w=1.4,volume=1.8", scribble: ",highpass=f=1800,lowpass=f=6500" }
+const LEN = { click: 0.12, pop: 0.2, blip: 0.14, blipHi: 0.14, whoosh: 0.38, scribble: 0.5, sparkle: 1.1, ding: 0.8, chime: 1.4, boing: 0.45 }
+const FILTER = { whoosh: ",bandpass=f=900:width_type=o:w=1.4,volume=1.8", scribble: ",highpass=f=1800,lowpass=f=6500" }
 // [second, sound, volume] — in step with the timeline in the page above
 const EVENTS = [
   [0, "blip", 0.8], [0.25, "blip", 0.8], [0.5, "blip", 0.8], [0.75, "blipHi", 0.8], [1.0, "pop", 1], [1.25, "scribble", 0.4],
@@ -348,7 +366,7 @@ for (const [k, expr] of Object.entries(SFX)) {
 }
 function encode(file, events) {
   const used = [...new Set(events.map((e) => e[1]))]
-  const mix = events.map(([at, k, v], i) => `[${1 + used.indexOf(k)}:a]adelay=${Math.round(at * 1000)}|${Math.round(at * 1000)},volume=${v}[e${i}]`).join(";")
+  const mix = events.map(([at, k, v], i) => { const ms = Math.round((at / SPEED) * 1000); return `[${1 + used.indexOf(k)}:a]adelay=${ms}|${ms},volume=${v}[e${i}]` }).join(";")
   execFileSync(FFMPEG, [
     "-loglevel", "error", "-y", "-framerate", String(FPS), "-i", join(FRAMES, "f%04d.jpg"),
     ...used.flatMap((k) => ["-i", join(SFX_DIR, `${k}.wav`)]),
@@ -359,11 +377,4 @@ function encode(file, events) {
   console.log("saved", join(OUT, file))
 }
 encode(name, EVENTS)
-// A version with a light 120 BPM groove under the effects (kick on the beat,
-// hat off the beat), to hear the rhythm before real music goes on.
-if (!NO_TEXT) {
-  const groove = []
-  for (let at = 2.0; at < 17.0; at += BEAT) groove.push([at, "kick", 0.55], [at + BEAT / 2, "hat", 0.35])
-  encode("sander-promo-ritmo.mp4", [...EVENTS, ...groove])
-}
 rmSync(FRAMES, { recursive: true, force: true })
