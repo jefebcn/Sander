@@ -1,8 +1,8 @@
 /**
- * 19-second promo for TikTok / Reels (1080×1920, 60 fps, silent: the music is
- * picked in the app). Seven beats, one idea each, the real app on a phone that
- * travels between them, tied by hand-drawn arrows, lifted-out details and a
- * 1→5 rail:
+ * 20-second promo for TikTok / Reels (1080×1920, 60 fps, built-in sound
+ * effects; the music goes on top later). Seven beats, one idea each, the real
+ * app on a phone that travels between them, tied by hand-drawn arrows,
+ * lifted-out details and a 1→5 rail:
  * hook → Scopri → like with two words → match → propose → «Ci sto» → CTA.
  * Text stays in the top band, clear of the TikTok/Instagram buttons.
  *   node scripts/promo/shots.mjs   (app screens, see there)
@@ -20,7 +20,7 @@ const ROOT = join(HERE, "..", "..")
 const NO_TEXT = process.argv.includes("--no-text")
 const OUT = join(HERE, "out")
 const FPS = 60
-const DURATION = 19.5
+const DURATION = 20.5
 const FRAMES = join(tmpdir(), `sander-promo-${process.pid}`)
 mkdirSync(OUT, { recursive: true })
 mkdirSync(FRAMES, { recursive: true })
@@ -38,9 +38,9 @@ const IMG = {
 /* Details lifted out of the phone: crop of a screen in app CSS px [x, y, w, h],
    where it lands in the frame, and when. */
 const CALLS = [
-  { id: "k1", img: "like", crop: [13, 503, 364, 112], w: 640, x: 40, y: 1230, rot: -3, from: 5.6, to: 7.6 },
-  { id: "k2", img: "sent", crop: [85, 185, 296, 245], w: 540, x: 500, y: 760, rot: 3, from: 12.35, to: 13.45 },
-  { id: "k3", img: "done", crop: [10, 768, 372, 58], w: 780, x: 150, y: 1300, rot: -2, from: 15.45, to: 16.35, noLink: true },
+  { id: "k1", img: "like", crop: [13, 503, 364, 112], w: 640, x: 40, y: 1230, rot: -3, from: 5.55, to: 7.3 },
+  { id: "k2", img: "sent", crop: [85, 185, 296, 245], w: 540, x: 500, y: 760, rot: 3, from: 12.8, to: 13.95 },
+  { id: "k3", img: "done", crop: [10, 768, 372, 58], w: 780, x: 150, y: 1300, rot: -2, from: 15.85, to: 16.85, noLink: true },
 ]
 
 /* Tap targets in app (CSS px of the 390×844 screen), from the screenshots. */
@@ -117,14 +117,17 @@ const win = (t, a, b) => clamp((t - a) / (b - a))
 const env = (t, a, b, f = 0.3) => Math.min(ease(win(t, a, a + f)), 1 - ease(win(t, b - f, b)))
 // [screen, start, end, how it comes in: "x" slides in from the side like a new
 // page, "y" rises like a sheet, "pop" lands with a zoom punch]
-const SCREENS = [["deck", 2.1, 5.0, "pop"], ["like", 5.0, 7.7, "y"], ["match", 7.7, 10.0, "pop"], ["propose", 10.0, 12.1, "x"], ["sent", 12.1, 13.4, "y"], ["ask", 13.4, 15.2, "x"], ["done", 15.2, 16.4, "y"]]
+const SCREENS = [["deck", 2.1, 5.05, "pop"], ["like", 5.05, 8.3, "y"], ["match", 8.3, 10.75, "pop"], ["propose", 10.75, 12.5, "x"], ["sent", 12.5, 14.15, "y"], ["ask", 14.15, 15.55, "x"], ["done", 15.55, 17.0, "y"]]
 // [from second, zoom, focus y in app CSS px]
-const FOCUS = [[2.1, 1.28, 540], [5.0, 1.42, 560], [7.7, 1.12, 430], [10.0, 1.42, 470], [12.1, 1.5, 300], [15.2, 1.42, 330]]
-const CAPS = [["c1", 2.2, 5.0], ["c2", 5.0, 7.7], ["c3", 7.7, 10.0], ["c4", 10.0, 13.4], ["c5", 13.4, 16.4]]
-const TAPLIST = [["deckHeart", 4.65], ["sendLike", 7.4], ["propose", 9.7], ["send", 11.8], ["ciSto", 14.9]]
+const FOCUS = [[2.1, 1.28, 540], [5.05, 1.42, 560], [8.3, 1.12, 430], [10.75, 1.42, 470], [12.5, 1.5, 300], [15.55, 1.42, 330]]
+const CAPS = [["c1", 2.2, 5.05], ["c2", 5.05, 8.3], ["c3", 8.3, 10.75], ["c4", 10.75, 14.15], ["c5", 14.15, 17.0]]
+const TAPLIST = [["deckHeart", 4.3], ["sendLike", 7.55], ["propose", 10.0], ["send", 12.25], ["ciSto", 15.25]]
+// Arrows only where the title changes; each draws while the phone is still,
+// lands next to where the new title appears, then fades as the title pops.
+const ARROWS = [["deckHeart", 4.35], ["sendLike", 7.6], ["propose", 10.05]]
 const IN = 0.28 // seconds a screen takes to come in
 // [from second, x offset, tilt]: the phone swings to make room for the details
-const POSE = [[2.1, 0, -2], [5.0, 110, 2.5], [7.7, 0, 0], [10.0, -60, -2], [12.1, -150, -3], [13.4, 60, 2], [15.2, 0, 0]]
+const POSE = [[2.1, 0, -2], [5.05, 110, 2.5], [8.3, 0, 0], [10.75, -60, -2], [12.5, -150, -3], [14.15, 60, 2], [15.55, 0, 0]]
 const swing = (x) => { x = clamp(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2 }
 // a point of the app (CSS px) → where it is in the frame right now
 const spot = (cx, cy) => { const m = $("mk"); m.style.left = cx * 1.2 + "px"; m.style.top = cy * 1.2 + "px"; const r = m.getBoundingClientRect(); return { x: r.left, y: r.top } }
@@ -148,7 +151,7 @@ window.render = (t) => {
   // phone: flies in at 1.85s, leaves at 16.25s; between screens it travels
   // across the frame (side, tilt), blurred by its own speed.
   const pose = (t) => {
-    const pin = back(win(t, 1.85, 2.25)), pout = ease(win(t, 16.25, 16.6))
+    const pin = back(win(t, 1.85, 2.25)), pout = ease(win(t, 16.95, 17.3))
     let z = FOCUS[0][1], fy = FOCUS[0][2], px = POSE[0][1], pr = POSE[0][2]
     for (let i = 1; i < FOCUS.length; i++) {
       const k = ease(win(t, FOCUS[i][0] - 0.12, FOCUS[i][0] + 0.3))
@@ -162,7 +165,7 @@ window.render = (t) => {
     for (let i = 0; i < SCREENS.length; i++) if (t >= SCREENS[i][1]) scene = i
     const [, sa, sb] = SCREENS[scene]
     z *= 1 + 0.035 * win(t, sa, sb)
-    z *= 1 + 0.07 * Math.sin(Math.PI * win(t, 7.7, 8.05)) // punch on the match
+    z *= 1 + 0.07 * Math.sin(Math.PI * win(t, 8.3, 8.65)) // punch on the match
     const oy = 16 + fy * 1.2
     return { z, oy, x: px, r: pr + (1 - pin) * -8, y: (1130 - (640 + oy)) * pin + (1 - pin) * 1400 + pout * 1600 }
   }
@@ -171,7 +174,7 @@ window.render = (t) => {
   $("phone").style.transformOrigin = "50% " + P.oy + "px"
   $("phone").style.transform = "translate(" + P.x + "px," + P.y + "px) rotate(" + P.r + "deg) scale(" + P.z + ")"
   $("phone").style.filter = speed > 1.5 ? "blur(" + Math.min(9, speed * 0.35).toFixed(1) + "px)" : "none"
-  $("topfade").style.opacity = ease(win(t, 1.9, 2.2)) * (1 - ease(win(t, 16.3, 16.55)))
+  $("topfade").style.opacity = ease(win(t, 1.9, 2.2)) * (1 - ease(win(t, 17.0, 17.25)))
   // screens: each comes in over the last one, the way the app moves
   SCREENS.forEach(([k, a, b, how], i) => {
     const img = $("s-" + k), next = SCREENS[i + 1]
@@ -207,7 +210,7 @@ window.render = (t) => {
     }
   }
   // lime burst on the match
-  const bx = win(t, 7.75, 8.9)
+  const bx = win(t, 8.35, 9.5)
   dots.forEach((d, i) => {
     const ang = (i / dots.length) * Math.PI * 2 + i, r = 260 + (i * 53) % 320, s = 12 + (i * 7) % 20
     d.style.width = d.style.height = s + "px"
@@ -216,20 +219,20 @@ window.render = (t) => {
     d.style.top = 1010 + Math.sin(ang) * r * 0.9 * ease(bx) - s / 2 + "px"
     d.style.opacity = bx > 0 && bx < 1 ? Math.min(1, bx * 6) * (1 - bx) : 0
   })
-  // hand-drawn arrow from what was tapped up to the next title
+  // hand-drawn arrow from what was tapped, out along the right edge (never
+  // across the screens) and up to where the next title appears
   const arrow = $("arrow"), head = $("head")
   arrow.style.opacity = head.style.opacity = 0
-  if (!NO_TEXT) for (const [k, at] of TAPLIST) {
-    const d = win(t, at - 0.05, at + 0.4), out = win(t, at + 0.55, at + 0.85)
+  if (!NO_TEXT) for (const [k, at] of ARROWS) {
+    const d = win(t, at, at + 0.55), out = win(t, at + 0.7, at + 1.0)
     if (d <= 0 || out >= 1) continue
-    const a = spot(...TAPS[k]), e = { x: 540 + (a.x < 540 ? -120 : 120), y: 560 }, side = a.x < 540 ? -1 : 1
-    const c1 = { x: a.x + side * 260, y: a.y - 200 }, c2 = { x: e.x + side * 300, y: e.y + 220 }
-    arrow.setAttribute("d", "M" + a.x + " " + a.y + " C" + c1.x + " " + c1.y + " " + c2.x + " " + c2.y + " " + e.x + " " + e.y)
+    const a = spot(...TAPS[k]), m = 1010, e = { x: 845, y: 545 }
+    arrow.setAttribute("d", "M" + a.x + " " + a.y + " Q" + m + " " + a.y + " " + m + " " + (a.y - 180) + " L" + m + " " + (e.y + 150) + " Q" + m + " " + e.y + " " + e.x + " " + e.y)
     const len = arrow.getTotalLength()
     arrow.style.strokeDasharray = len; arrow.style.strokeDashoffset = len * (1 - ease(d))
-    const ang = Math.atan2(e.y - c2.y, e.x - c2.x), hl = 42
-    head.setAttribute("d", "M" + (e.x - hl * Math.cos(ang - 0.5)) + " " + (e.y - hl * Math.sin(ang - 0.5)) + " L" + e.x + " " + e.y + " L" + (e.x - hl * Math.cos(ang + 0.5)) + " " + (e.y - hl * Math.sin(ang + 0.5)))
-    arrow.style.opacity = 1 - ease(out); head.style.opacity = d > 0.9 ? 1 - ease(out) : 0
+    const hl = 40
+    head.setAttribute("d", "M" + (e.x + hl * 0.85) + " " + (e.y - hl * 0.6) + " L" + e.x + " " + e.y + " L" + (e.x + hl * 0.85) + " " + (e.y + hl * 0.6))
+    arrow.style.opacity = 1 - ease(out); head.style.opacity = d > 0.92 ? 1 - ease(out) : 0
   }
   // details lifted out of the phone, tied to where they come from
   const link = $("link"); link.style.opacity = 0
@@ -247,8 +250,8 @@ window.render = (t) => {
     link.style.opacity = k >= 1 && !c.noLink ? 0.9 * (1 - ease(out)) : 0
   }
   // progress 1 → 5 along the left edge
-  const stepAt = [2.1, 5.0, 7.7, 10.0, 13.4]
-  $("rail").style.opacity = env(t, 2.0, 16.4, 0.25)
+  const stepAt = [2.1, 5.05, 8.3, 10.75, 14.15]
+  $("rail").style.opacity = env(t, 2.0, 17.0, 0.25)
   let fill = 0
   stepAt.forEach((a, i) => {
     const on = t >= a
@@ -258,11 +261,11 @@ window.render = (t) => {
   })
   $("railfill").style.transform = "scaleY(" + fill + ")"
   // CTA
-  const c = win(t, 16.45, 16.85)
+  const c = win(t, 17.15, 17.55)
   $("cta").style.opacity = ease(c * 2)
   $("cta").style.transform = "scale(" + (0.85 + 0.15 * back(c)) + ")"
-  $("gabbo").style.opacity = ease(win(t, 16.9, 17.05))
-  $("gabbo").style.transform = "translateY(" + (1 - back(win(t, 16.9, 17.3))) * 300 + "px) rotate(" + Math.sin(t * 4) * 4 + "deg)"
+  $("gabbo").style.opacity = ease(win(t, 17.6, 17.75))
+  $("gabbo").style.transform = "translateY(" + (1 - back(win(t, 17.6, 18.0))) * 300 + "px) rotate(" + Math.sin(t * 4) * 4 + "deg)"
 }
 </script></body></html>`
 
@@ -287,12 +290,49 @@ for (let f = 0; f < total; f++) {
 await b.close()
 
 const name = NO_TEXT ? "sander-promo-senzatesto.mp4" : "sander-promo.mp4"
-// Silent stereo track: some uploaders reject video without audio.
-execFileSync(process.env.FFMPEG ?? "ffmpeg", [
+const FFMPEG = process.env.FFMPEG ?? "ffmpeg"
+
+/* Sound effects, synthesised here (no third-party audio, nothing to license):
+   soft enough that music can go underneath later. */
+const SFX = {
+  click: "0.55*sin(2*PI*2200*t)*exp(-t*120)+0.25*(random(0)*2-1)*exp(-t*400)",
+  pop: "0.6*sin(2*PI*(720*t-1800*t*t))*exp(-t*22)",
+  blip: "0.38*sin(2*PI*(520*t+1500*t*t))*exp(-t*30)",
+  blipHi: "0.38*sin(2*PI*(900*t+2200*t*t))*exp(-t*28)",
+  whoosh: "(random(0)*2-1)*pow(sin(PI*t/0.38),2)*0.6",
+  scribble: "(random(0)*2-1)*(0.55+0.45*sin(2*PI*16*t))*pow(sin(PI*t/0.5),2)*0.3",
+  sparkle: "0.32*sin(2*PI*1046*t)*exp(-t*5)+gte(t,0.07)*0.28*sin(2*PI*1318*(t-0.07))*exp(-(t-0.07)*5)+gte(t,0.14)*0.28*sin(2*PI*1568*(t-0.14))*exp(-(t-0.14)*5)",
+  ding: "0.38*sin(2*PI*1318*t)*exp(-t*6)+0.2*sin(2*PI*2637*t)*exp(-t*9)",
+  chime: "0.3*sin(2*PI*784*t)*exp(-t*4)+gte(t,0.09)*0.28*sin(2*PI*988*(t-0.09))*exp(-(t-0.09)*4)+gte(t,0.18)*0.28*sin(2*PI*1175*(t-0.18))*exp(-(t-0.18)*4)+gte(t,0.27)*0.3*sin(2*PI*1568*(t-0.27))*exp(-(t-0.27)*3.5)",
+  boing: "0.45*sin(2*PI*(260*t+420*t*t))*exp(-t*8)",
+}
+const LEN = { click: 0.12, pop: 0.2, blip: 0.14, blipHi: 0.14, whoosh: 0.38, scribble: 0.5, sparkle: 1.1, ding: 0.8, chime: 1.4, boing: 0.45 }
+const FILTER = { whoosh: ",bandpass=f=900:width_type=o:w=1.4,volume=1.8", scribble: ",highpass=f=1800,lowpass=f=6500" }
+// [second, sound, volume] — in step with the timeline in the page above
+const EVENTS = [
+  [0.02, "pop", 0.8], [0.55, "pop", 0.9], [0.15, "blip", 0.7], [0.27, "blip", 0.7], [0.39, "blip", 0.7], [0.75, "blipHi", 0.8],
+  [1.85, "whoosh", 0.9],
+  [4.3, "click", 1], [4.35, "scribble", 0.8], [5.0, "whoosh", 0.7],
+  [5.55, "pop", 0.7], [7.55, "click", 1], [7.6, "scribble", 0.8],
+  [8.3, "whoosh", 0.6], [8.35, "sparkle", 0.9],
+  [10.0, "click", 1], [10.05, "scribble", 0.8], [10.7, "whoosh", 0.7],
+  [12.25, "click", 1], [12.45, "whoosh", 0.6], [12.8, "pop", 0.7],
+  [14.1, "whoosh", 0.6], [15.25, "click", 1], [15.55, "ding", 0.8], [15.85, "pop", 0.7],
+  [16.95, "whoosh", 0.9], [17.15, "chime", 0.8], [17.6, "boing", 0.7],
+]
+const SFX_DIR = join(FRAMES, "sfx")
+mkdirSync(SFX_DIR, { recursive: true })
+for (const [k, expr] of Object.entries(SFX)) {
+  execFileSync(FFMPEG, ["-loglevel", "error", "-y", "-f", "lavfi", "-i", `aevalsrc='${expr}':s=48000:d=${LEN[k]}${FILTER[k] ?? ""}`, "-ac", "2", join(SFX_DIR, `${k}.wav`)])
+}
+const used = [...new Set(EVENTS.map((e) => e[1]))]
+const mix = EVENTS.map(([at, k, v], i) => `[${1 + used.indexOf(k)}:a]adelay=${Math.round(at * 1000)}|${Math.round(at * 1000)},volume=${v}[e${i}]`).join(";")
+execFileSync(FFMPEG, [
   "-loglevel", "error", "-y", "-framerate", String(FPS), "-i", join(FRAMES, "f%04d.jpg"),
-  "-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=48000",
-  "-shortest", "-c:v", "libx264", "-preset", "slow", "-crf", "18", "-profile:v", "high", "-pix_fmt", "yuv420p",
-  "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", join(OUT, name),
+  ...used.flatMap((k) => ["-i", join(SFX_DIR, `${k}.wav`)]),
+  "-filter_complex", `${mix};${EVENTS.map((_, i) => `[e${i}]`).join("")}amix=inputs=${EVENTS.length}:normalize=0,apad=whole_dur=${DURATION},alimiter=limit=0.9[a]`,
+  "-map", "0:v", "-map", "[a]", "-c:v", "libx264", "-preset", "slow", "-crf", "18", "-profile:v", "high", "-pix_fmt", "yuv420p",
+  "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", join(OUT, name),
 ])
 rmSync(FRAMES, { recursive: true, force: true })
 console.log("saved", join(OUT, name))
