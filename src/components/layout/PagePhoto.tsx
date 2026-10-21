@@ -8,14 +8,15 @@ import { usePathname } from "next/navigation"
  * no brands), so the photo also tells you where you are.
  *
  * It scrolls away with the page (absolute, not fixed) so text further down
- * never sits on the photo. Profilo and Scopri have no photo: there the player
- * card and the people are the picture, on the plain night background.
+ * never sits on the photo. Scopri, chat and admin have no photo: there the
+ * people are the picture, on the plain night background.
  */
 const PHOTOS: { photo: string; paths: string[] }[] = [
   { photo: "set", paths: ["/sessions", "/tournaments", "/segna", "/trova"] },
   { photo: "rally", paths: ["/players", "/settimana", "/stagione", "/bagni"] },
+  { photo: "feet", paths: ["/profile"] },
 ]
-const NO_PHOTO = ["/profile", "/messaggi", "/admin", "/scopri"]
+const NO_PHOTO = ["/messaggi", "/admin", "/scopri"]
 
 function photoFor(pathname: string) {
   const area = PHOTOS.find(({ paths }) => paths.some((p) => pathname === p || pathname.startsWith(`${p}/`)))

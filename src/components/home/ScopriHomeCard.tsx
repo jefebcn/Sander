@@ -41,25 +41,34 @@ export function ScopriHomeCard({
       </Link>
     )
   }
+  // A photo card like the one before the profile is ready, a bit smaller: the
+  // whole card opens Scopri, the two round buttons go straight to likes and chats.
   return (
-    <section className="grid grid-cols-[1fr_auto_auto] items-center gap-2 rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-3 shadow-[var(--shadow-card)]">
-      <Link href="/scopri" className="pressable flex min-h-[3.5rem] min-w-0 items-center gap-3 rounded-[var(--radius-md)] px-2">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-black">
-          <HeartHandshake className="h-6 w-6" aria-hidden="true" />
-        </span>
-        <span className="min-w-0">
-          <span className="block font-display text-xl font-extrabold leading-tight text-white">Scopri</span>
-          <span className="block truncate text-sm text-[var(--muted-text)]">Il più compatibile di oggi ti aspetta</span>
-        </span>
-      </Link>
-      <Link href="/scopri/like" aria-label={`${likes} ti vogliono`} className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-4)] text-[var(--accent)]">
-        <Heart className="h-6 w-6" aria-hidden="true" />
-        {likes > 0 && <Badge n={likes} />}
-      </Link>
-      <Link href="/scopri/match" aria-label={`${waiting} match ti aspettano`} className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-4)] text-[var(--social)]">
-        <MessageCircle className="h-6 w-6" aria-hidden="true" />
-        {waiting > 0 && <Badge n={waiting} />}
-      </Link>
+    <section
+      className="relative flex min-h-[11rem] flex-col justify-between overflow-hidden rounded-[var(--radius-lg)] p-5 shadow-[var(--shadow-card)]"
+      style={{
+        background:
+          // Photo on the right part only, so the text on the left never sits on her face.
+          "linear-gradient(90deg, rgb(14 15 16) 41%, rgb(14 15 16 / 0) 74%), url(/demo/players/giorgia-1.webp) right top 22% / 62% auto no-repeat, rgb(14 15 16)",
+      }}
+    >
+      <Link href="/scopri" aria-label="Apri Scopri: il più compatibile di oggi ti aspetta" className="pressable absolute inset-0" />
+      <div className="pointer-events-none relative max-w-[62%]">
+        <p className="eyebrow flex items-center gap-1 text-white/85">
+          <HeartHandshake className="h-4 w-4" aria-hidden="true" /> Scopri
+        </p>
+        <p className="font-hand mt-1 text-[1.9rem] leading-[1.05] text-white">Il più compatibile di oggi ti aspetta</p>
+      </div>
+      <div className="relative mt-4 flex gap-2">
+        <Link href="/scopri/like" aria-label={`${likes} ti vogliono`} className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-3)] text-white ring-1 ring-white/20 backdrop-blur-md">
+          <Heart className="h-6 w-6" aria-hidden="true" />
+          {likes > 0 && <Badge n={likes} />}
+        </Link>
+        <Link href="/scopri/match" aria-label={`${waiting} match ti aspettano`} className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-3)] text-white ring-1 ring-white/20 backdrop-blur-md">
+          <MessageCircle className="h-6 w-6" aria-hidden="true" />
+          {waiting > 0 && <Badge n={waiting} />}
+        </Link>
+      </div>
     </section>
   )
 }
