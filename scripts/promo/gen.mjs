@@ -24,7 +24,9 @@ const BEAT = 0.5 // seconds per beat of the timeline below (120 BPM)
 // The timeline is written at 120 BPM and played 6% faster: ~20 s, ~127 BPM.
 // One knob for the whole edit: cuts, motion and sound all scale with it.
 const SPEED = 1.06
-const DURATION = +(21 / SPEED).toFixed(2)
+const HOOK_SHIFT = 1.5 // extra seconds for the hook (chat + "Manca sempre uno.")
+// App timeline ends at 19.8 (short close), plus the longer hook.
+const DURATION = +((19.8 + HOOK_SHIFT) / SPEED).toFixed(2)
 const FRAMES = join(tmpdir(), `sander-promo-${process.pid}`)
 mkdirSync(OUT, { recursive: true })
 mkdirSync(FRAMES, { recursive: true })
@@ -151,9 +153,11 @@ const CAPS = [["c1", 2.0, 5.0], ["c2", 5.0, 8.0], ["c3", 8.0, 10.5], ["c4", 10.5
 const TAPLIST = [["deckHeart", 4.0], ["sendLike", 7.0], ["propose", 9.5], ["send", 12.0], ["ciSto", 15.75]]
 // Arrows only where the title changes; each draws while the phone is still,
 // lands next to where the new title appears, then fades as the title pops.
-// [tap, second, corridor x]: right of the phone when there is room, else left
-const ARROWS = [["deckHeart", 4.0, 915], ["sendLike", 7.0, 170], ["propose", 9.5, 175]]
+// [tap, second, corridor x, where the arrow leaves the tapped element (app
+// CSS px: the button edge nearest the corridor, so it never crosses the label)]
+const ARROWS = [["deckHeart", 4.0, 915, [358, 715]], ["sendLike", 7.0, 170, [22, 681]], ["propose", 9.5, 175, [22, 546]]]
 const IN = 0.3 // seconds a screen takes to come in
+const HOOK_SHIFT = ${HOOK_SHIFT} // the hook lasts 2 s + this
 // [from second, x offset, tilt]: the phone swings to make room for the details
 const POSE = [[2.0, 0, -1], [5.0, 80, 1.2], [8.0, 0, 0], [10.5, -40, -1], [12.5, -110, -1.5], [14.5, 40, 1], [16.25, 0, 0]]
 const swing = (x) => { x = clamp(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2 }
@@ -162,23 +166,26 @@ const spot = (cx, cy) => { const m = $("mk"); m.style.left = cx * 1.2 + "px"; m.
 const dots = Array.from({ length: 26 }, (_, i) => { const d = document.createElement("div"); d.className = "dot"; $("burst").appendChild(d); return d })
 
 window.render = (real) => {
-  const t = real * ${SPEED}
-  // 1 · hook on the beach: quick pops over a slow push-in
-  $("beach").style.opacity = 1 - ease(win(t, 1.85, 2.1))
-  $("beach").style.transform = "scale(" + (1.08 + 0.07 * clamp(t / 2.1)) + ")"
-  // the group chat that never fills the court: a bubble per beat…
+  // The hook has its own clock (it is the part that sells, so it gets room);
+  // everything after it runs on the app timeline, shifted by HOOK_SHIFT.
+  const th = real * ${SPEED}
+  // 1 · hook on the beach, slow push-in
+  $("beach").style.opacity = 1 - ease(win(th, 3.35, 3.6))
+  $("beach").style.transform = "scale(" + (1.08 + 0.08 * clamp(th / 3.6)) + ")"
+  // the group chat that never fills the court: one bubble at a time, readable…
   for (let i = 0; i < 4; i++) {
-    const at = i * 0.25, k = win(t, at, at + 0.22), out = win(t, 0.95, 1.12)
+    const at = i * 0.4, k = win(th, at, at + 0.3), out = win(th, 1.75, 1.95)
     $("b" + i).style.opacity = ease(k * 2) * (1 - ease(out))
     $("b" + i).style.transform = "translateY(" + (1 - back(k)) * 60 + "px) scale(" + (0.92 + 0.08 * back(k)) + ")"
     $("b" + i).style.filter = out > 0 ? "blur(" + out * 14 + "px)" : "none"
   }
-  // …then the line lands on beat 3, blurred in like the titles
-  const hb = win(t, 1.0, 1.3), hout = win(t, 1.9, 2.05)
+  // …then the line lands and holds, blurred in like the titles
+  const hb = win(th, 1.8, 2.15), hout = win(th, 3.3, 3.5)
   $("big").style.opacity = NO_TEXT ? 0 : ease(hb * 1.6) * (1 - ease(hout))
   $("h2").style.transform = "scale(" + (1.08 - 0.08 * ease(hb)) + ")"
   $("h2").style.filter = "blur(" + ((1 - ease(hb)) * 22 + hout * 14) + "px)"
-  $("ghost").style.opacity = ease(win(t, 1.25, 1.4)) * (1 - ease(hout)) * (0.5 + 0.5 * Math.abs(Math.cos((t - 1.25) * 2 * Math.PI)))
+  $("ghost").style.opacity = ease(win(th, 2.2, 2.4)) * (1 - ease(hout)) * (0.5 + 0.5 * Math.abs(Math.cos((th - 2.2) * 1.4 * Math.PI)))
+  const t = th - HOOK_SHIFT
   // phone: flies in at 1.85s, leaves at 16.25s; between screens it travels
   // across the frame (side, tilt), blurred by its own speed.
   const pose = (t) => {
@@ -259,15 +266,17 @@ window.render = (real) => {
   // tip stops under the title, never on it
   const arrow = $("arrow"), head = $("head")
   arrow.style.opacity = head.style.opacity = 0
-  if (!NO_TEXT) for (const [k, at, m] of ARROWS) {
+  if (!NO_TEXT) for (const [k, at, m, from] of ARROWS) {
     const d = win(t, at, at + 0.45), out = win(t, at + 0.85, at + 1.05)
     if (d <= 0 || out >= 1) continue
-    const a = spot(...TAPS[k]), e = { x: m, y: 600 }
-    arrow.setAttribute("d", "M" + a.x + " " + a.y + " Q" + m + " " + a.y + " " + m + " " + (a.y - 160) + " L" + e.x + " " + e.y)
+    // out of the button, up the corridor beside the phone, then a last curve
+    // toward the title so the tip points at it from below
+    const a = spot(...from), dir = m < 540 ? 1 : -1, e = { x: m + dir * 120, y: 585 }, c = { x: m, y: 640 }
+    arrow.setAttribute("d", "M" + a.x + " " + a.y + " Q" + m + " " + a.y + " " + m + " " + (a.y - 120) + " L" + m + " 760 Q" + c.x + " " + c.y + " " + e.x + " " + e.y)
     const len = arrow.getTotalLength()
     arrow.style.strokeDasharray = len; arrow.style.strokeDashoffset = len * (1 - ease(d))
-    const hl = 40
-    head.setAttribute("d", "M" + (e.x - hl * 0.6) + " " + (e.y + hl * 0.85) + " L" + e.x + " " + e.y + " L" + (e.x + hl * 0.6) + " " + (e.y + hl * 0.85))
+    const ang = Math.atan2(e.y - c.y, e.x - c.x), hl = 40
+    head.setAttribute("d", "M" + (e.x - hl * Math.cos(ang - 0.55)) + " " + (e.y - hl * Math.sin(ang - 0.55)) + " L" + e.x + " " + e.y + " L" + (e.x - hl * Math.cos(ang + 0.55)) + " " + (e.y - hl * Math.sin(ang + 0.55)))
     arrow.style.opacity = 1 - ease(out); head.style.opacity = d > 0.92 ? 1 - ease(out) : 0
   }
   // details lifted out of the phone, tied to where they come from
@@ -300,8 +309,8 @@ window.render = (real) => {
   const c = win(t, 18.0, 18.35)
   $("cta").style.opacity = ease(c * 2)
   $("cta").style.transform = "scale(" + (0.85 + 0.15 * spring(t - 18.0, "gentle")) + ")"
-  $("gabbo").style.opacity = ease(win(t, 18.5, 18.6))
-  $("gabbo").style.transform = "translateY(" + (1 - spring(t - 18.5, "bouncy")) * 300 + "px) rotate(" + Math.sin(t * 4) * 4 + "deg)"
+  $("gabbo").style.opacity = ease(win(t, 18.4, 18.5))
+  $("gabbo").style.transform = "translateY(" + (1 - spring(t - 18.4, "bouncy")) * 300 + "px) rotate(" + Math.sin(t * 4) * 4 + "deg)"
 }
 </script></body></html>`
 
@@ -346,15 +355,19 @@ const LEN = { click: 0.12, pop: 0.2, blip: 0.14, blipHi: 0.14, whoosh: 0.38, scr
 const FILTER = { whoosh: ",bandpass=f=900:width_type=o:w=1.4,volume=1.8", scribble: ",highpass=f=1800,lowpass=f=6500" }
 // [second, sound, volume] — in step with the timeline in the page above
 const EVENTS = [
-  [0, "blip", 0.8], [0.25, "blip", 0.8], [0.5, "blip", 0.8], [0.75, "blipHi", 0.8], [1.0, "pop", 1], [1.25, "scribble", 0.4],
-  [1.85, "whoosh", 0.9],
-  [4.0, "click", 1], [4.0, "scribble", 0.8], [4.9, "whoosh", 0.7],
-  [5.5, "pop", 0.7], [7.0, "click", 1], [7.0, "scribble", 0.8],
-  [7.9, "whoosh", 0.6], [8.0, "sparkle", 0.9],
-  [9.5, "click", 1], [9.5, "scribble", 0.8], [10.4, "whoosh", 0.7],
-  [12.0, "click", 1], [12.4, "whoosh", 0.6], [12.9, "pop", 0.7],
-  [14.4, "whoosh", 0.6], [15.75, "click", 1], [16.25, "ding", 0.8], [16.55, "pop", 0.7],
-  [17.85, "whoosh", 0.9], [18.0, "chime", 0.8], [18.5, "boing", 0.7],
+  // hook (its own clock)
+  [0, "blip", 0.8], [0.4, "blip", 0.8], [0.8, "blip", 0.8], [1.2, "blipHi", 0.8], [1.8, "pop", 1], [2.2, "scribble", 0.4],
+  // app timeline, shifted after the hook
+  ...[
+    [1.85, "whoosh", 0.9],
+    [4.0, "click", 1], [4.0, "scribble", 0.8], [4.9, "whoosh", 0.7],
+    [5.5, "pop", 0.7], [7.0, "click", 1], [7.0, "scribble", 0.8],
+    [7.9, "whoosh", 0.6], [8.0, "sparkle", 0.9],
+    [9.5, "click", 1], [9.5, "scribble", 0.8], [10.4, "whoosh", 0.7],
+    [12.0, "click", 1], [12.4, "whoosh", 0.6], [12.9, "pop", 0.7],
+    [14.4, "whoosh", 0.6], [15.75, "click", 1], [16.25, "ding", 0.8], [16.55, "pop", 0.7],
+    [17.85, "whoosh", 0.9], [18.0, "chime", 0.8], [18.4, "boing", 0.7],
+  ].map(([at, k, v]) => [at + HOOK_SHIFT, k, v]),
 ]
 const SFX_DIR = join(FRAMES, "sfx")
 mkdirSync(SFX_DIR, { recursive: true })
