@@ -487,7 +487,7 @@ export function ChiceceDashboard({
           <button
             onClick={handleRegenerate}
             disabled={isPending}
-            className="flex flex-1 min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] text-sm font-bold text-white disabled:opacity-40"
+            className="flex flex-1 min-h-[3.5rem] items-center justify-center gap-2 rounded-full btn-secondary text-sm font-bold text-white disabled:opacity-40"
           >
             <RefreshCw className="h-4 w-4" />
             Rigenera Round
@@ -546,7 +546,7 @@ export function ChiceceDashboard({
           <button
             onClick={handleAdvance}
             disabled={isPending || !draftComplete}
-            className="mt-3 flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-bold text-black disabled:opacity-40"
+            className="mt-3 flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full bg-[var(--accent)] font-bold text-black disabled:opacity-40"
           >
             <Trophy className="h-5 w-5" />
             Avanza alla Finale
@@ -562,7 +562,7 @@ export function ChiceceDashboard({
             <button
               onClick={handleResetToGroup}
               disabled={isPending}
-              className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] font-bold text-white disabled:opacity-40"
+              className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full btn-secondary font-bold text-white disabled:opacity-40"
             >
               <RefreshCw className="h-5 w-5" />
               Rifai il draft partner

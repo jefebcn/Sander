@@ -51,7 +51,7 @@ export function InstallButton() {
     return (
       <Link
         href="/"
-        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-black text-black"
+        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full font-black text-black"
         style={{ background: "var(--accent)" }}
       >
         Apri SANDER <ArrowRight className="h-5 w-5" />
@@ -65,7 +65,7 @@ export function InstallButton() {
       {deferred && (
         <button
           onClick={install}
-          className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-black text-black"
+          className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full font-black text-black"
           style={{ background: "var(--accent)" }}
         >
           <Download className="h-5 w-5" /> Installa l&apos;app

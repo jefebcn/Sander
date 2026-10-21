@@ -59,7 +59,7 @@ export default async function NewTournamentPage() {
           {!canAfford && (
             <Link
               href="/profile"
-              className="mt-2 flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-black text-black"
+              className="mt-2 flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full font-black text-black"
               style={{ background: "var(--accent)" }}
             >
               <Coins className="h-5 w-5" aria-hidden="true" />

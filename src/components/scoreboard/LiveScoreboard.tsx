@@ -366,7 +366,7 @@ export function LiveScoreboard({ session, initialNames, initialState }: Props) {
               <button
                 onClick={saveResult}
                 disabled={saving}
-                className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl text-lg font-black text-black disabled:opacity-60"
+                className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full text-lg font-black text-black disabled:opacity-60"
                 style={{ background: "var(--accent)" }}
               >
                 {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}

@@ -95,7 +95,7 @@ export function CreatePlayerForm() {
       <button
         type="submit"
         disabled={isPending || name.trim().length < 2}
-        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-bold text-black transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full bg-[var(--accent)] font-bold text-black transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {isPending ? (
           <>

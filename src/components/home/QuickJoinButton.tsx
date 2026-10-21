@@ -54,7 +54,7 @@ export function QuickJoinButton({
       disabled={pending}
       aria-busy={pending}
       aria-label={`${label}: ${context}`}
-      className="pressable flex min-h-[3.5rem] w-full items-center justify-center gap-1.5 rounded-[var(--radius-md)] bg-[var(--accent-soft)] text-base font-extrabold text-[var(--accent)] ring-1 ring-[var(--accent-line)] active:bg-[var(--accent)] active:text-black disabled:opacity-60"
+      className="pressable flex min-h-[3.5rem] w-full items-center justify-center gap-1.5 btn btn-primary disabled:opacity-60"
     >
       {pending ? (
         <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />

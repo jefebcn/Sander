@@ -103,7 +103,7 @@ export function NotifyPermission() {
     <button
       onClick={enable}
       disabled={isPending}
-      className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-bold text-black transition-all active:scale-[0.98] disabled:opacity-40"
+      className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full font-bold text-black transition-all active:scale-[0.98] disabled:opacity-40"
       style={{ background: "var(--accent)" }}
     >
       <Bell className="h-5 w-5" />

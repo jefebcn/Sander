@@ -141,7 +141,7 @@ export function PaymentCtaButton({
             type="button"
             onClick={openPaySheet}
             disabled={isPending}
-            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-black text-base text-black transition-all active:brightness-90 disabled:opacity-60"
+            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full bg-[var(--accent)] font-black text-base text-black transition-all active:brightness-90 disabled:opacity-60"
           >
             Paga ora iscrizione
           </button>
@@ -159,7 +159,7 @@ export function PaymentCtaButton({
             type="button"
             onClick={handleCompleteStripe}
             disabled={isPending}
-            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-black text-base text-black transition-all active:brightness-90 disabled:opacity-60"
+            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full bg-[var(--accent)] font-black text-base text-black transition-all active:brightness-90 disabled:opacity-60"
           >
             {isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : "Completa pagamento"}
           </button>
@@ -168,7 +168,7 @@ export function PaymentCtaButton({
             type="button"
             onClick={openPaySheet}
             disabled={isPending}
-            className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl bg-[var(--surface-2)] text-base font-bold text-white active:bg-white/10 disabled:opacity-60"
+            className="flex min-h-[3.5rem] w-full items-center justify-center rounded-full btn-secondary text-base font-bold text-white disabled:opacity-60"
           >
             Paga in contanti o PayPal
           </button>
@@ -186,7 +186,7 @@ export function PaymentCtaButton({
           type="button"
           onClick={handleRegister}
           disabled={isPending}
-          className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-black text-base text-black transition-all active:brightness-90 disabled:opacity-60"
+          className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full bg-[var(--accent)] font-black text-base text-black transition-all active:brightness-90 disabled:opacity-60"
         >
           {isPending ? (
             <Loader2 className="h-5 w-5 animate-spin" />

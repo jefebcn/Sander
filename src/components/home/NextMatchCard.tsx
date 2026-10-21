@@ -27,7 +27,7 @@ export function NextMatchCard({ match }: { match: NextMatch }) {
   return (
     <Link
       href={`/sessions/${match.id}`}
-      className="pressable tone-play relative block overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-5 shadow-[var(--shadow-card)] ring-1 ring-[var(--accent-line)]"
+      className="pressable tone-play relative block overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-5 shadow-[var(--shadow-card)]"
     >
       <div className="flex items-center justify-between gap-3">
         <p className="eyebrow text-[var(--accent)]">{started ? "La tua partita è in corso" : "La tua prossima partita"}</p>

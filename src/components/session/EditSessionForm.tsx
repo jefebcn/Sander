@@ -188,7 +188,7 @@ export function EditSessionForm({ session }: Props) {
       <button
         onClick={handleSave}
         disabled={pending}
-        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-black text-black disabled:opacity-60"
+        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full font-black text-black disabled:opacity-60"
         style={{ background: "var(--accent)" }}
       >
         {pending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Check className="h-5 w-5" />}

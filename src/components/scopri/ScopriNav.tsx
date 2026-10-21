@@ -34,7 +34,7 @@ export function ScopriNav({ active, likes = 0, waiting = 0 }: { active: Tab; lik
             aria-current={active === t.id ? "page" : undefined}
             className={cn(
               "relative flex min-h-[3rem] flex-col items-center justify-center rounded-full text-xs font-bold",
-              active === t.id ? "bg-[var(--accent)] text-black" : "text-[var(--muted-text)]",
+              active === t.id ? "sel-on" : "text-[var(--muted-text)]",
             )}
           >
             {t.icon}

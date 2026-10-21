@@ -35,7 +35,7 @@ export default function GlobalError({
         </button>
         <Link
           href="/"
-          className="flex min-h-[3.5rem] items-center justify-center rounded-[var(--radius-md)] bg-[var(--surface-2)] px-6 text-base font-bold text-white"
+          className="flex min-h-[3.5rem] items-center justify-center rounded-full btn-secondary px-6 text-base font-bold text-white"
         >
           Torna alla home
         </Link>

@@ -14,6 +14,7 @@ import { PageWrapper } from "@/components/layout/PageWrapper"
 import { RefTracker } from "@/components/analytics/RefTracker"
 import { ErrorReporter } from "@/components/analytics/ErrorReporter"
 import { AppBackground, type BackgroundVariant } from "@/components/layout/AppBackground"
+import { PagePhoto } from "@/components/layout/PagePhoto"
 
 // Body: Figtree, round and very legible in the sun.
 const figtree = Figtree({
@@ -108,8 +109,8 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 }
 
-/** App-wide background: "aurora" (night sea + lime), "night" (grainy graphite) or "sunset". */
-const BG: BackgroundVariant = "aurora"
+/** App-wide background: "beach" (photo on top, glass surfaces), "aurora" (night sea + lime), "night" (grainy graphite) or "sunset". */
+const BG: BackgroundVariant = "beach"
 
 export default function RootLayout({
   children,
@@ -120,6 +121,7 @@ export default function RootLayout({
     <html lang="it" className={`${figtree.variable} ${bricolage.variable} ${instrument.variable} ${mansalva.variable} h-full`}>
       <body data-bg={BG} className="min-h-dvh flex flex-col bg-[var(--background)] text-[var(--foreground)]">
         <AppBackground variant={BG} />
+        {BG === "beach" && <PagePhoto />}
         <Providers>
           <OnboardingGate />
           <SwRegistrar />

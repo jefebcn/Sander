@@ -125,7 +125,7 @@ export function InviteTab({ promoCode, inviteCount, leaderboard = [] }: InviteTa
           <button
             type="button"
             onClick={shareNative}
-            className="flex min-h-[3.5rem] items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--surface-3)] text-base font-bold text-white"
+            className="flex min-h-[3.5rem] items-center justify-center gap-2 rounded-full btn-secondary text-base font-bold text-white"
           >
             <Share2 className="h-5 w-5 text-[var(--tone)]" aria-hidden="true" /> Condividi
           </button>

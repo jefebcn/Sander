@@ -13,7 +13,7 @@ import { getScopriBadge } from "@/actions/scopri"
  * Four destinations around Scopri. The centre button is the thing people open
  * the app to do now — find someone to play with — so it is one thumb-tap away
  * from every screen, with the likes and replies waiting for you on it.
- * (Quick actions moved to the "+" on Home and Gioca: QuickActionsButton.)
+ * (Quick actions: the round buttons at the top of Home, and the "+" on Gioca.)
  *
  * Each tab lights up in its area colour (see globals.css), and secondary
  * surfaces light up their parent, so you always know where you are.
@@ -97,7 +97,7 @@ export function MobileNav() {
           overlay opened inside a page always covers the bar. On wide screens
           the same bar is shown, centred under the phone-width app column. */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-30 mx-auto border-t border-[var(--border)] bg-[var(--surface-1)]/92 backdrop-blur-xl md:max-w-[560px] md:rounded-t-2xl md:border-x"
+        className="fixed inset-x-0 bottom-0 z-30 mx-auto border-t border-[var(--border)] bg-[color-mix(in_srgb,var(--background)_72%,transparent)] backdrop-blur-xl md:max-w-[560px] md:rounded-t-2xl md:border-x"
         aria-label="Navigazione principale"
       >
         <div

@@ -12,11 +12,15 @@ function actions(score: { href: string; sub: string }) {
   ]
 }
 
-/** "C'è un modo rapido per usarla?" — yes: these, also behind the + below. */
+/**
+ * The four things people open the app to do, one tap each: round glass
+ * buttons with the label underneath. A heading only when there's something to
+ * say ("Nessuna partita in programma").
+ */
 export function QuickStart({
   score,
-  eyebrow = "Il modo più rapido",
-  title = "In un tocco",
+  eyebrow,
+  title,
 }: {
   /** Where "Segna" saves something: a match's result or live board. */
   score: { href: string; sub: string }
@@ -24,18 +28,16 @@ export function QuickStart({
   title?: string
 }) {
   return (
-    <section className="flex flex-col gap-3" aria-labelledby="quick-title">
-      <CrestHeading id="quick-title" eyebrow={eyebrow} title={title} />
-      <div className="grid grid-cols-2 gap-2 min-[360px]:grid-cols-4">
+    <section className="flex flex-col gap-3" aria-labelledby={title ? "quick-title" : undefined} aria-label={title ? undefined : "Azioni rapide"}>
+      {title && <CrestHeading id="quick-title" eyebrow={eyebrow} title={title} />}
+      <div className="grid grid-cols-4 gap-1">
         {actions(score).map((a) => (
-          <Link
-            key={a.label}
-            href={a.href}
-            className="pressable flex min-h-[5.75rem] flex-col items-center justify-start gap-1.5 rounded-[var(--radius-md)] bg-[var(--surface-2)] px-1 pb-2 pt-3.5 text-center ring-1 ring-[var(--crest-hair)] active:bg-[var(--surface-3)]"
-          >
-            <a.icon className="h-6 w-6 text-[var(--accent)]" strokeWidth={2.25} aria-hidden="true" />
-            <span className="text-sm font-extrabold leading-tight text-white">{a.label}</span>
-            <span className="text-xs leading-tight text-[var(--muted-text)]">{a.sub}</span>
+          <Link key={a.label} href={a.href} className="pressable flex min-h-[5.5rem] flex-col items-center gap-2 text-center">
+            <span className="flex h-[3.75rem] w-[3.75rem] items-center justify-center rounded-full bg-[var(--surface-3)] text-white ring-1 ring-white/15 backdrop-blur-md">
+              <a.icon className="h-6 w-6" aria-hidden="true" />
+            </span>
+            <span className="text-sm font-bold leading-tight text-white">{a.label}</span>
+            <span className="sr-only">{a.sub}</span>
           </Link>
         ))}
       </div>

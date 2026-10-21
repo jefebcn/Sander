@@ -53,13 +53,13 @@ export default async function CancelPage({
       <div className="mt-10 flex flex-col gap-3 px-4">
         <Link
           href={`/tournaments/${id}/register`}
-          className="flex min-h-[3.5rem] items-center justify-center rounded-2xl bg-[var(--accent)] font-bold text-black active:brightness-90"
+          className="flex min-h-[3.5rem] items-center justify-center rounded-full bg-[var(--accent)] font-bold text-black active:brightness-90"
         >
           Riprova iscrizione
         </Link>
         <Link
           href={`/tournaments/${id}`}
-          className="flex min-h-[3.5rem] items-center justify-center rounded-2xl bg-[var(--surface-2)] font-bold text-white active:bg-white/10"
+          className="flex min-h-[3.5rem] items-center justify-center rounded-full btn-secondary font-bold text-white"
         >
           Torna al torneo
         </Link>

@@ -434,7 +434,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
                 aria-pressed={role === r.value}
                 className={cn(
                   "flex min-h-[3.75rem] flex-1 flex-col items-center justify-center rounded-[1.25rem] px-3 transition-colors",
-                  role === r.value ? "bg-[var(--accent)] text-black" : "bg-white/5 text-white ring-1 ring-white/15",
+                  role === r.value ? "sel-on" : "sel-off",
                 )}
               >
                 <span className="text-base font-black">{r.label}</span>
@@ -459,7 +459,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
                 aria-pressed={homeCity === c}
                 className={cn(
                   "min-h-[2.75rem] rounded-full px-4 text-sm font-bold transition-colors",
-                  homeCity === c ? "bg-[var(--accent)] text-black" : "bg-white/5 text-white ring-1 ring-white/15",
+                  homeCity === c ? "sel-on" : "sel-off",
                 )}
               >
                 {c}
@@ -481,7 +481,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
                 aria-pressed={startLevel === l.id}
                 className={cn(
                   "flex min-h-[3.75rem] flex-col items-center justify-center rounded-[1.25rem] px-2 text-center transition-colors",
-                  startLevel === l.id ? "bg-[var(--accent)] text-black" : "bg-white/5 text-white ring-1 ring-white/15",
+                  startLevel === l.id ? "sel-on" : "sel-off",
                 )}
               >
                 <span className="text-sm font-black">{l.label}</span>

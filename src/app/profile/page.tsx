@@ -298,9 +298,7 @@ export default async function ProfilePage({ searchParams }: Props) {
               aria-current={activeTab === id ? "page" : undefined}
               className={
                 "flex min-h-[2.75rem] shrink-0 items-center whitespace-nowrap rounded-full px-4 text-sm font-bold transition-colors " +
-                (activeTab === id
-                  ? "bg-[var(--tone)] text-black"
-                  : "bg-[var(--surface-2)] text-[var(--muted-text)]")
+                (activeTab === id ? "sel-on" : "sel-off")
               }
             >
               {label}
@@ -370,7 +368,7 @@ export default async function ProfilePage({ searchParams }: Props) {
               </p>
               <Link
                 href="/sessions"
-                className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl bg-[var(--accent)] text-base font-black text-black"
+                className="flex min-h-[3.5rem] w-full items-center justify-center rounded-full bg-[var(--accent)] text-base font-black text-black"
               >
                 Trova una partita
               </Link>
@@ -490,7 +488,7 @@ export default async function ProfilePage({ searchParams }: Props) {
           </Link>
           <Link
             href="/scopri/profilo"
-            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-extrabold text-black"
+            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full bg-[var(--accent)] font-extrabold text-black"
           >
             <HeartHandshake className="h-4 w-4" />
             Il tuo profilo Scopri

@@ -85,7 +85,7 @@ export function OpenMatchesRail({
               ) : (
                 <Link
                   href={`/sessions/${m.id}`}
-                  className="pressable flex min-h-[3.5rem] items-center justify-center gap-1.5 rounded-[var(--radius-md)] bg-[var(--surface-3)] text-base font-extrabold text-white ring-1 ring-[var(--crest-hair)]"
+                  className="pressable flex min-h-[3.5rem] items-center justify-center gap-1.5 rounded-full btn-secondary text-base font-extrabold text-white"
                 >
                   {full ? "Mettiti in lista" : "Entra con i crediti"}
                 </Link>

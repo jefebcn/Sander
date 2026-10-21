@@ -30,7 +30,7 @@ export function Crest({
         background:
           line === "accent"
             ? "radial-gradient(120% 70% at 0% 0%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 60%), var(--surface-2)"
-            : "linear-gradient(180deg, var(--surface-2), var(--surface-1))",
+            : "var(--surface-2)",
       }}
     >
       <div className={cn("relative", innerClassName)}>{children}</div>
@@ -85,7 +85,7 @@ export function CrestHeading({
     <div className={cn("flex items-end gap-3", className)}>
       <div className="min-w-0">
         {eyebrow && <p className="eyebrow text-[var(--tone)]">{eyebrow}</p>}
-        <h2 id={id} className="font-hand text-[1.9rem] leading-none text-white">{title}</h2>
+        <h2 id={id} className="font-display text-[1.45rem] font-extrabold leading-tight tracking-tight text-white">{title}</h2>
       </div>
       <span aria-hidden="true" className="mb-1.5 h-px min-w-6 flex-1 bg-[var(--crest-hair)]" />
       {action && (

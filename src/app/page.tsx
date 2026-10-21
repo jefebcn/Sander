@@ -26,13 +26,11 @@ import { NextMatchCard, type NextMatch } from "@/components/home/NextMatchCard"
 import { OpenMatchesRail } from "@/components/home/OpenMatchesRail"
 import { QuickStart } from "@/components/home/QuickStart"
 import { YourRace } from "@/components/home/YourRace"
-import { WhySander } from "@/components/home/WhySander"
 import { FirstSteps } from "@/components/home/FirstSteps"
 import { TournamentSpotlight, type SpotlightTournament } from "@/components/home/TournamentSpotlight"
 import { InviteCard } from "@/components/home/InviteCard"
 import { CommunityStrip } from "@/components/home/CommunityStrip"
 import { GuestLanding } from "@/components/home/GuestLanding"
-import { QuickActionsButton } from "@/components/layout/QuickActionsButton"
 import { ScopriHomeCard } from "@/components/home/ScopriHomeCard"
 import { scopriSummary } from "@/lib/scopri/server"
 import { pendingPlayAgain } from "@/lib/scopri/playAgainServer"
@@ -245,7 +243,6 @@ export default async function Home() {
         <div className="ml-auto flex items-center gap-2">
           <MessagesBell unreadCount={unreadMessages} />
           <NotificationBell unreadCount={unreadCount} />
-          <QuickActionsButton />
         </div>
       </header>
 
@@ -292,6 +289,15 @@ export default async function Home() {
           <PlayAgainCard ask={playAgain} />
         </div>
       )}
+
+      {/* ── The four things you open the app to do ─────────────────────── */}
+      <div {...rise()}>
+        {regular && nothingNow ? (
+          <QuickStart score={score} eyebrow="Nessuna partita in programma" title="Pronto a giocare?" />
+        ) : (
+          <QuickStart score={score} />
+        )}
+      </div>
       {(() => {
         const race = (
           <YourRace
@@ -314,7 +320,6 @@ export default async function Home() {
           ? [
               { key: "race", node: race },
               { key: "scopri", node: scopriCard },
-              { key: "quick", node: nothingNow ? <QuickStart score={score} eyebrow="Nessuna partita in programma" title="Pronto a giocare?" /> : null },
               { key: "rail", node: rail() },
               { key: "tournament", node: tournament ? <TournamentSpotlight t={tournament} /> : null },
             ]
@@ -322,8 +327,8 @@ export default async function Home() {
               { key: "steps", node: showFirstSteps ? <FirstSteps steps={firstSteps} /> : null },
               { key: "scopri", node: scopriCard },
               { key: "rail", node: rail(nextMatch ? "Posti liberi" : "La tua prima partita") },
-              { key: "quick", node: <QuickStart score={score} /> },
-              { key: "why", node: isNew ? <WhySander variant="player" hasOpenMatches={openMatches.length > 0} /> : race },
+              // Already signed up: no need to sell SANDER again, just the race once there is one.
+              { key: "race", node: isNew ? null : race },
               { key: "tournament", node: tournament ? <TournamentSpotlight t={tournament} /> : null },
               { key: "invite", node: !(showFirstSteps && invited === 0) ? <InviteCard invited={invited} /> : null },
             ]
@@ -353,9 +358,9 @@ export default async function Home() {
               <Link
                 key={d.href}
                 href={d.href}
-                className="pressable flex min-h-[3.5rem] shrink-0 items-center gap-2 rounded-full bg-[var(--surface-2)] px-4 text-base font-bold text-white ring-1 ring-[var(--crest-hair)]"
+                className="pressable flex min-h-[3.5rem] shrink-0 items-center gap-2 rounded-full px-4 text-base font-bold text-white ring-1 ring-inset ring-white/20"
               >
-                <d.icon className="h-5 w-5 text-[var(--tone)]" aria-hidden="true" />
+                <d.icon className="h-5 w-5" aria-hidden="true" />
                 <span className="max-w-[12rem] truncate">{d.label}</span>
               </Link>
             ))}

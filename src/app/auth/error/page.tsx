@@ -70,7 +70,7 @@ export default async function AuthErrorPage({
 
         <Link
           href="/auth/signin"
-          className="flex min-h-[3.5rem] w-full max-w-xs items-center justify-center rounded-2xl bg-[var(--accent)] font-bold text-black transition-all active:scale-[0.98]"
+          className="flex min-h-[3.5rem] w-full max-w-xs items-center justify-center rounded-full bg-[var(--accent)] font-bold text-black transition-all active:scale-[0.98]"
         >
           Riprova
         </Link>

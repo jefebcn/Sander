@@ -650,7 +650,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
           </p>
           <Link
             href="/tournaments"
-            className="mt-4 flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl font-black text-black"
+            className="mt-4 flex min-h-[3.5rem] w-full items-center justify-center rounded-full font-black text-black"
             style={{ background: "var(--accent)" }}
           >
             Vedi gli altri tornei

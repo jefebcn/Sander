@@ -36,7 +36,7 @@ export function SessionChat({ sessionId }: { sessionId: string }) {
     <button
       onClick={openChat}
       disabled={loading}
-      className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-black text-white transition-opacity active:opacity-80 disabled:opacity-60"
+      className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full btn-secondary font-black text-white transition-opacity active:opacity-80 disabled:opacity-60"
     >
       <MessageCircle className="h-5 w-5 text-[var(--accent)]" />
       {loading ? "Apro…" : "Chat della partita"}

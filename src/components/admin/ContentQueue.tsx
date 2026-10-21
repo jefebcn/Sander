@@ -132,7 +132,7 @@ function Card({
           </button>
           <button
             onClick={copy}
-            className="flex min-h-[3.5rem] items-center justify-center gap-1.5 rounded-xl bg-[var(--surface-2)] text-xs font-bold text-white"
+            className="flex min-h-[3.5rem] items-center justify-center gap-1.5 rounded-full btn-secondary text-xs font-bold text-white"
           >
             {copied ? <Check className="h-4 w-4 text-[var(--live)]" /> : <Copy className="h-4 w-4" />}
             {copied ? "Copiato" : "Copia testo"}
@@ -140,7 +140,7 @@ function Card({
           <button
             onClick={download}
             disabled={busy !== null}
-            className="flex min-h-[3.5rem] items-center justify-center gap-1.5 rounded-xl bg-[var(--surface-2)] text-xs font-bold text-white disabled:opacity-60"
+            className="flex min-h-[3.5rem] items-center justify-center gap-1.5 rounded-full btn-secondary text-xs font-bold text-white disabled:opacity-60"
           >
             {busy === "download" ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -159,7 +159,7 @@ function Card({
           <button
             onClick={() => startTransition(async () => { await skipContent(item.id); onChanged() })}
             disabled={pending}
-            className="flex min-h-[3.5rem] items-center justify-center gap-1.5 rounded-xl bg-[var(--surface-2)] text-xs font-bold text-[var(--muted-text)] disabled:opacity-60"
+            className="flex min-h-[3.5rem] items-center justify-center gap-1.5 rounded-full btn-secondary text-xs font-bold text-[var(--muted-text)] disabled:opacity-60"
           >
             <X className="h-4 w-4" /> Salta
           </button>

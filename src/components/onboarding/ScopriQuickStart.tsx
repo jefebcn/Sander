@@ -238,7 +238,7 @@ export function ScopriQuickStart({
                   type="button"
                   aria-pressed={on}
                   onClick={() => setLookingFor((list) => (on ? list.filter((x) => x !== l.key) : [...list, l.key]))}
-                  className={cn("min-h-[2.75rem] rounded-full px-4 text-sm font-bold transition-colors", on ? "bg-[var(--accent)] text-black" : "bg-white/5 text-white ring-1 ring-white/15")}
+                  className={cn("min-h-[2.75rem] rounded-full px-4 text-sm font-bold transition-colors", on ? "sel-on" : "sel-off")}
                 >
                   {l.label}
                 </button>

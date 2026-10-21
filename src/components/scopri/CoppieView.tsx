@@ -293,7 +293,7 @@ function ActiveDuo({ data, duo }: { data: CoppieData; duo: DuoCard }) {
             type="button"
             aria-pressed={tab === t.id}
             onClick={() => setTab(t.id)}
-            className={cn("min-h-[3rem] rounded-full text-sm font-bold", tab === t.id ? "bg-[var(--social)] text-black" : "text-[var(--muted-text)]")}
+            className={cn("min-h-[3rem] rounded-full text-sm font-bold", tab === t.id ? "sel-on" : "text-[var(--muted-text)]")}
           >
             {t.label}
           </button>

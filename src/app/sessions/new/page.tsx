@@ -30,13 +30,13 @@ export default async function NewSessionPage({
           <p className="text-base text-[var(--muted-text)]">Entra in SANDER per creare una partita.</p>
           <Link
             href={`/auth/signin?mode=register&callbackUrl=${encodeURIComponent("/sessions/new")}`}
-            className="flex min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] text-base font-bold text-black"
+            className="flex min-h-[3.5rem] items-center justify-center gap-2 rounded-full bg-[var(--accent)] text-base font-bold text-black"
           >
             <Sparkles className="h-5 w-5" aria-hidden="true" /> Crea un account gratis
           </Link>
           <Link
             href={`/auth/signin?callbackUrl=${encodeURIComponent("/sessions/new")}`}
-            className="flex min-h-[3.5rem] items-center justify-center rounded-2xl bg-[var(--surface-2)] text-base font-bold text-white"
+            className="flex min-h-[3.5rem] items-center justify-center rounded-full btn-secondary text-base font-bold text-white"
           >
             Ho già un account
           </Link>

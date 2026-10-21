@@ -42,7 +42,7 @@ export default async function TerritoriesPage() {
       <div className="mt-6 px-4">
         <Link
           href="/sessions/new"
-          className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-black text-black"
+          className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full font-black text-black"
           style={{ background: "var(--accent)" }}
         >
           Crea una partita e conquista un bagno

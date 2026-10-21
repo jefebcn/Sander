@@ -22,7 +22,7 @@ export function BackButton({ href, className }: { href: string; className?: stri
       aria-label="Indietro"
       className={cn("-ml-1.5 flex h-14 w-14 shrink-0 items-center justify-center", className)}
     >
-      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-2)] text-white transition-colors active:bg-[var(--surface-3)]">
+      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-3)] text-white ring-1 ring-white/15 backdrop-blur-md transition-colors active:bg-[var(--surface-4)]">
         <ChevronLeft className="h-5 w-5" aria-hidden="true" />
       </span>
     </Link>
@@ -32,7 +32,7 @@ export function BackButton({ href, className }: { href: string; className?: stri
 export function PageHeader({ title, subtitle, eyebrow, tone, action, backHref, className }: PageHeaderProps) {
   return (
     <header
-      className={cn("flex items-center gap-2 px-4 pb-4", toneOf(tone), className)}
+      className={cn("relative flex items-center gap-2 px-4 pb-4 [text-shadow:0_2px_14px_rgb(0_0_0/0.45)]", toneOf(tone), className)}
       style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}
     >
       {backHref && <BackButton href={backHref} />}
@@ -41,7 +41,7 @@ export function PageHeader({ title, subtitle, eyebrow, tone, action, backHref, c
         <h1 className="font-hand text-[2.6rem] leading-[0.95] text-white">
           {title}
         </h1>
-        {subtitle && <p className="mt-1 truncate text-sm text-[var(--muted-text)]">{subtitle}</p>}
+        {subtitle && <p className="mt-1 truncate text-sm text-white/80">{subtitle}</p>}
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </header>

@@ -98,7 +98,7 @@ export function SessionMatchRounds({ sessionId, matches, isOrganizer, sessionSta
               type="button"
               disabled={pending}
               onClick={handleGenerate}
-              className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-bold text-black disabled:opacity-50"
+              className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full font-bold text-black disabled:opacity-50"
               style={{ background: "var(--accent)" }}
             >
               {pending ? (

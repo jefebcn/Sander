@@ -22,18 +22,21 @@ export function ScopriHomeCard({
     return (
       <Link
         href="/onboarding/scopri"
-        className="pressable relative block overflow-hidden rounded-[var(--radius-lg)] p-5 shadow-[var(--shadow-card)]"
-        style={{ background: "linear-gradient(140deg, color-mix(in srgb, var(--accent) 34%, var(--surface-2)), color-mix(in srgb, var(--love) 14%, var(--surface-2)) 75%)" }}
+        className="pressable relative flex min-h-[15rem] flex-col justify-end overflow-hidden rounded-[var(--radius-lg)] p-5 shadow-[var(--shadow-card)]"
+        style={{
+          background:
+            "linear-gradient(180deg, rgb(0 0 0 / 0) 15%, rgb(0 0 0 / 0.82) 100%), url(/demo/players/davide-1.webp) center 25% / cover",
+        }}
       >
         <p className="eyebrow flex items-center gap-1 text-white/85">
           <HeartHandshake className="h-4 w-4" aria-hidden="true" /> Nuovo · Scopri
         </p>
-        <p className="font-hand mt-2 text-[2.3rem] leading-tight text-white">Trova con chi giocare, a colpi di swipe.</p>
-        <p className="mt-2 font-serif text-xl text-white/90">
+        <p className="font-hand mt-1 text-[2.3rem] leading-tight text-white">Trova con chi giocare</p>
+        <p className="mt-1 text-base text-white/85">
           {nearby > 0 ? `${nearby} giocatori ${city ? `a ${city}` : "vicino a te"} sono già su Scopri.` : "Foto, tre risposte, e sei in campo."}
         </p>
-        <span className="mt-4 flex min-h-[3.5rem] items-center justify-center gap-1 rounded-full bg-white text-base font-extrabold text-black">
-          Crea il profilo in un minuto <ChevronRight className="h-5 w-5" aria-hidden="true" />
+        <span className="mt-4 flex min-h-[3.5rem] items-center gap-1 self-start rounded-full px-6 text-base font-extrabold text-white ring-[1.5px] ring-inset ring-white/85">
+          Crea il profilo <ChevronRight className="h-5 w-5" aria-hidden="true" />
         </span>
       </Link>
     )

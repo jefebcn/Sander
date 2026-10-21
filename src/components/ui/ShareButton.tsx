@@ -34,11 +34,8 @@ export function ShareButton({ path, title, text, fullWidth, label }: ShareButton
     return (
       <button
         onClick={handleShare}
-        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-bold text-base transition-opacity active:opacity-80"
-        style={{
-          background: "var(--surface-2)",
-          color: copied ? "var(--live)" : "var(--foreground)",
-        }}
+        className="btn btn-secondary w-full"
+        style={copied ? { color: "var(--live)" } : undefined}
       >
         {copied ? <Check className="h-5 w-5" /> : <Share2 className="h-5 w-5" />}
         {copied ? "Link copiato!" : (label ?? "Invita un amico")}
