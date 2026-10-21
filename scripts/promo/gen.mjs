@@ -1,5 +1,5 @@
 /**
- * 27-second promo for TikTok / Reels (1080×1920, 30 fps, silent: the music is
+ * 19-second promo for TikTok / Reels (1080×1920, 60 fps, silent: the music is
  * picked in the app). Seven beats, one idea each, the real app on a phone:
  * hook → Scopri → like with two words → match → propose → «Ci sto» → CTA.
  * Text stays in the top band, clear of the TikTok/Instagram buttons.
@@ -17,8 +17,8 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(HERE, "..", "..")
 const NO_TEXT = process.argv.includes("--no-text")
 const OUT = join(HERE, "out")
-const FPS = 30
-const DURATION = 27
+const FPS = 60
+const DURATION = 19.5
 const FRAMES = join(tmpdir(), `sander-promo-${process.pid}`)
 mkdirSync(OUT, { recursive: true })
 mkdirSync(FRAMES, { recursive: true })
@@ -92,49 +92,75 @@ const back = (x) => { x = clamp(x); const c = 1.6; return 1 + (c + 1) * Math.pow
 const win = (t, a, b) => clamp((t - a) / (b - a))
 // in/out envelope: fades in over [a, a+f], out over [b-f, b]
 const env = (t, a, b, f = 0.3) => Math.min(ease(win(t, a, a + f)), 1 - ease(win(t, b - f, b)))
-const SCREENS = [["deck", 3.0, 7.6], ["like", 7.6, 11.9], ["match", 11.9, 15.4], ["propose", 15.4, 17.9], ["sent", 17.9, 20.2], ["ask", 20.2, 22.1], ["done", 22.1, 23.7]]
+// [screen, start, end, how it comes in: "x" slides in from the side like a new
+// page, "y" rises like a sheet, "pop" lands with a zoom punch]
+const SCREENS = [["deck", 2.1, 5.0, "pop"], ["like", 5.0, 7.7, "y"], ["match", 7.7, 10.0, "pop"], ["propose", 10.0, 12.1, "x"], ["sent", 12.1, 13.4, "y"], ["ask", 13.4, 15.2, "x"], ["done", 15.2, 16.4, "y"]]
 // [from second, zoom, focus y in app CSS px]
-const FOCUS = [[3.0, 1.3, 540], [7.6, 1.42, 560], [11.9, 1.12, 430], [15.4, 1.42, 470], [17.9, 1.5, 300], [22.1, 1.42, 330]]
-const CAPS = [["c1", 3.1, 7.6], ["c2", 7.6, 11.9], ["c3", 11.9, 15.4], ["c4", 15.4, 20.2], ["c5", 20.2, 23.7]]
-const TAPLIST = [["deckHeart", 6.6], ["sendLike", 11.1], ["propose", 14.6], ["send", 17.3], ["ciSto", 21.4]]
+const FOCUS = [[2.1, 1.28, 540], [5.0, 1.42, 560], [7.7, 1.12, 430], [10.0, 1.42, 470], [12.1, 1.5, 300], [15.2, 1.42, 330]]
+const CAPS = [["c1", 2.2, 5.0], ["c2", 5.0, 7.7], ["c3", 7.7, 10.0], ["c4", 10.0, 13.4], ["c5", 13.4, 16.4]]
+const TAPLIST = [["deckHeart", 4.65], ["sendLike", 7.4], ["propose", 9.7], ["send", 11.8], ["ciSto", 14.9]]
+const IN = 0.28 // seconds a screen takes to come in
 const dots = Array.from({ length: 26 }, (_, i) => { const d = document.createElement("div"); d.className = "dot"; $("burst").appendChild(d); return d })
 
 window.render = (t) => {
-  // 1 · hook on the beach
-  $("beach").style.opacity = 1 - ease(win(t, 2.6, 3.2))
-  $("hook").style.opacity = NO_TEXT ? 0 : env(t, 0, 3.1, 0.25)
-  $("h1").style.transform = "translateY(" + (1 - back(win(t, 0.05, 0.5))) * 60 + "px)"
-  $("h2").style.opacity = ease(win(t, 0.9, 1.25))
-  $("h2").style.transform = "scale(" + (0.85 + 0.15 * back(win(t, 0.9, 1.3))) + ")"
-  $("people").style.opacity = env(t, 0.2, 3.0, 0.3)
+  // 1 · hook on the beach: quick pops over a slow push-in
+  $("beach").style.opacity = 1 - ease(win(t, 1.9, 2.3))
+  $("beach").style.transform = "scale(" + (1.08 + 0.07 * clamp(t / 2.3)) + ")"
+  $("hook").style.opacity = NO_TEXT ? 0 : env(t, 0, 2.15, 0.15)
+  $("h1").style.transform = "scale(" + (0.7 + 0.3 * back(win(t, 0.02, 0.32))) + ")"
+  $("h1").style.opacity = ease(win(t, 0.02, 0.15))
+  $("h2").style.opacity = ease(win(t, 0.55, 0.7))
+  $("h2").style.transform = "scale(" + (0.75 + 0.25 * back(win(t, 0.55, 0.85))) + ")"
+  $("people").style.opacity = env(t, 0.1, 2.1, 0.15)
   for (let i = 0; i < 4; i++) {
-    const p = $("p" + i), a = 0.25 + i * 0.18
-    p.style.opacity = i === 3 ? ease(win(t, 1.3, 1.6)) * (0.55 + 0.45 * Math.abs(Math.sin(t * 5))) : ease(win(t, a, a + 0.25))
-    p.style.transform = "translateY(" + (1 - back(win(t, a, a + 0.35))) * 80 + "px)"
+    const p = $("p" + i), a = 0.15 + i * 0.12
+    p.style.opacity = i === 3 ? ease(win(t, 0.75, 0.9)) * (0.55 + 0.45 * Math.abs(Math.sin(t * 7))) : ease(win(t, a, a + 0.12))
+    p.style.transform = "translateY(" + (1 - back(win(t, a, a + 0.25))) * 90 + "px)"
   }
-  // phone: in from below at 3s, a small push-in on the match, out at 23.7s
-  const pin = back(win(t, 2.9, 3.6)), pout = ease(win(t, 23.5, 24.1))
-  // Camera: per screen, zoom on the part that matters (y in app CSS px) and
-  // bring it to the middle of the frame, easing between screens.
-  let z = FOCUS[0][1], fy = FOCUS[0][2]
+  // phone: flies in at 1.85s, leaves at 16.25s
+  const pin = back(win(t, 1.85, 2.25)), pout = ease(win(t, 16.25, 16.6))
+  // Camera: per screen, zoom on the part that matters and bring it to the
+  // middle; inside each screen a slow push so the frame never sits still.
+  let z = FOCUS[0][1], fy = FOCUS[0][2], scene = 0
   for (let i = 1; i < FOCUS.length; i++) {
-    const k = ease(win(t, FOCUS[i][0] - 0.25, FOCUS[i][0] + 0.35))
+    const k = ease(win(t, FOCUS[i][0] - 0.12, FOCUS[i][0] + 0.3))
     z += (FOCUS[i][1] - z) * k; fy += (FOCUS[i][2] - fy) * k
   }
+  for (let i = 0; i < SCREENS.length; i++) if (t >= SCREENS[i][1]) scene = i
+  const [, sa, sb] = SCREENS[scene]
+  z *= 1 + 0.035 * win(t, sa, sb)
+  z *= 1 + 0.07 * Math.sin(Math.PI * win(t, 7.7, 8.05)) // punch on the match
   const oy = 16 + fy * 1.2, target = 1130 - (640 + oy)
   $("phone").style.transformOrigin = "50% " + oy + "px"
-  $("phone").style.transform = "translateY(" + (target * pin + (1 - pin) * 1300 + pout * 1500) + "px) scale(" + z + ")"
-  $("topfade").style.opacity = ease(win(t, 2.9, 3.3)) * (1 - ease(win(t, 23.6, 24.0)))
-  for (const [k, a, b] of SCREENS) $("s-" + k).style.opacity = env(t, a, b, 0.18)
+  $("phone").style.transform = "translateY(" + (target * pin + (1 - pin) * 1400 + pout * 1600) + "px) rotate(" + (1 - pin) * -8 + "deg) scale(" + z + ")"
+  $("topfade").style.opacity = ease(win(t, 1.9, 2.2)) * (1 - ease(win(t, 16.3, 16.55)))
+  // screens: each comes in over the last one, the way the app moves
+  SCREENS.forEach(([k, a, b, how], i) => {
+    const img = $("s-" + k), next = SCREENS[i + 1]
+    const shown = t >= a && t < (next ? next[1] + IN : b + 0.4)
+    img.style.zIndex = i + 1
+    if (!shown) { img.style.opacity = 0; return }
+    const e = ease(win(t, a, a + IN))
+    let tf = ""
+    if (how === "x") tf = "translateX(" + (1 - e) * 100 + "%)"
+    if (how === "y") tf = "translateY(" + (1 - e) * 100 + "%)"
+    if (how === "pop") tf = "scale(" + (0.82 + 0.18 * back(win(t, a, a + IN + 0.1))) + ")"
+    // pushed back while the next one comes in
+    const leave = next ? ease(win(t, next[1], next[1] + IN)) : 0
+    if (next && next[3] === "x") tf += " translateX(" + -leave * 30 + "%)"
+    img.style.transform = tf
+    img.style.filter = "brightness(" + (1 - 0.45 * leave) + ")"
+    img.style.opacity = how === "pop" ? ease(win(t, a, a + 0.12)) : 1
+  })
   for (const [id, a, b] of CAPS) {
-    const e = NO_TEXT ? 0 : env(t, a, b, 0.28)
+    const e = NO_TEXT ? 0 : env(t, a, b, 0.14)
     $(id).style.opacity = e
-    $(id).style.transform = "translateY(" + (1 - e) * 40 + "px)"
+    $(id).style.transform = "translateY(" + (1 - e) * 24 + "px) scale(" + (0.88 + 0.12 * back(win(t, a, a + 0.3))) + ")"
   }
   // tap ripples on what gets pressed
-  const tap = $("tap"); tap.style.opacity = 0
+  const tap = $("tap"); tap.style.opacity = 0; tap.style.zIndex = 20
   for (const [k, at] of TAPLIST) {
-    const x = win(t, at - 0.35, at + 0.25)
+    const x = win(t, at - 0.25, at + 0.2)
     if (x > 0 && x < 1) {
       const [cx, cy] = TAPS[k], s = 468 / 390
       tap.style.left = cx * s + "px"; tap.style.top = cy * s + "px"
@@ -143,7 +169,7 @@ window.render = (t) => {
     }
   }
   // lime burst on the match
-  const bx = win(t, 12.0, 13.4)
+  const bx = win(t, 7.75, 8.9)
   dots.forEach((d, i) => {
     const ang = (i / dots.length) * Math.PI * 2 + i, r = 260 + (i * 53) % 320, s = 12 + (i * 7) % 20
     d.style.width = d.style.height = s + "px"
@@ -153,11 +179,11 @@ window.render = (t) => {
     d.style.opacity = bx > 0 && bx < 1 ? Math.min(1, bx * 6) * (1 - bx) : 0
   })
   // CTA
-  const c = ease(win(t, 23.9, 24.5))
-  $("cta").style.opacity = c
-  $("cta").style.transform = "translateY(" + (1 - c) * 50 + "px)"
-  $("gabbo").style.opacity = ease(win(t, 24.5, 24.8))
-  $("gabbo").style.transform = "translateY(" + (1 - back(win(t, 24.5, 25.1))) * 260 + "px) rotate(" + Math.sin(t * 3) * 3 + "deg)"
+  const c = win(t, 16.45, 16.85)
+  $("cta").style.opacity = ease(c * 2)
+  $("cta").style.transform = "scale(" + (0.85 + 0.15 * back(c)) + ")"
+  $("gabbo").style.opacity = ease(win(t, 16.9, 17.05))
+  $("gabbo").style.transform = "translateY(" + (1 - back(win(t, 16.9, 17.3))) * 300 + "px) rotate(" + Math.sin(t * 4) * 4 + "deg)"
 }
 </script></body></html>`
 
@@ -165,7 +191,7 @@ const b = await chromium.launch(process.env.CHROME ? { executablePath: process.e
 const p = await b.newPage({ viewport: { width: 1080, height: 1920 } })
 await p.setContent(html, { waitUntil: "networkidle" })
 await p.evaluate(() => document.fonts.ready)
-const total = DURATION * FPS
+const total = Math.round(DURATION * FPS)
 for (let f = 0; f < total; f++) {
   await p.evaluate((t) => window.render(t), f / FPS)
   await p.screenshot({ path: join(FRAMES, `f${String(f).padStart(4, "0")}.jpg`), type: "jpeg", quality: 95 })

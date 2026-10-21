@@ -1,17 +1,19 @@
 # Video promo SANDER
 
-`out/sander-promo.mp4`: 27 secondi, 1080×1920, 30 fps, senza musica (il suono si sceglie dentro TikTok o Instagram).
+`out/sander-promo.mp4`: 19,5 secondi, 1080×1920, 60 fps, senza musica (il suono si sceglie dentro TikTok o Instagram).
 `out/sander-promo-senzatesto.mp4`: stesse scene senza scritte, con la fascia in alto libera per i tuoi testi.
 
 | Tempo | Scena | Testo |
 |---|---|---|
-| 0–3s | Amici in spiaggia, 3 sagome + la quarta tratteggiata | «Siete in tre? Manca sempre uno.» |
-| 3–7,6s | Mazzo di Scopri | 1 · Scopri — «Chi gioca vicino a te» |
-| 7,6–12s | Like su una risposta con commento | 2 · Like — «Un cuore e due parole» |
-| 12–15,4s | «È un match!» | 3 · Match — «Se ricambia, è match!» |
-| 15,4–20,2s | Proponi giorno e bagno, proposta inviata | 4 · Partita — «Giorno e bagno, in un tocco» |
-| 20,2–23,7s | Lei tocca «Ci sto», partita creata | 5 · Fatto — «"Ci sto" e si gioca» |
-| 24–27s | Logo, Gabbo, invito | «Sabato si gioca.» · Gratis · sanderbv.it |
+| 0–2,1s | Amici in spiaggia, 3 sagome + la quarta tratteggiata | «Siete in tre? Manca sempre uno.» |
+| 2,1–5s | Il telefono entra al volo: mazzo di Scopri | 1 · Scopri — «Chi gioca vicino a te» |
+| 5–7,7s | Sale il pannello del like, commento | 2 · Like — «Un cuore e due parole» |
+| 7,7–10s | «È un match!» con colpo di zoom | 3 · Match — «Se ricambia, è match!» |
+| 10–13,4s | Proponi giorno e bagno, proposta inviata | 4 · Partita — «Giorno e bagno, in un tocco» |
+| 13,4–16,4s | Lei tocca «Ci sto», partita creata | 5 · Fatto — «"Ci sto" e si gioca» |
+| 16,5–19,5s | Logo, Gabbo, invito | «Sabato si gioca.» · Gratis · sanderbv.it |
+
+Le schermate si muovono come l'app: le pagine nuove entrano di lato, i pannelli salgono dal basso, la camera non sta mai ferma.
 
 Le scritte stanno nella fascia alta: niente sotto i 1500 px né sul lato destro, dove TikTok e Instagram mettono pulsanti e didascalia.
 
