@@ -41,6 +41,26 @@ export function ProfileCard({
   if (prompts[0]) blocks.push(<PromptBlock key={`pr-${prompts[0].id}`} p={prompts[0]} onLike={onLike} />)
   if (photos[0]) blocks.push(<PhotoBlock key={`ph-${photos[0].id}`} url={photos[0].url} name={card.name} onLike={onLike && (() => onLike({ kind: "PHOTO", id: photos[0].id, url: photos[0].url }))} />)
   blocks.push(<DetailsBlock key="details" card={card} />)
+  // What you'd be together on a 2v2 court: right after the first photo, where
+  // the floating pass/like buttons don't cover it.
+  if (fit) {
+    const rival = fit.kind === "rival"
+    blocks.splice(first ? 1 : 0, 0, (
+      <div
+        key="fit"
+        className={cn(
+          "mx-1 flex items-start gap-3 rounded-[var(--radius-md)] px-4 py-3",
+          rival ? "bg-[color-mix(in_srgb,var(--compete)_14%,transparent)]" : "bg-[var(--accent-soft)]",
+        )}
+      >
+        <Users className={cn("mt-0.5 h-5 w-5 shrink-0", rival ? "text-[var(--compete)]" : "text-[var(--accent)]")} aria-hidden="true" />
+        <span>
+          <span className={cn("block text-base font-extrabold", rival ? "text-[var(--compete)]" : "text-[var(--accent)]")}>{fit.title}</span>
+          {fit.detail && <span className="block text-sm text-white/80">{fit.detail}</span>}
+        </span>
+      </div>
+    ))
+  }
   if (prompts[1]) blocks.push(<PromptBlock key={`pr-${prompts[1].id}`} p={prompts[1]} onLike={onLike} />)
   if (!compact) {
     if (photos[1]) blocks.push(<PhotoBlock key={`ph-${photos[1].id}`} url={photos[1].url} name={card.name} onLike={onLike && (() => onLike({ kind: "PHOTO", id: photos[1].id, url: photos[1].url }))} />)
@@ -106,20 +126,6 @@ export function ProfileCard({
         </ul>
         )
       })()}
-      {fit && (
-        <div
-          className={cn(
-            "mx-1 flex items-start gap-3 rounded-[var(--radius-md)] px-4 py-3",
-            fit.kind === "rival" ? "bg-[color-mix(in_srgb,var(--compete)_14%,transparent)]" : "bg-[var(--accent-soft)]",
-          )}
-        >
-          <Users className={cn("mt-0.5 h-5 w-5 shrink-0", fit.kind === "rival" ? "text-[var(--compete)]" : "text-[var(--accent)]")} aria-hidden="true" />
-          <span>
-            <span className={cn("block text-base font-extrabold", fit.kind === "rival" ? "text-[var(--compete)]" : "text-[var(--accent)]")}>{fit.title}</span>
-            {fit.detail && <span className="block text-sm text-white/80">{fit.detail}</span>}
-          </span>
-        </div>
-      )}
       {blocks}
       {onReport && (
         <button
