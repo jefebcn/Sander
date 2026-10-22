@@ -58,7 +58,7 @@ function Footnote({ children }: { children: ReactNode }) {
 export default async function InvestorPage() {
   const session = await getCurrentSession()
   if (!session?.user?.id) redirect("/auth/signin?callbackUrl=/admin/investitori")
-  if (!isAdminEmail(session.user.email)) redirect("/")
+  if (!isAdminEmail(session.user.email)) redirect("/admin/accesso")
 
   const now = new Date()
   const [inv, m, sc] = await Promise.all([getInvestorMetrics(now), getAdminMetrics(now, INVESTOR_MONTHS), getScopriMetrics(now)])

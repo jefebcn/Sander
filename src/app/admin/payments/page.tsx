@@ -10,7 +10,7 @@ import { AdminPendingPaymentsList } from "@/components/tournament/AdminPendingPa
 export default async function AdminPaymentsPage() {
   const session = await getCurrentSession()
   if (!session?.user?.id) redirect("/auth/signin?callbackUrl=/admin/payments")
-  if (!isAdminEmail(session.user.email)) redirect("/")
+  if (!isAdminEmail(session.user.email)) redirect("/admin/accesso")
 
   return (
     <div className="min-h-dvh pb-10">

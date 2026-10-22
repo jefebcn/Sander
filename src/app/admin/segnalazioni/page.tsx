@@ -41,7 +41,7 @@ function H2({ children, count }: { children: React.ReactNode; count?: number }) 
 export default async function AdminReportsPage() {
   const session = await getCurrentSession()
   if (!session?.user?.id) redirect("/auth/signin?callbackUrl=/admin/segnalazioni")
-  if (!isAdminEmail(session.user.email)) redirect("/")
+  if (!isAdminEmail(session.user.email)) redirect("/admin/accesso")
 
   const weekAgo = daysAgo(7)
   const [reports, photos, flagged, suspended, disputes, selfies] = await Promise.all([

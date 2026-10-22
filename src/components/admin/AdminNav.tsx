@@ -18,6 +18,8 @@ const LINKS = [
 /** Desktop only: the admin pages side by side with the page you are on. */
 export function AdminNav() {
   const pathname = usePathname()
+  // The "not an admin" page has nothing to navigate to.
+  if (pathname === "/admin/accesso") return null
   return (
     <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-[var(--border)] bg-[var(--surface-1)] px-3 py-6 lg:flex print:hidden">
       <div className="px-3 pb-6">

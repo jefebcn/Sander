@@ -47,7 +47,7 @@ function Note({ children }: { children: ReactNode }) {
 export default async function AdminMetricsPage() {
   const session = await getCurrentSession()
   if (!session?.user?.id) redirect("/auth/signin?callbackUrl=/admin/metriche")
-  if (!isAdminEmail(session.user.email)) redirect("/")
+  if (!isAdminEmail(session.user.email)) redirect("/admin/accesso")
 
   const [m, sc] = await Promise.all([getAdminMetrics(), getScopriMetrics()])
   const { revenue, averages, credits, acquisition, retention } = m

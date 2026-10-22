@@ -6,7 +6,9 @@ import { useSession } from "next-auth/react"
 import { checkHasPlayerProfile } from "@/actions/players"
 
 const PROFILE_KEY = "sander_has_profile"
-const EXEMPT = ["/onboarding/", "/auth/"]
+// Admin needs an admin email, not a player card: an admin account without a
+// profile must still reach it (each admin page checks the email itself).
+const EXEMPT = ["/onboarding/", "/auth/", "/admin"]
 
 /**
  * Sends a signed-in user without a player profile to the 2-field profile

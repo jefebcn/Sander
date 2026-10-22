@@ -25,7 +25,7 @@ interface Section {
 export default async function AdminHomePage() {
   const session = await getCurrentSession()
   if (!session?.user?.id) redirect("/auth/signin?callbackUrl=/admin")
-  if (!isAdminEmail(session.user.email)) redirect("/")
+  if (!isAdminEmail(session.user.email)) redirect("/admin/accesso")
 
   const [openReports, errors] = await Promise.all([
     db.playerBlock.count({ where: { reported: true, reviewedAt: null } }),

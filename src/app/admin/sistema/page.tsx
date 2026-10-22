@@ -26,7 +26,7 @@ function Section({ icon, title, children }: { icon: ReactNode; title: string; ch
 export default async function AdminSystemPage() {
   const session = await getCurrentSession()
   if (!session?.user?.id) redirect("/auth/signin?callbackUrl=/admin/sistema")
-  if (!isAdminEmail(session.user.email)) redirect("/")
+  if (!isAdminEmail(session.user.email)) redirect("/admin/accesso")
 
   const errors = await db.appError.findMany({ orderBy: { lastSeenAt: "desc" }, take: 50 })
 

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import { signOut } from "next-auth/react"
 import { ChevronLeft, Camera, X, User } from "lucide-react"
 import { saveProfile } from "@/actions/profile"
 import { capturePhoto, isNativeApp, hapticTap } from "@/lib/native"
@@ -222,7 +223,7 @@ const ROLES: { value: Role; label: string; hint: string }[] = [
   { value: "DEFENDER", label: "Difensore", hint: "Dietro, recuperi tutto" },
 ]
 
-export function ProfileSetupForm({ initialData }: { initialData?: InitialData }) {
+export function ProfileSetupForm({ initialData, email }: { initialData?: InitialData; email?: string | null }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -362,6 +363,24 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
             ? "Aggiorna i tuoi dati quando vuoi."
             : "Bastano nome e ruolo. Comune e livello ti portano subito alle partite giuste."}
         </p>
+        {/* A new account lands here from every page. Without this, someone
+            signed in with the wrong account (say Google on a new computer)
+            had no way back to the sign-in: it bounced them here again. */}
+        {!initialData && email && (
+          <p className="mt-3 text-sm text-white/70">
+            Sei entrato come <strong className="text-white">{email}</strong>.{" "}
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.removeItem("sander_has_profile")
+                signOut({ callbackUrl: "/auth/signin" })
+              }}
+              className="inline-flex min-h-[2.75rem] items-center font-bold text-[var(--accent)] underline"
+            >
+              Non sei tu? Esci
+            </button>
+          </p>
+        )}
       </div>
 
       {/* Avatar: a photo sticker with a white die-cut border. */}
