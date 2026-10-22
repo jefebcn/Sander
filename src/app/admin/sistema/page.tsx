@@ -26,7 +26,7 @@ function Section({ icon, title, children }: { icon: ReactNode; title: string; ch
 export default async function AdminSystemPage() {
   const session = await getCurrentSession()
   if (!session?.user?.id) redirect("/auth/signin?callbackUrl=/admin/sistema")
-  if (!isAdminEmail(session.user.email)) redirect("/")
+  if (!isAdminEmail(session.user.email)) redirect("/admin/accesso")
 
   const errors = await db.appError.findMany({ orderBy: { lastSeenAt: "desc" }, take: 50 })
 
@@ -37,7 +37,7 @@ export default async function AdminSystemPage() {
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.5rem)" }}
       >
         <Link
-          href="/profile?tab=admin"
+          href="/admin"
           aria-label="Indietro"
           className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-2)] text-white active:bg-[var(--surface-3)]"
         >

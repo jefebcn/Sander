@@ -10,6 +10,8 @@ import { LikeSheet, type LikeResult } from "./LikeSheet"
 import { MatchOverlay } from "./MatchOverlay"
 import type { Allowance, LikeTarget, ScopriCard } from "./types"
 import { resizedPhoto } from "@/lib/photo"
+import { shownAffinity } from "@/lib/scopri/score"
+import { pairFit, type PairSide } from "@/lib/scopri/pairFit"
 
 /**
  * "Il più compatibile di oggi": one person a day, from a stable pairing of
@@ -20,11 +22,13 @@ export function DailyPickCard({
   seen: initialSeen,
   allowance: initialAllowance,
   myPhoto,
+  me,
 }: {
   card: ScopriCard
   seen: boolean
   allowance: Allowance
   myPhoto: string | null
+  me?: PairSide
 }) {
   const [open, setOpen] = useState(false)
   const [seen, setSeen] = useState(initialSeen)
@@ -49,17 +53,17 @@ export function DailyPickCard({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="pressable relative flex w-full items-center gap-4 overflow-hidden rounded-[var(--radius-lg)] p-3 pr-4 text-left shadow-[var(--shadow-card)]"
+        className="pressable relative flex w-full items-center gap-3 overflow-hidden rounded-[var(--radius-lg)] p-2.5 pr-4 text-left shadow-[var(--shadow-card)]"
         style={{ background: "linear-gradient(120deg, color-mix(in srgb, var(--ace) 22%, var(--surface-2)), var(--surface-2) 60%)" }}
       >
-        <span className="film relative h-24 w-20 shrink-0 overflow-hidden rounded-[var(--radius-md)] bg-[var(--surface-4)] ring-2 ring-[var(--ace)]">
+        <span className="film relative h-16 w-14 shrink-0 overflow-hidden rounded-[var(--radius-md)] bg-[var(--surface-4)] ring-2 ring-[var(--ace)]">
           {photo && <img src={resizedPhoto(photo, "thumb")} alt="" className="h-full w-full object-cover" />}
         </span>
         <span className="min-w-0 flex-1">
           <span className="eyebrow flex items-center gap-1 text-[var(--ace)]">
             <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> Il più compatibile di oggi
           </span>
-          <span className="font-hand mt-1 block text-[1.9rem] leading-tight text-white">
+          <span className="font-hand block text-[1.6rem] leading-tight text-white">
             {card.name}
             {card.age !== null && <span className="font-serif font-normal text-[var(--muted-text)]">, {card.age}</span>}
           </span>
@@ -71,13 +75,13 @@ export function DailyPickCard({
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-4)] text-[var(--success)]" aria-label="Già visto">
             <Check className="h-5 w-5" aria-hidden="true" />
           </span>
-        ) : (
-          <span className="num shrink-0 text-2xl text-[var(--ace)]">{card.score ?? 0}%</span>
-        )}
+        ) : shownAffinity(card.score) !== null ? (
+          <span className="num shrink-0 text-2xl text-[var(--ace)]">{card.score}%</span>
+        ) : null}
       </button>
 
       <Sheet open={open} onOpenChange={setOpen} title="Il più compatibile di oggi" description="Calcolato su tutti i giocatori di Scopri: è probabile che anche tu piaccia a lui o a lei.">
-        <ProfileCard card={card} onLike={seen ? undefined : (t) => setTarget(t)} />
+        <ProfileCard card={card} fit={me ? pairFit(me, card) : null} onLike={seen ? undefined : (t) => setTarget(t)} />
       </Sheet>
       <LikeSheet card={card} target={target} allowance={allowance} onClose={() => setTarget(null)} onSent={onSent} onAllowance={setAllowance} />
       {match && <MatchOverlay {...match} myPhoto={myPhoto} onClose={() => setMatch(null)} />}

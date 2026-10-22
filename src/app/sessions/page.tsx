@@ -25,8 +25,7 @@ export default async function SessionsPage() {
         <div className="flex gap-2 px-4 pb-4">
           <Link
             href="/sessions/new"
-            className="flex min-h-[3.5rem] flex-1 items-center justify-center gap-2 rounded-2xl font-black text-black text-base transition-opacity active:opacity-80"
-            style={{ background: "var(--accent)" }}
+            className="btn btn-primary flex-1"
           >
             <Plus className="h-5 w-5" />
             Crea una partita
@@ -34,9 +33,9 @@ export default async function SessionsPage() {
           <Link
             href="/segna"
             title="Tabellone libero: conta i punti senza registrare il risultato"
-            className="flex min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] px-4 font-black text-white transition-opacity active:opacity-80"
+            className="btn btn-secondary px-5"
           >
-            <Gauge className="h-5 w-5 text-[var(--accent)]" />
+            <Gauge className="h-5 w-5" />
             Tabellone
           </Link>
         </div>
@@ -45,7 +44,7 @@ export default async function SessionsPage() {
         <div className="px-4 pb-4">
           <Link
             href="/auth/signin?callbackUrl=%2Fsessions%2Fnew&mode=register"
-            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-black text-black text-base transition-opacity active:opacity-80"
+            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full font-black text-black text-base transition-opacity active:opacity-80"
             style={{ background: "var(--accent)" }}
           >
             <Plus className="h-5 w-5" />

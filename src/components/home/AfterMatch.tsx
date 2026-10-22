@@ -150,7 +150,7 @@ export function AfterMatchRecap({
           />
           <Link
             href={`/sessions/new?from=${recap.id}`}
-            className="pressable flex min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl bg-[var(--surface-3)] px-4 text-base font-extrabold text-white ring-1 ring-[var(--crest-hair)]"
+            className="pressable flex min-h-[3.5rem] items-center justify-center gap-2 rounded-full btn-secondary px-4 text-base font-extrabold text-white"
           >
             <RotateCcw className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" /> Rigioca
           </Link>

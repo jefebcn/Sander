@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { isKnownCity } from "@/lib/cities"
+import { isKnownPlace } from "@/lib/comuni"
 
 export const SendMessageSchema = z.object({
   threadId: z.string().min(1),
@@ -18,9 +18,15 @@ export const ProposeInChatSchema = z
     threadId: z.string().min(1),
     date: z.coerce.date(),
     location: z.string().trim().min(2, "Scrivi dove giocate (es. Bagno 26)").max(100),
-    city: z.string().refine(isKnownCity, "Comune non riconosciuto").optional(),
+    city: z.string().refine(isKnownPlace, "Comune non riconosciuto").optional(),
+    /** A 2v2 with the two of you as a pair, or a training just between you two. */
+    kind: z.enum(["GAME", "TRAINING"]).default("GAME"),
+    focus: z.enum(["PALLEGGIO", "SERVIZIO", "RICEZIONE", "TUTTO"]).optional(),
   })
   .strict()
+
+/** "Entrate in coppia": you and the person you're chatting with take two free seats. */
+export const JoinAsPairSchema = z.object({ threadId: z.string().min(1), sessionId: z.string().min(1) }).strict()
 
 export const ProposalAnswerSchema = z
   .object({ proposalId: z.string().min(1), answer: z.enum(["accept", "decline", "cancel"]) })

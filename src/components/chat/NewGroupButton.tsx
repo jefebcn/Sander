@@ -167,7 +167,7 @@ function NewGroupSheet({ meId, onClose }: { meId: string; onClose: () => void })
           <button
             onClick={create}
             disabled={selected.size < 2 || creating}
-            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-black text-black transition-opacity active:opacity-80 disabled:opacity-40"
+            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full font-black text-black transition-opacity active:opacity-80 disabled:opacity-40"
             style={{ background: "var(--accent)" }}
           >
             {creating ? "Creo…" : `Crea gruppo${selected.size >= 2 ? ` (${selected.size})` : ""}`}

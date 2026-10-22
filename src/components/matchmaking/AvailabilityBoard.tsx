@@ -123,7 +123,7 @@ export function AvailabilityBoard({ initial, groups }: Props) {
             ))}
             <Link
               href="/sessions/new"
-              className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-black text-black"
+              className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full font-black text-black"
               style={{ background: "var(--accent)" }}
             >
               <Plus className="h-5 w-5" aria-hidden="true" />
@@ -163,7 +163,7 @@ export function AvailabilityBoard({ initial, groups }: Props) {
                       className={cn(
                         "flex min-h-[3.5rem] flex-1 items-center justify-center rounded-xl text-sm font-bold transition-colors",
                         on
-                          ? "bg-[var(--accent)] text-black"
+                          ? "sel-on"
                           : "bg-[var(--surface-2)] text-[var(--muted-text)]",
                       )}
                     >
@@ -180,7 +180,7 @@ export function AvailabilityBoard({ initial, groups }: Props) {
               type="button"
               onClick={save}
               disabled={isPending}
-              className="mt-3 flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl font-black text-black disabled:opacity-60"
+              className="mt-3 flex min-h-[3.5rem] w-full items-center justify-center rounded-full font-black text-black disabled:opacity-60"
               style={{ background: "var(--accent)" }}
             >
               {isPending ? (

@@ -62,5 +62,15 @@ await q(`INSERT INTO attendance_events (id,"playerId","sessionId",kind,"createdA
 await q(
   `INSERT INTO duos (id,"aId","bId",status,name,motto,"acceptedAt") VALUES ('duo_ls','luca','sara','ACTIVE','Onda Lunga','Muro alto, difesa che non molla',now())`,
 )
+// In four days Luca and Sara play at Bagno 30 and miss a pair: Marco and Anna
+// join it together from their chat ("Entrate in coppia"). Four days out, so it
+// stays out of the deck's "games near you" (next three days).
+await q(
+  `INSERT INTO sessions (id,"createdAt","updatedAt","organizerId",title,location,city,date,"maxPlayers",status)
+   VALUES ('s_pair',now(),now(),'luca','2v2 al 30','Bagno 30','Rimini',now() + interval '4 days',4,'OPEN')`,
+)
+for (const id of ["luca", "sara"]) {
+  await q(`INSERT INTO session_participants (id,"sessionId","playerId",team) VALUES ($1,'s_pair',$2,0)`, [`sp_pair_${id}`, id])
+}
 console.log("e2e seed ok")
 await c.end()

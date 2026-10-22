@@ -32,8 +32,8 @@ function answers(variant: "guest" | "player", hasOpenMatches: boolean) {
           q: "C'è un modo rapido?",
           a: "Un tocco su Entra e sei in campo.",
           more: hasOpenMatches
-            ? "Lo trovi sui posti liberi qui sopra. Crea, trova, sono libero e segna sono sempre nel + in basso."
-            : "Apri Trova e scegli un posto libero. Crea, trova, sono libero e segna sono sempre nel + in basso.",
+            ? "Lo trovi sui posti liberi qui sopra. Crea, trova, sono libero e segna li trovi sempre in cima alla home."
+            : "Apri Trova e scegli un posto libero. Crea, trova, sono libero e segna li trovi sempre in cima alla home.",
         },
   ]
 }

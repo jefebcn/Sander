@@ -16,7 +16,7 @@ export function NotificationBell({ unreadCount }: NotificationBellProps) {
       <button
         onClick={() => setOpen(true)}
         aria-label={`Notifiche${unreadCount > 0 ? ` (${unreadCount} non lette)` : ""}`}
-        className="relative ml-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--surface-2)] ring-1 ring-[var(--crest-hair)] transition-transform active:scale-90"
+        className="relative ml-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--surface-3)] ring-1 ring-white/15 transition-transform active:scale-90"
       >
         <Bell className="h-5 w-5 text-white" />
         {unreadCount > 0 && (

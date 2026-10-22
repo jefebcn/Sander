@@ -2,15 +2,16 @@
 
 import { useState, useRef, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import { signOut } from "next-auth/react"
 import { ChevronLeft, Camera, X, User } from "lucide-react"
 import { saveProfile } from "@/actions/profile"
 import { capturePhoto, isNativeApp, hapticTap } from "@/lib/native"
 import { cn } from "@/lib/utils"
 import { canGoBackInApp } from "@/lib/navHistory"
-import { CITY_NAMES } from "@/lib/cities"
 import { START_LEVELS, type StartLevel } from "@/lib/startLevel"
 import { resizedPhoto } from "@/lib/photo"
 import { shrinkImage } from "@/lib/shrinkImage"
+import { CityPicker } from "@/components/ui/CityPicker"
 
 // ─── Countries list ────────────────────────────────────────────────────────────
 const COUNTRIES = [
@@ -222,7 +223,7 @@ const ROLES: { value: Role; label: string; hint: string }[] = [
   { value: "DEFENDER", label: "Difensore", hint: "Dietro, recuperi tutto" },
 ]
 
-export function ProfileSetupForm({ initialData }: { initialData?: InitialData }) {
+export function ProfileSetupForm({ initialData, email }: { initialData?: InitialData; email?: string | null }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -310,9 +311,11 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
         })
         localStorage.setItem("sander_onboarded", "1")
         localStorage.setItem("sander_has_profile", "1")
-        // Editing from the profile goes back there; a brand-new player gets the
-        // optional one-minute Scopri step (it skips itself for minors).
-        router.push(initialData ? "/profile" : "/onboarding/scopri")
+        // Editing from the profile goes back there; a brand-new player goes
+        // straight into the app. Sign-up stays one step: the Scopri profile is
+        // offered afterwards (home card, Scopri tab, morning reminder), never
+        // in the way of getting in.
+        router.push(initialData ? "/profile" : "/")
         router.refresh()
       } catch (err) {
         setError(err instanceof Error ? err.message : "Errore durante il salvataggio")
@@ -345,7 +348,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
           ) : (
             <span>SANDER</span>
           )}
-          <span>{initialData ? "Profilo" : "Passo 1 di 2"}</span>
+          <span>{initialData ? "Profilo" : "Ultimo passo"}</span>
           <span>Gratis</span>
         </div>
         <h1 className="font-hand mt-4 text-[3.25rem] leading-[0.92] text-white">
@@ -360,6 +363,24 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
             ? "Aggiorna i tuoi dati quando vuoi."
             : "Bastano nome e ruolo. Comune e livello ti portano subito alle partite giuste."}
         </p>
+        {/* A new account lands here from every page. Without this, someone
+            signed in with the wrong account (say Google on a new computer)
+            had no way back to the sign-in: it bounced them here again. */}
+        {!initialData && email && (
+          <p className="mt-3 text-sm text-white/70">
+            Sei entrato come <strong className="text-white">{email}</strong>.{" "}
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.removeItem("sander_has_profile")
+                signOut({ callbackUrl: "/auth/signin" })
+              }}
+              className="inline-flex min-h-[2.75rem] items-center font-bold text-[var(--accent)] underline"
+            >
+              Non sei tu? Esci
+            </button>
+          </p>
+        )}
       </div>
 
       {/* Avatar: a photo sticker with a white die-cut border. */}
@@ -432,7 +453,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
                 aria-pressed={role === r.value}
                 className={cn(
                   "flex min-h-[3.75rem] flex-1 flex-col items-center justify-center rounded-[1.25rem] px-3 transition-colors",
-                  role === r.value ? "bg-[var(--accent)] text-black" : "bg-white/5 text-white ring-1 ring-white/15",
+                  role === r.value ? "sel-on" : "sel-off",
                 )}
               >
                 <span className="text-base font-black">{r.label}</span>
@@ -447,23 +468,10 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
         <div className="border-t border-white/10 px-5 py-5">
           <Step n="03" label="Comune" />
           <p className="font-hand mt-1 text-[1.9rem] leading-tight text-white">Dove giochi di solito?</p>
-          <p className="mt-0.5 text-sm text-white/65">Ti mostriamo prima le partite e la classifica del tuo comune.</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {CITY_NAMES.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setHomeCity(homeCity === c ? "" : c)}
-                aria-pressed={homeCity === c}
-                className={cn(
-                  "min-h-[2.75rem] rounded-full px-4 text-sm font-bold transition-colors",
-                  homeCity === c ? "bg-[var(--accent)] text-black" : "bg-white/5 text-white ring-1 ring-white/15",
-                )}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
+          <p className="mt-0.5 text-sm text-white/65">
+            Ti mostriamo prima le partite e la classifica del tuo comune. SANDER cresce con te: vale ovunque in Italia.
+          </p>
+          <CityPicker value={homeCity} onChange={setHomeCity} className="mt-3" />
         </div>
 
         <div className="border-t border-white/10 px-5 py-5">
@@ -479,7 +487,7 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
                 aria-pressed={startLevel === l.id}
                 className={cn(
                   "flex min-h-[3.75rem] flex-col items-center justify-center rounded-[1.25rem] px-2 text-center transition-colors",
-                  startLevel === l.id ? "bg-[var(--accent)] text-black" : "bg-white/5 text-white ring-1 ring-white/15",
+                  startLevel === l.id ? "sel-on" : "sel-off",
                 )}
               >
                 <span className="text-sm font-black">{l.label}</span>

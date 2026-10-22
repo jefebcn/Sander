@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-/** Rounded square holding an icon in the current area tone. */
+/** Round glass button-shape holding a line icon: the one icon container in the app. */
 export function IconTile({
   icon: Icon,
   className,
@@ -15,7 +15,7 @@ export function IconTile({
     <span
       aria-hidden="true"
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--tone-soft)] text-[var(--tone)]",
+        "flex shrink-0 items-center justify-center rounded-full bg-[var(--surface-3)] text-white ring-1 ring-white/15",
         size === "md" ? "h-11 w-11" : "h-14 w-14",
         className,
       )}

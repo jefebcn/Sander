@@ -41,7 +41,7 @@ function H2({ children, count }: { children: React.ReactNode; count?: number }) 
 export default async function AdminReportsPage() {
   const session = await getCurrentSession()
   if (!session?.user?.id) redirect("/auth/signin?callbackUrl=/admin/segnalazioni")
-  if (!isAdminEmail(session.user.email)) redirect("/")
+  if (!isAdminEmail(session.user.email)) redirect("/admin/accesso")
 
   const weekAgo = daysAgo(7)
   const [reports, photos, flagged, suspended, disputes, selfies] = await Promise.all([
@@ -102,7 +102,7 @@ export default async function AdminReportsPage() {
 
   return (
     <div className="pb-10">
-      <PageHeader eyebrow="Admin" title="Moderazione Scopri" backHref="/profile?tab=admin" />
+      <PageHeader eyebrow="Admin" title="Moderazione Scopri" backHref="/admin" />
       <div className="px-4">
         <H2 count={selfies.length}>Verifiche foto</H2>
         <p className="mb-2 text-sm text-[var(--muted-text)]">

@@ -47,7 +47,7 @@ function Note({ children }: { children: ReactNode }) {
 export default async function AdminMetricsPage() {
   const session = await getCurrentSession()
   if (!session?.user?.id) redirect("/auth/signin?callbackUrl=/admin/metriche")
-  if (!isAdminEmail(session.user.email)) redirect("/")
+  if (!isAdminEmail(session.user.email)) redirect("/admin/accesso")
 
   const [m, sc] = await Promise.all([getAdminMetrics(), getScopriMetrics()])
   const { revenue, averages, credits, acquisition, retention } = m
@@ -59,7 +59,7 @@ export default async function AdminMetricsPage() {
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.5rem)" }}
       >
         <Link
-          href="/profile?tab=admin"
+          href="/admin"
           aria-label="Indietro"
           className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-2)] text-white active:bg-[var(--surface-3)]"
         >
@@ -68,7 +68,7 @@ export default async function AdminMetricsPage() {
         <h1 className="text-xl font-black text-white">Metriche</h1>
       </div>
 
-      <div className="space-y-4 px-4">
+      <div className="space-y-4 px-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-4 lg:space-y-0">
         {/* ── Scopri ─────────────────────────────────────────────────── */}
         <Section icon={<HeartHandshake className="h-4 w-4 text-[var(--accent)]" />} title="Scopri">
           <div className="grid grid-cols-2 gap-2">

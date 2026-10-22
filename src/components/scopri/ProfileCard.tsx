@@ -1,12 +1,14 @@
 "use client"
 
 /* eslint-disable @next/next/no-img-element -- user photos from Blob, any size */
-import { Heart, MapPin, Shield, Hand, ArrowLeftRight, Target, Sparkles, BadgeCheck, CalendarCheck, Sun, Repeat, Flag, ScanFace } from "lucide-react"
+import { Heart, MapPin, Shield, Hand, ArrowLeftRight, Target, Sparkles, BadgeCheck, CalendarCheck, Sun, Repeat, Flag, ScanFace, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { lookingForLabel, sideLabel } from "@/lib/scopri/prompts"
 import { freeSlotLabel, VERIFIED_MIN_GAMES, VERIFIED_MIN_RELIABILITY } from "@/lib/scopri/reliability"
 import type { ScopriCard, LikeTarget } from "./types"
 import { resizedPhoto } from "@/lib/photo"
+import { shownAffinity } from "@/lib/scopri/score"
+import type { PairFit } from "@/lib/scopri/pairFit"
 
 /**
  * A player as Scopri shows them: photos and prompt answers woven together,
@@ -19,8 +21,11 @@ export function ProfileCard({
   onReport,
   className,
   compact = false,
+  fit,
 }: {
   card: ScopriCard
+  /** What the two of you would be on a 2v2 court (partners or opponents). */
+  fit?: PairFit | null
   onLike?: (target: LikeTarget) => void
   /** Shows "Segnala o blocca" under the card. */
   onReport?: () => void
@@ -36,6 +41,26 @@ export function ProfileCard({
   if (prompts[0]) blocks.push(<PromptBlock key={`pr-${prompts[0].id}`} p={prompts[0]} onLike={onLike} />)
   if (photos[0]) blocks.push(<PhotoBlock key={`ph-${photos[0].id}`} url={photos[0].url} name={card.name} onLike={onLike && (() => onLike({ kind: "PHOTO", id: photos[0].id, url: photos[0].url }))} />)
   blocks.push(<DetailsBlock key="details" card={card} />)
+  // What you'd be together on a 2v2 court: right after the first photo, where
+  // the floating pass/like buttons don't cover it.
+  if (fit) {
+    const rival = fit.kind === "rival"
+    blocks.splice(first ? 1 : 0, 0, (
+      <div
+        key="fit"
+        className={cn(
+          "mx-1 flex items-start gap-3 rounded-[var(--radius-md)] px-4 py-3",
+          rival ? "bg-[color-mix(in_srgb,var(--compete)_14%,transparent)]" : "bg-[var(--accent-soft)]",
+        )}
+      >
+        <Users className={cn("mt-0.5 h-5 w-5 shrink-0", rival ? "text-[var(--compete)]" : "text-[var(--accent)]")} aria-hidden="true" />
+        <span>
+          <span className={cn("block text-base font-extrabold", rival ? "text-[var(--compete)]" : "text-[var(--accent)]")}>{fit.title}</span>
+          {fit.detail && <span className="block text-sm text-white/80">{fit.detail}</span>}
+        </span>
+      </div>
+    ))
+  }
   if (prompts[1]) blocks.push(<PromptBlock key={`pr-${prompts[1].id}`} p={prompts[1]} onLike={onLike} />)
   if (!compact) {
     if (photos[1]) blocks.push(<PhotoBlock key={`ph-${photos[1].id}`} url={photos[1].url} name={card.name} onLike={onLike && (() => onLike({ kind: "PHOTO", id: photos[1].id, url: photos[1].url }))} />)
@@ -81,22 +106,26 @@ export function ProfileCard({
             )}
           </p>
         </div>
-        {typeof card.score === "number" && (
+        {shownAffinity(card.score) !== null && (
           <div className="shrink-0 text-right">
             <p className="num text-3xl leading-none text-[var(--accent)]">{card.score}%</p>
             <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">affinità</p>
           </div>
         )}
       </header>
-      {card.reasons && card.reasons.length > 0 && (
+      {(() => {
+        // The pair band below already says it when roles complement each other.
+        const reasons = (card.reasons ?? []).filter((r) => !(fit && r === "Muro + difesa"))
+        return reasons.length > 0 && (
         <ul className="flex flex-wrap gap-2 px-1" aria-label="Perché te lo proponiamo">
-          {card.reasons.map((r) => (
+          {reasons.map((r) => (
             <li key={r} className="flex items-center gap-1 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-sm font-bold text-[var(--accent)]">
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> {r}
             </li>
           ))}
         </ul>
-      )}
+        )
+      })()}
       {blocks}
       {onReport && (
         <button

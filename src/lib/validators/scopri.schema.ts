@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { isKnownCity } from "@/lib/cities"
+import { isKnownPlace } from "@/lib/comuni"
 import { isPromptKey, LOOKING_FOR_KEYS, SIDE_KEYS } from "@/lib/scopri/prompts"
 import { SHOW_ME_KEYS } from "@/lib/scopri/rules"
 import { ANSWER_MAX, COMMENT_MAX, MAX_PHOTOS, MOTTO_MAX, PROMPT_COUNT } from "@/lib/scopri/rules"
@@ -48,7 +48,7 @@ export const DiscoverSettingsSchema = z
     side: z.enum(SIDE_KEYS).nullable().optional(),
     lookingFor: z.array(z.enum(LOOKING_FOR_KEYS)).max(LOOKING_FOR_KEYS.length).optional(),
     paused: z.boolean().optional(),
-    prefCities: z.array(z.string().refine(isKnownCity, "Comune non riconosciuto")).max(20).optional(),
+    prefCities: z.array(z.string().refine(isKnownPlace, "Comune non riconosciuto")).max(20).optional(),
     prefGender: z.enum(["Uomo", "Donna"]).nullable().optional(),
     prefRole: z.enum(["BLOCKER", "DEFENDER"]).nullable().optional(),
     maxGap: z.number().int().min(100).max(1000).optional(),
@@ -62,7 +62,7 @@ export const DiscoverSettingsSchema = z
     onlyFreeToday: z.boolean().optional(),
     // Player fields Scopri needs, editable from the same screen.
     birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato data non valido").optional(),
-    homeCity: z.string().refine(isKnownCity, "Comune non riconosciuto").optional(),
+    homeCity: z.string().refine(isKnownPlace, "Comune non riconosciuto").optional(),
     gender: z.enum(["Uomo", "Donna", "Altro"]).optional(),
     preferredRole: z.enum(["BLOCKER", "DEFENDER"]).optional(),
   })
@@ -86,7 +86,7 @@ export const ProposeGameSchema = z
   .object({
     matchId: Id,
     location: z.string().trim().min(2).max(100),
-    city: z.string().refine(isKnownCity, "Comune non riconosciuto").optional(),
+    city: z.string().refine(isKnownPlace, "Comune non riconosciuto").optional(),
     date: z.coerce.date(),
   })
   .strict()
@@ -121,7 +121,7 @@ export const DuoGameSchema = z
   .object({
     duoMatchId: Id,
     location: z.string().trim().min(2).max(100),
-    city: z.string().refine(isKnownCity, "Comune non riconosciuto").optional(),
+    city: z.string().refine(isKnownPlace, "Comune non riconosciuto").optional(),
     date: z.coerce.date(),
   })
   .strict()

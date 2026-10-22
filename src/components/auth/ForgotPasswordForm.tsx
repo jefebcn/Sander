@@ -78,7 +78,7 @@ export function ForgotPasswordForm() {
       <button
         type="submit"
         disabled={isPending}
-        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-bold text-black transition-all active:scale-[0.98] disabled:opacity-50"
+        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full bg-[var(--accent)] font-bold text-black transition-all active:scale-[0.98] disabled:opacity-50"
       >
         {isPending ? (
           <span className="h-5 w-5 animate-spin rounded-full border-2 border-black border-t-transparent" />

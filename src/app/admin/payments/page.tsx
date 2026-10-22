@@ -10,7 +10,7 @@ import { AdminPendingPaymentsList } from "@/components/tournament/AdminPendingPa
 export default async function AdminPaymentsPage() {
   const session = await getCurrentSession()
   if (!session?.user?.id) redirect("/auth/signin?callbackUrl=/admin/payments")
-  if (!isAdminEmail(session.user.email)) redirect("/")
+  if (!isAdminEmail(session.user.email)) redirect("/admin/accesso")
 
   return (
     <div className="min-h-dvh pb-10">
@@ -19,7 +19,7 @@ export default async function AdminPaymentsPage() {
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.5rem)" }}
       >
         <Link
-          href="/profile"
+          href="/admin"
           aria-label="Indietro"
           className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-3)] text-white active:bg-[var(--surface-4)]"
         >

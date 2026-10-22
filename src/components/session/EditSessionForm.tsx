@@ -4,9 +4,9 @@ import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { MapPin, Check, Loader2 } from "lucide-react"
 import { editSession } from "@/actions/sessions"
-import { CITY_NAMES } from "@/lib/cities"
 import { POPULAR_BAGNI, bagnoLabel } from "@/lib/bagni"
 import { cn } from "@/lib/utils"
+import { CityPicker } from "@/components/ui/CityPicker"
 
 interface Props {
   session: {
@@ -114,27 +114,7 @@ export function EditSessionForm({ session }: Props) {
         <p className="mb-1.5 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
           Comune
         </p>
-        <div className="flex flex-wrap gap-1.5">
-          {CITY_NAMES.map((name) => {
-            const selected = city === name
-            return (
-              <button
-                key={name}
-                type="button"
-                aria-pressed={selected}
-                onClick={() => setCity(selected ? "" : name)}
-                className={cn(
-                  "min-h-[2.75rem] rounded-full border px-4 text-sm font-bold transition-colors",
-                  selected
-                    ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
-                    : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted-text)]",
-                )}
-              >
-                {name}
-              </button>
-            )
-          })}
-        </div>
+        <CityPicker value={city} onChange={setCity} />
       </div>
 
       <div>
@@ -188,7 +168,7 @@ export function EditSessionForm({ session }: Props) {
       <button
         onClick={handleSave}
         disabled={pending}
-        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-black text-black disabled:opacity-60"
+        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full font-black text-black disabled:opacity-60"
         style={{ background: "var(--accent)" }}
       >
         {pending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Check className="h-5 w-5" />}

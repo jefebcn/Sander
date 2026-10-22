@@ -67,8 +67,8 @@ export default async function PlayersPage({ searchParams }: Props) {
             className={
               "flex min-h-[2.75rem] items-center rounded-full px-4 text-sm font-bold transition-colors " +
               (activeTab === f.id
-                ? "bg-[var(--tone-soft)] text-[var(--tone)] ring-1 ring-[var(--tone-line)]"
-                : "bg-[var(--surface-2)] text-[var(--muted-text)]")
+                ? "sel-on"
+                : "sel-off")
             }
           >
             {f.label}

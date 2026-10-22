@@ -27,6 +27,10 @@ export interface PlayerCardData {
 interface SanderCardFutProps {
   playerData: PlayerCardData
   className?: string
+  /** Just the frame, no photo or numbers: for showing what a card looks like. */
+  blank?: boolean
+  /** The frame without the beach behind the shield, for a card on its own page. */
+  cutout?: boolean
   /** "lazy" for a card below the fold: its frame is a multi-MB image. */
   frameLoading?: "eager" | "lazy"
 }
@@ -95,9 +99,9 @@ const STAT_ROW = "72%"
 /*  Debug  (Z-50):  20×20 calibration grid (temporary)                         */
 /* ──────────────────────────────────────────────────────────────────────────── */
 
-export function SanderCardFut({ playerData, className, frameLoading }: SanderCardFutProps) {
+export function SanderCardFut({ playerData, className, frameLoading, blank, cutout }: SanderCardFutProps) {
   const glicko = Math.round(playerData.glicko2)
-  const frame = getFrameTemplate(glicko)
+  const frame = cutout ? getFrameTemplate(glicko).replace("/assets/cards/", "/assets/cards/cutout/") : getFrameTemplate(glicko)
   const roleAbbr = playerData.stats.mur > playerData.stats.dif ? "MUR" : "DIF"
   const textColor = getTextColor(glicko)
 
@@ -111,7 +115,7 @@ export function SanderCardFut({ playerData, className, frameLoading }: SanderCar
         style={{ aspectRatio: "1 / 1" }}
       >
         {/* ── Z-0 — Player photo (rows 3–10, cols 7–15) ─────────────── */}
-        {playerData.imageUrl ? (
+        {blank ? null : playerData.imageUrl ? (
           <PlayerPhoto
             src={playerData.imageUrl}
             alt={playerData.name}
@@ -147,97 +151,100 @@ export function SanderCardFut({ playerData, className, frameLoading }: SanderCar
         />
 
         {/* ── Z-20 — Data elements ───────────────────────────────────── */}
+        {!blank && (
+          <>
+            {/* Glicko Rating — Row 3.5, Col 4.5 */}
+            <span
+              className="absolute text-sm font-bold uppercase leading-none"
+              style={{
+                top: "17.5%",
+                left: "22.5%",
+                zIndex: 20,
+                fontFamily: FONT,
+                letterSpacing: "0.05em",
+                color: textColor,
+                textShadow: SHADOW,
+              }}
+            >
+              {glicko}
+            </span>
 
-        {/* Glicko Rating — Row 3.5, Col 4.5 */}
-        <span
-          className="absolute text-sm font-bold uppercase leading-none"
-          style={{
-            top: "17.5%",
-            left: "22.5%",
-            zIndex: 20,
-            fontFamily: FONT,
-            letterSpacing: "0.05em",
-            color: textColor,
-            textShadow: SHADOW,
-          }}
-        >
-          {glicko}
-        </span>
+            {/* Flag — Row 4.5, Col 4.5 */}
+            <div
+              className="absolute overflow-hidden rounded-[2px]"
+              style={{
+                top: "22.5%",
+                left: "22.5%",
+                width: "8%",
+                zIndex: 20,
+              }}
+            >
+              <FlagIcon code={playerData.nationalityCode} />
+            </div>
 
-        {/* Flag — Row 4.5, Col 4.5 */}
-        <div
-          className="absolute overflow-hidden rounded-[2px]"
-          style={{
-            top: "22.5%",
-            left: "22.5%",
-            width: "8%",
-            zIndex: 20,
-          }}
-        >
-          <FlagIcon code={playerData.nationalityCode} />
-        </div>
+            {/* Role — Row 6.0, Col 4.5 */}
+            <span
+              className="absolute font-bold uppercase"
+              style={{
+                top: "30%",
+                left: "22.5%",
+                fontSize: "10px",
+                zIndex: 20,
+                fontFamily: FONT,
+                color: textColor,
+                textShadow: SHADOW,
+              }}
+            >
+              {roleAbbr}
+            </span>
 
-        {/* Role — Row 6.0, Col 4.5 */}
-        <span
-          className="absolute font-bold uppercase"
-          style={{
-            top: "30%",
-            left: "22.5%",
-            fontSize: "10px",
-            zIndex: 20,
-            fontFamily: FONT,
-            color: textColor,
-            textShadow: SHADOW,
-          }}
-        >
-          {roleAbbr}
-        </span>
+            {/* Player Name — Row 10.458, Col 6.0–14.0 (auto-scale to fit) */}
+            <div
+              className="absolute flex items-center justify-center"
+              style={{
+                top: "52.29%",
+                left: "30%",
+                width: "40%",
+                containerType: "inline-size",
+                zIndex: 20,
+              }}
+            >
+              <span
+                className="font-bold uppercase text-center"
+                style={{
+                  fontFamily: FONT,
+                  fontSize: "clamp(0.8rem, 4cqi, 1.125rem)",
+                  whiteSpace: "nowrap",
+                  letterSpacing: "0.04em",
+                  color: textColor,
+                  textShadow: SHADOW,
+                }}
+              >
+                {playerData.name}
+              </span>
+            </div>
 
-        {/* Player Name — Row 10.458, Col 6.0–14.0 (auto-scale to fit) */}
-        <div
-          className="absolute flex items-center justify-center"
-          style={{
-            top: "52.29%",
-            left: "30%",
-            width: "40%",
-            containerType: "inline-size",
-            zIndex: 20,
-          }}
-        >
-          <span
-            className="font-bold uppercase text-center"
-            style={{
-              fontFamily: FONT,
-              fontSize: "clamp(0.8rem, 4cqi, 1.125rem)",
-              whiteSpace: "nowrap",
-              letterSpacing: "0.04em",
-              color: textColor,
-              textShadow: SHADOW,
-            }}
-          >
-            {playerData.name}
-          </span>
-        </div>
-
-        {/* Stats — centred under their labels */}
-        {STAT_POSITIONS.map(({ key, left }) => (
-          <span
-            key={key}
-            className="absolute text-sm font-bold leading-none tabular-nums"
-            style={{
-              top: STAT_ROW,
-              left,
-              transform: "translate(-50%, -50%)",
-              zIndex: 20,
-              fontFamily: FONT,
-              letterSpacing: "0.03em",
-              color: textColor,
-              textShadow: SHADOW,
-            }}
-          >
-            {playerData.stats[key]}
-          </span>
-        ))}
+            {/* Stats — centred under their labels */}
+            {STAT_POSITIONS.map(({ key, left }) => (
+              <span
+                key={key}
+                className="absolute text-sm font-bold leading-none tabular-nums"
+                style={{
+                  top: STAT_ROW,
+                  left,
+                  transform: "translate(-50%, -50%)",
+                  zIndex: 20,
+                  fontFamily: FONT,
+                  letterSpacing: "0.03em",
+                  color: textColor,
+                  textShadow: SHADOW,
+                }}
+              >
+                {playerData.stats[key]}
+              </span>
+            ))}
+          </>
+        )}
       </div>
     </>
   )

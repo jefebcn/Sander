@@ -49,7 +49,7 @@ export function SignOutButton({ className, children, iconOnly }: SignOutButtonPr
             <LogOut className="h-5 w-5" aria-hidden="true" />
             {pending ? "Uscita…" : "Esci dall'account"}
           </button>
-          <DialogClose className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl bg-[var(--surface-2)] text-base font-bold text-white">
+          <DialogClose className="flex min-h-[3.5rem] w-full items-center justify-center rounded-full btn-secondary text-base font-bold text-white">
             Annulla
           </DialogClose>
         </div>

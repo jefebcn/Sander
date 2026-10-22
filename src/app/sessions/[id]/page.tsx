@@ -276,7 +276,7 @@ export default async function SessionPage({
         {!currentPlayer && (session.status === "OPEN" || session.status === "FULL") && joinWindowOpen(session.date) && (
           <Link
             href={`/auth/signin?mode=register&callbackUrl=${encodeURIComponent(`/sessions/${session.id}`)}${inviteCode ? `&invite=${inviteCode}` : ""}`}
-            className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl font-black text-black text-base"
+            className="flex min-h-[3.5rem] w-full items-center justify-center rounded-full font-black text-black text-base"
             style={{ background: "var(--accent)" }}
           >
             {inviteCode ? `Registrati e gioca: +${INVITEE_SC} SC alla prima partita` : "Accedi per partecipare"}
@@ -287,7 +287,7 @@ export default async function SessionPage({
         {isOrganizer && (session.status === "OPEN" || session.status === "FULL") && (
           <Link
             href={`/sessions/${session.id}/edit`}
-            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-bold text-white transition-opacity active:opacity-80"
+            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full btn-secondary font-bold text-white transition-opacity active:opacity-80"
           >
             <Pencil className="h-4 w-4 text-[var(--accent)]" />
             Modifica partita
@@ -349,7 +349,7 @@ export default async function SessionPage({
           session.participants.some((p) => p.team === 1) && (
             <Link
               href={`/segna?session=${session.id}`}
-              className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-black text-black text-base transition-opacity active:opacity-80"
+              className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full font-black text-black text-base transition-opacity active:opacity-80"
               style={{ background: "var(--accent)" }}
             >
               <Gauge className="h-5 w-5" />

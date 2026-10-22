@@ -14,12 +14,20 @@ export function ShareCardButton({ playerData }: Props) {
   const cardRef = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
+  // The off-screen copy decodes a large frame image: build it only once the
+  // button is about to be used, not with the page.
+  const [armed, setArmed] = useState(false)
 
   async function handleShare() {
-    if (!cardRef.current) return
     setLoading(true)
     setError(false)
     try {
+      if (!armed) {
+        setArmed(true)
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+      }
+      if (!cardRef.current) throw new Error("card not rendered")
+      await Promise.all([...cardRef.current.querySelectorAll("img")].map((img) => img.decode().catch(() => {})))
       const blob = await captureNodeToBlob(cardRef.current, { pixelRatio: 2 })
       const safeName = playerData.name.replace(/\s+/g, "_")
       await shareOrDownloadBlob(
@@ -43,19 +51,21 @@ export function ShareCardButton({ playerData }: Props) {
         className="pointer-events-none fixed"
         style={{ top: "-9999px", left: "-9999px", width: "400px" }}
       >
-        <div ref={cardRef}>
-          <SanderCardFut playerData={playerData} />
-        </div>
+        {armed && (
+          <div ref={cardRef}>
+            <SanderCardFut playerData={playerData} />
+          </div>
+        )}
       </div>
 
       <button
+        onPointerDown={() => setArmed(true)}
+        onFocus={() => setArmed(true)}
         onClick={handleShare}
         disabled={loading}
-        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-semibold"
+        className="btn btn-secondary w-full"
         style={{
-          background: error ? "color-mix(in srgb, var(--danger) 7%, transparent)" : "rgba(255,255,255,0.04)",
-          border: `1px solid ${error ? "color-mix(in srgb, var(--danger) 30%, transparent)" : "rgba(255,255,255,0.1)"}`,
-          color: error ? "var(--danger)" : "var(--muted-text)",
+          color: error ? "var(--danger)" : undefined,
           opacity: loading ? 0.6 : 1,
           cursor: loading ? "wait" : "pointer",
         }}

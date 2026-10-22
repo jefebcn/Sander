@@ -53,7 +53,7 @@ export function AdminChiceceCompletedActions({ tournamentId }: Props) {
           )
         }
         disabled={isPending}
-        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] text-sm font-bold text-[var(--danger)] disabled:opacity-40"
+        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full btn-secondary text-sm font-bold text-[var(--danger)] disabled:opacity-40"
       >
         <RefreshCw className="h-4 w-4" />
         {isPending ? "In corso…" : "Reimposta fase finale (admin)"}
@@ -67,7 +67,7 @@ export function AdminChiceceCompletedActions({ tournamentId }: Props) {
           )
         }
         disabled={isPending}
-        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] text-sm font-bold text-[var(--danger)] disabled:opacity-40"
+        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full btn-secondary text-sm font-bold text-[var(--danger)] disabled:opacity-40"
       >
         <Wrench className="h-4 w-4" />
         {isPending ? "In corso…" : "Correggi vincitore torneo (admin)"}
@@ -81,7 +81,7 @@ export function AdminChiceceCompletedActions({ tournamentId }: Props) {
           )
         }
         disabled={isPending}
-        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] text-sm font-bold text-[var(--accent)] disabled:opacity-40"
+        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full btn-secondary text-sm font-bold text-[var(--accent)] disabled:opacity-40"
       >
         <BarChart3 className="h-4 w-4" />
         {isPending ? "In corso…" : "Ricalcola punteggi Glicko (admin)"}

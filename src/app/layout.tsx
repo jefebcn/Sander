@@ -5,14 +5,18 @@ import { Figtree, Bricolage_Grotesque, Instrument_Serif, Mansalva } from "next/f
 import "./globals.css"
 import { Providers } from "@/lib/providers"
 import { MobileNav } from "@/components/layout/MobileNav"
+import { IosViewportFix } from "@/components/layout/IosViewportFix"
 import { Toaster } from "@/components/ui/Toaster"
 import { OnboardingGate } from "@/components/onboarding/OnboardingGate"
 import { ClientOnlyBanners } from "@/components/layout/ClientOnlyBanners"
+import { NavProgress } from "@/components/layout/NavProgress"
+import { Suspense } from "react"
 import { SwRegistrar } from "@/components/push/SwRegistrar"
 import { PageWrapper } from "@/components/layout/PageWrapper"
 import { RefTracker } from "@/components/analytics/RefTracker"
 import { ErrorReporter } from "@/components/analytics/ErrorReporter"
 import { AppBackground, type BackgroundVariant } from "@/components/layout/AppBackground"
+import { PagePhoto } from "@/components/layout/PagePhoto"
 
 // Body: Figtree, round and very legible in the sun.
 const figtree = Figtree({
@@ -98,17 +102,20 @@ export const metadata: Metadata = {
   },
 }
 
-// Pinch-zoom stays enabled: blocking it locks out anyone who needs larger text
-// (WCAG 1.4.4). Inputs are ≥16px, so iOS doesn't auto-zoom on focus anyway.
+// No zoom inside the app: it should feel like a native app, not a web page.
+// iOS Safari ignores user-scalable for pinches, so IosViewportFix also stops
+// the gesture. Inputs are ≥16px, so iOS doesn't auto-zoom on focus either.
 export const viewport: Viewport = {
   themeColor: "#0b0b0c",
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
 }
 
-/** App-wide background: "aurora" (night sea + lime), "night" (grainy graphite) or "sunset". */
-const BG: BackgroundVariant = "aurora"
+/** App-wide background: "beach" (photo on top, glass surfaces), "aurora" (night sea + lime), "night" (grainy graphite) or "sunset". */
+const BG: BackgroundVariant = "beach"
 
 export default function RootLayout({
   children,
@@ -119,6 +126,7 @@ export default function RootLayout({
     <html lang="it" className={`${figtree.variable} ${bricolage.variable} ${instrument.variable} ${mansalva.variable} h-full`}>
       <body data-bg={BG} className="min-h-dvh flex flex-col bg-[var(--background)] text-[var(--foreground)]">
         <AppBackground variant={BG} />
+        {BG === "beach" && <PagePhoto />}
         <Providers>
           <OnboardingGate />
           <SwRegistrar />
@@ -133,6 +141,10 @@ export default function RootLayout({
             <PageWrapper>{children}</PageWrapper>
           </main>
           <MobileNav />
+          <Suspense fallback={null}>
+            <NavProgress />
+          </Suspense>
+          <IosViewportFix />
           {/* Banners stacked just above the navbar — client-only, lazy loaded */}
           <div className="fixed bottom-[4.5rem] left-0 right-0 z-30 mx-auto flex flex-col md:max-w-[560px] gap-2 pointer-events-none [&>*]:pointer-events-auto">
             <ClientOnlyBanners />

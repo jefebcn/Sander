@@ -23,6 +23,7 @@ import { ProposeGameSheet } from "./ProposeGameSheet"
 import type { DuoCard, DuoMember, DuoMatchRow, IncomingDuoLike } from "./types"
 import type { DuoRankRow } from "@/lib/scopri/duos"
 import { resizedPhoto } from "@/lib/photo"
+import { shownAffinity } from "@/lib/scopri/score"
 
 export interface CoppieData {
   meId: string
@@ -36,6 +37,8 @@ export interface CoppieData {
   incoming: IncomingDuoLike[]
   matches: DuoMatchRow[]
   leaderboard: DuoRankRow[]
+  /** Without a pair: pairs near you waiting for opponents. */
+  nearbyPairs: DuoCard[]
 }
 
 function Leaderboard({ rows, mine }: { rows: DuoRankRow[]; mine?: string }) {
@@ -119,6 +122,31 @@ function NoDuo({ data }: { data: CoppieData }) {
           Poi sfidate le altre coppie: se accettano, chat a quattro e partita in calendario.
         </p>
       </section>
+
+      {data.nearbyPairs.length > 0 && (
+        <section aria-labelledby="near-pairs">
+          <h3 id="near-pairs" className="font-display text-[1.45rem] font-extrabold leading-tight tracking-tight text-white">
+            Coppie che cercano avversari
+          </h3>
+          <p className="mb-2 text-sm text-[var(--muted-text)]">
+            {data.myCity ? `A ${data.myCity} e dintorni` : "Vicino a te"}: formate la vostra coppia qui sotto e sfidatele.
+          </p>
+          <ul className="flex flex-col gap-2">
+            {data.nearbyPairs.map((d) => (
+              <li key={d.id} className="flex items-center gap-3 rounded-[var(--radius-md)] bg-[var(--surface-2)] p-3">
+                <Faces members={d.members} size="h-11 w-11" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-base font-extrabold text-white">{d.name}</span>
+                  <span className="block truncate text-sm text-[var(--muted-text)]">
+                    {d.members.map((m) => (m.role === "BLOCKER" ? "Muro" : "Difesa")).join(" + ")} · punteggio {d.rating}
+                  </span>
+                </span>
+                <Swords className="h-5 w-5 shrink-0 text-[var(--social)]" aria-hidden="true" />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {data.invites.length > 0 && (
         <section aria-labelledby="inv">
@@ -292,7 +320,7 @@ function ActiveDuo({ data, duo }: { data: CoppieData; duo: DuoCard }) {
             type="button"
             aria-pressed={tab === t.id}
             onClick={() => setTab(t.id)}
-            className={cn("min-h-[3rem] rounded-full text-sm font-bold", tab === t.id ? "bg-[var(--social)] text-black" : "text-[var(--muted-text)]")}
+            className={cn("min-h-[3rem] rounded-full text-sm font-bold", tab === t.id ? "sel-on" : "text-[var(--muted-text)]")}
           >
             {t.label}
           </button>
@@ -302,6 +330,7 @@ function ActiveDuo({ data, duo }: { data: CoppieData; duo: DuoCard }) {
       {tab === "sfide" &&
         (current ? (
           <section aria-label={`Coppia ${current.name}`} className="flex flex-col gap-3">
+            <p className="eyebrow text-[var(--social)]">Coppie che cercano avversari</p>
             <DuoProfile duo={current} />
             <div className="grid grid-cols-[auto_1fr] gap-2">
               <button
@@ -509,7 +538,7 @@ function DuoProfile({ duo }: { duo: DuoCard }) {
           <p className="font-hand text-[2.3rem] leading-tight text-white">{duo.name}</p>
           {duo.motto && <p className="mt-1 font-serif text-xl leading-snug text-white/90">«{duo.motto}»</p>}
         </div>
-        {typeof duo.score === "number" && <p className="num shrink-0 text-3xl text-[var(--social)]">{duo.score}%</p>}
+        {shownAffinity(duo.score) !== null && <p className="num shrink-0 text-3xl text-[var(--social)]">{duo.score}%</p>}
       </div>
       {duo.reasons && duo.reasons.length > 0 && (
         <ul className="mt-3 flex flex-wrap gap-2">

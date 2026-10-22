@@ -67,7 +67,7 @@ In più, solo SANDER:
   - I propri match vengono avvisati una volta al giorno.
   - Il colore è il lime del logo.
 - **Ingresso**:
-  - Dopo il profilo base, il nuovo iscritto vede un passo facoltativo di un minuto (`/onboarding/scopri`), già precompilato con la foto profilo e tre domande suggerite.
+  - La registrazione finisce con il profilo base: il nuovo iscritto entra subito nell'app. Il profilo Scopri si compila dopo, in un minuto (`/onboarding/scopri`, già precompilato con la foto profilo e tre domande suggerite), dalla card in home, dalla tab Scopri o dal richiamo del mattino. Per entrare nel mazzo serve almeno una foto.
   - I minorenni saltano il passo.
 - **Richiami** (`lib/scopri/digest.ts`, eseguiti dal cron del mattino):
   - Chi è già su Scopri riceve "N nuovi giocatori a {comune}", al massimo una volta al giorno.

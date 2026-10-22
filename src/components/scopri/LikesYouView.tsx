@@ -149,7 +149,7 @@ export function LikesYouView({
             <button
               type="button"
               onClick={() => setExtras(true)}
-              className="pressable mt-3 flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full bg-[var(--surface-3)] text-base font-extrabold text-white"
+              className="pressable mt-3 flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full btn-secondary text-base font-extrabold text-white"
             >
               <Eye className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" /> Vedili tutti subito
             </button>

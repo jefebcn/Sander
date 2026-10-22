@@ -227,7 +227,7 @@ export function ParticipantList({ session, participants, currentPlayerId, myWait
             <button
               onClick={handleJoin}
               disabled={isPending}
-              className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-bold text-black transition-all active:scale-[0.98] disabled:opacity-50"
+              className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full bg-[var(--accent)] font-bold text-black transition-all active:scale-[0.98] disabled:opacity-50"
             >
               <UserPlus className="h-5 w-5" aria-hidden="true" />
               Unisciti
@@ -283,7 +283,7 @@ export function ParticipantList({ session, participants, currentPlayerId, myWait
                 <button
                   onClick={handleJoinWaitlist}
                   disabled={isPending}
-                  className="mt-3 flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-black text-black disabled:opacity-60"
+                  className="mt-3 flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full font-black text-black disabled:opacity-60"
                   style={{ background: "var(--accent)" }}
                 >
                   <BellRing className="h-5 w-5" aria-hidden="true" />

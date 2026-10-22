@@ -91,7 +91,7 @@ export default async function WeeklyPage() {
           </p>
           <Link
             href="/sessions/new"
-            className="mt-4 inline-flex min-h-[3.5rem] items-center justify-center rounded-2xl px-6 font-black text-black"
+            className="mt-4 inline-flex min-h-[3.5rem] items-center justify-center rounded-full px-6 font-black text-black"
             style={{ background: "var(--accent)" }}
           >
             Crea una partita
@@ -209,7 +209,7 @@ export default async function WeeklyPage() {
             />
             <Link
               href="/players"
-              className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-bold text-white active:opacity-80"
+              className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full btn-secondary font-bold text-white active:opacity-80"
             >
               Classifica completa
               <ArrowUpRight className="h-4 w-4" />

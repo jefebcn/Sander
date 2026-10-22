@@ -167,7 +167,7 @@ export function PaymentMethodSheet({
                     className={cn(
                       "flex min-h-[3.5rem] flex-col items-center justify-center rounded-2xl px-2 py-2 text-center transition-colors disabled:opacity-60",
                       selected
-                        ? "bg-[var(--accent)] text-black"
+                        ? "sel-on"
                         : "bg-[var(--surface-2)] text-white active:bg-white/10",
                     )}
                   >
@@ -190,7 +190,7 @@ export function PaymentMethodSheet({
               type="button"
               onClick={handleFreeRegister}
               disabled={!canAct}
-              className="mt-2 flex min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-black text-black active:brightness-90 disabled:opacity-50"
+              className="mt-2 flex min-h-[3.5rem] items-center justify-center gap-2 rounded-full bg-[var(--accent)] font-black text-black active:brightness-90 disabled:opacity-50"
             >
               {isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : "Iscriviti gratis"}
             </button>
@@ -199,7 +199,7 @@ export function PaymentMethodSheet({
               type="button"
               onClick={handleRegisterOnly}
               disabled={!canAct}
-              className="mt-2 flex min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-black text-black active:brightness-90 disabled:opacity-50"
+              className="mt-2 flex min-h-[3.5rem] items-center justify-center gap-2 rounded-full bg-[var(--accent)] font-black text-black active:brightness-90 disabled:opacity-50"
             >
               {isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : "Iscriviti"}
             </button>

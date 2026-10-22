@@ -20,6 +20,11 @@ describe("parseCity", () => {
     expect(parseCity("Portoverde")).toBe("Misano Adriatico")
   })
 
+  it("riconosce San Marino senza confonderlo con San Mauro", () => {
+    expect(parseCity("Campi sabbia, San Marino")).toBe("San Marino")
+    expect(parseCity("San Mauro Mare")).toBe("San Mauro Mare")
+  })
+
   it("preferisce l'alias più lungo quando due combaciano", () => {
     // "milano marittima" è frazione di Cervia: non deve perdere contro un
     // generico match più corto, e "igea marina" non deve essere oscurata da "igea"

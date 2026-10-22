@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { isKnownCity } from "@/lib/cities"
+import { isKnownPlace } from "@/lib/comuni"
 
 export const CreateSessionSchema = z.object({
   title: z.string().max(80).optional(),
@@ -9,7 +9,7 @@ export const CreateSessionSchema = z.object({
   // useless for the town leaderboards, which is the only reason this exists.
   city: z
     .string()
-    .refine(isKnownCity, "Comune non riconosciuto")
+    .refine(isKnownPlace, "Comune non riconosciuto")
     .optional(),
   date: z.coerce.date(),
   format: z.enum(["TWO_VS_TWO", "THREE_VS_THREE", "FOUR_VS_FOUR"]),
@@ -31,7 +31,7 @@ export const EditSessionSchema = z.object({
   location: z.string().max(100).default(""),
   // Lets the organiser correct a wrong pick instead of the match staying out
   // of the town leaderboards for good.
-  city: z.string().refine(isKnownCity, "Comune non riconosciuto").optional(),
+  city: z.string().refine(isKnownPlace, "Comune non riconosciuto").optional(),
   date: z.coerce.date(),
   notes: z.string().max(200).optional(),
   maxPlayers: z.number().int().min(2).max(32).optional(),

@@ -45,13 +45,13 @@ export default async function SuccessPage({ params }: { params: Promise<{ id: st
       <div className="mt-6 flex flex-col gap-3 px-4">
         <Link
           href={`/tournaments/${id}`}
-          className="flex min-h-[3.5rem] items-center justify-center rounded-2xl bg-[var(--accent)] font-bold text-black active:brightness-90"
+          className="flex min-h-[3.5rem] items-center justify-center rounded-full bg-[var(--accent)] font-bold text-black active:brightness-90"
         >
           Vai al torneo
         </Link>
         <Link
           href="/tournaments"
-          className="flex min-h-[3.5rem] items-center justify-center rounded-2xl bg-[var(--surface-2)] font-bold text-white active:bg-white/10"
+          className="flex min-h-[3.5rem] items-center justify-center rounded-full btn-secondary font-bold text-white"
         >
           Tutti i tornei
         </Link>

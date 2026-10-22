@@ -68,7 +68,7 @@ export function GuestWelcome() {
 
       {/* The crest, small, like an app mark at the top of a welcome screen. */}
       <div className="relative flex justify-center pt-2">
-        <Image src="/sander-logo.png" alt="SANDER" width={2048} height={1749} sizes="4.5rem" preload className="h-auto w-[4.5rem]" />
+        <Image src="/sander-logo.png" alt="SANDER" width={1024} height={874} sizes="4.5rem" preload className="h-auto w-[4.5rem]" />
       </div>
 
       {/* The fanned cards. */}

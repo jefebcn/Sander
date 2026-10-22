@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { isKnownCity } from "@/lib/cities"
+import { isKnownPlace } from "@/lib/comuni"
 import { START_LEVEL_IDS } from "@/lib/startLevel"
 
 /**
@@ -24,7 +24,7 @@ export const SaveProfileSchema = z.object({
   avatarUrl:     z.string().url().nullable().optional(),
   // Both optional so they never block sign-up, but asked up front: they are
   // what makes the first home screen about *your* town and *your* level.
-  homeCity:      z.string().refine(isKnownCity, "Comune non riconosciuto").optional(),
+  homeCity:      z.string().refine(isKnownPlace, "Comune non riconosciuto").optional(),
   startLevel:    z.enum(START_LEVEL_IDS).optional(),
 })
 

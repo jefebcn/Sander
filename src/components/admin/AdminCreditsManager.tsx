@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { Coins, Search, Plus } from "lucide-react"
+import { Coins, Search, Plus, ChevronDown } from "lucide-react"
 import { adminAddCredits } from "@/actions/players"
 import { TOP_UP_METHODS } from "@/lib/validators/player.schema"
 
@@ -113,7 +113,7 @@ export function AdminCreditsManager({ players }: { players: PlayerRow[] }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Cerca giocatore…"
-          className="w-full rounded-xl bg-[var(--surface-2)] py-2.5 pl-9 pr-4 text-sm text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+          className="w-full min-h-[3.5rem] rounded-xl bg-[var(--surface-2)] py-2.5 pl-9 pr-4 text-base text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
         />
       </div>
 
@@ -133,8 +133,10 @@ export function AdminCreditsManager({ players }: { players: PlayerRow[] }) {
                 </p>
               </div>
 
-              <div className="flex items-stretch gap-2">
-                <label className="flex-1 min-w-0">
+              {/* Two rows: four controls side by side left the method select
+                  too narrow to read ("PayPa…") on a phone. */}
+              <div className="grid grid-cols-2 gap-2">
+                <label className="min-w-0">
                   <span className="sr-only">Crediti da aggiungere</span>
                   <input
                     type="number"
@@ -147,7 +149,7 @@ export function AdminCreditsManager({ players }: { players: PlayerRow[] }) {
                     className="w-full min-h-[3.5rem] rounded-lg bg-[var(--surface-3)] px-2 text-base text-center text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                   />
                 </label>
-                <label className="flex-1 min-w-0">
+                <label className="min-w-0">
                   <span className="sr-only">Euro ricevuti</span>
                   <input
                     type="text"
@@ -159,17 +161,22 @@ export function AdminCreditsManager({ players }: { players: PlayerRow[] }) {
                     className="w-full min-h-[3.5rem] rounded-lg bg-[var(--surface-3)] px-2 text-base text-center text-white disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                   />
                 </label>
-                <label className="flex-1 min-w-0">
+              </div>
+              <div className="flex items-stretch gap-2">
+                <label className="relative min-w-0 flex-1">
                   <span className="sr-only">Metodo di pagamento</span>
+                  {/* appearance-none: iOS otherwise draws its own short native
+                      select and ignores the height. */}
                   <select
                     value={d.method}
                     onChange={(e) => update(p.id, { method: e.target.value as Method })}
-                    className="w-full min-h-[3.5rem] rounded-lg bg-[var(--surface-3)] px-2 text-base text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                    className="w-full min-h-[3.5rem] appearance-none rounded-lg bg-[var(--surface-3)] pl-3 pr-10 text-base text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                   >
                     {TOP_UP_METHODS.map((m) => (
                       <option key={m} value={m}>{METHOD_LABEL[m]}</option>
                     ))}
                   </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--muted-text)]" aria-hidden="true" />
                 </label>
                 <button
                   onClick={() => handleAdd(p.id)}

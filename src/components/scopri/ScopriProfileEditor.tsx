@@ -24,6 +24,7 @@ import { SelfieVerify, type SelfieState } from "./SelfieVerify"
 import type { ScopriCard } from "./types"
 import { resizedPhoto } from "@/lib/photo"
 import { shrinkImage } from "@/lib/shrinkImage"
+import { CityPicker } from "@/components/ui/CityPicker"
 
 export interface EditorData {
   photos: { id: string; url: string }[]
@@ -64,7 +65,7 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
       onClick={onClick}
       className={cn(
         "min-h-[2.75rem] rounded-full px-4 text-sm font-bold",
-        on ? "bg-[var(--accent)] text-black" : "bg-[var(--surface-2)] text-white ring-1 ring-[var(--border)]",
+        on ? "sel-on" : "sel-off",
       )}
     >
       {children}
@@ -196,7 +197,7 @@ export function ScopriProfileEditor({ data }: { data: EditorData }) {
         <button
           type="button"
           onClick={() => setPreview(true)}
-          className="pressable flex min-h-[3.5rem] items-center justify-center gap-2 rounded-full bg-[var(--surface-2)] text-base font-bold text-white ring-1 ring-[var(--border)]"
+          className="pressable flex min-h-[3.5rem] items-center justify-center gap-2 rounded-full btn-secondary text-base font-bold text-white"
         >
           <Eye className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" /> Guarda come ti vedono gli altri
         </button>
@@ -267,7 +268,7 @@ export function ScopriProfileEditor({ data }: { data: EditorData }) {
           <button
             type="button"
             onClick={() => run(() => addAvatarAsPhoto(), "Foto aggiunta")}
-            className="mt-2 flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full bg-[var(--surface-2)] text-base font-bold text-white"
+            className="mt-2 flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full btn-secondary text-base font-bold text-white"
           >
             <UserRound className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" /> Usa la tua foto profilo
           </button>
@@ -322,15 +323,10 @@ export function ScopriProfileEditor({ data }: { data: EditorData }) {
             />
             {data.birthDate && <span className="text-xs text-[var(--muted-text)]">Non si può cambiare: scrivi al supporto se è sbagliata.</span>}
           </label>
-          <label className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1">
             <span className="text-sm font-bold text-[var(--muted-text)]">Comune dove giochi</span>
-            <select value={homeCity} onChange={(e) => setHomeCity(e.target.value)} className={inputCls}>
-              <option value="">Scegli</option>
-              {CITY_NAMES.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </label>
+            <CityPicker value={homeCity} onChange={setHomeCity} />
+          </div>
           <label className="flex flex-col gap-1">
             <span className="text-sm font-bold text-[var(--muted-text)]">Genere (privato, per le preferenze)</span>
             <select value={gender} onChange={(e) => setGender(e.target.value)} className={inputCls}>
@@ -435,7 +431,8 @@ export function ScopriProfileEditor({ data }: { data: EditorData }) {
           <div>
             <p className="mb-2 text-sm font-bold text-[var(--muted-text)]">Comuni {prefCities.length === 0 && "· tutti"}</p>
             <div className="flex flex-wrap gap-2">
-              {CITY_NAMES.map((c) => (
+              {/* The Riviera towns, plus your own comune and any already chosen elsewhere. */}
+              {[...new Set([...CITY_NAMES, homeCity, ...prefCities].filter(Boolean))].map((c) => (
                 <Chip key={c} on={prefCities.includes(c)} onClick={() => setPrefCities(toggle(prefCities, c))}>{c}</Chip>
               ))}
             </div>
@@ -496,7 +493,7 @@ export function ScopriProfileEditor({ data }: { data: EditorData }) {
       <button
         type="button"
         onClick={() => run(() => saveDiscoverSettings({ paused: !data.paused }), data.paused ? "Sei di nuovo visibile" : "Profilo in pausa")}
-        className="flex min-h-[3.5rem] items-center justify-center gap-2 rounded-full bg-[var(--surface-2)] text-base font-bold text-white"
+        className="flex min-h-[3.5rem] items-center justify-center gap-2 rounded-full btn-secondary text-base font-bold text-white"
       >
         {data.paused ? <Play className="h-5 w-5" aria-hidden="true" /> : <Pause className="h-5 w-5" aria-hidden="true" />}
         {data.paused ? "Riattiva il profilo" : "Metti in pausa (nessuno ti vede)"}

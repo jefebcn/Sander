@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { SCOPRI_PHOTO_BG } from "@/components/scopri/photoBanner"
 import { HeartHandshake, Heart, MessageCircle, ChevronRight } from "lucide-react"
 
 /**
@@ -22,41 +23,49 @@ export function ScopriHomeCard({
     return (
       <Link
         href="/onboarding/scopri"
-        className="pressable relative block overflow-hidden rounded-[var(--radius-lg)] p-5 shadow-[var(--shadow-card)]"
-        style={{ background: "linear-gradient(140deg, color-mix(in srgb, var(--accent) 34%, var(--surface-2)), color-mix(in srgb, var(--love) 14%, var(--surface-2)) 75%)" }}
+        className="pressable relative flex min-h-[15rem] flex-col justify-end overflow-hidden rounded-[var(--radius-lg)] p-5 shadow-[var(--shadow-card)]"
+        style={{
+          background:
+            "linear-gradient(180deg, rgb(0 0 0 / 0) 15%, rgb(0 0 0 / 0.82) 100%), url(/demo/players/davide-1.webp) center 25% / cover",
+        }}
       >
         <p className="eyebrow flex items-center gap-1 text-white/85">
           <HeartHandshake className="h-4 w-4" aria-hidden="true" /> Nuovo · Scopri
         </p>
-        <p className="font-hand mt-2 text-[2.3rem] leading-tight text-white">Trova con chi giocare, a colpi di swipe.</p>
-        <p className="mt-2 font-serif text-xl text-white/90">
+        <p className="font-hand mt-1 text-[2.3rem] leading-tight text-white">Trova con chi giocare</p>
+        <p className="mt-1 text-base text-white/85">
           {nearby > 0 ? `${nearby} giocatori ${city ? `a ${city}` : "vicino a te"} sono già su Scopri.` : "Foto, tre risposte, e sei in campo."}
         </p>
-        <span className="mt-4 flex min-h-[3.5rem] items-center justify-center gap-1 rounded-full bg-white text-base font-extrabold text-black">
-          Crea il profilo in un minuto <ChevronRight className="h-5 w-5" aria-hidden="true" />
+        <span className="mt-4 flex min-h-[3.5rem] items-center gap-1 self-start rounded-full px-6 text-base font-extrabold text-white ring-[1.5px] ring-inset ring-white/85">
+          Crea il profilo <ChevronRight className="h-5 w-5" aria-hidden="true" />
         </span>
       </Link>
     )
   }
+  // A photo card like the one before the profile is ready, a bit smaller: the
+  // whole card opens Scopri, the two round buttons go straight to likes and chats.
   return (
-    <section className="grid grid-cols-[1fr_auto_auto] items-center gap-2 rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-3 shadow-[var(--shadow-card)]">
-      <Link href="/scopri" className="pressable flex min-h-[3.5rem] min-w-0 items-center gap-3 rounded-[var(--radius-md)] px-2">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-black">
-          <HeartHandshake className="h-6 w-6" aria-hidden="true" />
-        </span>
-        <span className="min-w-0">
-          <span className="block font-display text-xl font-extrabold leading-tight text-white">Scopri</span>
-          <span className="block truncate text-sm text-[var(--muted-text)]">Il più compatibile di oggi ti aspetta</span>
-        </span>
-      </Link>
-      <Link href="/scopri/like" aria-label={`${likes} ti vogliono`} className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-4)] text-[var(--accent)]">
-        <Heart className="h-6 w-6" aria-hidden="true" />
-        {likes > 0 && <Badge n={likes} />}
-      </Link>
-      <Link href="/scopri/match" aria-label={`${waiting} match ti aspettano`} className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-4)] text-[var(--social)]">
-        <MessageCircle className="h-6 w-6" aria-hidden="true" />
-        {waiting > 0 && <Badge n={waiting} />}
-      </Link>
+    <section
+      className="relative flex min-h-[11rem] flex-col justify-between overflow-hidden rounded-[var(--radius-lg)] p-5 shadow-[var(--shadow-card)]"
+      style={{ background: SCOPRI_PHOTO_BG }}
+    >
+      <Link href="/scopri" aria-label="Apri Scopri: il più compatibile di oggi ti aspetta" className="pressable absolute inset-0" />
+      <div className="pointer-events-none relative max-w-[62%]">
+        <p className="eyebrow flex items-center gap-1 text-white/85">
+          <HeartHandshake className="h-4 w-4" aria-hidden="true" /> Scopri
+        </p>
+        <p className="font-hand mt-1 text-[1.9rem] leading-[1.05] text-white">Il più compatibile di oggi ti aspetta</p>
+      </div>
+      <div className="relative mt-4 flex gap-2">
+        <Link href="/scopri/like" aria-label={`${likes} ti vogliono`} className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-3)] text-white ring-1 ring-white/20">
+          <Heart className="h-6 w-6" aria-hidden="true" />
+          {likes > 0 && <Badge n={likes} />}
+        </Link>
+        <Link href="/scopri/match" aria-label={`${waiting} match ti aspettano`} className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-3)] text-white ring-1 ring-white/20">
+          <MessageCircle className="h-6 w-6" aria-hidden="true" />
+          {waiting > 0 && <Badge n={waiting} />}
+        </Link>
+      </div>
     </section>
   )
 }

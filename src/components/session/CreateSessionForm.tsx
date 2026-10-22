@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation"
 import { MapPin, ChevronRight, Banknote, Beer, Gift, Shuffle, Coins, ChevronDown } from "lucide-react"
 import { createSession } from "@/actions/sessions"
 import { POPULAR_BAGNI, bagnoLabel } from "@/lib/bagni"
-import { CITY_NAMES, parseCity } from "@/lib/cities"
+import { parseCity } from "@/lib/cities"
 import { cn } from "@/lib/utils"
+import { CityPicker } from "@/components/ui/CityPicker"
 
 const FORMATS = [
   { value: "TWO_VS_TWO",     label: "2 vs 2", sub: "4 gioc." },
@@ -256,30 +257,13 @@ export function CreateSessionForm({ presets, defaultCity }: { presets?: Presets;
             {city ? "· conta per le classifiche di città" : "· serve per il Derby della Riviera"}
           </span>
         </p>
-        <div className="flex flex-wrap gap-1.5">
-          {CITY_NAMES.map((name) => {
-            const selected = city === name
-            return (
-              <button
-                key={name}
-                type="button"
-                aria-pressed={selected}
-                onClick={() => {
-                  setCityTouched(true)
-                  setCity(selected ? "" : name)
-                }}
-                className={cn(
-                  "min-h-[2.75rem] rounded-full border px-4 text-sm font-bold transition-colors",
-                  selected
-                    ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
-                    : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted-text)]",
-                )}
-              >
-                {name}
-              </button>
-            )
-          })}
-        </div>
+        <CityPicker
+          value={city}
+          onChange={(c) => {
+            setCityTouched(true)
+            setCity(c)
+          }}
+        />
       </div>
 
       {/* Date — styled tap-target over a hidden native input */}
@@ -430,7 +414,7 @@ export function CreateSessionForm({ presets, defaultCity }: { presets?: Presets;
       <button
         type="submit"
         disabled={isPending || !location.trim()}
-        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-bold text-black transition-all active:scale-[0.98] disabled:opacity-60"
+        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full bg-[var(--accent)] font-bold text-black transition-all active:scale-[0.98] disabled:opacity-60"
       >
         {isPending ? (
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent" />

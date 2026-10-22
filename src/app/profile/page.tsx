@@ -59,41 +59,30 @@ const AWARD_META: Record<number, { emoji: string; label: string; color: string }
 
 // ── Supporters ────────────────────────────────────────────────────────
 // Add entries here to display a new supporter banner.
-// image/icon are optional — if absent a gradient placeholder is shown.
-const SUPPORTERS: { name: string; image?: string; icon?: string; href: string; tagline?: string; accentColor?: string }[] = [
+// banner: a wide photo for the left panel (the logo then sits next to the name).
+// logo: shown whole (never cropped) on the left panel, over logoBg.
+// Neither: the initials, once. Remove an entry when its site goes offline.
+const SUPPORTERS: { name: string; banner?: string; logo?: string; logoBg?: string; href: string; tagline?: string; accentColor?: string }[] = [
   {
     name: "LilloFind",
-    image: "/sponsors/lillofind-banner.png",
-    icon: "/sponsors/lillofind.png",
+    banner: "/sponsors/lillofind-banner.png",
+    logo: "/sponsors/lillofind.png",
     href: "https://jefebcn.github.io/lillofind/",
     tagline: "Streetwear & Abbigliamento",
   },
   {
     name: "Fisioganzerli",
+    logo: "/sponsors/fisioganzerli.png",
+    logoBg: "#ffffff",
     href: "https://fisioterapiaganzerli.com/",
     tagline: "Fisioterapia & Riabilitazione",
-    accentColor: "#22c55e",
-  },
-  {
-    name: "WanderQuest",
-    href: "https://wanderquest-jade.vercel.app/",
-    tagline: "Esplora il mondo",
-    accentColor: "#3b82f6",
-  },
-  {
-    name: "Flexeno",
-    image: "/sponsors/flexeno.png",
-    icon: "/sponsors/flexeno.png",
-    href: "https://flexenofitness.com/",
-    tagline: "Fitness & Performance",
   },
   {
     name: "Pepitos Eyewear",
-    image: "/sponsors/pepitos-logo.png",
-    icon: "/sponsors/pepitos-logo.png",
+    logo: "/sponsors/pepitos-logo.png",
+    logoBg: "#eeeeee", // the logo file's own background
     href: "https://www.pepitoseyewear.com/",
     tagline: "Occhiali da sole",
-    accentColor: "#f59e0b",
   },
 ]
 
@@ -309,9 +298,7 @@ export default async function ProfilePage({ searchParams }: Props) {
               aria-current={activeTab === id ? "page" : undefined}
               className={
                 "flex min-h-[2.75rem] shrink-0 items-center whitespace-nowrap rounded-full px-4 text-sm font-bold transition-colors " +
-                (activeTab === id
-                  ? "bg-[var(--tone)] text-black"
-                  : "bg-[var(--surface-2)] text-[var(--muted-text)]")
+                (activeTab === id ? "sel-on" : "sel-off")
               }
             >
               {label}
@@ -329,13 +316,13 @@ export default async function ProfilePage({ searchParams }: Props) {
       {/* ══ Profilo tab ═══════════════════════════════════════ */}
       {activeTab === "profilo" && (
         <div className="px-4 space-y-3">
-          <SanderCardFut playerData={playerToCardData(fullPlayer)} />
+          <SanderCardFut playerData={playerToCardData(fullPlayer)} cutout />
           <WalletCard
             credits={fullPlayer.sanderCredits}
             playerName={fullPlayer.firstName ?? fullPlayer.name.split(" ")[0]}
           />
           {/* Viral share: Story-format image for Instagram/WhatsApp (primary) */}
-          <ShareStoryButton playerData={playerToCardData(fullPlayer)} variant="card" />
+          <ShareStoryButton playerData={playerToCardData(fullPlayer)} variant="card" lazy />
           {/* Square card download — kept next to the story share, one sharing block */}
           <ShareCardButton playerData={playerToCardData(fullPlayer)} />
 
@@ -381,7 +368,7 @@ export default async function ProfilePage({ searchParams }: Props) {
               </p>
               <Link
                 href="/sessions"
-                className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl bg-[var(--accent)] text-base font-black text-black"
+                className="flex min-h-[3.5rem] w-full items-center justify-center rounded-full bg-[var(--accent)] text-base font-black text-black"
               >
                 Trova una partita
               </Link>
@@ -501,7 +488,7 @@ export default async function ProfilePage({ searchParams }: Props) {
           </Link>
           <Link
             href="/scopri/profilo"
-            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] font-extrabold text-black"
+            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full bg-[var(--accent)] font-extrabold text-black"
           >
             <HeartHandshake className="h-4 w-4" />
             Il tuo profilo Scopri
@@ -680,34 +667,26 @@ export default async function ProfilePage({ searchParams }: Props) {
                 rel="noopener noreferrer"
                 className="flex h-20 overflow-hidden rounded-2xl bg-[var(--surface-2)] active:opacity-75 transition-opacity"
               >
-                {/* Banner image — left portion */}
-                <div className="relative h-full w-32 shrink-0 overflow-hidden bg-[var(--surface-1)]">
-                  {s.image ? (
+                {/* Left panel: the banner photo, else the whole logo, else initials */}
+                <div
+                  className="relative flex h-full w-32 shrink-0 items-center justify-center overflow-hidden"
+                  style={{ background: s.banner ? "var(--surface-1)" : s.logoBg ?? (s.accentColor ? `linear-gradient(135deg, ${s.accentColor}33, ${s.accentColor}99)` : "var(--surface-3)") }}
+                >
+                  {s.banner ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={s.image} alt={s.name} className="h-full w-full object-cover object-top" />
+                    <img src={s.banner} alt={s.name} className="h-full w-full object-cover object-top" />
+                  ) : s.logo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={s.logo} alt={s.name} className="h-full w-full object-contain p-2" />
                   ) : (
-                    <div
-                      className="h-full w-full flex items-center justify-center"
-                      style={{ background: s.accentColor ? `linear-gradient(135deg, ${s.accentColor}33, ${s.accentColor}99)` : "var(--surface-3)" }}
-                    >
-                      <span className="text-xl font-black text-white opacity-90">
-                        {s.name.slice(0, 2).toUpperCase()}
-                      </span>
-                    </div>
+                    <span className="text-xl font-black text-white opacity-90">{s.name.slice(0, 2).toUpperCase()}</span>
                   )}
                 </div>
-                {/* Info — right portion */}
+                {/* Info — right portion (the logo again only next to a banner) */}
                 <div className="flex min-w-0 flex-1 items-center gap-3 px-4">
-                  {s.icon ? (
+                  {s.banner && s.logo && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={s.icon} alt="" className="h-10 w-10 shrink-0 rounded-xl object-cover" />
-                  ) : (
-                    <div
-                      className="h-10 w-10 shrink-0 rounded-xl flex items-center justify-center text-sm font-black text-white"
-                      style={{ background: s.accentColor ?? "var(--surface-3)" }}
-                    >
-                      {s.name.slice(0, 2).toUpperCase()}
-                    </div>
+                    <img src={s.logo} alt="" className="h-10 w-10 shrink-0 rounded-xl object-cover" />
                   )}
                   <div className="min-w-0">
                     <p className="font-black text-base text-white truncate">{s.name}</p>

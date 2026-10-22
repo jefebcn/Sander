@@ -1,7 +1,7 @@
 # Griglia Instagram SANDER
 
 12 post 1080×1350 (4:5) nello stile "run club": foto mosse effetto pellicola,
-scritte a pennarello, grafite sgranato, lime SANDER, piccole info negli angoli.
+scritte a pennarello, lime SANDER (niente sfondi grigi: i post di testo stanno su foto sfocate), piccole info negli angoli.
 Le foto in `photos/` sono generate con Higgsfield: persone inventate, scalze, senza marchi.
 
 ```bash

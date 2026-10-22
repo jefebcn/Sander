@@ -32,9 +32,9 @@ export function QRCodeButton({ path, title, label = "Mostra QR Code" }: QRCodeBu
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-3)] font-bold text-white text-base transition-colors active:bg-[var(--surface-4)]"
+        className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full btn-secondary font-bold text-white text-base"
       >
-        <QrCode className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />
+        <QrCode className="h-5 w-5" aria-hidden="true" />
         {label}
       </button>
 

@@ -91,7 +91,7 @@ export function LiveDashboard({ tournamentId, initialData, readOnly, canEditPlay
                 className={cn(
                   "relative shrink-0 rounded-full px-4 py-1.5 text-sm font-bold transition-all duration-150 min-h-[3.5rem]",
                   isActive
-                    ? "bg-[var(--accent)] text-black"
+                    ? "sel-on"
                     : isDone
                       ? "bg-[var(--surface-1)] text-[var(--muted-text)]"
                       : isCurrent

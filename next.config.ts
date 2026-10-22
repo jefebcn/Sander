@@ -25,6 +25,9 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 2678400,
   },
   experimental: {
+    // A page you opened in the last minute comes back instantly instead of
+    // reloading (mutations still refresh it through revalidatePath).
+    staleTimes: { dynamic: 60 },
     serverActions: {
       // Default is 1MB. File uploads go through API routes (/api/avatar,
       // /api/tournament-cover), which this limit does not apply to, and the
@@ -33,6 +36,14 @@ const nextConfig: NextConfig = {
       // surface for oversized-payload abuse.
       bodySizeLimit: "10mb",
     },
+  },
+  // Addresses people type by habit: both land on the sign-up form.
+  async redirects() {
+    return ["/auth/signup", "/auth/register", "/registrati"].map((source) => ({
+      source,
+      destination: "/auth/signin?mode=register",
+      permanent: false,
+    }))
   },
   async headers() {
     return [

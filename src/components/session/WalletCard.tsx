@@ -66,7 +66,7 @@ export function WalletCard({ credits, playerName }: WalletCardProps) {
         <button
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="flex min-h-[2.75rem] items-center gap-1 rounded-full bg-[var(--accent)] px-4 text-sm font-extrabold text-black"
+          className="btn btn-secondary min-h-[2.75rem] gap-1 px-4 text-sm"
         >
           Ricarica
           <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} aria-hidden="true" />

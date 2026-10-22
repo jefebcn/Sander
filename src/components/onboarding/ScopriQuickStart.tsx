@@ -55,7 +55,10 @@ export function ScopriQuickStart({
 
   const filled = prompts.filter((p) => p.answer.trim().length >= 2)
   const hasPhoto = hasPhotos || !!uploaded || (useAvatar && !!avatarUrl)
-  const canSave = filled.length > 0 && (hasBirthDate || !!birthDate)
+  // The photo is required here: without one the profile isn't shown in the
+  // deck, and "Entra in Scopri" used to drop people in the editor instead.
+  const missing = !hasPhoto ? "Aggiungi una foto per entrare" : !(hasBirthDate || birthDate) ? "Manca la data di nascita" : filled.length === 0 ? "Scrivi almeno una risposta" : null
+  const canSave = !missing
 
   async function upload(file: File) {
     setUploading(true)
@@ -112,7 +115,7 @@ export function ScopriQuickStart({
         <header className="px-5 pb-2">
           <div className="flex min-h-[2.75rem] items-center justify-between text-xs font-semibold uppercase tracking-[0.12em] text-white/70">
             <span>SANDER</span>
-            <span>Passo 2 di 2</span>
+            <span>Scopri · 1 minuto</span>
             <span>Facoltativo</span>
           </div>
           <h1 className="font-hand mt-4 text-[3rem] leading-[0.92] text-white">
@@ -235,7 +238,7 @@ export function ScopriQuickStart({
                   type="button"
                   aria-pressed={on}
                   onClick={() => setLookingFor((list) => (on ? list.filter((x) => x !== l.key) : [...list, l.key]))}
-                  className={cn("min-h-[2.75rem] rounded-full px-4 text-sm font-bold transition-colors", on ? "bg-[var(--accent)] text-black" : "bg-white/5 text-white ring-1 ring-white/15")}
+                  className={cn("min-h-[2.75rem] rounded-full px-4 text-sm font-bold transition-colors", on ? "sel-on" : "sel-off")}
                 >
                   {l.label}
                 </button>
@@ -260,7 +263,7 @@ export function ScopriQuickStart({
             {saving ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <HeartHandshake className="h-5 w-5" aria-hidden="true" />}
             Entra in Scopri
           </button>
-          {!hasPhoto && <p className="text-center text-sm text-white/60">Senza foto puoi aggiungerla dopo dal profilo Scopri.</p>}
+          {missing && <p className="text-center text-sm text-white/60">{missing}</p>}
           <button type="button" onClick={() => router.push("/")} className="min-h-[3.5rem] text-base font-bold text-white/60">
             Più tardi
           </button>

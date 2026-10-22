@@ -49,9 +49,7 @@ export function FilterableSessionList({ sessions, isLoggedIn = false }: Filterab
             onClick={() => setFormat(f)}
             className={cn(
               "min-h-[2.75rem] rounded-full px-4 text-sm font-bold shrink-0 transition-colors",
-              format === f
-                ? "bg-[var(--accent)] text-black"
-                : "bg-[var(--surface-2)] text-[var(--muted-text)]",
+              format === f ? "sel-on" : "sel-off",
             )}
           >
             {f === "" ? "Tutti" : FORMAT_LABEL[f]}

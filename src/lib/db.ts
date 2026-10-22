@@ -23,7 +23,9 @@ function createPrismaClient(): PrismaClient {
   const { Pool } = require("pg")
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { PrismaPg } = require("@prisma/adapter-pg")
-  const pool = new Pool({ connectionString: url, max: 5 })
+  // One page fires several queries at once (Promise.all): with only 5
+  // connections they waited in line for each other.
+  const pool = new Pool({ connectionString: url, max: 10 })
   const adapter = new PrismaPg(pool)
   return new PrismaClient({ adapter })
 }

@@ -302,7 +302,7 @@ export async function getThread(threadId: string) {
       createdAt: true,
       senderId: true,
       sender: { select: { firstName: true, name: true } },
-      proposal: { select: { id: true, fromId: true, toId: true, date: true, location: true, city: true, status: true, sessionId: true } },
+      proposal: { select: { id: true, fromId: true, toId: true, date: true, location: true, city: true, status: true, sessionId: true, kind: true, focus: true } },
     },
   })
 
@@ -319,12 +319,22 @@ export async function getThread(threadId: string) {
     title = thread.name || others.map((o) => o.firstName ?? o.name).join(", ") || "Gruppo"
   else title = other ? other.firstName ?? other.name : "Chat"
 
+  // A private chat born from a Scopri match says so in its header.
+  const scopriMatch =
+    isDM && !!other &&
+    !!(await db.playerSwipe.findFirst({
+      where: { status: "MATCHED", OR: [{ fromId: me.id, toId: other.id }, { fromId: other.id, toId: me.id }] },
+      select: { id: true },
+    }))
+
   return {
     id: thread.id,
     kind: thread.kind,
     sessionId: thread.sessionId,
     otherReadAt,
     title,
+    other: isDM && other ? { id: other.id, avatarUrl: other.avatarUrl } : null,
+    scopriMatch,
     meId: me.id,
     amCreator: thread.kind === "GROUP" && thread.createdById === me.id,
     members: thread.participants.map((pp) => ({
@@ -348,6 +358,8 @@ export async function getThread(threadId: string) {
             // A pending proposal whose time has passed reads as expired.
             status: r.proposal.status === "PENDING" && r.proposal.date <= new Date() ? "EXPIRED" : r.proposal.status,
             sessionId: r.proposal.sessionId,
+            kind: r.proposal.kind === "TRAINING" ? ("TRAINING" as const) : ("GAME" as const),
+            focus: r.proposal.focus,
             mineToAnswer: r.proposal.toId === me.id,
             mineSent: r.proposal.fromId === me.id,
           }
