@@ -587,6 +587,62 @@ body[data-bg="beach"] {
 }
 
 /* ─── Pop-in (badges, XP gain, level-up) ─────────────────────────────────── */
+/* Match: two halves of a beach volleyball fly in, snap together, bounce in a
+   puff of sand (MatchOverlay). Ends whole and still, so reduced motion just
+   skips the trip. */
+.match-ball {
+  animation: ballJoin 650ms 950ms cubic-bezier(0.3, 1.6, 0.5, 1) both, floatY 3.2s 1.7s ease-in-out infinite;
+  /* On the wrapper: on the clipped halves the shadow got cut square. */
+  filter: drop-shadow(0 10px 16px rgb(0 0 0 / 0.4));
+}
+.match-ball__half {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.match-ball__half--l { clip-path: inset(0 50% 0 0); animation: ballHalfL 720ms 230ms cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+.match-ball__half--r { clip-path: inset(0 0 0 50%); animation: ballHalfR 720ms 230ms cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+@keyframes ballHalfL {
+  from { transform: translateX(-48vw) rotate(-260deg); opacity: 0; }
+  35% { opacity: 1; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes ballHalfR {
+  from { transform: translateX(48vw) rotate(260deg); opacity: 0; }
+  35% { opacity: 1; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes ballJoin {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.22) translateY(-10px); }
+  100% { transform: scale(1); }
+}
+/* Sand flying off the impact, and a lime flash behind the ball. */
+.match-ball__burst {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: var(--sand);
+  box-shadow:
+    -46px -18px 0 0 var(--sand), 44px -22px 0 -1px var(--sand), -36px 30px 0 -1px var(--sand),
+    40px 26px 0 0 var(--sand), -8px -48px 0 -1px var(--sand), 10px 46px 0 0 var(--sand),
+    -58px 6px 0 -2px var(--sand), 58px 2px 0 -1px var(--sand), 0 0 40px 26px color-mix(in srgb, var(--accent) 55%, transparent);
+  opacity: 0;
+  animation: sandBurst 800ms 950ms ease-out both;
+}
+@keyframes sandBurst {
+  0% { opacity: 1; transform: scale(0.3); }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .match-ball, .match-ball__half, .match-ball__burst { animation: none !important; }
+}
+
 @keyframes popIn {
   0%   { opacity: 0; transform: scale(0.6); }
   65%  { opacity: 1; transform: scale(1.12); }
