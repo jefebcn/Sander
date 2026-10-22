@@ -41,9 +41,13 @@ export default async function ScopriPage() {
   }
 
   const now = new Date()
-  await db.discoverProfile.upsert({ where: { playerId: player.id }, create: { playerId: player.id }, update: {} })
-  await refreshPlusIfStale(player.id, now)
-  const me = await loadCardRow(player.id)
+  // In parallel: the card and the SANDER+ check (which only touches Stripe for
+  // a lapsed subscription). The profile row is created once, not on every visit.
+  let [me] = await Promise.all([loadCardRow(player.id), refreshPlusIfStale(player.id, now)])
+  if (me && !me.discoverProfile) {
+    await db.discoverProfile.upsert({ where: { playerId: player.id }, create: { playerId: player.id }, update: {} })
+    me = await loadCardRow(player.id)
+  }
   if (!me) return null
   const missing = readiness(me, now)
 
@@ -117,9 +121,18 @@ export default async function ScopriPage() {
   return (
     <div className="px-4 pb-10">
       <ScopriNav active="scopri" likes={likes.length} waiting={waiting.length} />
+      <p className="-mt-1 mb-4 text-base text-white/80 [text-shadow:0_2px_12px_rgb(0_0_0/0.5)]">
+        Beach volley si gioca in due: qui trovi il <strong className="text-white">compagno per il 2v2</strong>, o gli avversari.
+      </p>
       {pick && (
         <div className="mb-5">
-          <DailyPickCard card={pick.card} seen={pick.seen} allowance={left} myPhoto={myPhoto} />
+          <DailyPickCard
+            card={pick.card}
+            seen={pick.seen}
+            allowance={left}
+            myPhoto={myPhoto}
+            me={{ role: me.preferredRole, side: me.discoverProfile?.side ?? null }}
+          />
         </div>
       )}
       <ScopriDeck
@@ -128,6 +141,7 @@ export default async function ScopriPage() {
         games={games}
         myPhoto={myPhoto}
         myFree={freeToday(me.discoverProfile?.freeDay, me.discoverProfile?.freeSlot, now)}
+        me={{ role: me.preferredRole, side: me.discoverProfile?.side ?? null }}
       />
       <ScopriWelcome />
     </div>

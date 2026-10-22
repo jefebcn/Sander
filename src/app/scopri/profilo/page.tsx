@@ -8,7 +8,7 @@ import { DEFAULT_MAX_GAP, isPlus } from "@/lib/scopri/rules"
 import { loadCardRow, readiness, toCard } from "@/lib/scopri/server"
 import { gestureFor } from "@/lib/scopri/selfie"
 import { dayKey } from "@/lib/datetime"
-import { PageHeader } from "@/components/layout/PageHeader"
+import { ScopriNav } from "@/components/scopri/ScopriNav"
 import { ScopriProfileEditor } from "@/components/scopri/ScopriProfileEditor"
 
 export const metadata: Metadata = { title: "Il tuo profilo Scopri — SANDER" }
@@ -16,17 +16,24 @@ export const metadata: Metadata = { title: "Il tuo profilo Scopri — SANDER" }
 export default async function ScopriProfilePage() {
   const player = await getCurrentPlayer()
   if (!player) redirect("/auth/signin?callbackUrl=/scopri/profilo")
-  await db.discoverProfile.upsert({ where: { playerId: player.id }, create: { playerId: player.id }, update: {} })
-  const me = await loadCardRow(player.id)
+  const [first, lastSelfie] = await Promise.all([
+    loadCardRow(player.id),
+    db.selfieCheck.findFirst({ where: { playerId: player.id }, orderBy: { createdAt: "desc" }, select: { status: true } }),
+  ])
+  let me = first
+  // The profile row is created once, not on every visit.
+  if (me && !me.discoverProfile) {
+    await db.discoverProfile.upsert({ where: { playerId: player.id }, create: { playerId: player.id }, update: {} })
+    me = await loadCardRow(player.id)
+  }
   if (!me) redirect("/onboarding/profile")
   const p = me.discoverProfile
-  const lastSelfie = await db.selfieCheck.findFirst({ where: { playerId: player.id }, orderBy: { createdAt: "desc" }, select: { status: true } })
   const gesture = gestureFor(player.id, dayKey(new Date()))
 
   return (
-    <div className="pb-10">
-      <PageHeader eyebrow="Scopri" tone="play" title="Il tuo profilo" backHref="/scopri" />
-      <div className="px-4">
+    <div className="px-4 pb-10">
+      <ScopriNav active="profilo" />
+      <div>
         <ScopriProfileEditor
           data={{
             photos: me.discoverPhotos,

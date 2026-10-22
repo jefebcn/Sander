@@ -11,6 +11,7 @@ import { MatchOverlay } from "./MatchOverlay"
 import type { Allowance, LikeTarget, ScopriCard } from "./types"
 import { resizedPhoto } from "@/lib/photo"
 import { shownAffinity } from "@/lib/scopri/score"
+import { pairFit, type PairSide } from "@/lib/scopri/pairFit"
 
 /**
  * "Il più compatibile di oggi": one person a day, from a stable pairing of
@@ -21,11 +22,13 @@ export function DailyPickCard({
   seen: initialSeen,
   allowance: initialAllowance,
   myPhoto,
+  me,
 }: {
   card: ScopriCard
   seen: boolean
   allowance: Allowance
   myPhoto: string | null
+  me?: PairSide
 }) {
   const [open, setOpen] = useState(false)
   const [seen, setSeen] = useState(initialSeen)
@@ -78,7 +81,7 @@ export function DailyPickCard({
       </button>
 
       <Sheet open={open} onOpenChange={setOpen} title="Il più compatibile di oggi" description="Calcolato su tutti i giocatori di Scopri: è probabile che anche tu piaccia a lui o a lei.">
-        <ProfileCard card={card} onLike={seen ? undefined : (t) => setTarget(t)} />
+        <ProfileCard card={card} fit={me ? pairFit(me, card) : null} onLike={seen ? undefined : (t) => setTarget(t)} />
       </Sheet>
       <LikeSheet card={card} target={target} allowance={allowance} onClose={() => setTarget(null)} onSent={onSent} onAllowance={setAllowance} />
       {match && <MatchOverlay {...match} myPhoto={myPhoto} onClose={() => setMatch(null)} />}

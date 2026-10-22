@@ -1,13 +1,14 @@
 "use client"
 
 /* eslint-disable @next/next/no-img-element -- user photos from Blob, any size */
-import { Heart, MapPin, Shield, Hand, ArrowLeftRight, Target, Sparkles, BadgeCheck, CalendarCheck, Sun, Repeat, Flag, ScanFace } from "lucide-react"
+import { Heart, MapPin, Shield, Hand, ArrowLeftRight, Target, Sparkles, BadgeCheck, CalendarCheck, Sun, Repeat, Flag, ScanFace, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { lookingForLabel, sideLabel } from "@/lib/scopri/prompts"
 import { freeSlotLabel, VERIFIED_MIN_GAMES, VERIFIED_MIN_RELIABILITY } from "@/lib/scopri/reliability"
 import type { ScopriCard, LikeTarget } from "./types"
 import { resizedPhoto } from "@/lib/photo"
 import { shownAffinity } from "@/lib/scopri/score"
+import type { PairFit } from "@/lib/scopri/pairFit"
 
 /**
  * A player as Scopri shows them: photos and prompt answers woven together,
@@ -20,8 +21,11 @@ export function ProfileCard({
   onReport,
   className,
   compact = false,
+  fit,
 }: {
   card: ScopriCard
+  /** What the two of you would be on a 2v2 court (partners or opponents). */
+  fit?: PairFit | null
   onLike?: (target: LikeTarget) => void
   /** Shows "Segnala o blocca" under the card. */
   onReport?: () => void
@@ -89,14 +93,32 @@ export function ProfileCard({
           </div>
         )}
       </header>
-      {card.reasons && card.reasons.length > 0 && (
+      {(() => {
+        // The pair band below already says it when roles complement each other.
+        const reasons = (card.reasons ?? []).filter((r) => !(fit && r === "Muro + difesa"))
+        return reasons.length > 0 && (
         <ul className="flex flex-wrap gap-2 px-1" aria-label="Perché te lo proponiamo">
-          {card.reasons.map((r) => (
+          {reasons.map((r) => (
             <li key={r} className="flex items-center gap-1 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-sm font-bold text-[var(--accent)]">
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> {r}
             </li>
           ))}
         </ul>
+        )
+      })()}
+      {fit && (
+        <div
+          className={cn(
+            "mx-1 flex items-start gap-3 rounded-[var(--radius-md)] px-4 py-3",
+            fit.kind === "rival" ? "bg-[color-mix(in_srgb,var(--compete)_14%,transparent)]" : "bg-[var(--accent-soft)]",
+          )}
+        >
+          <Users className={cn("mt-0.5 h-5 w-5 shrink-0", fit.kind === "rival" ? "text-[var(--compete)]" : "text-[var(--accent)]")} aria-hidden="true" />
+          <span>
+            <span className={cn("block text-base font-extrabold", fit.kind === "rival" ? "text-[var(--compete)]" : "text-[var(--accent)]")}>{fit.title}</span>
+            {fit.detail && <span className="block text-sm text-white/80">{fit.detail}</span>}
+          </span>
+        </div>
       )}
       {blocks}
       {onReport && (

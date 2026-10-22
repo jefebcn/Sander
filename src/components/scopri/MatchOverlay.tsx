@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element -- user photos from Blob, any size */
 import Link from "next/link"
-import { MessageCircle, Volleyball } from "lucide-react"
+import { MessageCircle, Users, Volleyball } from "lucide-react"
 import { useEffect } from "react"
 import { resizedPhoto } from "@/lib/photo"
 
@@ -42,7 +42,7 @@ export function MatchOverlay({
       </div>
       <div>
         <h2 id="match-title" className="font-hand text-7xl leading-none text-white">È un match!</h2>
-        <p className="mt-3 font-serif text-2xl text-white/90">Tu e {name} volete giocare insieme.</p>
+        <p className="mt-3 font-serif text-2xl text-white/90">Tu e {name} volete giocare insieme: fate coppia per il 2v2?</p>
       </div>
       <div className="flex w-full max-w-sm flex-col gap-2">
         {/* The point of a match is a game: propose one in a tap. */}
@@ -50,11 +50,18 @@ export function MatchOverlay({
           href={`/messaggi/${threadId}?proponi=1`}
           className="pressable flex min-h-[3.75rem] items-center justify-center gap-2 rounded-full bg-[var(--accent)] text-lg font-extrabold text-black"
         >
-          <Volleyball className="h-5 w-5" aria-hidden="true" /> Proponi una partita
+          <Volleyball className="h-5 w-5" aria-hidden="true" /> Proponi un 2v2 in coppia
+        </Link>
+        <p className="-mt-1 text-sm text-white/80">Voi due insieme: SANDER cerca i due avversari tra chi gioca vicino.</p>
+        <Link
+          href="/scopri/coppie"
+          className="pressable btn btn-secondary min-h-[3.75rem] gap-2 text-lg"
+        >
+          <Users className="h-5 w-5" aria-hidden="true" /> Fate coppia fissa
         </Link>
         <Link
           href={`/messaggi/${threadId}`}
-          className="pressable flex min-h-[3.75rem] items-center justify-center gap-2 rounded-full bg-white text-lg font-extrabold text-black"
+          className="pressable flex min-h-[3.25rem] items-center justify-center gap-2 text-base font-extrabold text-white"
         >
           <MessageCircle className="h-5 w-5" aria-hidden="true" /> Scrivi a {name}
         </Link>

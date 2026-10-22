@@ -125,6 +125,22 @@ try {
     await anna.getByText("Onda Lunga").first().waitFor()
   })
 
+  await step("Chat after the match: write to Anna, she reads it and replies", async () => {
+    await page.goto(`${BASE}/scopri/match`, { waitUntil: "networkidle" })
+    await page.getByRole("link", { name: /Anna/ }).first().click()
+    await page.waitForURL(/\/messaggi\//, { timeout: 15_000 })
+    const thread = page.url()
+    await page.getByPlaceholder("Scrivi un messaggio…").fill("Sabato al 26 alle 18?")
+    await page.getByRole("button", { name: "Invia" }).click()
+    await page.getByText("Sabato al 26 alle 18?").first().waitFor({ timeout: 10_000 })
+    await anna.goto(thread, { waitUntil: "networkidle" })
+    await anna.getByText("Sabato al 26 alle 18?").first().waitFor({ timeout: 10_000 })
+    await anna.getByPlaceholder("Scrivi un messaggio…").fill("Ci sto, porto io la palla")
+    await anna.getByRole("button", { name: "Invia" }).click()
+    // The conversation polls: the reply shows up without reloading.
+    await page.getByText("Ci sto, porto io la palla").first().waitFor({ timeout: 15_000 })
+  })
+
   await step("Android app: nothing to buy inside (Google Play rules)", async () => {
     const app = await newPage({ android: true })
     await signIn(app, "me@e2e.local")

@@ -1,6 +1,9 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  // Relations come back in the same query (LATERAL JOIN) instead of one query
+  // per relation: far fewer round trips to the database on every page.
+  previewFeatures = ["relationJoins"]
 }
 
 datasource db {

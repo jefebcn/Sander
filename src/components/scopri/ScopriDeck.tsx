@@ -15,6 +15,7 @@ import { FreeTodayButton } from "./FreeTodayButton"
 import { ReportSheet } from "./ReportSheet"
 import type { FreeSlot } from "@/lib/scopri/reliability"
 import type { Allowance, GroupGame, LikeTarget, ScopriCard } from "./types"
+import { pairFit, type PairSide } from "@/lib/scopri/pairFit"
 
 type Item = { kind: "player"; card: ScopriCard } | { kind: "game"; game: GroupGame }
 
@@ -42,12 +43,15 @@ export function ScopriDeck({
   games,
   myPhoto,
   myFree,
+  me,
 }: {
   initialCards: ScopriCard[]
   initialAllowance: Allowance
   games: GroupGame[]
   myPhoto: string | null
   myFree: FreeSlot | null
+  /** Your role and side: each card says what you'd be together on a 2v2 court. */
+  me?: PairSide
 }) {
   const [items, setItems] = useState<Item[]>(() => weave(initialCards, games))
   const [allowance, setAllowance] = useState(initialAllowance)
@@ -187,7 +191,12 @@ export function ScopriDeck({
         >
           <Stamp show={drag > 40} text="GIOCHIAMO" side="left" color="var(--accent)" opacity={Math.min(1, drag / COMMIT)} />
           <Stamp show={drag < -40} text="PASSO" side="right" color="var(--muted-text)" opacity={Math.min(1, -drag / COMMIT)} />
-          <ProfileCard card={current.card} onLike={(t) => setTarget(t)} onReport={() => setReport(true)} />
+          <ProfileCard
+            card={current.card}
+            fit={me ? pairFit(me, current.card) : null}
+            onLike={(t) => setTarget(t)}
+            onReport={() => setReport(true)}
+          />
         </div>
       )}
 
