@@ -1162,8 +1162,9 @@ model SelfieCheck {
   @@map("selfie_checks")
 }
 
-/// "Proponi una partita" in a private chat: when and where. Accepting creates a
-/// 2v2 with the two of them as a pair and two seats open.
+/// "Proponi una partita" in a private chat: when and where. Accepting a GAME
+/// creates a 2v2 with the two of them as a pair and two seats open; accepting a
+/// TRAINING just confirms it between the two.
 model GameProposal {
   id          String    @id @default(cuid())
   createdAt   DateTime  @default(now())
@@ -1175,6 +1176,10 @@ model GameProposal {
   city        String?
   /// PENDING | ACCEPTED | DECLINED | CANCELLED
   status      String    @default("PENDING")
+  /// GAME (a 2v2 with the two of you as a pair) | TRAINING (just the two of you)
+  kind        String    @default("GAME")
+  /// For TRAINING: what you work on (PALLEGGIO | SERVIZIO | RICEZIONE | TUTTO).
+  focus       String?
   respondedAt DateTime?
   sessionId   String?
   messages    ChatMessage[]

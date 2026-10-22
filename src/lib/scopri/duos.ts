@@ -339,3 +339,23 @@ export async function duoLeaderboard(limit = 30): Promise<DuoRankRow[]> {
       members: [toMember(d.a), toMember(d.b)],
     }))
 }
+
+/**
+ * Pairs that want opponents near you (a member plays in your comune), shown
+ * to someone without a pair yet: the reason to form one.
+ */
+export async function pairsNearby(playerId: string, city: string | null, limit = 4): Promise<DuoCard[]> {
+  const rows = await db.duo.findMany({
+    where: {
+      status: "ACTIVE",
+      a: { is: NOT_DELETED_PLAYER },
+      b: { is: NOT_DELETED_PLAYER },
+      NOT: { OR: [{ aId: playerId }, { bId: playerId }] },
+      ...(city ? { OR: [{ a: { homeCity: city } }, { b: { homeCity: city } }] } : {}),
+    },
+    orderBy: { rating: "desc" },
+    take: limit,
+    select: DUO_SELECT,
+  })
+  return rows.map((d) => toDuoCard(d))
+}

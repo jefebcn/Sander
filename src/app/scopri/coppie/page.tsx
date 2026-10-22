@@ -16,6 +16,7 @@ import {
   duoMatchList,
   duoLeaderboard,
   toDuoCard,
+  pairsNearby,
 } from "@/lib/scopri/duos"
 import { ScopriNav } from "@/components/scopri/ScopriNav"
 import { CoppieView } from "@/components/scopri/CoppieView"
@@ -36,9 +37,19 @@ export default async function CoppiePage() {
   ])
   const waiting = matches.filter((m) => m.turn !== "in-attesa").length
 
-  const [candidates, deck, used, incoming, duoMatches] = duo
-    ? await Promise.all([Promise.resolve([]), duoDeck(duo, now), duoLikesUsedToday(duo.id, now), incomingDuoLikes(duo), duoMatchList(duo)])
-    : [await partnerCandidates(player.id), [], 0, [], []]
+  // With a pair: pairs to challenge and your games. Without: who to pair with,
+  // and the pairs nearby that are waiting for opponents (the reason to pair up).
+  let candidates: Awaited<ReturnType<typeof partnerCandidates>> = []
+  let deck: Awaited<ReturnType<typeof duoDeck>> = []
+  let used = 0
+  let incoming: Awaited<ReturnType<typeof incomingDuoLikes>> = []
+  let duoMatches: Awaited<ReturnType<typeof duoMatchList>> = []
+  let nearbyPairs: Awaited<ReturnType<typeof pairsNearby>> = []
+  if (duo) {
+    ;[deck, used, incoming, duoMatches] = await Promise.all([duoDeck(duo, now), duoLikesUsedToday(duo.id, now), incomingDuoLikes(duo), duoMatchList(duo)])
+  } else {
+    ;[candidates, nearbyPairs] = await Promise.all([partnerCandidates(player.id), pairsNearby(player.id, player.homeCity)])
+  }
 
   return (
     <div className="px-4 pb-10">
@@ -56,6 +67,7 @@ export default async function CoppiePage() {
           incoming,
           matches: duoMatches,
           leaderboard,
+          nearbyPairs,
         }}
       />
     </div>

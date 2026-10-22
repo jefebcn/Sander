@@ -50,9 +50,9 @@ export function MatchOverlay({
           href={`/messaggi/${threadId}?proponi=1`}
           className="pressable flex min-h-[3.75rem] items-center justify-center gap-2 rounded-full bg-[var(--accent)] text-lg font-extrabold text-black"
         >
-          <Volleyball className="h-5 w-5" aria-hidden="true" /> Proponi un 2v2 in coppia
+          <Volleyball className="h-5 w-5" aria-hidden="true" /> Giocate insieme
         </Link>
-        <p className="-mt-1 text-sm text-white/80">Voi due insieme: SANDER cerca i due avversari tra chi gioca vicino.</p>
+        <p className="-mt-1 text-sm text-white/80">Entrate in coppia in una partita vicina, proponete un 2v2 o un allenamento a due.</p>
         <Link
           href="/scopri/coppie"
           className="pressable btn btn-secondary min-h-[3.75rem] gap-2 text-lg"

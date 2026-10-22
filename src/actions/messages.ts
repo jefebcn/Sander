@@ -302,7 +302,7 @@ export async function getThread(threadId: string) {
       createdAt: true,
       senderId: true,
       sender: { select: { firstName: true, name: true } },
-      proposal: { select: { id: true, fromId: true, toId: true, date: true, location: true, city: true, status: true, sessionId: true } },
+      proposal: { select: { id: true, fromId: true, toId: true, date: true, location: true, city: true, status: true, sessionId: true, kind: true, focus: true } },
     },
   })
 
@@ -358,6 +358,8 @@ export async function getThread(threadId: string) {
             // A pending proposal whose time has passed reads as expired.
             status: r.proposal.status === "PENDING" && r.proposal.date <= new Date() ? "EXPIRED" : r.proposal.status,
             sessionId: r.proposal.sessionId,
+            kind: r.proposal.kind === "TRAINING" ? ("TRAINING" as const) : ("GAME" as const),
+            focus: r.proposal.focus,
             mineToAnswer: r.proposal.toId === me.id,
             mineSent: r.proposal.fromId === me.id,
           }

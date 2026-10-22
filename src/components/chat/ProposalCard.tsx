@@ -14,8 +14,18 @@ export interface ProposalView {
   city: string | null
   status: string
   sessionId: string | null
+  /** GAME: a 2v2 with the two of you as a pair. TRAINING: just the two of you. */
+  kind: "GAME" | "TRAINING"
+  focus: string | null
   mineToAnswer: boolean
   mineSent: boolean
+}
+
+const FOCUS: Record<string, string> = {
+  PALLEGGIO: "Palleggio",
+  SERVIZIO: "Servizio",
+  RICEZIONE: "Ricezione",
+  TUTTO: "Un po' di tutto",
 }
 
 const STATUS: Record<string, string> = {
@@ -44,7 +54,7 @@ export function ProposalCard({ p, onAnswered }: { p: ProposalView; onAnswered: (
     start(async () => {
       try {
         await answerGameProposal({ proposalId: p.id, answer: a })
-        if (a === "accept") toast.success("Partita creata: siete in coppia!")
+        if (a === "accept") toast.success(p.kind === "TRAINING" ? "Allenamento confermato!" : "Partita creata: siete in coppia!")
         onAnswered()
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Non riuscito")
@@ -56,7 +66,11 @@ export function ProposalCard({ p, onAnswered }: { p: ProposalView; onAnswered: (
   return (
     <div className="w-[min(18rem,78vw)] overflow-hidden rounded-2xl bg-[var(--surface-2)] ring-1 ring-[var(--accent-line)]">
       <div className="bg-[var(--accent-soft)] px-4 py-2">
-        <p className="eyebrow text-[var(--accent)]">{p.mineSent ? "Hai proposto una partita" : "Ti propone una partita"}</p>
+        <p className="eyebrow text-[var(--accent)]">
+          {p.kind === "TRAINING"
+            ? p.mineSent ? "Hai proposto un allenamento" : "Ti propone un allenamento"
+            : p.mineSent ? "Hai proposto una partita" : "Ti propone una partita"}
+        </p>
       </div>
       <div className="flex flex-col gap-1.5 px-4 py-3 text-white">
         <p className="flex items-center gap-2 text-base font-bold first-letter:uppercase">
@@ -67,7 +81,11 @@ export function ProposalCard({ p, onAnswered }: { p: ProposalView; onAnswered: (
           {p.location}
           {p.city && <span className="text-[var(--muted-text)]">· {p.city}</span>}
         </p>
-        <p className="text-sm text-[var(--muted-text)]">2v2: voi due in coppia, due posti per gli avversari.</p>
+        <p className="text-sm text-[var(--muted-text)]">
+          {p.kind === "TRAINING"
+            ? `Allenamento a due · ${FOCUS[p.focus ?? "TUTTO"] ?? "Un po' di tutto"}`
+            : "2v2: voi due in coppia, due posti per gli avversari."}
+        </p>
       </div>
       {open && p.mineToAnswer && (
         <div className="grid grid-cols-2 gap-2 px-3 pb-3">

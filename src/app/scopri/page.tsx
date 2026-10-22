@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic"
 
 import type { Metadata } from "next"
 import Link from "next/link"
-import { MessageCircle } from "lucide-react"
+import { MessageCircle, Users, Volleyball } from "lucide-react"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { YOUR_TURN_LIMIT } from "@/lib/scopri/rules"
@@ -16,6 +16,7 @@ import {
   incomingLikes,
 } from "@/lib/scopri/server"
 import { openGamesNear } from "@/lib/scopri/games"
+import { playNearby, type PlayNearby } from "@/lib/scopri/pairPlay"
 import { freeToday } from "@/lib/scopri/reliability"
 import { refreshPlusIfStale } from "@/lib/scopri/plus"
 import { ScopriNav } from "@/components/scopri/ScopriNav"
@@ -112,18 +113,20 @@ export default async function ScopriPage() {
     )
   }
 
-  const [deck, pick, games] = await Promise.all([
+  const [deck, pick, games, nearby] = await Promise.all([
     buildDeck(me, now),
     dailyPickFor(me, now),
     openGamesNear(me.id, me.homeCity, now),
+    playNearby(me.id, me.homeCity, now),
   ])
 
   return (
     <div className="px-4 pb-10">
       <ScopriNav active="scopri" likes={likes.length} waiting={waiting.length} />
-      <p className="-mt-1 mb-4 text-base text-white/80 [text-shadow:0_2px_12px_rgb(0_0_0/0.5)]">
+      <p className="-mt-1 text-base text-white/80 [text-shadow:0_2px_12px_rgb(0_0_0/0.5)]">
         Beach volley si gioca in due: qui trovi il <strong className="text-white">compagno per il 2v2</strong>, o gli avversari.
       </p>
+      <PlayNearbyStrip nearby={nearby} />
       {pick && (
         <div className="mb-5">
           <DailyPickCard
@@ -144,6 +147,38 @@ export default async function ScopriPage() {
         me={{ role: me.preferredRole, side: me.discoverProfile?.side ?? null }}
       />
       <ScopriWelcome />
+    </div>
+  )
+}
+
+/**
+ * What a like turns into around you: pairs to challenge and games that miss a
+ * pair. A match is half a 2v2, and this shows the other half is already here.
+ */
+function PlayNearbyStrip({ nearby }: { nearby: PlayNearby | null }) {
+  if (!nearby) return <div className="mb-4" />
+  const { city, pairs, pairGames } = nearby
+  if (pairs === 0 && pairGames === 0) {
+    return (
+      <p className="mb-4 mt-1 text-sm text-white/70">
+        A {city} siete i primi: col vostro match aprite voi la prima partita, gli avversari arrivano.
+      </p>
+    )
+  }
+  return (
+    <div className="mb-4 mt-2 flex flex-wrap gap-2" aria-label={`Oggi a ${city}`}>
+      {pairs > 0 && (
+        <Link href="/scopri/coppie" className="pressable flex min-h-[2.75rem] items-center gap-1.5 rounded-full bg-[var(--surface-3)] px-3.5 text-sm font-bold text-white ring-1 ring-white/15">
+          <Users className="h-4 w-4 text-[var(--social)]" aria-hidden="true" />
+          {pairs === 1 ? "1 coppia cerca avversari" : `${pairs} coppie cercano avversari`}
+        </Link>
+      )}
+      {pairGames > 0 && (
+        <Link href="/sessions" className="pressable flex min-h-[2.75rem] items-center gap-1.5 rounded-full bg-[var(--surface-3)] px-3.5 text-sm font-bold text-white ring-1 ring-white/15">
+          <Volleyball className="h-4 w-4 text-[var(--accent)]" aria-hidden="true" />
+          {pairGames === 1 ? "1 partita cerca una coppia" : `${pairGames} partite cercano una coppia`}
+        </Link>
+      )}
     </div>
   )
 }

@@ -141,6 +141,34 @@ try {
     await page.getByText("Ci sto, porto io la palla").first().waitFor({ timeout: 15_000 })
   })
 
+  await step("Entrate in coppia: Marco and Anna take the two free seats together", async () => {
+    await page.goto(`${BASE}/scopri/match`, { waitUntil: "networkidle" })
+    await page.getByRole("link", { name: /Anna/ }).first().click()
+    await page.waitForURL(/\/messaggi\//, { timeout: 15_000 })
+    await page.getByRole("button", { name: /Giocate insieme/ }).click()
+    await page.getByText("2v2 al 30").waitFor({ timeout: 15_000 })
+    await page.getByRole("button", { name: "Entriamo in due" }).click()
+    await page.getByText(/Siamo dentro in coppia/).first().waitFor({ timeout: 15_000 })
+    await page.goto(`${BASE}/sessions/s_pair`, { waitUntil: "networkidle" })
+    await page.getByText("Anna").first().waitFor({ timeout: 15_000 })
+  })
+
+  await step("Allenamento a due: Marco proposes it, Anna says «Ci sto»", async () => {
+    await page.goto(`${BASE}/scopri/match`, { waitUntil: "networkidle" })
+    await page.getByRole("link", { name: /Anna/ }).first().click()
+    await page.waitForURL(/\/messaggi\//, { timeout: 15_000 })
+    const thread = page.url()
+    await page.getByRole("button", { name: /Giocate insieme/ }).click()
+    await page.getByRole("button", { name: "Allenamento a due" }).click()
+    await page.getByRole("button", { name: "Servizio" }).click()
+    await page.getByPlaceholder("Es. Bagno 26").fill("Bagno 26")
+    await page.getByRole("button", { name: "Invia la proposta" }).click()
+    await page.getByText("Hai proposto un allenamento").first().waitFor({ timeout: 15_000 })
+    await anna.goto(thread, { waitUntil: "networkidle" })
+    await anna.getByRole("button", { name: "Ci sto" }).last().click()
+    await anna.getByText(/Allenamento a due confermato/).first().waitFor({ timeout: 15_000 })
+  })
+
   await step("Android app: nothing to buy inside (Google Play rules)", async () => {
     const app = await newPage({ android: true })
     await signIn(app, "me@e2e.local")

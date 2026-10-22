@@ -197,7 +197,7 @@ export function ConversationView({
           className="flex items-center justify-center gap-2 border-t border-[var(--border)] py-2.5 text-sm font-black text-[var(--accent)] active:opacity-70"
         >
           <Volleyball className="h-4 w-4" />
-          Proponi una partita
+          {thread.kind === "DM" ? "Giocate insieme: in coppia, 2v2 o allenamento" : "Proponi una partita"}
         </button>
       )}
 
