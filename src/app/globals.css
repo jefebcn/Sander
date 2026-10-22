@@ -217,6 +217,27 @@ body {
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   min-height: 100dvh;
+  /* The page never slides sideways, whatever is a pixel too wide. clip (not
+     hidden) where supported: it doesn't turn body into a scroll container,
+     so sticky headers and window scrolling keep working. */
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+/* iOS gives date and time fields an intrinsic width wider than a phone column
+   ("28 set 2001" ran off the screen and let the page slide sideways). */
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"] {
+  min-width: 0;
+  max-width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+}
+input[type="date"]::-webkit-date-and-time-value,
+input[type="datetime-local"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value {
+  text-align: left;
 }
 
 /* ─── App background (see AppBackground) ─────────────────────────────────── */
