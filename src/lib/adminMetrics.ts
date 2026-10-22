@@ -21,8 +21,8 @@ import {
 export const SC_PER_EURO = 10
 const WINDOW_MONTHS = 6
 
-export async function getAdminMetrics(now = new Date()) {
-  const months = lastMonths(now, WINDOW_MONTHS)
+export async function getAdminMetrics(now = new Date(), windowMonths = WINDOW_MONTHS) {
+  const months = lastMonths(now, windowMonths)
 
   const [
     paidRegistrations,

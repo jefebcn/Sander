@@ -872,3 +872,14 @@ button, a, [role="button"] {
 @media (pointer: coarse) {
   :is(input, select, textarea):is(.text-xs, .text-sm) { font-size: 16px; }
 }
+
+/* ─── Admin on a computer ─────────────────────────────────────────────────────
+   The app is a phone-width column; admin opened on a desktop screen uses the
+   whole window instead (side menu in app/admin/layout.tsx, no tab bar). */
+@media (min-width: 1024px) {
+  main:has(.admin-shell) { max-width: none; padding-bottom: 0; }
+}
+@media print {
+  main:has(.admin-shell) { max-width: none; padding-bottom: 0; }
+  body:has(.admin-shell) nav[aria-label="Navigazione principale"] { display: none; }
+}

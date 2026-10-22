@@ -68,7 +68,7 @@ export default async function AdminMetricsPage() {
         <h1 className="text-xl font-black text-white">Metriche</h1>
       </div>
 
-      <div className="space-y-4 px-4">
+      <div className="space-y-4 px-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-4 lg:space-y-0">
         {/* ── Scopri ─────────────────────────────────────────────────── */}
         <Section icon={<HeartHandshake className="h-4 w-4 text-[var(--accent)]" />} title="Scopri">
           <div className="grid grid-cols-2 gap-2">

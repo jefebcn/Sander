@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { Banknote, Bug, ChartColumn, ChevronRight, Coins, ShieldCheck, type LucideIcon } from "lucide-react"
+import { Banknote, Bug, ChartColumn, ChevronRight, Coins, ShieldCheck, TrendingUp, type LucideIcon } from "lucide-react"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { isAdminEmail } from "@/lib/isAdmin"
 import { db } from "@/lib/db"
@@ -33,6 +33,7 @@ export default async function AdminHomePage() {
   ])
 
   const sections: Section[] = [
+    { href: "/admin/investitori", icon: TrendingUp, color: "var(--accent)", title: "Numeri per investitori", hint: "Crescita, attivi, incassi, comuni: pronti da mostrare" },
     { href: "/admin/metriche", icon: ChartColumn, color: "var(--accent)", title: "Metriche", hint: "Iscritti, incassi, Scopri, chi torna a giocare" },
     { href: "/admin/segnalazioni", icon: ShieldCheck, color: "var(--danger)", title: "Moderazione Scopri", hint: "Segnalazioni, foto, sospensioni", pending: openReports },
     { href: "/admin/payments", icon: Banknote, color: "var(--accent)", title: "Pagamenti in attesa", hint: "Conferma o rifiuta i pagamenti in contanti" },
@@ -43,7 +44,7 @@ export default async function AdminHomePage() {
   return (
     <div className="min-h-dvh pb-10">
       <PageHeader eyebrow="Admin" title="Pannello admin" backHref="/profile" />
-      <div className="flex flex-col gap-2 px-4">
+      <div className="flex flex-col gap-2 px-4 lg:grid lg:grid-cols-2 lg:gap-3">
         {sections.map(({ href, icon: Icon, color, title, hint, pending }) => (
           <Link
             key={href}
