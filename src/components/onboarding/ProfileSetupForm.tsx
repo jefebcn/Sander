@@ -7,10 +7,10 @@ import { saveProfile } from "@/actions/profile"
 import { capturePhoto, isNativeApp, hapticTap } from "@/lib/native"
 import { cn } from "@/lib/utils"
 import { canGoBackInApp } from "@/lib/navHistory"
-import { CITY_NAMES } from "@/lib/cities"
 import { START_LEVELS, type StartLevel } from "@/lib/startLevel"
 import { resizedPhoto } from "@/lib/photo"
 import { shrinkImage } from "@/lib/shrinkImage"
+import { CityPicker } from "@/components/ui/CityPicker"
 
 // ─── Countries list ────────────────────────────────────────────────────────────
 const COUNTRIES = [
@@ -449,23 +449,10 @@ export function ProfileSetupForm({ initialData }: { initialData?: InitialData })
         <div className="border-t border-white/10 px-5 py-5">
           <Step n="03" label="Comune" />
           <p className="font-hand mt-1 text-[1.9rem] leading-tight text-white">Dove giochi di solito?</p>
-          <p className="mt-0.5 text-sm text-white/65">Ti mostriamo prima le partite e la classifica del tuo comune.</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {CITY_NAMES.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setHomeCity(homeCity === c ? "" : c)}
-                aria-pressed={homeCity === c}
-                className={cn(
-                  "min-h-[2.75rem] rounded-full px-4 text-sm font-bold transition-colors",
-                  homeCity === c ? "sel-on" : "sel-off",
-                )}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
+          <p className="mt-0.5 text-sm text-white/65">
+            Ti mostriamo prima le partite e la classifica del tuo comune. SANDER cresce con te: vale ovunque in Italia.
+          </p>
+          <CityPicker value={homeCity} onChange={setHomeCity} className="mt-3" />
         </div>
 
         <div className="border-t border-white/10 px-5 py-5">

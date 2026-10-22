@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { CalendarPlus, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { Sheet } from "@/components/ui/Sheet"
-import { CITY_NAMES } from "@/lib/cities"
+import { CityPicker } from "@/components/ui/CityPicker"
 
 /** Next full hour, as a datetime-local value in the phone's own time. */
 function nextHourLocal(): string {
@@ -79,19 +79,10 @@ export function ProposeGameSheet({
             className="min-h-[3.5rem] rounded-[var(--radius-md)] bg-[var(--surface-2)] px-4 text-base text-white placeholder:text-[var(--muted-text)] outline-none ring-1 ring-[var(--border)] focus:ring-[var(--accent)]"
           />
         </label>
-        <label className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1">
           <span className="text-sm font-bold text-[var(--muted-text)]">Comune</span>
-          <select
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            className="min-h-[3.5rem] rounded-[var(--radius-md)] bg-[var(--surface-2)] px-4 text-base text-white outline-none ring-1 ring-[var(--border)] focus:ring-[var(--accent)]"
-          >
-            <option value="">Scegli il comune</option>
-            {CITY_NAMES.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-        </label>
+          <CityPicker value={city} onChange={setCity} />
+        </div>
         <button
           type="submit"
           disabled={busy}

@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { isKnownCity } from "@/lib/cities"
+import { isKnownPlace } from "@/lib/comuni"
 
 export const SendMessageSchema = z.object({
   threadId: z.string().min(1),
@@ -18,7 +18,7 @@ export const ProposeInChatSchema = z
     threadId: z.string().min(1),
     date: z.coerce.date(),
     location: z.string().trim().min(2, "Scrivi dove giocate (es. Bagno 26)").max(100),
-    city: z.string().refine(isKnownCity, "Comune non riconosciuto").optional(),
+    city: z.string().refine(isKnownPlace, "Comune non riconosciuto").optional(),
   })
   .strict()
 

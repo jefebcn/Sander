@@ -6,8 +6,8 @@ import Link from "next/link"
 import { X, MapPin, Calendar, Plus, Send, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { proposeGameInChat } from "@/actions/proposals"
-import { CITY_NAMES } from "@/lib/cities"
 import { getMyUpcomingSessions, sendMessage } from "@/actions/messages"
+import { CityPicker } from "@/components/ui/CityPicker"
 
 type Sess = Awaited<ReturnType<typeof getMyUpcomingSessions>>[number]
 
@@ -138,17 +138,10 @@ export function ProposeMatchSheet({
                   className="min-h-[3.5rem] rounded-xl bg-[var(--surface-3)] px-3 text-base text-white placeholder:text-[var(--muted-text)] outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 />
               </label>
-              <select
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                aria-label="Comune"
-                className="min-h-[3.5rem] rounded-xl bg-[var(--surface-3)] px-3 text-base text-white outline-none focus:ring-2 focus:ring-[var(--accent)]"
-              >
-                <option value="">Comune (facoltativo)</option>
-                {CITY_NAMES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+              <div className="flex flex-col gap-1">
+                <span className="text-sm font-bold text-[var(--muted-text)]">Comune (facoltativo)</span>
+                <CityPicker value={city} onChange={setCity} />
+              </div>
               <button
                 type="submit"
                 disabled={proposing}

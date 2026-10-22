@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation"
 import { MapPin, ChevronRight, Banknote, Beer, Gift, Shuffle, Coins, ChevronDown } from "lucide-react"
 import { createSession } from "@/actions/sessions"
 import { POPULAR_BAGNI, bagnoLabel } from "@/lib/bagni"
-import { CITY_NAMES, parseCity } from "@/lib/cities"
+import { parseCity } from "@/lib/cities"
 import { cn } from "@/lib/utils"
+import { CityPicker } from "@/components/ui/CityPicker"
 
 const FORMATS = [
   { value: "TWO_VS_TWO",     label: "2 vs 2", sub: "4 gioc." },
@@ -256,30 +257,13 @@ export function CreateSessionForm({ presets, defaultCity }: { presets?: Presets;
             {city ? "· conta per le classifiche di città" : "· serve per il Derby della Riviera"}
           </span>
         </p>
-        <div className="flex flex-wrap gap-1.5">
-          {CITY_NAMES.map((name) => {
-            const selected = city === name
-            return (
-              <button
-                key={name}
-                type="button"
-                aria-pressed={selected}
-                onClick={() => {
-                  setCityTouched(true)
-                  setCity(selected ? "" : name)
-                }}
-                className={cn(
-                  "min-h-[2.75rem] rounded-full border px-4 text-sm font-bold transition-colors",
-                  selected
-                    ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
-                    : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted-text)]",
-                )}
-              >
-                {name}
-              </button>
-            )
-          })}
-        </div>
+        <CityPicker
+          value={city}
+          onChange={(c) => {
+            setCityTouched(true)
+            setCity(c)
+          }}
+        />
       </div>
 
       {/* Date — styled tap-target over a hidden native input */}

@@ -2,7 +2,6 @@ import Link from "next/link"
 import { Sparkles, ChevronRight, Download, HeartHandshake, Heart, Users } from "lucide-react"
 import { SanderCardFut, type PlayerCardData } from "@/components/player/SanderCardFut"
 import { CountUp } from "@/components/ui/CountUp"
-import { CITY_NAMES } from "@/lib/cities"
 import { TournamentSpotlight, type SpotlightTournament } from "./TournamentSpotlight"
 import { WhySander } from "./WhySander"
 import { CrestHeading } from "./Crest"
@@ -28,7 +27,7 @@ export function GuestLanding({
   stats,
   tournament,
 }: {
-  stats: { players: number; matches: number }
+  stats: { players: number; matches: number; comuni: number }
   tournament: SpotlightTournament | null
 }) {
   return (
@@ -43,7 +42,7 @@ export function GuestLanding({
         {[
           { n: stats.players, label: "Giocatori" },
           { n: stats.matches, label: "Partite" },
-          { n: CITY_NAMES.length, label: "Comuni" },
+          { n: stats.comuni, label: "Comuni" },
         ].map((s) => (
           <div key={s.label} className="text-center">
             <CountUp value={s.n} className="num block text-4xl leading-none text-white" />

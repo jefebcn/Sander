@@ -80,12 +80,14 @@ async function getSpotlightTournament(): Promise<SpotlightTournament | null> {
    database. The cache stores JSON, so the date travels as a string. */
 const getLandingData = unstable_cache(
   async () => {
-    const [players, matches, tournament] = await Promise.all([
+    const [players, matches, tournament, homes] = await Promise.all([
       db.player.count(),
       db.session.count({ where: { status: "COMPLETED" } }),
       getSpotlightTournament(),
+      // Comuni where someone plays: SANDER grows wherever its players are.
+      db.player.groupBy({ by: ["homeCity"], where: { homeCity: { not: null } } }),
     ])
-    return { players, matches, tournament: tournament && { ...tournament, date: tournament.date.toISOString() } }
+    return { players, matches, comuni: homes.length, tournament: tournament && { ...tournament, date: tournament.date.toISOString() } }
   },
   ["landing"],
   { revalidate: 120, tags: [LANDING_TAG] },
@@ -102,11 +104,11 @@ export default async function Home() {
 
   /* ── Visitor ─────────────────────────────────────────────────────────── */
   if (!player) {
-    const { players, matches, tournament } = await getLandingData()
+    const { players, matches, comuni, tournament } = await getLandingData()
     return (
       <HomeShell>
         <GuestLanding
-          stats={{ players, matches }}
+          stats={{ players, matches, comuni }}
           tournament={tournament && { ...tournament, date: new Date(tournament.date) }}
         />
       </HomeShell>
