@@ -16,6 +16,7 @@ import {
   acesLeft,
   chatTurn,
   isPlus,
+  plusEnd,
   MIN_AGE,
   DEFAULT_MAX_GAP,
   type DealbreakerSide,
@@ -265,7 +266,7 @@ const MEET_RANK_BONUS = 10
 export async function buildDeck(me: CardRow, now: Date = new Date(), limit = 12): Promise<ScopriCard[]> {
   const hidden = await hiddenFor(me.id, now)
   const p = me.discoverProfile
-  const plus = isPlus(p?.plusUntil, now)
+  const plus = isPlus(plusEnd(p), now)
   const gap = p?.maxGap ?? DEFAULT_MAX_GAP
   // My own dealbreakers narrow the query; theirs are checked below (mutual).
   const pool = await loadPool(now, {
@@ -316,13 +317,14 @@ export async function allowance(meId: string, now: Date = new Date()) {
     db.playerSwipe.count({ where: { fromId: meId, isAce: true, createdAt: { gte: romeWeekStart(now) } } }),
     db.discoverProfile.findUnique({
       where: { playerId: meId },
-      select: { bonusLikes: true, bonusAces: true, likesUnlockedUntil: true, plusUntil: true },
+      select: { bonusLikes: true, bonusAces: true, likesUnlockedUntil: true, plusUntil: true, plusPassUntil: true },
     }),
   ])
-  const plus = isPlus(profile?.plusUntil, now)
+  const plusUntil = plusEnd(profile)
+  const plus = isPlus(plusUntil, now)
   // SANDER+ always sees everyone who likes them; otherwise "vedi tutti" bought with SC.
   const reveal = plus
-    ? profile?.plusUntil
+    ? plusUntil
     : profile?.likesUnlockedUntil && profile.likesUnlockedUntil > now
       ? profile.likesUnlockedUntil
       : null
@@ -332,7 +334,7 @@ export async function allowance(meId: string, now: Date = new Date()) {
     likes: likesLeft(likesToday, profile?.bonusLikes ?? 0, plus),
     aces: acesLeft(acesWeek, profile?.bonusAces ?? 0, plus),
     revealUntil: reveal ? reveal.toISOString() : null,
-    plusUntil: plus && profile?.plusUntil ? profile.plusUntil.toISOString() : null,
+    plusUntil: plus && plusUntil ? plusUntil.toISOString() : null,
   }
 }
 

@@ -4,7 +4,7 @@ import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
-import { DEFAULT_MAX_GAP, isPlus } from "@/lib/scopri/rules"
+import { DEFAULT_MAX_GAP, isPlus, plusEnd } from "@/lib/scopri/rules"
 import { loadCardRow, readiness, toCard } from "@/lib/scopri/server"
 import { gestureFor } from "@/lib/scopri/selfie"
 import { dayKey } from "@/lib/datetime"
@@ -50,7 +50,7 @@ export default async function ScopriProfilePage() {
             prefGender: p?.prefGender ?? null,
             prefRole: p?.prefRole ?? null,
             maxGap: p?.maxGap ?? DEFAULT_MAX_GAP,
-            plus: isPlus(p?.plusUntil),
+            plus: isPlus(plusEnd(p)),
             onlyVerified: p?.onlyVerified ?? false,
             onlyFreeToday: p?.onlyFreeToday ?? false,
             openToMeet: p?.openToMeet ?? false,

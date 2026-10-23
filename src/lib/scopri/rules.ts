@@ -73,6 +73,30 @@ export function isPlus(plusUntil: Date | null | undefined, now: Date = new Date(
   return !!plusUntil && plusUntil > now
 }
 
+/** SANDER+ for a week paid with SC: for a tournament weekend, without a subscription. */
+export const PLUS_PASS = { days: 7, sc: 40 } as const
+
+/** When SANDER+ ends: the later of the subscription and a pass bought with SC. */
+export function plusEnd(p: { plusUntil?: Date | null; plusPassUntil?: Date | null } | null | undefined): Date | null {
+  const sub = p?.plusUntil ?? null
+  const pass = p?.plusPassUntil ?? null
+  if (!sub || !pass) return sub ?? pass
+  return sub > pass ? sub : pass
+}
+
+/** A pass bought while one is running adds its days after the current one. */
+export function extendPass(current: Date | null | undefined, now: Date, days: number = PLUS_PASS.days): Date {
+  const from = current && current > now ? current : now
+  return new Date(from.getTime() + days * 86_400_000)
+}
+
+/** Days (Rome calendar) on which the free daily likes ran out. */
+export function daysAtLikeLimit(likes: Date[], limit: number = FREE_LIKES_PER_DAY): number {
+  const perDay = new Map<string, number>()
+  for (const d of likes) perDay.set(dayKey(d), (perDay.get(dayKey(d)) ?? 0) + 1)
+  return [...perDay.values()].filter((n) => n >= limit).length
+}
+
 /** Age in whole years on the Rome calendar day of `now`. */
 export function ageOn(birthDate: Date, now: Date = new Date()): number {
   const b = birthDate.toISOString().slice(0, 10).split("-").map(Number)

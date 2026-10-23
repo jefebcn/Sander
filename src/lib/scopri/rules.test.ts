@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest"
 import {
   FREE_LIKES_PER_DAY,
+  plusEnd,
+  extendPass,
+  daysAtLikeLimit,
   nextLikeSource,
   likesLeft,
   nextAceSource,
@@ -164,5 +167,35 @@ describe("likeMessage", () => {
     const msg = likeMessage("PROMPT", "a".repeat(200), "ok") as string
     expect(msg.length).toBeLessThan(110)
     expect(msg).toContain("…")
+  })
+})
+
+describe("SANDER+ pass", () => {
+  const now = new Date("2026-10-23T10:00:00Z")
+  const later = new Date("2026-11-10T10:00:00Z")
+  it("ends at the later of subscription and pass", () => {
+    expect(plusEnd({ plusUntil: now, plusPassUntil: later })).toEqual(later)
+    expect(plusEnd({ plusUntil: later, plusPassUntil: now })).toEqual(later)
+    expect(plusEnd({ plusUntil: null, plusPassUntil: later })).toEqual(later)
+    expect(plusEnd({ plusUntil: later })).toEqual(later)
+    expect(plusEnd(null)).toBeNull()
+  })
+  it("adds a week from now, or after a pass still running", () => {
+    expect(extendPass(null, now)).toEqual(new Date("2026-10-30T10:00:00Z"))
+    expect(extendPass(new Date("2026-10-20T10:00:00Z"), now)).toEqual(new Date("2026-10-30T10:00:00Z"))
+    expect(extendPass(new Date("2026-10-25T10:00:00Z"), now)).toEqual(new Date("2026-11-01T10:00:00Z"))
+  })
+})
+
+describe("daysAtLikeLimit", () => {
+  it("counts Rome days on which the free likes ran out", () => {
+    const day = (iso: string, n: number) => Array.from({ length: n }, () => new Date(iso))
+    const likes = [
+      ...day("2026-10-20T10:00:00Z", FREE_LIKES_PER_DAY),
+      ...day("2026-10-21T10:00:00Z", FREE_LIKES_PER_DAY - 1),
+      // 23:30 UTC on the 21st is already the 22nd in Rome.
+      ...day("2026-10-21T23:30:00Z", FREE_LIKES_PER_DAY + 2),
+    ]
+    expect(daysAtLikeLimit(likes)).toBe(2)
   })
 })
