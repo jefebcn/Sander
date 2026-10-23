@@ -41,7 +41,7 @@ export const MatchRefSchema = z.object({ matchId: Id }).strict()
 
 export const PlayedSchema = z.object({ matchId: Id, played: z.boolean() }).strict()
 
-export const BuyExtraSchema = z.object({ offer: z.enum(["likes", "ace", "reveal"]) }).strict()
+export const BuyExtraSchema = z.object({ offer: z.enum(["likes", "ace", "reveal", "pass"]) }).strict()
 
 export const DiscoverSettingsSchema = z
   .object({

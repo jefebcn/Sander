@@ -873,6 +873,10 @@ model DiscoverProfile {
 
   /// SANDER+ until this instant (Stripe subscription, renewed by the webhook).
   plusUntil            DateTime?
+  /// SANDER+ pass paid with SanderCredits (7 days, no renewal). Kept apart
+  /// from plusUntil so a Stripe webhook never shortens a pass and a pass never
+  /// blocks subscribing.
+  plusPassUntil        DateTime?
   stripeCustomerId     String?
   stripeSubscriptionId String?
   /// SANDER+ filters on the deck.

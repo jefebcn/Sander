@@ -124,8 +124,9 @@ export default function TermsPage() {
             fermo restando il diritto di disdire i rinnovi successivi.
           </p>
           <p className="mt-2">
-            Gli extra di Scopri acquistati con i SanderCredits (like, Ace, &quot;vedi tutti&quot;) si usano
-            subito e non sono rimborsabili.
+            Gli extra di Scopri acquistati con i SanderCredits (like, Ace, &quot;vedi tutti&quot;, pass SANDER+
+            di 7 giorni) si usano subito e non sono rimborsabili. Il pass di 7 giorni non si rinnova e dà le
+            stesse funzioni di SANDER+ fino alla scadenza indicata.
           </p>
         </Section>
 

@@ -1,24 +1,38 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Crown, Check, Loader2 } from "lucide-react"
+import { Crown, Check, Loader2, Ticket } from "lucide-react"
 import { toast } from "sonner"
 import { startPlusCheckout, cancelPlus, resumePlus } from "@/actions/plus"
+import { buyScopriExtra } from "@/actions/scopri"
 import { PLUS_BENEFITS } from "@/lib/scopri/plusBenefits"
 import { useIsNativeApp } from "@/lib/native"
 
-/** SANDER+: what you get, the price, and the one button. */
+/**
+ * SANDER+: what you get, the price, and the one button. Above it, your own
+ * month (games, likes, days the free likes ran out) so you can judge whether
+ * it pays off; below it, a 7-day pass in SC for a busy week, no subscription.
+ */
 export function PlusView({
   priceLabel,
   active,
   until,
   cancelAtEnd,
+  passUntil,
+  pass,
+  month,
 }: {
   priceLabel: string
+  /** A Stripe subscription is running. */
   active: boolean
   until: string | null
   cancelAtEnd: boolean
+  /** A 7-day pass is running (and no subscription). */
+  passUntil: string | null
+  pass: { days: number; sc: number; credits: number }
+  month: { games: number; likes: number; daysAtLimit: number }
 }) {
   const router = useRouter()
   // Inside the Android app digital subscriptions must go through Google Play
@@ -28,7 +42,17 @@ export function PlusView({
   const [busy, setBusy] = useState(false)
   // Express request to start now (needed to start a paid digital service at once).
   const [consent, setConsent] = useState(false)
-  const date = until ? new Date(until).toLocaleDateString("it-IT", { day: "numeric", month: "long", timeZone: "Europe/Rome" }) : null
+  const fmt = (iso: string | null) =>
+    iso ? new Date(iso).toLocaleDateString("it-IT", { day: "numeric", month: "long", timeZone: "Europe/Rome" }) : null
+  const date = fmt(until)
+  const plusNow = active || !!passUntil
+  const advice = plusNow
+    ? null
+    : month.daysAtLimit >= 3
+      ? `Hai finito gli 8 like gratis in ${month.daysAtLimit} giorni: con SANDER+ non ti fermi.`
+      : month.daysAtLimit >= 1 || month.games >= 4
+        ? "Giochi spesso: SANDER+ ti fa trovare compagni più in fretta. Per una settimana di tornei basta il pass."
+        : "Per ora la versione gratis ti basta. Se ti serve per un weekend di tornei, c'è il pass di 7 giorni."
 
   async function go(fn: () => Promise<unknown>, ok?: string) {
     setBusy(true)
@@ -53,17 +77,36 @@ export function PlusView({
           <Crown className="h-4 w-4" aria-hidden="true" /> SANDER+
         </p>
         <h2 className="font-hand mt-2 text-[2.75rem] leading-none text-white">
-          {active ? "Sei SANDER+" : "Trova compagni senza limiti."}
+          {plusNow ? "Sei SANDER+" : "Trova compagni senza limiti."}
         </h2>
         <p className="mt-3 font-serif text-2xl text-white/90">
           {active
             ? cancelAtEnd
               ? `Attivo fino al ${date}, poi non si rinnova.`
               : `Si rinnova il ${date}.`
-            : native
+            : passUntil
+              ? `Pass attivo fino al ${fmt(passUntil)}.`
+              : native
               ? "Non disponibile nell'app."
               : `${priceLabel} al mese. Disdici quando vuoi.`}
         </p>
+      </section>
+
+      <section className="rounded-[var(--radius-md)] bg-[var(--surface-2)] p-4">
+        <p className="eyebrow text-[var(--muted-text)]">Il tuo mese</p>
+        <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
+          {[
+            { n: month.games, label: month.games === 1 ? "partita giocata" : "partite giocate" },
+            { n: month.likes, label: month.likes === 1 ? "like mandato" : "like mandati" },
+            { n: month.daysAtLimit, label: month.daysAtLimit === 1 ? "giorno senza like" : "giorni senza like" },
+          ].map((s) => (
+            <div key={s.label} className="rounded-[var(--radius-sm)] bg-[var(--surface-3)] px-2 py-3">
+              <dd className="text-2xl font-black tabular-nums text-white">{s.n}</dd>
+              <dt className="text-xs text-[var(--muted-text)]">{s.label}</dt>
+            </div>
+          ))}
+        </dl>
+        {advice && !native && <p className="mt-3 text-sm text-white/85">{advice}</p>}
       </section>
 
       <ul className="flex flex-col gap-2">
@@ -131,6 +174,39 @@ export function PlusView({
         >
           Disdici il rinnovo
         </button>
+      )}
+      {!active && !native && (
+        <section className="flex flex-col gap-3 rounded-[var(--radius-md)] bg-[var(--surface-2)] p-4">
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--accent)]">
+              <Ticket className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <span>
+              <span className="block text-base font-extrabold text-white">Pass {pass.days} giorni · {pass.sc} SC</span>
+              <span className="block text-sm text-[var(--muted-text)]">
+                Tutto SANDER+ per una settimana, senza abbonamento. Non si rinnova.
+              </span>
+            </span>
+          </div>
+          <button
+            type="button"
+            disabled={busy || pass.credits < pass.sc}
+            onClick={() => go(() => buyScopriExtra({ offer: "pass" }), `SANDER+ attivo per ${pass.days} giorni`)}
+            className="btn btn-secondary w-full gap-2 disabled:opacity-60"
+          >
+            <Ticket className="h-5 w-5" aria-hidden="true" />
+            {passUntil ? `Aggiungi ${pass.days} giorni` : `Attiva per ${pass.days} giorni`} · {pass.sc} SC
+          </button>
+          <p className="text-center text-xs text-[var(--muted-text)]">
+            Hai {pass.credits} SC.
+            {pass.credits < pass.sc && (
+              <>
+                {" "}
+                <Link href="/profile" className="font-bold text-[var(--accent)] underline">Ricarica dal profilo</Link>
+              </>
+            )}
+          </p>
+        </section>
       )}
       {!native && (
         <p className="text-center text-xs text-[var(--muted-text)]">Pagamento sicuro con Stripe. L&apos;abbonamento si rinnova ogni mese finché non lo disdici.</p>
