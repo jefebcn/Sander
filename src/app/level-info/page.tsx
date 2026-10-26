@@ -1,7 +1,14 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import { ChevronLeft, Zap, Star, Trophy, ClipboardList, ThumbsUp, Award, ShieldCheck, Flame, Crown, Swords } from "lucide-react"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
+
+export const metadata: Metadata = {
+  title: "Come si sale di livello | SANDER",
+  description:
+    "Punti, livelli e divisioni: come funziona la crescita della tua carta giocatore su SANDER.",
+}
 
 export const dynamic = "force-dynamic"
 

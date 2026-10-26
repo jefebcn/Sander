@@ -18,6 +18,7 @@ import { applyTournamentGlicko } from "@/lib/tournamentRating"
 import { updateRating } from "@/lib/tournament/glicko2"
 import { isAdminEmail, canManageTournament } from "@/lib/isAdmin"
 import { TOURNAMENT_CREATION_SC } from "@/lib/pricing"
+import { settleStripeBeforeDelete } from "@/lib/tournamentRefunds"
 
 async function requireAdmin() {
   const session = await getCurrentSession()
@@ -1459,6 +1460,10 @@ export async function deleteTournament(tournamentId: string) {
     where: { id: tournamentId },
     select: { status: true, type: true },
   })
+
+  // Card payments go back before anything is deleted; a failed refund stops
+  // the delete so no one is left paid for a tournament that no longer exists.
+  await settleStripeBeforeDelete(tournamentId)
 
   const standings = tournament.status === "COMPLETED"
     ? await db.tournamentStanding.findMany({

@@ -40,9 +40,6 @@ export async function generateMetadata(
   const { id } = await params
   const tournament = await db.tournament.findUnique({ where: { id }, select: { name: true } }).catch(() => null)
   const title = tournament ? `${tournament.name} — SANDER` : "SANDER — Beach Volleyball"
-  const ogUrl = tournament
-    ? `/api/og?title=${encodeURIComponent(tournament.name)}&subtitle=Torneo+Beach+Volleyball&type=tournament`
-    : `/api/og?title=SANDER&subtitle=Beach+Volleyball&type=tournament`
   return {
     title,
     openGraph: {
@@ -50,7 +47,6 @@ export async function generateMetadata(
       description: tournament
         ? `Torneo di beach volley · Unisciti su SANDER 🏐`
         : "Beach Volleyball Tournament Manager",
-      images: [{ url: ogUrl, width: 1200, height: 630, alt: title }],
     },
   }
 }

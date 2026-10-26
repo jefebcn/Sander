@@ -52,9 +52,9 @@ const mansalva = Mansalva({
   display: "swap",
 })
 
-const TITLE = "SANDER — Beach volley in Riviera Romagnola"
+const TITLE = "SANDER — Trova con chi giocare a beach volley"
 const DESCRIPTION =
-  "Il gruppo WhatsApp del beach volley, ma che si organizza da solo: trova partite in Riviera Romagnola (Rimini, Riccione, Cervia, Cesenatico), vedi i posti liberi, sali nella classifica del tuo bagno e del tuo comune."
+  "Il gruppo WhatsApp del beach volley, ma che si organizza da solo: trova partite vicino a te, vedi i posti liberi, gioca tornei e sali nella classifica del tuo comune. Nato in Riviera Romagnola, gratis in tutta Italia."
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.sanderbv.it"),
@@ -64,6 +64,8 @@ export const metadata: Metadata = {
   keywords: [
     "beach volley",
     "Riviera Romagnola",
+    "beach volley Italia",
+    "partite beach volley vicino a me",
     "Rimini",
     "Riccione",
     "Cervia",
@@ -87,7 +89,7 @@ export const metadata: Metadata = {
     siteName: "SANDER",
     title: TITLE,
     description: DESCRIPTION,
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: "SANDER — Beach volley in Riviera Romagnola" }],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "SANDER — Trova con chi giocare a beach volley" }],
   },
   twitter: {
     card: "summary_large_image",

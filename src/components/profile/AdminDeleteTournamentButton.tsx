@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { deleteTournament } from "@/actions/tournaments"
+import { toast } from "sonner"
 
 export function AdminDeleteTournamentButton({ id }: { id: string }) {
   const [confirm, setConfirm] = useState(false)
@@ -11,7 +12,9 @@ export function AdminDeleteTournamentButton({ id }: { id: string }) {
     setLoading(true)
     try {
       await deleteTournament(id)
-    } catch {
+    } catch (e) {
+      // e.g. a card refund that didn't go through: the tournament is kept.
+      toast.error(e instanceof Error ? e.message : "Eliminazione non riuscita")
       setLoading(false)
       setConfirm(false)
     }

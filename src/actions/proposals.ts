@@ -14,6 +14,7 @@ import { joinWindowOpen } from "@/lib/sessionRules"
 import { creditCost } from "@/lib/joinPrice"
 import { pairSlotsNear } from "@/lib/scopri/pairPlay"
 import { teamForPair } from "@/lib/scopri/pairTeam"
+import { RATE_LIMITS, SLOW_DOWN, overLimit, since } from "@/lib/rateLimit"
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  "Proponi una partita" in a private chat: a card with when and where.       */
@@ -54,6 +55,8 @@ async function post(threadId: string, senderId: string, body: string, proposalId
 export async function proposeGameInChat(input: unknown) {
   const data = ProposeInChatSchema.parse(input)
   const me = await requireMe()
+  const recent = await db.gameProposal.count({ where: { fromId: me.id, createdAt: { gte: since("hour") } } })
+  if (overLimit(recent, RATE_LIMITS.proposalsPerHour)) throw new Error(SLOW_DOWN)
   const dateError = sessionDateError(data.date)
   if (dateError) throw new Error(dateError)
 

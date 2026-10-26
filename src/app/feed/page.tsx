@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic"
 
+import type { Metadata } from "next"
 import { Trophy, Volleyball } from "lucide-react"
 import Link from "next/link"
 import { getRecentMatchResults, getRecentSessions, getRecentTournamentEvents } from "@/actions/feed"
@@ -10,6 +11,12 @@ import { PageHeader } from "@/components/layout/PageHeader"
 import { formatDate } from "@/lib/utils"
 import { db } from "@/lib/db"
 import { Gabbo } from "@/components/ui/Gabbo"
+
+export const metadata: Metadata = {
+  title: "Feed — risultati e partite della community | SANDER",
+  description:
+    "Gli ultimi risultati, le partite giocate e chi sta salendo nella community di beach volley di SANDER.",
+}
 
 // ─── Type label helpers ───────────────────────────────────────────────────────
 

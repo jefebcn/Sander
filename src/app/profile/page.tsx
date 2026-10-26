@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic"
 
+import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowUpRight, MapPin, Calendar, Settings, ShieldCheck, Users, Trophy, Pencil, MessageCircle, ChartColumn, Bug, ChevronRight, HeartHandshake, CalendarCheck } from "lucide-react"
@@ -45,6 +46,12 @@ import { ContentQueue } from "@/components/admin/ContentQueue"
 import { listContent } from "@/actions/content"
 import { NOT_DELETED_PLAYER } from "@/lib/publicPlayer"
 import { Gabbo } from "@/components/ui/Gabbo"
+
+export const metadata: Metadata = {
+  title: "Il tuo profilo | SANDER",
+  description:
+    "La tua carta giocatore, le statistiche e le partite.",
+}
 
 const MONTH_NAMES_IT = [
   "", "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",

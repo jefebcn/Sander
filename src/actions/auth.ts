@@ -8,6 +8,7 @@ import { sendPasswordResetEmail } from "@/lib/email"
 import { findPlayerByInviteCode } from "@/actions/invite"
 import { linkInvite } from "@/lib/referralRedeem"
 import { findUserByEmail } from "@/lib/userByEmail"
+import { isAdminEmail } from "@/lib/isAdmin"
 
 type ActionResult = { success: true } | { error: string }
 
@@ -20,6 +21,12 @@ export async function registerWithEmail(input: unknown): Promise<ActionResult> {
     const existing = await findUserByEmail(email)
     if (existing) {
       return { error: "Email già in uso. Prova ad accedere." }
+    }
+    // Admin rights follow the email, and a password sign-up never proves the
+    // address is yours: an admin address not yet registered could otherwise be
+    // claimed by anyone. Those addresses come in through Google only.
+    if (isAdminEmail(email)) {
+      return { error: "Per questo indirizzo usa «Continua con Google»." }
     }
 
     const hashed = await bcrypt.hash(password, 12)

@@ -7,7 +7,7 @@ import { GooglePlayButton } from "@/components/download/GooglePlayButton"
 export const metadata: Metadata = {
   title: "Scarica SANDER — Beach Volley, la tua carta giocatore",
   description:
-    "Crea la tua carta giocatore, organizza partite, sali in classifica e conquista i campi. SANDER — il beach volley della Riviera in un'app.",
+    "Crea la tua carta giocatore, organizza partite, sali in classifica e conquista i campi. SANDER — il beach volley in un'app, gratis.",
   openGraph: {
     title: "Scarica SANDER 🏐",
     description: "Crea la tua carta, gioca, sali in classifica.",

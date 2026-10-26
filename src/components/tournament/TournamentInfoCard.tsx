@@ -2,6 +2,7 @@ import { Calendar, MapPin, Clock, Trophy, Users, Info, Ticket, Beer, Gauge } fro
 import { formatPrice } from "@/lib/utils"
 import { seatLimit } from "@/lib/tournament/capacity"
 import { TournamentPriceBadge } from "./TournamentPriceBadge"
+import { hasTimeOfDay } from "@/lib/datetime"
 
 type Tournament = {
   date: Date | string
@@ -26,6 +27,7 @@ const TZ = "Europe/Rome"
 function formatDateTime(d: Date | string) {
   const date = new Date(d)
   const day = date.toLocaleDateString("it-IT", { timeZone: TZ, weekday: "long", day: "numeric", month: "long", year: "numeric" })
+  if (!hasTimeOfDay(date)) return day
   const time = date.toLocaleTimeString("it-IT", { timeZone: TZ, hour: "2-digit", minute: "2-digit" })
   return `${day} · ore ${time}`
 }

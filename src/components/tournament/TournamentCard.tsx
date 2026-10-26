@@ -2,6 +2,7 @@ import Link from "next/link"
 import { MapPin, Calendar, Clock, Users } from "lucide-react"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
 import { resizedPhoto } from "@/lib/photo"
+import { hasTimeOfDay } from "@/lib/datetime"
 
 const TYPE_LABEL: Record<string, string> = {
   KING_OF_THE_BEACH: "King of the Beach",
@@ -34,7 +35,9 @@ interface TournamentCardProps {
 export function TournamentCard({ tournament: t }: TournamentCardProps) {
   const date = new Date(t.date)
   const dateStr = date.toLocaleDateString("it-IT", { timeZone: "Europe/Rome", day: "2-digit", month: "short", year: "numeric" })
-  const timeStr = date.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" })
+  const timeStr = hasTimeOfDay(date)
+    ? date.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" })
+    : null
 
   const deadline = t.registrationDeadline ? new Date(t.registrationDeadline) : null
   const deadlineStr = deadline
@@ -81,7 +84,7 @@ export function TournamentCard({ tournament: t }: TournamentCardProps) {
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[var(--muted-text)]">
           <span className="flex items-center gap-1.5 capitalize">
             <Calendar className="h-4 w-4 text-[var(--tone)]" aria-hidden="true" />
-            {dateStr} · {timeStr}
+            {timeStr ? `${dateStr} · ${timeStr}` : dateStr}
           </span>
           {t.location && (
             <span className="flex min-w-0 items-center gap-1.5">

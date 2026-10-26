@@ -6,6 +6,7 @@ import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { getPartnerStats } from "@/actions/players"
 import { SendMessageSchema, CreateGroupSchema, ThreadIdSchema, PlayerIdSchema } from "@/lib/validators/message.schema"
 import { blockedWith, isBlockedPair } from "@/lib/scopri/blocks"
+import { RATE_LIMITS, SLOW_DOWN, overLimit, since } from "@/lib/rateLimit"
 
 // Lazy push import keeps web-push out of the SSR/client bundle (mirrors sessions.ts).
 async function safeNotifyPlayers(
@@ -87,6 +88,8 @@ export async function createGroupThread(input: unknown): Promise<string> {
   const me = await getCurrentPlayer()
   if (!me) throw new Error("Non autenticato")
   const { playerIds, name } = CreateGroupSchema.parse(input)
+  const recentGroups = await db.chatThread.count({ where: { createdById: me.id, kind: "GROUP", createdAt: { gte: since("hour") } } })
+  if (overLimit(recentGroups, RATE_LIMITS.groupsPerHour)) throw new Error(SLOW_DOWN)
 
   const others = Array.from(new Set(playerIds.filter((id) => id && id !== me.id)))
   if (others.length < 2) throw new Error("Seleziona almeno 2 giocatori")
@@ -380,6 +383,14 @@ export async function sendMessage(input: unknown) {
   const me = await getCurrentPlayer()
   if (!me) throw new Error("Non autenticato")
   const { threadId, body } = SendMessageSchema.parse(input)
+
+  const [lastMinute, lastHour] = await Promise.all([
+    db.chatMessage.count({ where: { senderId: me.id, createdAt: { gte: since("minute") } } }),
+    db.chatMessage.count({ where: { senderId: me.id, createdAt: { gte: since("hour") } } }),
+  ])
+  if (overLimit(lastMinute, RATE_LIMITS.messagesPerMinute) || overLimit(lastHour, RATE_LIMITS.messagesPerHour)) {
+    throw new Error(SLOW_DOWN)
+  }
 
   const thread = await db.chatThread.findUnique({
     where: { id: threadId },

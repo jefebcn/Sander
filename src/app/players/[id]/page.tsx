@@ -15,7 +15,17 @@ import { PageHeader } from "@/components/layout/PageHeader"
 import { MessageButton } from "@/components/chat/MessageButton"
 import { Users, Swords, Trophy, Volleyball } from "lucide-react"
 import Link from "next/link"
+import type { Metadata } from "next"
 import { cn } from "@/lib/utils"
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params
+  const player = await db.player.findUnique({ where: { id }, select: { name: true, homeCity: true } }).catch(() => null)
+  if (!player) return { title: "Giocatore | SANDER" }
+  const title = `${player.name} — Carta giocatore | SANDER`
+  const description = `La carta di ${player.name} su SANDER${player.homeCity ? `, ${player.homeCity}` : ""}: rating, partite e classifiche di beach volley.`
+  return { title, description, openGraph: { title, description } }
+}
 
 function pct(won: number, played: number) {
   if (played === 0) return "—"

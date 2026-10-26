@@ -37,6 +37,11 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "10mb",
     },
   },
+  // The link previews (opengraph-image) read their fonts and the app icon
+  // from disk: make sure those files ship with the functions that need them.
+  outputFileTracingIncludes: {
+    "/{players,tournaments}/*/opengraph-image*": ["./src/assets/fonts/**", "./public/icon-512.png"],
+  },
   // Addresses people type by habit: both land on the sign-up form.
   async redirects() {
     return ["/auth/signup", "/auth/register", "/registrati"].map((source) => ({

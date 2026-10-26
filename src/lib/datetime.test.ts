@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { formatTime, formatWhen, daysFromNow, relativeDay, dayKey } from "./datetime"
+import { formatTime, formatWhen, daysFromNow, relativeDay, dayKey, hasTimeOfDay } from "./datetime"
 
 const d = (iso: string) => new Date(iso)
 
@@ -43,5 +43,16 @@ describe("relativeDay", () => {
     expect(relativeDay(d("2026-10-14T18:00:00Z"), now)).toBe("domani")
     expect(relativeDay(d("2026-10-16T18:00:00Z"), now)).toBe("tra 3 giorni")
     expect(relativeDay(d("2026-11-03T18:00:00Z"), now)).toBe("tra 3 settimane")
+  })
+})
+
+describe("hasTimeOfDay", () => {
+  it("treats a date-only value (midnight UTC) as having no time", () => {
+    expect(hasTimeOfDay(d("2026-05-02T00:00:00Z"))).toBe(false)
+  })
+  it("keeps a real start time", () => {
+    expect(hasTimeOfDay(d("2026-05-02T16:30:00Z"))).toBe(true)
+    // Midnight in Rimini is 22:00 or 23:00 UTC, not a date-only value.
+    expect(hasTimeOfDay(d("2026-05-01T22:00:00Z"))).toBe(true)
   })
 })

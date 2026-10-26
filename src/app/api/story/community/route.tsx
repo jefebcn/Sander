@@ -76,7 +76,7 @@ export async function GET() {
 
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
           <span style={{ fontSize: 40, fontWeight: 700, color: "rgba(255,255,255,0.55)" }}>
-            Il beach volley della Riviera
+            Il beach volley in un'app
           </span>
           <span style={{ fontSize: 52, fontWeight: 900, color: ACCENT }}>Unisciti · sanderbv.it</span>
         </div>

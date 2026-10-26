@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic"
 
+import type { Metadata } from "next"
 import Link from "next/link"
 import { Plus, Gauge } from "lucide-react"
 import { getSessions } from "@/actions/sessions"
@@ -9,6 +10,12 @@ import { SessionsInfoSheet } from "@/components/session/SessionsInfoSheet"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { QuickActionsButton } from "@/components/layout/QuickActionsButton"
 import { SectionTabs, PLAY_TABS } from "@/components/layout/SectionTabs"
+
+export const metadata: Metadata = {
+  title: "Partite di beach volley vicino a te | SANDER",
+  description:
+    "Trova una partita di beach volley con un posto libero vicino a te, o creane una: 2v2, 3v3, 4v4.",
+}
 
 export default async function SessionsPage() {
   const currentPlayer = await getCurrentPlayer()

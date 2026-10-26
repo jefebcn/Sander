@@ -21,6 +21,22 @@ function isPrismaUniqueViolation(err: unknown): boolean {
   )
 }
 
+/** A refunded or disputed payment: the registration is no longer paid, a
+ *  SanderCredits pack is taken back. Both steps are idempotent. */
+async function undoPayment(paymentIntentId: string) {
+  await db.tournamentRegistration.updateMany({
+    where: { stripePaymentIntentId: paymentIntentId, paymentStatus: "PAID" },
+    data: { paymentStatus: "REFUNDED" },
+  })
+  const sessions = await stripe.checkout.sessions.list({ payment_intent: paymentIntentId, limit: 1 })
+  const s = sessions.data[0]
+  if (s?.metadata?.kind === "sc_topup") {
+    await revokeStripeTopUp(s.id)
+    revalidatePath("/profile")
+    revalidatePath("/admin/metriche")
+  }
+}
+
 export async function POST(req: NextRequest) {
   const signature = req.headers.get("stripe-signature")
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
@@ -151,20 +167,20 @@ export async function POST(req: NextRequest) {
           : charge.payment_intent?.id
         // Only full refunds undo anything: a partial one (e.g. just the fee) is
         // a manual decision for the admin and must not cost the player a seat.
-        if (paymentIntentId && charge.refunded) {
-          await db.tournamentRegistration.updateMany({
-            where: { stripePaymentIntentId: paymentIntentId, paymentStatus: "PAID" },
-            data: { paymentStatus: "REFUNDED" },
-          })
-          // A refunded SanderCredits pack: take the credits back.
-          const sessions = await stripe.checkout.sessions.list({ payment_intent: paymentIntentId, limit: 1 })
-          const s = sessions.data[0]
-          if (s?.metadata?.kind === "sc_topup") {
-            await revokeStripeTopUp(s.id)
-            revalidatePath("/profile")
-            revalidatePath("/admin/metriche")
-          }
-        }
+        if (paymentIntentId && charge.refunded) await undoPayment(paymentIntentId)
+        break
+      }
+
+      // A chargeback: the bank takes the money back as soon as it opens, so
+      // the seat or the credits go with it. A dispute later won is restored
+      // by hand from the admin (it is rare and needs a look anyway).
+      case "charge.dispute.created": {
+        const dispute = event.data.object as Stripe.Dispute
+        const paymentIntentId = typeof dispute.payment_intent === "string"
+          ? dispute.payment_intent
+          : dispute.payment_intent?.id
+        if (paymentIntentId) await undoPayment(paymentIntentId)
+        console.error("[stripe webhook] dispute opened", dispute.id, paymentIntentId)
         break
       }
 

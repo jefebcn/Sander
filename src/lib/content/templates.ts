@@ -40,7 +40,7 @@ export function weeklyDraft(input: {
   const { playerOfWeek, ratingDelta, totalEvents } = input
   const caption = playerOfWeek
     ? `🏐 La classifica della settimana su SANDER!\n\n👑 ${playerOfWeek} è il giocatore della settimana con +${ratingDelta} di rating in ${totalEvents} partite.\n\nTu dove sei finito? Scarica SANDER e scala la classifica ⬆️\n${SITE}/scarica`
-    : `🏐 ${totalEvents} partite questa settimana su SANDER!\n\nUnisciti al beach volley della Riviera e scala la classifica ⬆️\n${SITE}/scarica`
+    : `🏐 ${totalEvents} partite questa settimana su SANDER!\n\nUnisciti alla community del beach volley e scala la classifica ⬆️\n${SITE}/scarica`
   return {
     kind: "weekly",
     title: "Classifica della settimana",
