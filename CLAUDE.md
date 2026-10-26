@@ -77,3 +77,7 @@ const mutation = useMutation({
 - Run: `npx vitest run`
 - All algorithm tests (`kotb.test.ts`, `bracket.test.ts`, `standings.test.ts`) must pass before any merge
 - Tests live alongside source: `src/lib/tournament/*.test.ts`
+
+## Social content
+- Instagram stories: start from `scripts/content-storie/` (approved style, generator, backgrounds, rules in its README)
+- Generated photos: barefoot players, no logos or text on clothes, no alcohol
