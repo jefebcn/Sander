@@ -3,11 +3,10 @@
 import { db } from "@/lib/db"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { revalidatePath } from "next/cache"
+import { PushEndpointSchema, PushSubscriptionSchema } from "@/lib/validators/push.schema"
 
-export async function subscribePush(subscription: {
-  endpoint: string
-  keys: { p256dh: string; auth: string }
-}) {
+export async function subscribePush(input: unknown) {
+  const subscription = PushSubscriptionSchema.parse(input)
   const player = await getCurrentPlayer()
   if (!player) throw new Error("Non autenticato")
 
@@ -27,13 +26,13 @@ export async function subscribePush(subscription: {
   })
 }
 
-export async function unsubscribePush(endpoint: string) {
+export async function unsubscribePush(input: unknown) {
+  const endpoint = PushEndpointSchema.parse(input)
   const player = await getCurrentPlayer()
   if (!player) return
 
-  await db.pushSubscription
-    .delete({ where: { endpoint } })
-    .catch(() => {})
+  // Only your own: someone else's endpoint stays subscribed.
+  await db.pushSubscription.deleteMany({ where: { endpoint, playerId: player.id } })
 
   revalidatePath("/profile")
 }

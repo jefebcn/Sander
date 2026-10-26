@@ -39,8 +39,8 @@ export const EditSessionSchema = z.object({
 
 export const SubmitSessionMatchScoreSchema = z.object({
   matchId:    z.string().min(1),
-  teamAScore: z.number().int().min(0),
-  teamBScore: z.number().int().min(0),
+  teamAScore: z.number().int().min(0).max(99),
+  teamBScore: z.number().int().min(0).max(99),
 })
 
 export const AssignTeamSchema = z.object({

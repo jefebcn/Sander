@@ -1,0 +1,2697 @@
+{
+  "posts": [
+    {
+      "id": "T01",
+      "platform": "tiktok",
+      "date": "2026-10-26",
+      "time": "12:30",
+      "rubrica": "Meme",
+      "slug": "felpa-ottobre",
+      "format": "video",
+      "bg": "clip:felpa",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Meteo Riviera: 14 gradi",
+          "style": "meta"
+        },
+        {
+          "t": 0.9,
+          "text": "il resto d'Italia:\n'stagione finita'",
+          "style": "big"
+        },
+        {
+          "t": 2.4,
+          "text": "noi in felpa\na giocare",
+          "style": "lime"
+        }
+      ],
+      "end": {
+        "text": "Si gioca\nanche a novembre",
+        "bg": "lime"
+      },
+      "caption": "Ottobre, 14 gradi, felpa col cappuccio e pallone in mano 🧥🏐\nLa stagione è finita? Non per noi.\nE tu, giochi ancora o hai già appeso il pallone? Dimmelo nei commenti 👇\n#beachvolley #beachvolleyitalia #rivieraromagnola #sander #ottobre",
+      "audio": "audio trend ironico 'tutti vs io', stacco secco sul cambio di scena"
+    },
+    {
+      "id": "T02",
+      "platform": "tiktok",
+      "date": "2026-10-26",
+      "time": "19:00",
+      "rubrica": "Tipi di giocatori",
+      "slug": "tipi-d-ottobre",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "felpa",
+          "title": "5 giocatori d'ottobre",
+          "body": "Ne conosci almeno tre. Scorri e riconoscili."
+        },
+        {
+          "bg": "felpa",
+          "title": "Il Cappuccio",
+          "body": "Felpa tirata su fin sopra le orecchie. La toglie solo a fine match."
+        },
+        {
+          "bg": "battuta",
+          "title": "Il Coraggioso",
+          "body": "In maglietta con 13 gradi. 'Io il freddo non lo sento.' Certo."
+        },
+        {
+          "bg": "autunno",
+          "title": "Il Tattico",
+          "body": "Arriva a strati, con il tè caldo e un piano per ogni raggio di sole."
+        },
+        {
+          "bg": "waiting",
+          "title": "Il Fantasma",
+          "body": "Aveva scritto 'ci sono'. Il campo lo sta ancora aspettando."
+        },
+        {
+          "bg": "inverno",
+          "title": "Il Fedelissimo",
+          "body": "Nebbia, vento, sabbia gelata. Lui è già in campo che palleggia."
+        },
+        {
+          "bg": "lime",
+          "title": "Quale sei tu?",
+          "body": "Dillo nei commenti e trova chi gioca vicino a te su sanderbv.it"
+        }
+      ],
+      "caption": "I 5 giocatori che incontri a ottobre 🧥\nSpoiler: almeno uno sei tu. Scorri per scoprire 👉\nE tu, quale sei? Diccelo nei commenti 👇\n#beachvolley #beachvolleyitalia #sander #tipidigiocatori #autunno"
+    },
+    {
+      "id": "T03",
+      "platform": "tiktok",
+      "date": "2026-10-27",
+      "time": "12:30",
+      "rubrica": "App demo",
+      "slug": "partita-in-3-tap",
+      "format": "video",
+      "bg": "app:partita",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "App demo",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Partita creata\nin 3 tap",
+          "style": "big"
+        },
+        {
+          "t": 2,
+          "text": "Comune, giorno, posto. Fatto.",
+          "style": "pill"
+        },
+        {
+          "t": 3.2,
+          "text": "Gli altri la vedono\nsubito",
+          "style": "lime"
+        }
+      ],
+      "end": {
+        "text": "Gioca gratis\nsu sanderbv.it",
+        "bg": "dark"
+      },
+      "caption": "Crei la partita in 3 tap 📲🏐\nScegli comune, giorno e posto: chi gioca vicino a te la vede subito.\nProvala su sanderbv.it (link in bio) 👆\n#beachvolley #sander #beachvolleyitalia #partite #trovacompagni",
+      "audio": "audio 'tutorial veloce' pulito, un tick a ogni tap"
+    },
+    {
+      "id": "T04",
+      "platform": "tiktok",
+      "date": "2026-10-27",
+      "time": "19:00",
+      "rubrica": "POV",
+      "slug": "ora-solare",
+      "format": "video",
+      "bg": "autunno",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "POV: è tornata l'ora solare",
+          "style": "meta"
+        },
+        {
+          "t": 0.9,
+          "text": "sono le 17:00",
+          "style": "big"
+        },
+        {
+          "t": 2,
+          "text": "il sole sta già\ntramontando",
+          "style": "lime"
+        },
+        {
+          "t": 3.3,
+          "text": "e tu sei\nancora in campo",
+          "style": "outline"
+        }
+      ],
+      "end": {
+        "text": "Un'ora di luce\nin meno. Si gioca.",
+        "bg": "dark"
+      },
+      "caption": "POV: l'ora solare ti ha rubato il tramonto 🌇\nMa il pallone è ancora in mano, quindi si gioca finché si vede.\nA che ora finisci tu? Diccelo nei commenti 👇\n#beachvolley #rivieraromagnola #orasolare #sander #autunno",
+      "audio": "audio lento malinconico che parte in ritmo sul cambio scena"
+    },
+    {
+      "id": "T05",
+      "platform": "tiktok",
+      "date": "2026-10-28",
+      "time": "12:30",
+      "rubrica": "Tutorial",
+      "slug": "consigli-campo-freddo",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "allenamento",
+          "title": "Giocare al freddo: 5 tip",
+          "body": "Piccole cose che a ottobre fanno la differenza."
+        },
+        {
+          "bg": "allenamento",
+          "title": "1. Riscaldamento lungo",
+          "body": "Arriva prima e muoviti più del solito: a ottobre si parte da freddo."
+        },
+        {
+          "bg": "felpa",
+          "title": "2. Strati che si tolgono",
+          "body": "Felpa, poi maglia. Ti spogli quando ti scaldi, non prima."
+        },
+        {
+          "bg": "feet",
+          "title": "3. Passi corti sulla sabbia",
+          "body": "Con la sabbia fredda e umida meglio passi piccoli e veloci."
+        },
+        {
+          "bg": "pallone",
+          "title": "4. Palla sempre in mano",
+          "body": "Tra uno scambio e l'altro palleggia: le mani restano in ritmo."
+        },
+        {
+          "bg": "terzo-tempo",
+          "title": "5. Rimetti la felpa",
+          "body": "Finito il match copriti subito: il terzo tempo si fa vestiti."
+        },
+        {
+          "bg": "lime",
+          "title": "Chi viene a giocare?",
+          "body": "Crea una partita in 3 tap su SANDER: sanderbv.it"
+        }
+      ],
+      "caption": "5 tip per giocare al freddo senza lamentarti 🥶🏐\nSalva il post per il prossimo allenamento. Scorri per scoprire 👉\nE tu, hai un trucco anti-freddo? Diccelo nei commenti 👇\n#beachvolley #allenamento #beachvolleyitalia #sander #inverno"
+    },
+    {
+      "id": "T06",
+      "platform": "tiktok",
+      "date": "2026-10-28",
+      "time": "19:00",
+      "rubrica": "Hot take",
+      "slug": "autunno-batte-agosto",
+      "format": "video",
+      "bg": "clip:battuta",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Hot take",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Il beach volley\nd'autunno",
+          "style": "big"
+        },
+        {
+          "t": 2,
+          "text": "batte\nagosto",
+          "style": "lime"
+        },
+        {
+          "t": 3.2,
+          "text": "Niente caldo, niente ressa, campi liberi",
+          "style": "pill"
+        }
+      ],
+      "end": {
+        "text": "D'accordo?\nScrivilo nei commenti",
+        "bg": "dark"
+      },
+      "caption": "Hot take: giocare a ottobre è meglio che giocare ad agosto 🔥\nNiente caldo, niente ressa, campo tutto tuo.\nSei d'accordo o ci sbagliamo? Diccelo nei commenti 👇\n#beachvolley #hottake #rivieraromagnola #sander #beachvolleyitalia",
+      "audio": "audio trend 'hot take' con voce che sale e stop netto sul reveal"
+    },
+    {
+      "id": "T07",
+      "platform": "tiktok",
+      "date": "2026-10-29",
+      "time": "12:30",
+      "rubrica": "Questo o quello",
+      "slug": "mattina-o-tramonto",
+      "format": "video",
+      "bg": "autunno",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Questo o quello",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Si gioca:",
+          "style": "big"
+        },
+        {
+          "t": 1.8,
+          "text": "mattina\npresto",
+          "style": "lime"
+        },
+        {
+          "t": 3,
+          "text": "o tramonto\nin felpa?",
+          "style": "outline"
+        }
+      ],
+      "end": {
+        "text": "Vota nei commenti",
+        "bg": "dark"
+      },
+      "caption": "Mattina presto con la nebbia o tramonto in felpa? 🌅\nUna sola risposta, niente 'dipende'.\nVota nei commenti 👇 e tagga chi la pensa come te.\n#beachvolley #questooquello #beachvolleyitalia #sander #autunno",
+      "audio": "audio trend 'questo o quello' con due suoni alternati"
+    },
+    {
+      "id": "T08",
+      "platform": "tiktok",
+      "date": "2026-10-29",
+      "time": "19:00",
+      "rubrica": "Classifica",
+      "slug": "4-classifiche",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "lime",
+          "title": "Chi comanda nel tuo comune?",
+          "body": "Su SANDER c'è una classifica per ogni occasione."
+        },
+        {
+          "bg": "dark",
+          "title": "Per comune",
+          "body": "Guarda chi guida nella tua città e quanti punti ti separano."
+        },
+        {
+          "bg": "lime",
+          "title": "Per settimana",
+          "body": "Una settimana in forma e scali la classifica. Anche subito."
+        },
+        {
+          "bg": "dark",
+          "title": "Per stagione",
+          "body": "La lunga distanza: ogni partita pesa fino a fine stagione."
+        },
+        {
+          "bg": "lime",
+          "title": "Per bagno",
+          "body": "Il tuo stabilimento contro gli altri: l'orgoglio di spiaggia."
+        },
+        {
+          "bg": "dark",
+          "title": "E tu, dove sei?",
+          "body": "Gioca una partita e guarda come si muove il tuo nome."
+        },
+        {
+          "bg": "lime",
+          "title": "Scalala",
+          "body": "Apri SANDER su sanderbv.it e sali di livello."
+        }
+      ],
+      "caption": "4 classifiche, un solo obiettivo: stare in cima 👑\nComune, settimana, stagione, bagno. Scorri e dimmi dove vuoi arrivare 👉\nIn che posizione sei nel tuo comune? Diccelo nei commenti 👇\n#beachvolley #classifica #sander #rivieraromagnola #redeibagni"
+    },
+    {
+      "id": "T09",
+      "platform": "tiktok",
+      "date": "2026-10-30",
+      "time": "12:30",
+      "rubrica": "Meme",
+      "slug": "tuffo-sabbia-fredda",
+      "format": "video",
+      "bg": "clip:dive",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Tuffo d'ottobre",
+          "style": "meta"
+        },
+        {
+          "t": 0.9,
+          "text": "la sabbia\nin autunno:",
+          "style": "big"
+        },
+        {
+          "t": 2.1,
+          "text": "fredda",
+          "style": "lime"
+        },
+        {
+          "t": 3.3,
+          "text": "sempre.\novunque.",
+          "style": "outline"
+        }
+      ],
+      "end": {
+        "text": "Tuffati lo stesso",
+        "bg": "dark"
+      },
+      "caption": "Il tuffo è epico. La sabbia fredda nel collo un po' meno 🥶\nMa il punto vale tutto.\nQuante volte ti sei tuffato questo mese? Diccelo nei commenti 👇\n#beachvolley #tuffo #beachvolleyitalia #sander #meme",
+      "audio": "audio comico con 'ahi' o suono di sorpresa sul momento del tuffo"
+    },
+    {
+      "id": "T10",
+      "platform": "tiktok",
+      "date": "2026-10-30",
+      "time": "19:00",
+      "rubrica": "Tutorial",
+      "slug": "bagher-3-cose",
+      "format": "video",
+      "bg": "clip:allenamento",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Bagher in 3 cose",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "1. Piedi larghi",
+          "style": "big"
+        },
+        {
+          "t": 1.9,
+          "text": "2. Braccia dritte",
+          "style": "lime"
+        },
+        {
+          "t": 3.1,
+          "text": "3. Muovi le gambe",
+          "style": "outline"
+        }
+      ],
+      "end": {
+        "text": "Salvalo per\nl'allenamento",
+        "bg": "dark"
+      },
+      "caption": "Il bagher in 3 cose, senza giri di parole 💪\nPiedi larghi, braccia dritte, gambe in movimento. Provalo al prossimo allenamento.\nSalva il video e mandalo al tuo compagno 👇\n#beachvolley #bagher #tutorial #beachvolleyitalia #sander",
+      "audio": "audio ritmato tipo 'tutorial in 3 step', un colpo a ogni punto"
+    },
+    {
+      "id": "T11",
+      "platform": "tiktok",
+      "date": "2026-10-31",
+      "time": "12:30",
+      "rubrica": "Meme",
+      "slug": "halloween-paura",
+      "format": "video",
+      "bg": "clip:muro",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Halloween in campo",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Cosa fa paura:",
+          "style": "big"
+        },
+        {
+          "t": 1.9,
+          "text": "il muro che\nti legge",
+          "style": "lime"
+        },
+        {
+          "t": 3.1,
+          "text": "la battuta\na 20-20",
+          "style": "outline"
+        }
+      ],
+      "end": {
+        "text": "Buon Halloween\ngiocatori",
+        "bg": "lime"
+      },
+      "caption": "Halloween nel beach volley: le vere paure 👻🏐\nIl muro che ti legge, la battuta sul 20-20, la sabbia nelle tasche.\nQual è la tua paura più grande in campo? Diccelo nei commenti 👇\n#beachvolley #halloween #beachvolleyitalia #sander #meme",
+      "audio": "audio spooky ironico con sting al reveal"
+    },
+    {
+      "id": "T12",
+      "platform": "tiktok",
+      "date": "2026-10-31",
+      "time": "19:00",
+      "rubrica": "App demo",
+      "slug": "like-match-partita",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "pair",
+          "title": "Dal like alla partita",
+          "body": "Come trovi un compagno su SANDER in 5 passi."
+        },
+        {
+          "bg": "app:deck",
+          "title": "1. Scopri",
+          "body": "Scorri i profili dei giocatori vicino a te."
+        },
+        {
+          "bg": "app:like",
+          "title": "2. Metti like",
+          "body": "Il like arriva con un commento su una foto o una risposta."
+        },
+        {
+          "bg": "app:match",
+          "title": "3. È un match!",
+          "body": "Se il like è reciproco si apre la chat."
+        },
+        {
+          "bg": "app:proponi",
+          "title": "4. Proponi una partita",
+          "body": "Scegli giorno e posto direttamente in chat."
+        },
+        {
+          "bg": "app:ci-sto",
+          "title": "5. Ci sto",
+          "body": "L'altro risponde 'Ci sto' e la partita viene creata."
+        },
+        {
+          "bg": "app:partita",
+          "title": "Partita creata",
+          "body": "Si gioca. Gratis su sanderbv.it"
+        }
+      ],
+      "caption": "Come si trova un compagno di beach in 5 passi 🏐\nLike con commento, match, chat, 'Proponi una partita', 'Ci sto'. Scorri 👉\nProvalo su sanderbv.it (link in bio). Chi è il tuo primo match? Diccelo nei commenti 👇\n#beachvolley #trovacompagni #sander #beachvolleyitalia #2vs2"
+    },
+    {
+      "id": "T13",
+      "platform": "tiktok",
+      "date": "2026-11-01",
+      "time": "12:30",
+      "rubrica": "Storytelling",
+      "slug": "20-20-nastro",
+      "format": "video",
+      "bg": "pallone",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Ti ricordi agosto?",
+          "style": "meta"
+        },
+        {
+          "t": 0.9,
+          "text": "20-20, ultima\nbattuta.",
+          "style": "big"
+        },
+        {
+          "t": 2.2,
+          "text": "Sul nastro.\nDentro.",
+          "style": "lime"
+        },
+        {
+          "t": 3.5,
+          "text": "Ancora ne\nparliamo",
+          "style": "outline"
+        }
+      ],
+      "end": {
+        "text": "Il tuo punto\ndell'estate?",
+        "bg": "dark"
+      },
+      "caption": "Agosto, 20-20, ultima battuta. Il pallone tocca il nastro e... 🏐\nAncora ne parliamo al terzo tempo.\nQual è stato IL punto della tua estate? Diccelo nei commenti 👇\n#beachvolley #nostalgia #estate #sander #rivieraromagnola",
+      "audio": "audio nostalgico lento con colpo secco sul tocco del nastro"
+    },
+    {
+      "id": "T14",
+      "platform": "tiktok",
+      "date": "2026-11-01",
+      "time": "19:00",
+      "rubrica": "Meme",
+      "slug": "cosa-ti-manca-estate",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "morning",
+          "title": "Cosa ti manca dell'estate?",
+          "body": "Sii onesto. Scorri."
+        },
+        {
+          "bg": "set",
+          "title": "Il tramonto alle 21",
+          "body": "Giocare finché la palla non si vede più."
+        },
+        {
+          "bg": "feet",
+          "title": "I piedi nudi",
+          "body": "Sabbia calda e zero pensieri. Ora serve il calzino."
+        },
+        {
+          "bg": "terzo-tempo",
+          "title": "Il terzo tempo",
+          "body": "Asciugamano in riva, risate, nessuna fretta."
+        },
+        {
+          "bg": "morning",
+          "title": "I campi all'alba",
+          "body": "Alle 8 sei solo tu, la rete e il mare."
+        },
+        {
+          "bg": "felpa",
+          "title": "La buona notizia",
+          "body": "Si gioca anche adesso, in felpa o al coperto."
+        },
+        {
+          "bg": "lime",
+          "title": "Intanto si gioca",
+          "body": "Trova una partita nel tuo comune su sanderbv.it"
+        }
+      ],
+      "caption": "Cosa ti manca di più dell'estate? ☀️\nScorri e scegli la tua. Poi ricordati: si gioca anche adesso 👉\nLa tua risposta? Diccelo nei commenti 👇\n#beachvolley #estate #nostalgia #sander #beachvolleyitalia"
+    },
+    {
+      "id": "T15",
+      "platform": "tiktok",
+      "date": "2026-11-02",
+      "time": "12:30",
+      "rubrica": "Inverno/Indoor",
+      "slug": "beach-al-coperto",
+      "format": "video",
+      "bg": "clip:indoor",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Lo sapevi?",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Il beach volley\nesiste al coperto",
+          "style": "big"
+        },
+        {
+          "t": 2.3,
+          "text": "sabbia vera,\ntetto sopra",
+          "style": "lime"
+        }
+      ],
+      "end": {
+        "text": "Pioggia? Non è\nun problema",
+        "bg": "dark"
+      },
+      "caption": "Sì, esistono campi di sabbia dentro i palazzetti 🏟️🏖️\nSabbia vera, rete vera, zero pioggia.\nL'hai mai provato? Diccelo nei commenti 👇\n#beachvolley #beachindoor #inverno #sander #beachvolleyitalia",
+      "audio": "audio trend 'lo sapevi?' con whoosh sul reveal"
+    },
+    {
+      "id": "T16",
+      "platform": "tiktok",
+      "date": "2026-11-02",
+      "time": "19:00",
+      "rubrica": "Meme",
+      "slug": "gruppo-whatsapp",
+      "format": "video",
+      "bg": "telefono",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Il gruppo WhatsApp",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "'Sabato si gioca?'",
+          "style": "big"
+        },
+        {
+          "t": 2,
+          "text": "12 risposte:\n'forse'",
+          "style": "lime"
+        },
+        {
+          "t": 3.3,
+          "text": "In campo: 3 persone",
+          "style": "outline"
+        }
+      ],
+      "end": {
+        "text": "Su SANDER vedi\nchi è libero",
+        "bg": "dark"
+      },
+      "caption": "Il gruppo: 12 'forse'. Il campo: 3 persone 📱😅\nSu SANDER, con 'Libero oggi', sai chi c'è davvero.\nQuanti siete di solito a sabato? Diccelo nei commenti 👇\n#beachvolley #meme #gruppowhatsapp #sander #beachvolleyitalia",
+      "audio": "audio trend 'notifiche a raffica' che si ferma di colpo"
+    },
+    {
+      "id": "T17",
+      "platform": "tiktok",
+      "date": "2026-11-03",
+      "time": "12:30",
+      "rubrica": "App demo",
+      "slug": "libero-oggi",
+      "format": "video",
+      "bg": "app:deck",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "App demo",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Libero oggi?",
+          "style": "big"
+        },
+        {
+          "t": 1.8,
+          "text": "Un tap.",
+          "style": "lime"
+        },
+        {
+          "t": 3,
+          "text": "Passi avanti nei profili di chi gioca vicino",
+          "style": "pill"
+        }
+      ],
+      "end": {
+        "text": "Sei libero?\nAccendilo",
+        "bg": "lime"
+      },
+      "caption": "Libero oggi? Un tap e te lo dice anche il profilo 🟢\nPassi avanti nei mazzi di chi gioca vicino a te.\nProvalo su sanderbv.it (link in bio) 👆\n#beachvolley #liberooggi #sander #trovacompagni #beachvolleyitalia",
+      "audio": "audio pulito da tutorial, click sul toggle"
+    },
+    {
+      "id": "T18",
+      "platform": "tiktok",
+      "date": "2026-11-03",
+      "time": "19:00",
+      "rubrica": "Tutorial",
+      "slug": "errori-battuta",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "battuta",
+          "title": "5 errori in battuta",
+          "body": "Li facciamo tutti. Quanti ne riconosci?"
+        },
+        {
+          "bg": "battuta",
+          "title": "1. Lancio storto",
+          "body": "Se la palla parte male, il colpo è già perso. Lancio dritto e alto."
+        },
+        {
+          "bg": "battuta",
+          "title": "2. Guardi solo la palla",
+          "body": "Prima scegli la zona dove mandarla, poi colpisci."
+        },
+        {
+          "bg": "battuta",
+          "title": "3. Sempre lo stesso punto",
+          "body": "Cambia zona: se sai dove arriva, ti ricevono."
+        },
+        {
+          "bg": "battuta",
+          "title": "4. Mano molle",
+          "body": "Colpo deciso e braccio che accompagna fino in fondo."
+        },
+        {
+          "bg": "battuta",
+          "title": "5. Zero routine",
+          "body": "Respira, palleggia due volte, tira. Sempre uguale."
+        },
+        {
+          "bg": "lime",
+          "title": "Provala alla prossima",
+          "body": "Trova chi gioca vicino a te su sanderbv.it e allenatevi in due."
+        }
+      ],
+      "caption": "5 errori in battuta che fanno tutti 🎯\nUno di questi è il tuo, ammettilo. Scorri 👉\nQuale correggi per primo? Diccelo nei commenti 👇\n#beachvolley #battuta #tutorial #sander #beachvolleyitalia"
+    },
+    {
+      "id": "T19",
+      "platform": "tiktok",
+      "date": "2026-11-04",
+      "time": "12:30",
+      "rubrica": "Tipi di giocatori",
+      "slug": "ultima-palla",
+      "format": "video",
+      "bg": "group",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Tipi di giocatori",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Quello che dice:",
+          "style": "big"
+        },
+        {
+          "t": 2,
+          "text": "'Ultima palla'",
+          "style": "lime"
+        },
+        {
+          "t": 3.3,
+          "text": "(è la decima)",
+          "style": "outline"
+        }
+      ],
+      "end": {
+        "text": "Taggalo",
+        "bg": "dark"
+      },
+      "caption": "C'è sempre quello che dice 'ultima palla' 🏐\nÈ la decima. E non è l'ultima.\nTaggalo qui sotto 👇\n#beachvolley #tipidigiocatori #meme #sander #beachvolleyitalia",
+      "audio": "audio comico con suono 'ding' a ogni ripetizione"
+    },
+    {
+      "id": "T20",
+      "platform": "tiktok",
+      "date": "2026-11-04",
+      "time": "19:00",
+      "rubrica": "POV",
+      "slug": "compagno-fisso",
+      "format": "video",
+      "bg": "pair",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "POV",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "hai trovato il\ncompagno fisso",
+          "style": "big"
+        },
+        {
+          "t": 2.2,
+          "text": "per tutta\nl'estate 2027",
+          "style": "lime"
+        },
+        {
+          "t": 3.4,
+          "text": "Cercalo adesso, non a maggio",
+          "style": "pill"
+        }
+      ],
+      "end": {
+        "text": "Cercalo con\nScopri su SANDER",
+        "bg": "lime"
+      },
+      "caption": "POV: hai già il compagno per l'estate 2027 🤝🏐\nIl momento giusto per cercarlo non è maggio, è adesso.\nCon Scopri metti like con un commento e, se è match, si gioca.\nChi sarebbe il tuo compagno ideale? Diccelo nei commenti 👇\n#beachvolley #compagnodigioco #2vs2 #sander #beachvolleyitalia",
+      "audio": "audio epico/hype da 'trovato quello giusto' con beat drop sul reveal"
+    },
+    {
+      "id": "T21",
+      "platform": "tiktok",
+      "date": "2026-11-05",
+      "time": "12:30",
+      "rubrica": "Questo o quello",
+      "slug": "indoor-o-spiaggia",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "lime",
+          "title": "Questo o quello",
+          "body": "Beach d'inverno edition. Rispondi nei commenti."
+        },
+        {
+          "bg": "indoor",
+          "title": "Indoor vs spiaggia",
+          "body": "Palazzetto con la sabbia o lungomare in felpa?"
+        },
+        {
+          "bg": "muro",
+          "title": "Muro vs difesa",
+          "body": "Chiudere la rete o salvare l'impossibile?"
+        },
+        {
+          "bg": "morning",
+          "title": "Mattina vs tramonto",
+          "body": "Nebbia e silenzio o luce dorata e vento?"
+        },
+        {
+          "bg": "battuta",
+          "title": "Float vs salto",
+          "body": "Battuta che ondeggia o battuta che spacca?"
+        },
+        {
+          "bg": "pair",
+          "title": "Fisso vs sempre diverso",
+          "body": "Stessa coppia da anni o ogni volta un volto nuovo?"
+        },
+        {
+          "bg": "lime",
+          "title": "Vota nei commenti",
+          "body": "E trova chi la pensa come te su sanderbv.it"
+        }
+      ],
+      "caption": "5 duelli, nessuna via di mezzo ⚔️\nScorri e rispondi nei commenti con le tue scelte 👉\nIndoor o spiaggia? Diccelo nei commenti 👇\n#beachvolley #questooquello #beachvolleyitalia #sander #inverno"
+    },
+    {
+      "id": "T22",
+      "platform": "tiktok",
+      "date": "2026-11-05",
+      "time": "19:00",
+      "rubrica": "Hot take",
+      "slug": "chiama-la-palla",
+      "format": "video",
+      "bg": "rally",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Hot take",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Se non chiami\nla palla",
+          "style": "big"
+        },
+        {
+          "t": 2,
+          "text": "la palla\nnon è tua",
+          "style": "lime"
+        },
+        {
+          "t": 3.2,
+          "text": "Parlate col compagno. Sempre.",
+          "style": "pill"
+        }
+      ],
+      "end": {
+        "text": "Chiamala.\nOgni volta",
+        "bg": "dark"
+      },
+      "caption": "Hot take: se non la chiami, non è tua 📣\nNiente scontri, niente sguardi persi: si parla.\nSei d'accordo? Diccelo nei commenti 👇\n#beachvolley #hottake #comunicazione #sander #beachvolleyitalia",
+      "audio": "audio trend hot take, voce che sale e stop netto"
+    },
+    {
+      "id": "T23",
+      "platform": "tiktok",
+      "date": "2026-11-06",
+      "time": "12:30",
+      "rubrica": "Meme",
+      "slug": "riscaldamento-novembre",
+      "format": "video",
+      "bg": "clip:allenamento",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Il riscaldamento",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "luglio:\n2 minuti",
+          "style": "big"
+        },
+        {
+          "t": 2,
+          "text": "novembre:\n20 minuti",
+          "style": "lime"
+        },
+        {
+          "t": 3.3,
+          "text": "e ancora\nfreddo",
+          "style": "outline"
+        }
+      ],
+      "end": {
+        "text": "Scaldati bene",
+        "bg": "dark"
+      },
+      "caption": "Il riscaldamento a luglio vs a novembre 🥶\nCambia la durata, non il freddo.\nQuanto ti scaldi tu? Diccelo nei commenti 👇\n#beachvolley #riscaldamento #meme #sander #beachvolleyitalia",
+      "audio": "audio trend 'DiCaprio che corre' o 'corsa epica' per il riscaldamento"
+    },
+    {
+      "id": "T24",
+      "platform": "tiktok",
+      "date": "2026-11-06",
+      "time": "19:00",
+      "rubrica": "App demo",
+      "slug": "manca-1-giocatore",
+      "format": "video",
+      "bg": "app:partita",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "App demo",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Manca 1\ngiocatore",
+          "style": "big"
+        },
+        {
+          "t": 2,
+          "text": "arriva la\nnotifica",
+          "style": "lime"
+        },
+        {
+          "t": 3.2,
+          "text": "Ti avvisa chi gioca nel tuo comune",
+          "style": "pill"
+        }
+      ],
+      "end": {
+        "text": "Attiva le notifiche\nsu SANDER",
+        "bg": "dark"
+      },
+      "caption": "Manca 1 giocatore e arriva la notifica 🔔\nTe lo dice l'app, tu rispondi e sei in campo.\nProvala su sanderbv.it (link in bio) 👆\n#beachvolley #sander #notifiche #beachvolleyitalia #partite",
+      "audio": "audio con suono di notifica in loop e beat sul tap"
+    },
+    {
+      "id": "T25",
+      "platform": "tiktok",
+      "date": "2026-11-07",
+      "time": "12:30",
+      "rubrica": "Community",
+      "slug": "non-solo-riviera",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "pallone",
+          "title": "SANDER non è solo Riviera",
+          "body": "Nata a Rimini, ora aperta a tutta Italia."
+        },
+        {
+          "bg": "group",
+          "title": "Nata in Riviera",
+          "body": "Rimini, Riccione, Cervia, Cesenatico: la casa di SANDER."
+        },
+        {
+          "bg": "morning",
+          "title": "Ora si gioca ovunque",
+          "body": "Apri l'app e scegli regione e comune. Funziona in tutta Italia."
+        },
+        {
+          "bg": "dark",
+          "title": "Scegli la regione",
+          "body": "Qualunque regione: scegli la tua e sei dentro."
+        },
+        {
+          "bg": "lime",
+          "title": "Poi il comune",
+          "body": "Partite, classifiche e giocatori sono quelli della tua zona."
+        },
+        {
+          "bg": "batti-cinque",
+          "title": "SANDER cresce con te",
+          "body": "Più siete nel tuo comune, più partite trovi."
+        },
+        {
+          "bg": "lime",
+          "title": "Dove giochi tu?",
+          "body": "Scrivi il tuo comune nei commenti. sanderbv.it"
+        }
+      ],
+      "caption": "SANDER è nata in Riviera, ma oggi è per tutta Italia 🇮🇹\nScegli regione e comune e trova chi gioca vicino a te. Scorri 👉\nDi che comune sei? Diccelo nei commenti 👇\n#beachvolley #sander #beachvolleyitalia #tuttaitalia #rivieraromagnola"
+    },
+    {
+      "id": "T26",
+      "platform": "tiktok",
+      "date": "2026-11-07",
+      "time": "19:00",
+      "rubrica": "Tutorial",
+      "slug": "passi-corti-sabbia",
+      "format": "video",
+      "bg": "clip:feet",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Tip sulla sabbia",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Passi corti\ne veloci",
+          "style": "big"
+        },
+        {
+          "t": 2.1,
+          "text": "non lunghe\ncorse",
+          "style": "lime"
+        },
+        {
+          "t": 3.3,
+          "text": "Corri poco, arrivi prima",
+          "style": "pill"
+        }
+      ],
+      "end": {
+        "text": "Provalo\nal prossimo match",
+        "bg": "dark"
+      },
+      "caption": "Sulla sabbia: passi corti e veloci 🦶\nMeno corsa, più reazione, e arrivi prima sulla palla.\nSalvalo e provalo al prossimo match 👇\n#beachvolley #tutorial #piedinudi #sander #beachvolleyitalia",
+      "audio": "audio ritmo veloce tipo 'footwork' con tick a ogni passo"
+    },
+    {
+      "id": "T27",
+      "platform": "tiktok",
+      "date": "2026-11-08",
+      "time": "12:30",
+      "rubrica": "Questo o quello",
+      "slug": "ruolo-sulla-carta",
+      "format": "video",
+      "bg": "clip:spike",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Questo o quello",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Sulla tua carta\nche ruolo hai?",
+          "style": "big"
+        },
+        {
+          "t": 2.2,
+          "text": "MURO",
+          "style": "lime"
+        },
+        {
+          "t": 3.3,
+          "text": "o DIFENSORE?",
+          "style": "outline"
+        }
+      ],
+      "end": {
+        "text": "Dillo nei commenti",
+        "bg": "dark"
+      },
+      "caption": "Sulla tua carta giocatore: muro o difensore? 🃏\nUna sola risposta, niente 'tutti e due'.\nDiccelo nei commenti 👇\n#beachvolley #cartagiocatore #sander #muro #difensore",
+      "audio": "audio trend 'scegli' con due suoni a confronto"
+    },
+    {
+      "id": "T28",
+      "platform": "tiktok",
+      "date": "2026-11-08",
+      "time": "19:00",
+      "rubrica": "Inverno/Indoor",
+      "slug": "piano-b-pioggia",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "inverno",
+          "title": "Piove? Piano B",
+          "body": "Il meteo dice no. Il beach volley dice: vediamo."
+        },
+        {
+          "bg": "indoor",
+          "title": "1. Beach indoor",
+          "body": "Cerca un palazzetto con campo di sabbia nel tuo comune."
+        },
+        {
+          "bg": "allenamento",
+          "title": "2. Allenamento a due",
+          "body": "Cerca su SANDER qualcuno per allenarvi insieme."
+        },
+        {
+          "bg": "app:deck",
+          "title": "3. Scopri",
+          "body": "Guarda i profili e metti like con un commento."
+        },
+        {
+          "bg": "dark",
+          "title": "4. Guarda la classifica",
+          "body": "Chi hai davanti nel tuo comune? Preparati la rivincita."
+        },
+        {
+          "bg": "telefono",
+          "title": "5. Programma sabato",
+          "body": "Se il meteo regge, proponi giorno e posto in chat."
+        },
+        {
+          "bg": "lime",
+          "title": "Il sole tornerà",
+          "body": "Intanto sanderbv.it"
+        }
+      ],
+      "caption": "Piove? Cinque cose da fare invece di restare sul divano 🌧️🏐\nScorri 👉\nQual è il tuo piano B? Diccelo nei commenti 👇\n#beachvolley #pioggia #inverno #sander #beachvolleyitalia"
+    },
+    {
+      "id": "T29",
+      "platform": "tiktok",
+      "date": "2026-11-09",
+      "time": "12:30",
+      "rubrica": "Meme",
+      "slug": "sole-novembre",
+      "format": "video",
+      "bg": "morning",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Sabato, sole, 14 gradi",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "il gruppo:",
+          "style": "big"
+        },
+        {
+          "t": 1.8,
+          "text": "'SI GIOCA\nOGGI!'",
+          "style": "lime"
+        },
+        {
+          "t": 3.1,
+          "text": "tutti in campo.\nSubito.",
+          "style": "outline"
+        }
+      ],
+      "end": {
+        "text": "Il sole è\nuna chiamata",
+        "bg": "lime"
+      },
+      "caption": "Esce il sole a novembre e il gruppo si sveglia ☀️\nTutti pronti, tutti in campo, zero scuse.\nCome reagisci tu al sole d'autunno? Diccelo nei commenti 👇\n#beachvolley #novembre #meme #sander #beachvolleyitalia",
+      "audio": "audio trend 'sveglia' con stacco hype sul sole"
+    },
+    {
+      "id": "T30",
+      "platform": "tiktok",
+      "date": "2026-11-09",
+      "time": "19:00",
+      "rubrica": "App demo",
+      "slug": "entrate-in-coppia",
+      "format": "video",
+      "bg": "app:deck",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "App demo",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Siete in due?",
+          "style": "big"
+        },
+        {
+          "t": 1.9,
+          "text": "Entrate\nin coppia",
+          "style": "lime"
+        },
+        {
+          "t": 3.1,
+          "text": "Entri in una partita a cui mancano 2",
+          "style": "pill"
+        }
+      ],
+      "end": {
+        "text": "Giocate insieme\nsu SANDER",
+        "bg": "dark"
+      },
+      "caption": "Siete in due e c'è una partita che ne cerca 2? Entrate in coppia 🤝\nUn tap e siete dentro.\nProvala su sanderbv.it (link in bio) 👆\n#beachvolley #coppia #2vs2 #sander #beachvolleyitalia",
+      "audio": "audio da tutorial con click, ritmo leggero"
+    },
+    {
+      "id": "T31",
+      "platform": "tiktok",
+      "date": "2026-11-10",
+      "time": "12:30",
+      "rubrica": "Meme",
+      "slug": "solo-chi-gioca-novembre",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "felpa",
+          "title": "Solo chi gioca a novembre",
+          "body": "Cose che capisce solo chi ci è passato."
+        },
+        {
+          "bg": "feet",
+          "title": "Il primo passo",
+          "body": "Sabbia fredda sotto i piedi nudi. Poi ti abitui. Forse."
+        },
+        {
+          "bg": "set",
+          "title": "Le mani rosse",
+          "body": "Dopo il terzo bagher sono del colore del tramonto."
+        },
+        {
+          "bg": "felpa",
+          "title": "La felpa in campo",
+          "body": "Tolta, appoggiata sulla rete, ritrovata a fine match."
+        },
+        {
+          "bg": "autunno",
+          "title": "Il campo tutto per te",
+          "body": "Nessuno in spiaggia, il mare fa da tifoso."
+        },
+        {
+          "bg": "terzo-tempo",
+          "title": "Il caffè dopo",
+          "body": "Il terzo tempo di novembre si fa con le mani intorno a un bicchiere caldo."
+        },
+        {
+          "bg": "lime",
+          "title": "Ci sei anche tu?",
+          "body": "Trova una partita vicino a te: sanderbv.it"
+        }
+      ],
+      "caption": "Cose che capisce solo chi gioca a novembre 🧣\nLe mani rosse e la felpa persa: scorri 👉\nQuale ti rappresenta? Diccelo nei commenti 👇\n#beachvolley #novembre #beachvolleyitalia #sander #relatable"
+    },
+    {
+      "id": "T32",
+      "platform": "tiktok",
+      "date": "2026-11-10",
+      "time": "19:00",
+      "rubrica": "Hot take",
+      "slug": "indoor-vero-beach",
+      "format": "video",
+      "bg": "indoor",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Hot take",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Il beach indoor",
+          "style": "big"
+        },
+        {
+          "t": 1.8,
+          "text": "è beach volley\nvero",
+          "style": "lime"
+        },
+        {
+          "t": 3,
+          "text": "Sabbia, rete e tanta voglia",
+          "style": "pill"
+        }
+      ],
+      "end": {
+        "text": "Fine del dibattito",
+        "bg": "dark"
+      },
+      "caption": "Hot take: il beach indoor è beach volley vero 🏟️\nSabbia, rete, voglia. Il resto sono scuse.\nSei d'accordo? Diccelo nei commenti 👇\n#beachvolley #beachindoor #hottake #sander #beachvolleyitalia",
+      "audio": "audio trend 'unpopular opinion' con stop netto"
+    },
+    {
+      "id": "T33",
+      "platform": "tiktok",
+      "date": "2026-11-11",
+      "time": "12:30",
+      "rubrica": "Tutorial",
+      "slug": "muro-guarda-spalle",
+      "format": "video",
+      "bg": "clip:muro",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Tip da muro",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Guarda le spalle\ndell'attaccante",
+          "style": "big"
+        },
+        {
+          "t": 2.3,
+          "text": "non la palla",
+          "style": "lime"
+        },
+        {
+          "t": 3.5,
+          "text": "La direzione parte da lì",
+          "style": "pill"
+        }
+      ],
+      "end": {
+        "text": "Provalo a rete",
+        "bg": "dark"
+      },
+      "caption": "Per muro: guarda le spalle di chi attacca, non la palla 🧱\nLa direzione del colpo parte da lì.\nSalvalo e provalo al prossimo match 👇\n#beachvolley #muro #tutorial #sander #beachvolleyitalia",
+      "audio": "audio ritmato da tutorial con colpo secco al reveal"
+    },
+    {
+      "id": "T34",
+      "platform": "tiktok",
+      "date": "2026-11-11",
+      "time": "19:00",
+      "rubrica": "Meme",
+      "slug": "sabbia-in-felpa",
+      "format": "video",
+      "bg": "terzo-tempo",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Dopo il match",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "sabbia in\nfelpa:",
+          "style": "big"
+        },
+        {
+          "t": 2,
+          "text": "per sempre",
+          "style": "lime"
+        },
+        {
+          "t": 3.2,
+          "text": "anche a casa",
+          "style": "outline"
+        }
+      ],
+      "end": {
+        "text": "Prova che\nhai giocato",
+        "bg": "dark"
+      },
+      "caption": "La sabbia nella felpa non se ne va mai 🏖️\nAnche dopo tre lavaggi. È la prova che hai giocato.\nDove la trovi tu? Diccelo nei commenti 👇\n#beachvolley #sabbia #meme #sander #beachvolleyitalia",
+      "audio": "audio comico con suono 'sciaf' sul reveal"
+    },
+    {
+      "id": "T35",
+      "platform": "tiktok",
+      "date": "2026-11-12",
+      "time": "12:30",
+      "rubrica": "App demo",
+      "slug": "iscrizione-torneo",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "batti-cinque",
+          "title": "Torneo invernale: come entri",
+          "body": "Dal divano al tabellone in 4 passi."
+        },
+        {
+          "bg": "pallone",
+          "title": "1. Trova il torneo",
+          "body": "Nell'app trovi i tornei aperti e le date."
+        },
+        {
+          "bg": "pair",
+          "title": "2. Scegli il compagno",
+          "body": "Il beach si gioca in due: porta il tuo o trovalo con Scopri."
+        },
+        {
+          "bg": "dark",
+          "title": "3. Paga con Stripe",
+          "body": "Iscrizione online e sicura, direttamente dall'app."
+        },
+        {
+          "bg": "highfive",
+          "title": "4. Sei dentro",
+          "body": "Ora si gioca. Il resto lo fa il campo."
+        },
+        {
+          "bg": "lime",
+          "title": "Chi è la tua coppia?",
+          "body": "Trova il tuo compagno su sanderbv.it"
+        }
+      ],
+      "caption": "Come ti iscrivi a un torneo invernale in 4 passi 🏆\nTrova, scegli il compagno, paga con Stripe, gioca. Scorri 👉\nChi sarà il tuo compagno? Diccelo nei commenti 👇\n#beachvolley #tornei #sander #beachvolleyitalia #inverno"
+    },
+    {
+      "id": "T36",
+      "platform": "tiktok",
+      "date": "2026-11-12",
+      "time": "19:00",
+      "rubrica": "Tipi di giocatori",
+      "slug": "tipi-di-compagno",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "group",
+          "title": "Che compagno hai?",
+          "body": "I 5 tipi di compagno di coppia. Scorri."
+        },
+        {
+          "bg": "batti-cinque",
+          "title": "Il Commentatore",
+          "body": "'Era dentro.' 'No, fuori.' Non c'è l'arbitro, ma lui ha la sua versione."
+        },
+        {
+          "bg": "pair",
+          "title": "Il Silenzioso",
+          "body": "Zero parole in campo. Poi la palla arriva dove deve. Magia."
+        },
+        {
+          "bg": "allenamento",
+          "title": "Il Coach",
+          "body": "Ti spiega la posizione dei piedi anche sul 21-20."
+        },
+        {
+          "bg": "highfive",
+          "title": "Il Motivatore",
+          "body": "'Dai che è nostra!' Anche sul 3-14. Lo adoriamo."
+        },
+        {
+          "bg": "battuta",
+          "title": "Il Perfezionista",
+          "body": "Rifà il lancio della battuta tre volte. Il punto può attendere."
+        },
+        {
+          "bg": "lime",
+          "title": "Il compagno ideale?",
+          "body": "Trovalo con Scopri su sanderbv.it. Anche in coppia."
+        }
+      ],
+      "caption": "5 tipi di compagno di coppia: riconosci il tuo? 🤝\nScorri e taggalo 👉\nE tu, che compagno sei? Diccelo nei commenti 👇\n#beachvolley #tipidigiocatori #2vs2 #sander #beachvolleyitalia"
+    },
+    {
+      "id": "T37",
+      "platform": "tiktok",
+      "date": "2026-11-13",
+      "time": "12:30",
+      "rubrica": "Community",
+      "slug": "da-dove-giochi",
+      "format": "video",
+      "bg": "group",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Community",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Da dove\ngiochi?",
+          "style": "big"
+        },
+        {
+          "t": 1.9,
+          "text": "scrivi il tuo\ncomune",
+          "style": "lime"
+        },
+        {
+          "t": 3.1,
+          "text": "Facciamo la mappa di SANDER insieme",
+          "style": "pill"
+        }
+      ],
+      "end": {
+        "text": "Scrivilo nei\ncommenti",
+        "bg": "lime"
+      },
+      "caption": "Da quale comune giochi a beach? 📍\nScrivilo qui sotto: facciamo la mappa di SANDER insieme.\nSe c'è un campo vicino a te, trovi partite su sanderbv.it 👇\n#beachvolley #community #beachvolleyitalia #sander #tuttaitalia",
+      "audio": "audio vox-pop stile 'da dove sei?' leggero"
+    },
+    {
+      "id": "T38",
+      "platform": "tiktok",
+      "date": "2026-11-13",
+      "time": "19:00",
+      "rubrica": "Classifica",
+      "slug": "chi-hai-davanti",
+      "format": "video",
+      "bg": "clip:spike",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Classifica",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Guarda chi hai\ndavanti",
+          "style": "big"
+        },
+        {
+          "t": 2,
+          "text": "e sfidalo",
+          "style": "lime"
+        },
+        {
+          "t": 3.2,
+          "text": "Ogni partita muove il tuo rating",
+          "style": "pill"
+        }
+      ],
+      "end": {
+        "text": "Sali di livello",
+        "bg": "dark"
+      },
+      "caption": "Apri la classifica del tuo comune e guarda chi hai davanti 👀\nPoi sfidalo. Ogni partita muove il tuo rating.\nChi è il tuo rivale? Diccelo nei commenti 👇\n#beachvolley #classifica #sfida #sander #beachvolleyitalia",
+      "audio": "audio da sfida con battito che accelera"
+    },
+    {
+      "id": "T39",
+      "platform": "tiktok",
+      "date": "2026-11-14",
+      "time": "12:30",
+      "rubrica": "Storytelling",
+      "slug": "sabato-di-novembre",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "autunno",
+          "title": "Sabato di novembre, ore 11",
+          "body": "Una storia che ti suonerà familiare."
+        },
+        {
+          "bg": "waiting",
+          "title": "Il campo è libero",
+          "body": "C'è sole, 13 gradi e una rete tutta per voi."
+        },
+        {
+          "bg": "telefono",
+          "title": "Ma siete in tre",
+          "body": "Il quarto ha dato buca. Il gruppo risponde 'forse'."
+        },
+        {
+          "bg": "app:partita",
+          "title": "Apri SANDER",
+          "body": "Un tap su 'manca 1 giocatore' e parte la notifica."
+        },
+        {
+          "bg": "batti-cinque",
+          "title": "Arriva uno che non conosci",
+          "body": "Zaino in spalla, piedi già scalzi: 'Ho visto la notifica.'"
+        },
+        {
+          "bg": "terzo-tempo",
+          "title": "Si gioca. Si ride.",
+          "body": "Due set, tanta sabbia e un nuovo compagno per il sabato."
+        },
+        {
+          "bg": "lime",
+          "title": "Il prossimo sabato?",
+          "body": "Crea la tua partita su sanderbv.it"
+        }
+      ],
+      "caption": "Sabato di novembre: siete in tre e il sole è uscito ☀️\nScorri per scoprire come finisce 👉\nTi è mai successo? Diccelo nei commenti 👇\n#beachvolley #storytelling #novembre #sander #beachvolleyitalia"
+    },
+    {
+      "id": "T40",
+      "platform": "tiktok",
+      "date": "2026-11-14",
+      "time": "19:00",
+      "rubrica": "Inverno/Indoor",
+      "slug": "tornei-invernali",
+      "format": "video",
+      "bg": "allenamento",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Tornei invernali",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "L'estate\nsi vince",
+          "style": "big"
+        },
+        {
+          "t": 2,
+          "text": "adesso",
+          "style": "lime"
+        },
+        {
+          "t": 3.2,
+          "text": "Allenati ora, iscriviti dall'app",
+          "style": "pill"
+        }
+      ],
+      "end": {
+        "text": "Si parte\nda novembre",
+        "bg": "lime"
+      },
+      "caption": "L'estate si vince a novembre 🏆\nAllenamento, tornei invernali e un compagno fisso: il piano è questo.\nSei dentro? Diccelo nei commenti 👇\n#beachvolley #tornei #inverno #sander #beachvolleyitalia",
+      "audio": "audio motivazionale con beat che cresce"
+    },
+    {
+      "id": "T41",
+      "platform": "tiktok",
+      "date": "2026-11-15",
+      "time": "12:30",
+      "rubrica": "Questo o quello",
+      "slug": "float-o-salto",
+      "format": "video",
+      "bg": "clip:battuta",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Questo o quello",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Battuta:",
+          "style": "big"
+        },
+        {
+          "t": 1.8,
+          "text": "float",
+          "style": "lime"
+        },
+        {
+          "t": 2.8,
+          "text": "o salto?",
+          "style": "outline"
+        }
+      ],
+      "end": {
+        "text": "Dillo nei commenti",
+        "bg": "dark"
+      },
+      "caption": "Battuta float o battuta in salto? 🎯\nUna sola, niente 'dipende dal vento'.\nDiccelo nei commenti 👇\n#beachvolley #battuta #questooquello #sander #beachvolleyitalia",
+      "audio": "audio trend 'scegli' con due suoni"
+    },
+    {
+      "id": "T42",
+      "platform": "tiktok",
+      "date": "2026-11-15",
+      "time": "19:00",
+      "rubrica": "Hot take",
+      "slug": "5-hot-take",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "lime",
+          "title": "5 hot take. Litighiamo?",
+          "body": "Mettiamo d'accordo il campo: scorri e vota."
+        },
+        {
+          "bg": "set",
+          "title": "Il bagher batte il palleggio",
+          "body": "È il colpo più importante: se non ricevi, non giochi."
+        },
+        {
+          "bg": "terzo-tempo",
+          "title": "Il terzo tempo vale metà match",
+          "body": "Si parla, si ride, si programma la rivincita."
+        },
+        {
+          "bg": "battuta",
+          "title": "Il vento è un compagno",
+          "body": "Chi lo legge meglio, vince. Chi lo insulta, perde."
+        },
+        {
+          "bg": "dive",
+          "title": "La difesa fa più spettacolo",
+          "body": "Un tuffo vale tre schiacciate. Dibattito aperto."
+        },
+        {
+          "bg": "feet",
+          "title": "Si gioca meglio scalzi",
+          "body": "Il piede sente la sabbia. Il resto è nostalgia di scarpe."
+        },
+        {
+          "bg": "lime",
+          "title": "Quale è sbagliato?",
+          "body": "Diccelo nei commenti e trova qualcuno con cui litigare in campo: sanderbv.it"
+        }
+      ],
+      "caption": "5 hot take sul beach volley, siete pronti a litigare? 🔥\nScorri 👉\nQuale è sbagliato? Diccelo nei commenti 👇\n#beachvolley #hottake #beachvolleyitalia #sander #dibattito"
+    },
+    {
+      "id": "T43",
+      "platform": "tiktok",
+      "date": "2026-11-16",
+      "time": "12:30",
+      "rubrica": "Meme",
+      "slug": "galleria-foto-estate",
+      "format": "video",
+      "bg": "feet",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Galleria foto, novembre",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "io che scorro\nle foto d'agosto",
+          "style": "big"
+        },
+        {
+          "t": 2.3,
+          "text": "piedi nudi,\nsole, mare",
+          "style": "lime"
+        },
+        {
+          "t": 3.6,
+          "text": "sembra\nun'altra vita",
+          "style": "outline"
+        }
+      ],
+      "end": {
+        "text": "Intanto si gioca",
+        "bg": "dark"
+      },
+      "caption": "Io, a novembre, che scorro le foto d'agosto 📸\nPiedi nudi, sole, mare. Sembra un'altra vita.\nChe foto d'estate hai salvato? Diccelo nei commenti 👇\n#beachvolley #nostalgia #estate #sander #rivieraromagnola",
+      "audio": "audio nostalgico lento con stacco hype finale"
+    },
+    {
+      "id": "T44",
+      "platform": "tiktok",
+      "date": "2026-11-16",
+      "time": "19:00",
+      "rubrica": "Tutorial",
+      "slug": "palleggio-tip",
+      "format": "video",
+      "bg": "set",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Tip palleggio",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Mani sopra\nla fronte",
+          "style": "big"
+        },
+        {
+          "t": 2,
+          "text": "gomiti larghi",
+          "style": "lime"
+        },
+        {
+          "t": 3.2,
+          "text": "Spingi con le gambe, non solo con le braccia",
+          "style": "pill"
+        }
+      ],
+      "end": {
+        "text": "Provalo\ncontro il muro",
+        "bg": "dark"
+      },
+      "caption": "Il palleggio comincia dalle gambe 🙌\nMani sopra la fronte, gomiti larghi, spinta da sotto.\nSalva il video e provalo con un amico 👇\n#beachvolley #palleggio #tutorial #sander #beachvolleyitalia",
+      "audio": "audio ritmato da tutorial con click a ogni punto"
+    },
+    {
+      "id": "T45",
+      "platform": "tiktok",
+      "date": "2026-11-17",
+      "time": "12:30",
+      "rubrica": "Community",
+      "slug": "compagno-fisso-ora",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "pair",
+          "title": "Compagno fisso per l'estate?",
+          "body": "Il momento giusto per cercarlo non è maggio."
+        },
+        {
+          "bg": "waiting",
+          "title": "A giugno è tardi",
+          "body": "I campi si riempiono e le coppie si formano prima di quanto pensi."
+        },
+        {
+          "bg": "allenamento",
+          "title": "D'inverno si prova",
+          "body": "Qualche partita insieme ti dice se funzionate: stile, intesa, ritmo."
+        },
+        {
+          "bg": "app:like",
+          "title": "Scopri aiuta",
+          "body": "Profili vicino a te. Il like arriva con un commento."
+        },
+        {
+          "bg": "app:match",
+          "title": "Il match è il primo punto",
+          "body": "Se è match si apre la chat e proponi giorno e posto."
+        },
+        {
+          "bg": "highfive",
+          "title": "Poi si gioca",
+          "body": "Meglio una partita che mille messaggi."
+        },
+        {
+          "bg": "lime",
+          "title": "Cerca il tuo compagno",
+          "body": "Scopri su SANDER, gratis: sanderbv.it"
+        }
+      ],
+      "caption": "Il compagno per l'estate si cerca a novembre, non a maggio 🤝\nScorri 👉\nChi vuoi in squadra l'anno prossimo? Diccelo nei commenti 👇\n#beachvolley #compagnodigioco #2vs2 #sander #beachvolleyitalia"
+    },
+    {
+      "id": "T46",
+      "platform": "tiktok",
+      "date": "2026-11-17",
+      "time": "19:00",
+      "rubrica": "POV",
+      "slug": "ci-sto",
+      "format": "video",
+      "bg": "app:ci-sto",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "POV",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "ti arriva\n'Ci sto'",
+          "style": "big"
+        },
+        {
+          "t": 2,
+          "text": "Partita\ncreata",
+          "style": "lime"
+        },
+        {
+          "t": 3.2,
+          "text": "Giorno e posto già decisi",
+          "style": "pill"
+        }
+      ],
+      "end": {
+        "text": "Fine della\ntrattativa",
+        "bg": "lime"
+      },
+      "caption": "POV: scrivi 'Proponi una partita', lui risponde 'Ci sto' 🏐\nGiorno e posto decisi, partita creata. Zero giri di messaggi.\nProvala su sanderbv.it 👆\n#beachvolley #sander #cisto #partita #beachvolleyitalia",
+      "audio": "audio hype 'finalmente' con beat drop sul 'Ci sto'"
+    },
+    {
+      "id": "T47",
+      "platform": "tiktok",
+      "date": "2026-11-18",
+      "time": "12:30",
+      "rubrica": "Meme",
+      "slug": "ancora-un-set",
+      "format": "video",
+      "bg": "highfive",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Dopo il 21-19",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "'Rivincita?'",
+          "style": "big"
+        },
+        {
+          "t": 1.9,
+          "text": "'Ancora\nun set!'",
+          "style": "lime"
+        },
+        {
+          "t": 3.2,
+          "text": "Intanto il sole\nsta scendendo",
+          "style": "outline"
+        }
+      ],
+      "end": {
+        "text": "Fino all'ultimo\nraggio",
+        "bg": "dark"
+      },
+      "caption": "21-19 e subito 'rivincita?' ⏱️\nIl sole scende, ma un set in più si fa sempre.\nQuanti set hai giocato di fila? Diccelo nei commenti 👇\n#beachvolley #rivincita #meme #sander #beachvolleyitalia",
+      "audio": "audio comico 'ancora uno' con ripetizione"
+    },
+    {
+      "id": "T48",
+      "platform": "tiktok",
+      "date": "2026-11-18",
+      "time": "19:00",
+      "rubrica": "Inverno/Indoor",
+      "slug": "pro-beach-indoor",
+      "format": "video",
+      "bg": "indoor",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Pro del beach indoor",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Niente vento",
+          "style": "big"
+        },
+        {
+          "t": 1.9,
+          "text": "Niente pioggia",
+          "style": "lime"
+        },
+        {
+          "t": 3,
+          "text": "Niente scuse",
+          "style": "outline"
+        }
+      ],
+      "end": {
+        "text": "Sabbia al coperto",
+        "bg": "lime"
+      },
+      "caption": "3 pro del beach volley indoor 🏟️\nNiente vento, niente pioggia, niente scuse.\nL'hai già provato? Diccelo nei commenti 👇\n#beachvolley #beachindoor #inverno #sander #beachvolleyitalia",
+      "audio": "audio da lista 'tre cose' con tick a ogni punto"
+    },
+    {
+      "id": "T49",
+      "platform": "tiktok",
+      "date": "2026-11-19",
+      "time": "12:30",
+      "rubrica": "Classifica",
+      "slug": "carta-5-cose",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "lime",
+          "title": "La tua carta: 5 cose",
+          "body": "Sì, esiste una carta giocatore stile FUT."
+        },
+        {
+          "bg": "dark",
+          "title": "1. Livello",
+          "body": "Sale con le partite, da Sabbia a Leggenda."
+        },
+        {
+          "bg": "muro",
+          "title": "2. Ruolo",
+          "body": "Muro o difensore: dici tu come giochi."
+        },
+        {
+          "bg": "lime",
+          "title": "3. Statistiche",
+          "body": "Le tue partite diventano numeri sulla carta."
+        },
+        {
+          "bg": "dark",
+          "title": "4. Si muove",
+          "body": "Dopo ogni risultato rating e livello si aggiornano."
+        },
+        {
+          "bg": "batti-cinque",
+          "title": "5. È tua",
+          "body": "La mostri al compagno prima di andare in campo."
+        },
+        {
+          "bg": "lime",
+          "title": "Crea la tua carta",
+          "body": "Gratis su sanderbv.it"
+        }
+      ],
+      "caption": "5 cose da sapere sulla tua carta giocatore 🃏\nLivello, ruolo, statistiche: scorri 👉\nChe livello sei? Diccelo nei commenti 👇\n#beachvolley #cartagiocatore #sander #beachvolleyitalia #classifica"
+    },
+    {
+      "id": "T50",
+      "platform": "tiktok",
+      "date": "2026-11-19",
+      "time": "19:00",
+      "rubrica": "Hot take",
+      "slug": "perdere-con-uno-forte",
+      "format": "video",
+      "bg": "clip:spike",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Hot take",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Perdere con uno forte",
+          "style": "big"
+        },
+        {
+          "t": 2.1,
+          "text": "vale più di\nvincere facile",
+          "style": "lime"
+        },
+        {
+          "t": 3.4,
+          "text": "Il livello cresce dove fa fatica",
+          "style": "pill"
+        }
+      ],
+      "end": {
+        "text": "Cerca uno più forte",
+        "bg": "dark"
+      },
+      "caption": "Hot take: perdere con uno forte vale più che vincere facile 💪\nÈ lì che si impara davvero.\nSei d'accordo? Diccelo nei commenti 👇\n#beachvolley #hottake #crescita #sander #beachvolleyitalia",
+      "audio": "audio motivazionale con voce che sale"
+    },
+    {
+      "id": "T51",
+      "platform": "tiktok",
+      "date": "2026-11-20",
+      "time": "12:30",
+      "rubrica": "Community",
+      "slug": "gratis-per-sempre",
+      "format": "video",
+      "bg": "dark",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "SANDER",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Giocare è\ngratis.",
+          "style": "big"
+        },
+        {
+          "t": 2,
+          "text": "Sempre.",
+          "style": "lime"
+        },
+        {
+          "t": 3.2,
+          "text": "Extra facoltativi con SANDER+",
+          "style": "pill"
+        }
+      ],
+      "end": {
+        "text": "Scarica SANDER\nsanderbv.it",
+        "bg": "lime"
+      },
+      "caption": "Giocare su SANDER è gratis, sempre 🟢\nPartite, classifiche, carta giocatore e Scopri: tutto incluso.\nSANDER+ (4,99 €/mese) è solo per chi vuole gli extra.\nProvala su sanderbv.it 👆\n#beachvolley #sander #gratis #beachvolleyitalia #app",
+      "audio": "audio pulito con beat leggero, un colpo a ogni parola"
+    },
+    {
+      "id": "T52",
+      "platform": "tiktok",
+      "date": "2026-11-20",
+      "time": "19:00",
+      "rubrica": "Community",
+      "slug": "chi-porta-il-pallone",
+      "format": "video",
+      "bg": "pallone",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Community",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Tagga chi porta\nsempre il pallone",
+          "style": "big"
+        },
+        {
+          "t": 2.3,
+          "text": "ce l'hai\ntutti",
+          "style": "lime"
+        },
+        {
+          "t": 3.4,
+          "text": "Merita\nun grazie",
+          "style": "outline"
+        }
+      ],
+      "end": {
+        "text": "Grazie, eroe\ndel pallone",
+        "bg": "lime"
+      },
+      "caption": "Ogni gruppo ha QUELLO che porta sempre il pallone 🏐\nSenza di lui non si gioca. Taggalo qui sotto e digli grazie 👇\n#beachvolley #community #pallone #sander #beachvolleyitalia",
+      "audio": "audio trend 'grazie a chi...' dolce con stacco"
+    },
+    {
+      "id": "T53",
+      "platform": "tiktok",
+      "date": "2026-11-21",
+      "time": "12:30",
+      "rubrica": "Tutorial",
+      "slug": "allenamento-a-due",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "allenamento",
+          "title": "4 esercizi da fare in due",
+          "body": "Serve solo un pallone. Scorri."
+        },
+        {
+          "bg": "set",
+          "title": "1. Palleggio a coppie",
+          "body": "Lanciatevi la palla a distanza: tocco morbido, mani sopra la fronte."
+        },
+        {
+          "bg": "rally",
+          "title": "2. Bagher a coppie",
+          "body": "Uno lancia, l'altro riceve e rimanda. Braccia dritte, gambe in movimento."
+        },
+        {
+          "bg": "battuta",
+          "title": "3. Battuta e ricezione",
+          "body": "A turno: uno batte, l'altro riceve e rimanda alta. Cambia zona ogni tanto."
+        },
+        {
+          "bg": "dive",
+          "title": "4. Difesa e alzata",
+          "body": "Uno finta l'attacco, l'altro difende e alza. Poi si inverte."
+        },
+        {
+          "bg": "app:deck",
+          "title": "Nessuno con cui farli?",
+          "body": "Su SANDER c'è 'Allenamento a due': trovi chi cerca lo stesso."
+        },
+        {
+          "bg": "lime",
+          "title": "Allenatevi in due",
+          "body": "Scarica SANDER su sanderbv.it"
+        }
+      ],
+      "caption": "4 esercizi da fare in due con un solo pallone 🏐\nSalva il post e mandalo al tuo compagno. Scorri 👉\nQuale proverai per primo? Diccelo nei commenti 👇\n#beachvolley #allenamento #tutorial #sander #beachvolleyitalia"
+    },
+    {
+      "id": "T54",
+      "platform": "tiktok",
+      "date": "2026-11-21",
+      "time": "19:00",
+      "rubrica": "Storytelling",
+      "slug": "ultimo-tramonto",
+      "format": "video",
+      "bg": "inverno",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Sabato sera",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Il campo è\nquasi vuoto",
+          "style": "big"
+        },
+        {
+          "t": 2.1,
+          "text": "il sole scende",
+          "style": "lime"
+        },
+        {
+          "t": 3.3,
+          "text": "e la rete\naspetta",
+          "style": "outline"
+        }
+      ],
+      "end": {
+        "text": "Si gioca\nanche d'inverno",
+        "bg": "dark"
+      },
+      "caption": "Sabato sera, nebbia sul mare, la rete che aspetta 🌫️\nLa stagione fuori è finita. Quella dentro no.\nChi c'è domani? Diccelo nei commenti 👇\n#beachvolley #inverno #rivieraromagnola #sander #beachvolleyitalia",
+      "audio": "audio lento malinconico/cinematico che sale piano"
+    },
+    {
+      "id": "T55",
+      "platform": "tiktok",
+      "date": "2026-11-22",
+      "time": "12:30",
+      "rubrica": "Community",
+      "slug": "da-nord-a-sud",
+      "format": "video",
+      "bg": "batti-cinque",
+      "beats": [
+        {
+          "t": 0.3,
+          "text": "Community",
+          "style": "meta"
+        },
+        {
+          "t": 0.8,
+          "text": "Benvenuti dal\nnord al sud",
+          "style": "big"
+        },
+        {
+          "t": 2.2,
+          "text": "SANDER cresce\ncon te",
+          "style": "lime"
+        },
+        {
+          "t": 3.4,
+          "text": "Scegli regione e comune e gioca",
+          "style": "pill"
+        }
+      ],
+      "end": {
+        "text": "Scegli regione\ne comune",
+        "bg": "lime"
+      },
+      "caption": "Da nord a sud, SANDER cresce con te 🇮🇹\nScegli la regione, scegli il comune e trova chi gioca vicino a te.\nProvala su sanderbv.it (link in bio) 👆\n#beachvolley #sander #beachvolleyitalia #tuttaitalia #community",
+      "audio": "audio hype/inclusivo con beat leggero"
+    },
+    {
+      "id": "T56",
+      "platform": "tiktok",
+      "date": "2026-11-22",
+      "time": "19:00",
+      "rubrica": "Community",
+      "slug": "inverno-5-mosse",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "inverno",
+          "title": "Il tuo inverno in 5 mosse",
+          "body": "Per arrivare pronto all'estate. Scorri."
+        },
+        {
+          "bg": "pair",
+          "title": "1. Trova un compagno fisso",
+          "body": "Con Scopri: like con commento, match, chat."
+        },
+        {
+          "bg": "rally",
+          "title": "2. Gioca una volta a settimana",
+          "body": "Anche in felpa. L'importante è non fermarsi."
+        },
+        {
+          "bg": "indoor",
+          "title": "3. Prova il beach indoor",
+          "body": "Sabbia al coperto: nessuna scusa col meteo."
+        },
+        {
+          "bg": "batti-cinque",
+          "title": "4. Iscriviti a un torneo",
+          "body": "Ti iscrivi dall'app e paghi con Stripe."
+        },
+        {
+          "bg": "dark",
+          "title": "5. Sali in classifica",
+          "body": "Guarda dove sei nel tuo comune e vai su."
+        },
+        {
+          "bg": "lime",
+          "title": "Si riparte",
+          "body": "Con SANDER su sanderbv.it"
+        }
+      ],
+      "caption": "Il tuo inverno col beach in 5 mosse ❄️🏐\nCosì a giugno arrivi già in forma. Scorri 👉\nQuale parte dal weekend? Diccelo nei commenti 👇\n#beachvolley #inverno #sander #beachvolleyitalia #compagnodigioco"
+    },
+    {
+      "id": "I01",
+      "platform": "instagram",
+      "date": "2026-10-26",
+      "time": "18:30",
+      "format": "reel",
+      "reuse": "T01",
+      "caption": "Ottobre in Riviera: 14 gradi, felpa e pallone 🧥🏐\nChi dice che la stagione è finita non ha mai giocato a novembre.\nSalva e mandalo a chi gioca con te 👇\n#beachvolley #beachvolleyitalia #rivieraromagnola #sander #autunno"
+    },
+    {
+      "id": "I02",
+      "platform": "instagram",
+      "date": "2026-10-28",
+      "time": "18:30",
+      "rubrica": "Tutorial",
+      "slug": "borsa-ottobre",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "felpa",
+          "title": "Borsa da beach: edizione ottobre",
+          "body": "Cosa porti in campo ora che fa fresco."
+        },
+        {
+          "bg": "pallone",
+          "title": "Il pallone",
+          "body": "Sempre quello. Se non lo porti tu, lo porta qualcun altro."
+        },
+        {
+          "bg": "felpa",
+          "title": "Felpa e strato leggero",
+          "body": "A inizio match servono, dopo il terzo set li appoggi."
+        },
+        {
+          "bg": "feet",
+          "title": "Calzini per il dopo",
+          "body": "In campo piedi nudi come sempre, ma a fine partita i piedi ringraziano."
+        },
+        {
+          "bg": "terzo-tempo",
+          "title": "Asciugamano",
+          "body": "Per sederti sulla sabbia fredda e per il terzo tempo."
+        },
+        {
+          "bg": "lime",
+          "title": "Manca solo il compagno",
+          "body": "Trovalo su SANDER: sanderbv.it"
+        }
+      ],
+      "caption": "La borsa da beach a ottobre: cosa ci metti? 🎒\nPallone, felpa, asciugamano e calzini per il dopo.\nScorri 👉 e dicci cosa non ti manca mai nei commenti 👇\n#beachvolley #beachvolleyitalia #autunno #sander #borsa"
+    },
+    {
+      "id": "I03",
+      "platform": "instagram",
+      "date": "2026-10-30",
+      "time": "18:30",
+      "format": "reel",
+      "reuse": "T09",
+      "caption": "Il tuffo è epico, la sabbia gelata nel collo un po' meno 🥶\nIl punto, però, vale tutto.\nTagga il tuo compagno più tuffatore 👇\n#beachvolley #tuffo #meme #sander #beachvolleyitalia"
+    },
+    {
+      "id": "I04",
+      "platform": "instagram",
+      "date": "2026-11-01",
+      "time": "18:30",
+      "rubrica": "App demo",
+      "slug": "commento-giusto",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "app:like",
+          "title": "Il commento giusto per il like",
+          "body": "Su Scopri il like parte con un commento. Ecco cosa scrivere."
+        },
+        {
+          "bg": "pair",
+          "title": "1. Parla del campo",
+          "body": "'Anche tu giochi a Riccione? Sabato ci sei?'"
+        },
+        {
+          "bg": "muro",
+          "title": "2. Cita la foto",
+          "body": "'Bel muro in questa foto: uno così mi serve in squadra.'"
+        },
+        {
+          "bg": "morning",
+          "title": "3. Rispondi alla sua risposta",
+          "body": "Se scrive che ama giocare all'alba, dì che sei dei suoi."
+        },
+        {
+          "bg": "allenamento",
+          "title": "4. Sii concreto",
+          "body": "'Sabato alle 10 a Cervia: ci stai?' funziona meglio di 'ciao'."
+        },
+        {
+          "bg": "lime",
+          "title": "Poi si gioca",
+          "body": "Match, chat, 'Proponi una partita'. Tutto su sanderbv.it"
+        }
+      ],
+      "caption": "Come commentare un like su SANDER (spoiler: non scrivere solo 'ciao') 💬🏐\nQuattro idee per iniziare con il piede giusto. Scorri 👉\nQual è il tuo commento tipo? Diccelo nei commenti 👇\n#beachvolley #trovacompagni #scopri #sander #2vs2"
+    },
+    {
+      "id": "I05",
+      "platform": "instagram",
+      "date": "2026-11-02",
+      "time": "18:30",
+      "format": "reel",
+      "reuse": "T15",
+      "caption": "Esiste il beach volley al coperto 🏟️\nSabbia vera sotto un tetto: l'inverno non ti ferma.\nL'hai mai provato? Dimmelo nei commenti 👇\n#beachvolley #beachindoor #inverno #sander #beachvolleyitalia"
+    },
+    {
+      "id": "I06",
+      "platform": "instagram",
+      "date": "2026-11-04",
+      "time": "18:30",
+      "rubrica": "Meme",
+      "slug": "mito-o-realta",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "inverno",
+          "title": "Beach d'inverno: mito o realtà?",
+          "body": "Cose che si dicono. Scorri per la verità."
+        },
+        {
+          "bg": "felpa",
+          "title": "Mito: d'inverno non si gioca",
+          "body": "Realtà: giornate di sole, felpa e campi al coperto. Si gioca."
+        },
+        {
+          "bg": "pallone",
+          "title": "Mito: serve il caldo",
+          "body": "Realtà: serve la voglia. Il caldo arriva col riscaldamento."
+        },
+        {
+          "bg": "waiting",
+          "title": "Mito: da soli non si gioca",
+          "body": "Realtà: su SANDER trovi chi gioca vicino a te."
+        },
+        {
+          "bg": "indoor",
+          "title": "Mito: il beach è solo estate",
+          "body": "Realtà: esistono campi di sabbia al coperto."
+        },
+        {
+          "bg": "lime",
+          "title": "Verdetto: si gioca",
+          "body": "Trova la tua partita su sanderbv.it"
+        }
+      ],
+      "caption": "Il beach volley d'inverno? Cinque miti da smontare ❄️🏐\nScorri 👉 e dicci qual è il tuo preferito.\nE tu, quale mito hai sentito più spesso? Diccelo nei commenti 👇\n#beachvolley #inverno #miti #sander #beachvolleyitalia"
+    },
+    {
+      "id": "I07",
+      "platform": "instagram",
+      "date": "2026-11-06",
+      "time": "18:30",
+      "format": "reel",
+      "reuse": "T23",
+      "caption": "Il riscaldamento a luglio vs a novembre 🥶\nCambia la durata, non il freddo.\nQuanti minuti ci metti tu? Diccelo nei commenti 👇\n#beachvolley #riscaldamento #meme #sander #rivieraromagnola"
+    },
+    {
+      "id": "I08",
+      "platform": "instagram",
+      "date": "2026-11-08",
+      "time": "18:30",
+      "rubrica": "App demo",
+      "slug": "weekend-con-sander",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "batti-cinque",
+          "title": "Il weekend perfetto su SANDER",
+          "body": "Dal venerdì sera alla domenica: tutto in app."
+        },
+        {
+          "bg": "app:deck",
+          "title": "Venerdì: Libero oggi",
+          "body": "Un tap e chi gioca vicino a te sa che ci sei."
+        },
+        {
+          "bg": "app:partita",
+          "title": "Sabato: partita",
+          "body": "Crei la partita o entri in una a cui manca un giocatore."
+        },
+        {
+          "bg": "terzo-tempo",
+          "title": "Sabato sera: terzo tempo",
+          "body": "Asciugamano, risate, la rivincita già in programma."
+        },
+        {
+          "bg": "dark",
+          "title": "Domenica: classifica",
+          "body": "Guardi come si è mosso il tuo nome nel comune."
+        },
+        {
+          "bg": "lime",
+          "title": "Dove giochi?",
+          "body": "Scrivilo nei commenti e prova SANDER: sanderbv.it"
+        }
+      ],
+      "caption": "Un weekend perfetto con SANDER: libero oggi, partita, terzo tempo, classifica 🏐\nScorri 👉\nIn che giorno giochi di solito? Diccelo nei commenti 👇\n#beachvolley #weekend #sander #beachvolleyitalia #rivieraromagnola"
+    },
+    {
+      "id": "I09",
+      "platform": "instagram",
+      "date": "2026-11-09",
+      "time": "18:30",
+      "format": "reel",
+      "reuse": "T29",
+      "caption": "Esce il sole a novembre e il gruppo si sveglia ☀️\nTutti in campo, zero scuse.\nTagga chi risponde sempre al primo raggio 👇\n#beachvolley #novembre #meme #sander #beachvolleyitalia"
+    },
+    {
+      "id": "I10",
+      "platform": "instagram",
+      "date": "2026-11-11",
+      "time": "18:30",
+      "rubrica": "App demo",
+      "slug": "3-modi-in-coppia",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "pair",
+          "title": "3 modi per giocare in coppia",
+          "body": "SANDER non è solo per chi cerca un compagno."
+        },
+        {
+          "bg": "group",
+          "title": "1. Entrate in coppia",
+          "body": "C'è una partita a cui mancano 2 giocatori? Entrate insieme."
+        },
+        {
+          "bg": "spike",
+          "title": "2. Coppie che cercano avversari",
+          "body": "Siete in due e volete sfidare un'altra coppia? Cercatela qui."
+        },
+        {
+          "bg": "allenamento",
+          "title": "3. Allenamento a due",
+          "body": "Cercate qualcuno con cui allenarvi: palleggi, battute, difese."
+        },
+        {
+          "bg": "app:ci-sto",
+          "title": "Poi si va in campo",
+          "body": "Giorno e posto in chat, un 'Ci sto' e la partita è creata."
+        },
+        {
+          "bg": "lime",
+          "title": "In coppia è meglio",
+          "body": "Scegli la tua modalità su sanderbv.it"
+        }
+      ],
+      "caption": "Tre modi di giocare in coppia su SANDER 🤝\nEntrate in coppia, cercate avversari, allenatevi in due. Scorri 👉\nCon chi giochi tu in coppia? Taggalo 👇\n#beachvolley #2vs2 #coppia #sander #beachvolleyitalia"
+    },
+    {
+      "id": "I11",
+      "platform": "instagram",
+      "date": "2026-11-13",
+      "time": "18:30",
+      "format": "reel",
+      "reuse": "T37",
+      "caption": "Da quale comune giochi a beach? 📍\nScrivilo qui sotto: facciamo la mappa di SANDER insieme.\nSanderBV.it, link in bio 👇\n#beachvolley #community #beachvolleyitalia #sander #tuttaitalia"
+    },
+    {
+      "id": "I12",
+      "platform": "instagram",
+      "date": "2026-11-15",
+      "time": "18:30",
+      "rubrica": "Tipi di giocatori",
+      "slug": "quiz-inverno",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "inverno",
+          "title": "Che giocatore d'inverno sei?",
+          "body": "Quiz di 3 domande. Conta le risposte A, B, C."
+        },
+        {
+          "bg": "morning",
+          "title": "Sabato mattina: cosa fai?",
+          "body": "A) Corro in spiaggia in felpa. B) Cerco un palazzetto. C) Aspetto il sole."
+        },
+        {
+          "bg": "pair",
+          "title": "Il tuo compagno ideale?",
+          "body": "A) Uno che non sente il freddo. B) Uno puntuale. C) Uno che porta il caffè."
+        },
+        {
+          "bg": "pallone",
+          "title": "Cosa porti in borsa?",
+          "body": "A) Due felpe. B) Calzini e telo. C) Il pallone e basta."
+        },
+        {
+          "bg": "felpa",
+          "title": "Maggioranza A: il Temerario",
+          "body": "Giochi con qualsiasi meteo e sei il primo in campo."
+        },
+        {
+          "bg": "indoor",
+          "title": "B: l'Indoor. C: il Meteorologo",
+          "body": "B: sabbia al coperto sempre. C: aspetti il sole e arrivi carico."
+        },
+        {
+          "bg": "lime",
+          "title": "Dimmi il tuo risultato",
+          "body": "Scrivilo nei commenti e trova la tua partita su sanderbv.it"
+        }
+      ],
+      "caption": "Che giocatore d'inverno sei? 3 domande, 3 profili ❄️\nScorri 👉 e scrivi A, B o C nei commenti.\nIl Temerario, l'Indoor o il Meteorologo? 👇\n#beachvolley #quiz #inverno #sander #beachvolleyitalia"
+    },
+    {
+      "id": "I13",
+      "platform": "instagram",
+      "date": "2026-11-16",
+      "time": "18:30",
+      "format": "reel",
+      "reuse": "T43",
+      "caption": "Io, a novembre, che scorro le foto d'agosto 📸\nPiedi nudi, sole, mare.\nChe foto d'estate non cancelli mai? Diccelo nei commenti 👇\n#beachvolley #nostalgia #estate #sander #rivieraromagnola"
+    },
+    {
+      "id": "I14",
+      "platform": "instagram",
+      "date": "2026-11-18",
+      "time": "18:30",
+      "rubrica": "App demo",
+      "slug": "prima-del-torneo",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "batti-cinque",
+          "title": "Prima di iscriverti a un torneo",
+          "body": "4 cose da sapere. Poi tocca a te."
+        },
+        {
+          "bg": "pair",
+          "title": "1. Il beach è in due",
+          "body": "Porta il tuo compagno o trovalo con Scopri prima dell'iscrizione."
+        },
+        {
+          "bg": "dark",
+          "title": "2. Iscrizione online",
+          "body": "Dall'app, con pagamento sicuro tramite Stripe."
+        },
+        {
+          "bg": "allenamento",
+          "title": "3. Scaldati con calma",
+          "body": "A novembre la sabbia è fredda: arriva prima e muoviti."
+        },
+        {
+          "bg": "highfive",
+          "title": "4. Divertiti",
+          "body": "Si vince, si perde, si ride. Il rating fa il resto."
+        },
+        {
+          "bg": "lime",
+          "title": "Pronti a giocare?",
+          "body": "Scopri i tornei su sanderbv.it"
+        }
+      ],
+      "caption": "Prima di iscriverti al torneo: 4 cose da sapere 🏆\nCompagno, iscrizione online, riscaldamento e tanta voglia. Scorri 👉\nChe torneo vorresti giocare? Diccelo nei commenti 👇\n#beachvolley #tornei #sander #beachvolleyitalia #inverno"
+    },
+    {
+      "id": "I15",
+      "platform": "instagram",
+      "date": "2026-11-20",
+      "time": "18:30",
+      "format": "reel",
+      "reuse": "T50",
+      "caption": "Hot take: perdere con uno forte vale più che vincere facile 💪\nÈ così che si cresce.\nSei d'accordo? Diccelo nei commenti 👇\n#beachvolley #hottake #crescita #sander #beachvolleyitalia"
+    },
+    {
+      "id": "I16",
+      "platform": "instagram",
+      "date": "2026-11-22",
+      "time": "18:30",
+      "rubrica": "Meme",
+      "slug": "regole-non-scritte",
+      "format": "carousel",
+      "slides": [
+        {
+          "bg": "group",
+          "title": "Le regole non scritte del beach",
+          "body": "Quelle che nessuno scrive ma tutti rispettano."
+        },
+        {
+          "bg": "rally",
+          "title": "Il punto dubbio si rigioca",
+          "body": "Se non siete sicuri, rigiocate. Nessuno litiga per un punto."
+        },
+        {
+          "bg": "pallone",
+          "title": "Chi manda via la palla...",
+          "body": "...la va a prendere. Anche se è finita oltre la rete."
+        },
+        {
+          "bg": "highfive",
+          "title": "Si saluta sempre la rete",
+          "body": "Cinque a fine set, vinca chi vinca."
+        },
+        {
+          "bg": "feet",
+          "title": "Il campo si lascia pulito",
+          "body": "Via i sassi e quello che trovi: la sabbia ringrazia."
+        },
+        {
+          "bg": "pair",
+          "title": "Il compagno non si rimprovera",
+          "body": "Il punto lo perdete in due, lo vincete in due."
+        },
+        {
+          "bg": "lime",
+          "title": "Aggiungi la tua",
+          "body": "Quale regola manca? Scrivila nei commenti. sanderbv.it"
+        }
+      ],
+      "caption": "Le regole non scritte del beach volley 🏐\nQuelle che tutti rispettano e nessuno scrive. Scorri 👉\nQuale regola aggiungi tu? Diccelo nei commenti 👇\n#beachvolley #beachvolleyitalia #regole #sander #community"
+    }
+  ]
+}

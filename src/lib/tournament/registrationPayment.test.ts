@@ -9,10 +9,12 @@ describe("classifyCheckoutSession", () => {
   it("reuses an open session with a url", () => {
     expect(classifyCheckoutSession({ status: "open", payment_status: "unpaid", url: "https://x" })).toBe("open")
   })
-  it("considers expired / url-less / unpaid-complete sessions closed", () => {
+  it("considers expired / url-less sessions closed", () => {
     expect(classifyCheckoutSession({ status: "expired", payment_status: "unpaid" })).toBe("closed")
     expect(classifyCheckoutSession({ status: "open", payment_status: "unpaid", url: null })).toBe("closed")
-    expect(classifyCheckoutSession({ status: "complete", payment_status: "unpaid" })).toBe("closed")
+  })
+  it("keeps a completed checkout whose money is still on its way (bank transfer)", () => {
+    expect(classifyCheckoutSession({ status: "complete", payment_status: "unpaid" })).toBe("processing")
   })
 })
 

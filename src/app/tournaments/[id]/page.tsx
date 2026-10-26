@@ -400,6 +400,15 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
 
   const playerRegs = tournament.registrations.filter(r => !r.isSpectator)
   const spectatorRegs = tournament.registrations.filter(r => r.isSpectator)
+  // The dashboard carries public fields only; the admin's payment list needs more.
+  const payments = isAdmin && (tournament.priceCents ?? 0) > 0
+    ? new Map(
+        (await db.tournamentRegistration.findMany({
+          where: { tournamentId: id },
+          select: { id: true, paidAt: true, amountPaidCents: true },
+        })).map((p) => [p.id, p]),
+      )
+    : null
 
   return (
     <div className="pb-6">
@@ -625,8 +634,8 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               player: { name: r.player.name },
               paymentStatus: r.paymentStatus,
               paymentMethod: r.paymentMethod,
-              paidAt: r.paidAt,
-              amountPaidCents: r.amountPaidCents,
+              paidAt: payments?.get(r.id)?.paidAt ?? null,
+              amountPaidCents: payments?.get(r.id)?.amountPaidCents ?? null,
               skillLevel: r.skillLevel,
               isSpectator: r.isSpectator,
             }))}

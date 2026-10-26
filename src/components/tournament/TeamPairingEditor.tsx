@@ -9,7 +9,9 @@ import type { TournamentRegistration } from "@/generated/prisma/client"
 import type { PublicPlayer as Player } from "@/lib/publicPlayer"
 import { resizedPhoto } from "@/lib/photo"
 
-type RegWithPlayer = TournamentRegistration & { player: Player }
+type RegWithPlayer = Pick<TournamentRegistration, "id" | "playerId" | "seedPosition" | "teamName" | "teamLogoUrl" | "skillLevel"> & {
+  player: Player
+}
 
 interface TeamPairingEditorProps {
   tournamentId: string

@@ -16,6 +16,9 @@ import {
   likeMessage,
   ageOn,
   isPlus,
+  plusEnd,
+  extendPass,
+  PLUS_PASS,
   SC_OFFERS,
   MAX_PHOTOS,
   YOUR_TURN_LIMIT,
@@ -110,7 +113,7 @@ export async function sendLike(input: unknown) {
 
   const gone = "Questo giocatore non è più su Scopri"
   const to = await loadCardRow(data.toId)
-  if (!to || !to.userId || to.discoverProfile?.paused || readiness(to, now).length > 0) throw new Error(gone)
+  if (!to || !to.userId || to.discoverProfile?.paused || to.discoverProfile?.suspendedAt || readiness(to, now).length > 0) throw new Error(gone)
   if (await isBlockedPair(me.id, to.id)) throw new Error(gone)
   if (!mutuallyEligible(sideOf(me), sideOf(to))) throw new Error(gone)
   if ((await waitingCount(me.id)) >= YOUR_TURN_LIMIT) {
@@ -142,9 +145,9 @@ export async function sendLike(input: unknown) {
         if (existing?.liked) throw new Error("Gli hai già mandato un like")
         const profile = await tx.discoverProfile.findUnique({
           where: { playerId: me.id },
-          select: { bonusLikes: true, bonusAces: true, plusUntil: true },
+          select: { bonusLikes: true, bonusAces: true, plusUntil: true, plusPassUntil: true },
         })
-        const plus = isPlus(profile?.plusUntil, now)
+        const plus = isPlus(plusEnd(profile), now)
         if (isAce) {
           const used = await tx.playerSwipe.count({
             where: { fromId: me.id, isAce: true, createdAt: { gte: romeWeekStart(now) } },
@@ -256,6 +259,14 @@ export async function respondToLike(input: unknown) {
   })
   if (!like || !like.liked || like.status !== "PENDING") throw new Error("Questo like non c'è più")
   if (await isBlockedPair(me.id, data.fromId)) throw new Error("Questo like non c'è più")
+
+  if (data.accept) {
+    // A suspended profile can't start a match, from either side.
+    const suspended = await db.discoverProfile.count({
+      where: { playerId: { in: [me.id, data.fromId] }, suspendedAt: { not: null } },
+    })
+    if (suspended > 0) throw new Error("Questo like non c'è più")
+  }
 
   if (!data.accept) {
     await db.$transaction([
@@ -387,22 +398,29 @@ export async function answerPlayed(input: unknown) {
 export async function buyScopriExtra(input: unknown) {
   const { offer } = BuyExtraSchema.parse(input)
   const me = await requireMe()
-  const o = SC_OFFERS[offer]
+  const cost = offer === "pass" ? PLUS_PASS.sc : SC_OFFERS[offer].sc
   const now = new Date()
   await db.$transaction(async (tx) => {
-    const paid = await tx.player.updateMany({
-      where: { id: me.id, sanderCredits: { gte: o.sc } },
-      data: { sanderCredits: { decrement: o.sc } },
-    })
-    if (paid.count === 0) throw new Error(`Ti servono ${o.sc} SC: ricarica dal profilo`)
-    await tx.creditSpend.create({ data: { playerId: me.id, kind: `scopri_${offer}`, credits: o.sc } })
     const profile = await tx.discoverProfile.upsert({
       where: { playerId: me.id },
       create: { playerId: me.id },
       update: {},
-      select: { likesUnlockedUntil: true },
+      select: { likesUnlockedUntil: true, plusUntil: true, plusPassUntil: true },
     })
-    if (offer === "likes") {
+    // A subscriber already has everything the pass gives.
+    if (offer === "pass" && isPlus(profile.plusUntil, now)) throw new Error("Hai già SANDER+")
+    const paid = await tx.player.updateMany({
+      where: { id: me.id, sanderCredits: { gte: cost } },
+      data: { sanderCredits: { decrement: cost } },
+    })
+    if (paid.count === 0) throw new Error(`Ti servono ${cost} SC: ricarica dal profilo`)
+    await tx.creditSpend.create({ data: { playerId: me.id, kind: `scopri_${offer}`, credits: cost } })
+    if (offer === "pass") {
+      await tx.discoverProfile.update({
+        where: { playerId: me.id },
+        data: { plusPassUntil: extendPass(profile.plusPassUntil, now) },
+      })
+    } else if (offer === "likes") {
       await tx.discoverProfile.update({ where: { playerId: me.id }, data: { bonusLikes: { increment: SC_OFFERS.likes.amount } } })
     } else if (offer === "ace") {
       await tx.discoverProfile.update({ where: { playerId: me.id }, data: { bonusAces: { increment: SC_OFFERS.ace.amount } } })
@@ -443,9 +461,9 @@ export async function saveDiscoverSettings(input: unknown) {
 
   const current = await db.discoverProfile.findUnique({
     where: { playerId: me.id },
-    select: { plusUntil: true, openToMeet: true, showMe: true, meetConsentAt: true },
+    select: { plusUntil: true, plusPassUntil: true, openToMeet: true, showMe: true, meetConsentAt: true },
   })
-  if ((data.onlyVerified || data.onlyFreeToday) && !isPlus(current?.plusUntil)) {
+  if ((data.onlyVerified || data.onlyFreeToday) && !isPlus(plusEnd(current))) {
     throw new Error("Questi filtri sono di SANDER+")
   }
   // "Aperto a conoscersi" can reveal orientation: explicit consent the first

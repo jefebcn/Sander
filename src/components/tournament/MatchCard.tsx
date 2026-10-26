@@ -252,7 +252,7 @@ export function MatchCard({ match, tournamentId, readOnly, preview, canEditPlaye
         {canEdit && (
           <button
             onClick={handleSubmit}
-            disabled={isPending}
+            disabled={isPending || scoreA === scoreB}
             className={cn(
               "mt-4 flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-xl font-bold transition-all duration-150",
               "bg-[var(--accent)] text-black hover:bg-[var(--accent-dim)] active:scale-[0.98]",

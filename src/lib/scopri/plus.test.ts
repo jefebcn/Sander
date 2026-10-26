@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 import type Stripe from "stripe"
-import { subscriptionPeriodEnd, plusUntilFor, invoiceSubscriptionId } from "./plus"
+import { subscriptionPeriodEnd, plusUntilFor, invoiceSubscriptionId, shouldSyncSubscription } from "./plus"
 
 const sub = (o: Partial<Stripe.Subscription>) => ({ status: "active", ended_at: null, items: { data: [] }, ...o }) as unknown as Stripe.Subscription
 
@@ -21,5 +21,12 @@ describe("SANDER+", () => {
     expect(invoiceSubscriptionId({ parent: { subscription_details: { subscription: "sub_1" } } } as never)).toBe("sub_1")
     expect(invoiceSubscriptionId({ parent: null, subscription: "sub_2" } as never)).toBe("sub_2")
     expect(invoiceSubscriptionId({ parent: null } as never)).toBeNull()
+  })
+  it("never lets another subscription that has stopped overwrite the stored one", () => {
+    expect(shouldSyncSubscription(null, sub({ id: "sub_a", status: "canceled" }))).toBe(true)
+    expect(shouldSyncSubscription("sub_a", sub({ id: "sub_a", status: "canceled" }))).toBe(true)
+    expect(shouldSyncSubscription("sub_a", sub({ id: "sub_b", status: "active" }))).toBe(true)
+    expect(shouldSyncSubscription("sub_a", sub({ id: "sub_b", status: "canceled" }))).toBe(false)
+    expect(shouldSyncSubscription("sub_a", sub({ id: "sub_b", status: "incomplete_expired" }))).toBe(false)
   })
 })

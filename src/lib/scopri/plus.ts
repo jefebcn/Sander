@@ -31,10 +31,23 @@ export function plusUntilFor(sub: Pick<Stripe.Subscription, "status" | "ended_at
   return null
 }
 
+/**
+ * Whether a subscription may overwrite the one stored on the profile. A
+ * different one that has stopped (a duplicate, an old one) must not: its end
+ * date would take SANDER+ away while the stored one is still being paid.
+ */
+export function shouldSyncSubscription(storedId: string | null | undefined, sub: Pick<Stripe.Subscription, "id" | "status">): boolean {
+  return !storedId || storedId === sub.id || ACTIVE.has(sub.status)
+}
+
 /** Copy a subscription's state onto the player's profile. */
 export async function syncPlusFromSubscription(sub: Stripe.Subscription): Promise<void> {
   const playerId = sub.metadata?.playerId
   const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id
+  if (playerId) {
+    const stored = await db.discoverProfile.findUnique({ where: { playerId }, select: { stripeSubscriptionId: true } })
+    if (!shouldSyncSubscription(stored?.stripeSubscriptionId, sub)) return
+  }
   const data = {
     plusUntil: plusUntilFor(sub, subscriptionPeriodEnd(sub)),
     stripeSubscriptionId: sub.id,

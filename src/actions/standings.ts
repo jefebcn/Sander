@@ -8,6 +8,25 @@ import { z } from "zod"
 // browser): players come back with their public fields only.
 const TournamentIdSchema = z.string().trim().min(1).max(64)
 
+/** What anyone may see of a registration: who plays, not what they paid or
+ *  the admin's notes. Payment details stay server-side (admin pages load them). */
+const PUBLIC_REGISTRATION_SELECT = {
+  id: true,
+  createdAt: true,
+  tournamentId: true,
+  playerId: true,
+  seedPosition: true,
+  teamName: true,
+  teamLogoUrl: true,
+  chicecePlusMinus: true,
+  chiceceMatchesPlayed: true,
+  skillLevel: true,
+  isSpectator: true,
+  paymentStatus: true,
+  paymentMethod: true,
+  player: { select: PUBLIC_PLAYER_SELECT },
+} as const
+
 export async function getStandings(id: string) {
   const tournamentId = TournamentIdSchema.parse(id)
   return db.tournamentStanding.findMany({
@@ -23,7 +42,7 @@ export async function getTournamentDashboard(id: string) {
     db.tournament.findUniqueOrThrow({
       where: { id: tournamentId },
       include: {
-        registrations: { include: { player: { select: PUBLIC_PLAYER_SELECT } } },
+        registrations: { select: PUBLIC_REGISTRATION_SELECT },
       },
     }),
     db.tournamentStanding.findMany({

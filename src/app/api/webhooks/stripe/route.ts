@@ -96,6 +96,10 @@ export async function POST(req: NextRequest) {
         const registrationId = session.metadata?.registrationId
         const tournamentId   = session.metadata?.tournamentId
 
+        // Checkout finished but the money hasn't arrived (bank transfer, SEPA):
+        // the row stays PENDING until async_payment_succeeded.
+        if (session.payment_status === "unpaid") break
+
         if (!registrationId) {
                 console.error("[stripe webhook] checkout.session.completed missing registrationId")
           return new Response(null, { status: 200 })
@@ -124,6 +128,8 @@ export async function POST(req: NextRequest) {
         break
       }
 
+      // A delayed payment that never arrived frees the seat like an expiry.
+      case "checkout.session.async_payment_failed":
       case "checkout.session.expired": {
         const session = event.data.object as Stripe.Checkout.Session
         const registrationId = session.metadata?.registrationId
@@ -143,21 +149,20 @@ export async function POST(req: NextRequest) {
         const paymentIntentId = typeof charge.payment_intent === "string"
           ? charge.payment_intent
           : charge.payment_intent?.id
-        if (paymentIntentId) {
+        // Only full refunds undo anything: a partial one (e.g. just the fee) is
+        // a manual decision for the admin and must not cost the player a seat.
+        if (paymentIntentId && charge.refunded) {
           await db.tournamentRegistration.updateMany({
             where: { stripePaymentIntentId: paymentIntentId, paymentStatus: "PAID" },
             data: { paymentStatus: "REFUNDED" },
           })
-          // A refunded SanderCredits pack: take the credits back. Only full
-          // refunds; a partial refund is a manual decision for the admin.
-          if (charge.refunded) {
-            const sessions = await stripe.checkout.sessions.list({ payment_intent: paymentIntentId, limit: 1 })
-            const s = sessions.data[0]
-            if (s?.metadata?.kind === "sc_topup") {
-              await revokeStripeTopUp(s.id)
-              revalidatePath("/profile")
-              revalidatePath("/admin/metriche")
-            }
+          // A refunded SanderCredits pack: take the credits back.
+          const sessions = await stripe.checkout.sessions.list({ payment_intent: paymentIntentId, limit: 1 })
+          const s = sessions.data[0]
+          if (s?.metadata?.kind === "sc_topup") {
+            await revokeStripeTopUp(s.id)
+            revalidatePath("/profile")
+            revalidatePath("/admin/metriche")
           }
         }
         break
@@ -168,7 +173,9 @@ export async function POST(req: NextRequest) {
       case "customer.subscription.updated":
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription
-        if (sub.metadata?.kind === "plus") await syncPlusFromSubscription(sub)
+        // Events can arrive out of order: sync from Stripe's current copy, not
+        // the payload, so a late "updated" can't revive a deleted subscription.
+        if (sub.metadata?.kind === "plus") await syncPlusFromSubscription(await stripe.subscriptions.retrieve(sub.id))
         break
       }
 

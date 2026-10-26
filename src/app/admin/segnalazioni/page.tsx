@@ -111,7 +111,7 @@ export default async function AdminReportsPage() {
         {selfies.length === 0 ? (
           <p className="rounded-[var(--radius-md)] bg-[var(--surface-2)] p-4 text-base text-[var(--muted-text)]">Nessuna verifica in attesa.</p>
         ) : (
-          <ul className="flex flex-col gap-2">
+          <ul className="grid gap-2 lg:grid-cols-2">
             {selfies.map((c) => {
               const g = gestureByKey(c.gesture)
               return (
@@ -120,7 +120,7 @@ export default async function AdminReportsPage() {
                   <p className="text-sm text-[var(--accent)]">
                     Gesto richiesto: {g ? `${g.emoji} ${g.text}` : c.gesture}
                   </p>
-                  <div className="mt-3 grid grid-cols-4 gap-2">
+                  <div className="mt-3 grid max-w-md grid-cols-4 gap-2">
                     {c.imageUrl && (
                       <div className="col-span-2 overflow-hidden rounded-lg ring-2 ring-[var(--accent)]">
                         <img src={c.imageUrl} alt={`Selfie di ${c.player.name}`} className="aspect-[3/4] w-full object-cover" />
@@ -201,7 +201,7 @@ export default async function AdminReportsPage() {
         {photos.length === 0 ? (
           <p className="rounded-[var(--radius-md)] bg-[var(--surface-2)] p-4 text-base text-[var(--muted-text)]">Niente da controllare.</p>
         ) : (
-          <ul className="grid grid-cols-2 gap-2">
+          <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             {photos.map((p) => (
               <li key={p.id} className="overflow-hidden rounded-[var(--radius-md)] bg-[var(--surface-2)]">
                 <img src={resizedPhoto(p.url, "card")} alt={`Foto di ${p.player.name}`} className="aspect-[3/4] w-full object-cover" />
