@@ -49,7 +49,13 @@ export function logoDataUrl(): Promise<string> {
 export async function photoDataUrl(url: string | null | undefined): Promise<string | null> {
   if (!url) return null
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(4000) })
+    // Uploads are mostly WebP, which the renderer can't read: our own image
+    // optimizer hands back a JPEG when the request doesn't accept WebP.
+    const site = (process.env.NEXT_PUBLIC_APP_URL ?? "https://www.sanderbv.it").replace(/\/$/, "")
+    const src = /\.public\.blob\.vercel-storage\.com\//.test(url)
+      ? `${site}/_next/image?url=${encodeURIComponent(url)}&w=640&q=75`
+      : url
+    const res = await fetch(src, { headers: { Accept: "image/jpeg,image/png" }, signal: AbortSignal.timeout(5000) })
     const type = res.headers.get("content-type") ?? ""
     if (!res.ok || !/^image\/(jpeg|png)/.test(type)) return null
     const buf = Buffer.from(await res.arrayBuffer())
