@@ -50,7 +50,7 @@ export async function adminKeepPhoto(input: unknown) {
   return { ok: true as const }
 }
 
-/** Take someone off Scopri: out of every deck, no likes. Matches and chats stay. */
+/** Take someone off Scopri: out of every deck, pending likes closed. Matches and chats stay. */
 export async function adminSuspend(input: unknown) {
   await requireAdmin()
   const { playerId, reason } = AdminSuspendSchema.parse(input)
@@ -58,6 +58,11 @@ export async function adminSuspend(input: unknown) {
     where: { playerId },
     create: { playerId, suspendedAt: new Date(), suspendedReason: reason },
     update: { suspendedAt: new Date(), suspendedReason: reason },
+  })
+  // Pending likes, sent or received, would still turn into matches.
+  await db.playerSwipe.updateMany({
+    where: { liked: true, status: "PENDING", OR: [{ fromId: playerId }, { toId: playerId }] },
+    data: { status: "DECLINED", respondedAt: new Date() },
   })
   await notify([playerId], {
     title: "Il tuo profilo Scopri è sospeso",

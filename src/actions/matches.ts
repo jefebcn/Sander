@@ -185,6 +185,12 @@ export async function replaceMatchPlayer(
   newPlayerId: string,
   team: number,
 ) {
+  z.object({
+    matchId: z.string().min(1).max(64),
+    oldPlayerId: z.string().min(1).max(64).nullable(),
+    newPlayerId: z.string().min(1).max(64),
+    team: z.union([z.literal(0), z.literal(1)]),
+  }).parse({ matchId, oldPlayerId, newPlayerId, team })
   const session = await getCurrentSession()
   if (!session?.user?.id) throw new Error("Non autenticato")
 

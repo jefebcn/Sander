@@ -113,7 +113,7 @@ export async function sendLike(input: unknown) {
 
   const gone = "Questo giocatore non è più su Scopri"
   const to = await loadCardRow(data.toId)
-  if (!to || !to.userId || to.discoverProfile?.paused || readiness(to, now).length > 0) throw new Error(gone)
+  if (!to || !to.userId || to.discoverProfile?.paused || to.discoverProfile?.suspendedAt || readiness(to, now).length > 0) throw new Error(gone)
   if (await isBlockedPair(me.id, to.id)) throw new Error(gone)
   if (!mutuallyEligible(sideOf(me), sideOf(to))) throw new Error(gone)
   if ((await waitingCount(me.id)) >= YOUR_TURN_LIMIT) {
@@ -259,6 +259,14 @@ export async function respondToLike(input: unknown) {
   })
   if (!like || !like.liked || like.status !== "PENDING") throw new Error("Questo like non c'è più")
   if (await isBlockedPair(me.id, data.fromId)) throw new Error("Questo like non c'è più")
+
+  if (data.accept) {
+    // A suspended profile can't start a match, from either side.
+    const suspended = await db.discoverProfile.count({
+      where: { playerId: { in: [me.id, data.fromId] }, suspendedAt: { not: null } },
+    })
+    if (suspended > 0) throw new Error("Questo like non c'è più")
+  }
 
   if (!data.accept) {
     await db.$transaction([

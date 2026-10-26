@@ -1,6 +1,9 @@
 import { z } from "zod"
 import { isKnownPlace } from "@/lib/comuni"
 
+export const ThreadIdSchema = z.string().trim().min(1).max(64)
+export const PlayerIdSchema = z.string().trim().min(1).max(64)
+
 export const SendMessageSchema = z.object({
   threadId: z.string().min(1),
   body: z.string().trim().min(1, "Messaggio vuoto").max(2000, "Messaggio troppo lungo"),

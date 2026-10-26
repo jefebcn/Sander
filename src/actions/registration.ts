@@ -161,6 +161,8 @@ async function resolveCheckoutSession(sessionId: string): Promise<SessionResolut
     const state = classifyCheckoutSession(session)
     if (state === "paid") return { state, session }
     if (state === "open" && session.url) return { state, url: session.url }
+    // Money still on its way: like an unreachable Stripe, touch nothing.
+    if (state === "processing") return { state: "unknown" }
     return { state: "closed" }
   } catch (e) {
     if (isStripeError(e) && e.code === "resource_missing") return { state: "closed" }

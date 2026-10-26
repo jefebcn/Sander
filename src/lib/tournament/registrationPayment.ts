@@ -2,14 +2,17 @@
  * Pure helpers for tournament registration payments (no DB / Stripe imports).
  */
 
-export type CheckoutSessionState = "open" | "paid" | "closed"
+export type CheckoutSessionState = "open" | "paid" | "processing" | "closed"
 
 /**
  * Classify a Stripe Checkout Session.
- *  - "paid":   the customer completed payment (the webhook may not have arrived
- *              yet) — the registration must be treated as PAID, never recreated.
- *  - "open":   still payable at `url`.
- *  - "closed": expired, or complete without payment — safe to replace.
+ *  - "paid":       the customer completed payment (the webhook may not have
+ *                  arrived yet) — the registration must be treated as PAID,
+ *                  never recreated.
+ *  - "processing": checkout finished but the money is still on its way (bank
+ *                  transfer, SEPA) — neither paid nor safe to replace.
+ *  - "open":       still payable at `url`.
+ *  - "closed":     expired — safe to replace.
  */
 export function classifyCheckoutSession(session: {
   status: string | null
@@ -19,6 +22,7 @@ export function classifyCheckoutSession(session: {
   if (session.payment_status === "paid" || session.payment_status === "no_payment_required") {
     return "paid"
   }
+  if (session.status === "complete") return "processing"
   if (session.status === "open" && session.url) return "open"
   return "closed"
 }

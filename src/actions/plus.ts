@@ -16,6 +16,22 @@ async function requireMe() {
   return me
 }
 
+/** Subscriptions that still charge or are about to: never open a second one beside them. */
+const LIVE_STATUSES = new Set(["active", "trialing", "past_due", "incomplete", "unpaid"])
+
+/**
+ * The player's Stripe customer, created once and stored before any checkout,
+ * so every attempt lands on the same customer and duplicates can be seen.
+ */
+async function plusCustomer(playerId: string, stored: string | null, email: string | null): Promise<string> {
+  if (stored) return stored
+  const created = await stripe.customers.create({ ...(email ? { email } : {}), metadata: { playerId } })
+  // Two requests at once: the first to store wins, the other customer stays unused.
+  await db.discoverProfile.updateMany({ where: { playerId, stripeCustomerId: null }, data: { stripeCustomerId: created.id } })
+  const p = await db.discoverProfile.findUnique({ where: { playerId }, select: { stripeCustomerId: true } })
+  return p?.stripeCustomerId ?? created.id
+}
+
 export async function startPlusCheckout(): Promise<{ url: string }> {
   const me = await requireMe()
   if (!process.env.STRIPE_SECRET_KEY) throw new Error("Pagamenti non disponibili al momento")
@@ -27,6 +43,21 @@ export async function startPlusCheckout(): Promise<{ url: string }> {
   })
   if (isPlus(profile.plusUntil)) throw new Error("Hai già SANDER+")
   const user = me.userId ? await db.user.findUnique({ where: { id: me.userId }, select: { email: true } }) : null
+  const customer = await plusCustomer(me.id, profile.stripeCustomerId, user?.email ?? null)
+
+  // A second tab or a double tap must not open a second subscription: reuse a
+  // live one (the webhook just hasn't landed) or the checkout already open.
+  const subs = await stripe.subscriptions.list({ customer, status: "all", limit: 20 })
+  const live = subs.data.find((s) => s.metadata?.kind === "plus" && LIVE_STATUSES.has(s.status))
+  if (live) {
+    await syncPlusFromSubscription(live)
+    revalidatePath("/scopri/plus")
+    throw new Error("Hai già SANDER+: ricarica la pagina")
+  }
+  const open = await stripe.checkout.sessions.list({ customer, status: "open", limit: 10 })
+  const pending = open.data.find((s) => s.metadata?.kind === "plus" && s.url)
+  if (pending?.url) return { url: pending.url }
+
   const appUrl = getAppUrl()
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
@@ -41,7 +72,7 @@ export async function startPlusCheckout(): Promise<{ url: string }> {
         },
       },
     ],
-    ...(profile.stripeCustomerId ? { customer: profile.stripeCustomerId } : user?.email ? { customer_email: user.email } : {}),
+    customer,
     client_reference_id: me.id,
     metadata: { kind: "plus", playerId: me.id },
     subscription_data: { metadata: { kind: "plus", playerId: me.id } },

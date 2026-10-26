@@ -3,6 +3,8 @@
 import { revalidatePath, revalidateTag } from "next/cache"
 import { LEADERBOARDS_TAG } from "@/lib/cacheTags"
 import { db } from "@/lib/db"
+import { z } from "zod"
+import { isBlockedPair } from "@/lib/scopri/blocks"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import {
   CreateSessionSchema,
@@ -231,6 +233,7 @@ export async function getLiveScore(sessionId: string) {
 }
 
 export async function joinSession(sessionId: string) {
+  SessionIdSchema.parse(sessionId)
   const player = await getCurrentPlayer()
   if (!player) throw new Error("Non autenticato")
 
@@ -395,6 +398,7 @@ export async function editSession(input: unknown): Promise<{ ok: true } | { ok: 
 /* ── Waitlist on a full session ───────────────────────────────────────────── */
 
 export async function joinWaitlist(sessionId: string): Promise<{ ok: true; position: number } | { ok: false; error: string }> {
+  if (!SessionIdSchema.safeParse(sessionId).success) return { ok: false, error: "Partita non valida" }
   const player = await getCurrentPlayer()
   if (!player) return { ok: false, error: "Non autenticato" }
 
@@ -802,6 +806,7 @@ export async function addPlayerToSession(sessionId: string, playerId: string) {
   const organizer = await getCurrentPlayer()
   if (!organizer) throw new Error("Non autenticato")
   AddPlayerToSessionSchema.parse({ sessionId, playerId })
+  if (await isBlockedPair(organizer.id, playerId)) throw new Error("Non puoi aggiungere questo giocatore")
 
   const session = await seatTransaction(sessionId, organizer.id, (tx) =>
     tx.sessionParticipant.create({ data: { sessionId, playerId } }),
@@ -1020,6 +1025,8 @@ export async function generateSessionMatches(
   sessionId: string,
   requestedRounds?: number,
 ) {
+  SessionIdSchema.parse(sessionId)
+  z.number().int().min(1).max(20).optional().parse(requestedRounds)
   const player = await getCurrentPlayer()
   if (!player) throw new Error("Non autenticato")
 
@@ -1088,12 +1095,13 @@ export async function submitSessionMatchScore(input: unknown) {
   const match = await db.sessionMatch.findUniqueOrThrow({
     where: { id: matchId },
     include: {
-      session: { select: { organizerId: true, title: true } },
+      session: { select: { organizerId: true, title: true, status: true } },
       players: { select: { playerId: true, team: true } },
     },
   })
 
   if (match.session.organizerId !== player.id) throw new Error("Solo l'organizzatore può inviare i risultati")
+  if (match.session.status === "CANCELLED") throw new Error("La partita è stata annullata")
 
   await db.sessionMatch.update({
     where: { id: matchId },

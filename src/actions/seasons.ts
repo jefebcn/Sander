@@ -1,5 +1,6 @@
 "use server"
 
+import { z } from "zod"
 import { db } from "@/lib/db"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { isAdminEmail } from "@/lib/isAdmin"
@@ -138,10 +139,14 @@ export async function createSeason(input: {
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
     await requireAdmin()
-    const name = input.name.trim()
+    const parsed = z
+      .object({ name: z.string().trim().max(60), startsAt: z.string().max(40), endsAt: z.string().max(40) })
+      .safeParse(input)
+    if (!parsed.success) return { ok: false, error: "Dati non validi" }
+    const name = parsed.data.name
     if (!name) return { ok: false, error: "Nome mancante" }
-    const startsAt = new Date(input.startsAt)
-    const endsAt = new Date(input.endsAt)
+    const startsAt = new Date(parsed.data.startsAt)
+    const endsAt = new Date(parsed.data.endsAt)
     if (isNaN(startsAt.getTime()) || isNaN(endsAt.getTime()) || endsAt <= startsAt) {
       return { ok: false, error: "Date non valide" }
     }
@@ -160,6 +165,7 @@ export async function createSeason(input: {
 
 export async function endSeason(seasonId: string): Promise<void> {
   await requireAdmin()
+  z.string().min(1).max(64).parse(seasonId)
   await db.season.update({ where: { id: seasonId }, data: { isActive: false } })
   revalidatePath("/stagione")
   revalidatePath("/profile")

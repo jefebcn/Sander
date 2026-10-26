@@ -3,6 +3,7 @@
 import { db } from "@/lib/db"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { revalidatePath } from "next/cache"
+import { z } from "zod"
 
 export type ReactionTargetType = "match" | "session" | "tournament"
 
@@ -16,6 +17,8 @@ export async function toggleReaction(
   targetType: ReactionTargetType,
   targetId: string,
 ): Promise<ReactionState> {
+  z.object({ targetType: z.enum(["match", "session", "tournament"]), targetId: z.string().min(1).max(64) })
+    .parse({ targetType, targetId })
   const player = await getCurrentPlayer()
   if (!player) throw new Error("Non autenticato")
 

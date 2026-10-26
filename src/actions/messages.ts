@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { getPartnerStats } from "@/actions/players"
-import { SendMessageSchema, CreateGroupSchema } from "@/lib/validators/message.schema"
-import { isBlockedPair } from "@/lib/scopri/blocks"
+import { SendMessageSchema, CreateGroupSchema, ThreadIdSchema, PlayerIdSchema } from "@/lib/validators/message.schema"
+import { blockedWith, isBlockedPair } from "@/lib/scopri/blocks"
 
 // Lazy push import keeps web-push out of the SSR/client bundle (mirrors sessions.ts).
 async function safeNotifyPlayers(
@@ -50,7 +50,8 @@ async function resolveMembers(thread: ThreadForMembers, meId: string) {
 }
 
 // ── 1:1 DM: open or create the thread with another player ────────────────────
-export async function getOrCreateDmThread(otherPlayerId: string): Promise<string> {
+export async function getOrCreateDmThread(input: unknown): Promise<string> {
+  const otherPlayerId = PlayerIdSchema.parse(input)
   const me = await getCurrentPlayer()
   if (!me) throw new Error("Non autenticato")
   if (otherPlayerId === me.id) throw new Error("Non puoi scrivere a te stesso")
@@ -93,6 +94,9 @@ export async function createGroupThread(input: unknown): Promise<string> {
   const found = await db.player.findMany({ where: { id: { in: others } }, select: { id: true } })
   const validIds = found.map((f) => f.id)
   if (validIds.length < 2) throw new Error("Giocatori non validi")
+  // A block holds everywhere: no pulling someone who blocked you into a group.
+  const blocked = await blockedWith(me.id)
+  if (validIds.some((id) => blocked.has(id))) throw new Error("Non puoi aggiungere uno di questi giocatori")
 
   const memberIds = Array.from(new Set([me.id, ...validIds]))
   const thread = await db.chatThread.create({
@@ -108,7 +112,8 @@ export async function createGroupThread(input: unknown): Promise<string> {
 }
 
 // ── Leave a group (removes me; deletes the thread if empty) ──────────────────
-export async function leaveGroup(threadId: string) {
+export async function leaveGroup(input: unknown) {
+  const threadId = ThreadIdSchema.parse(input)
   const me = await getCurrentPlayer()
   if (!me) throw new Error("Non autenticato")
   const thread = await db.chatThread.findUnique({
@@ -126,7 +131,8 @@ export async function leaveGroup(threadId: string) {
 }
 
 // ── Delete a group (creator only) ────────────────────────────────────────────
-export async function deleteGroup(threadId: string) {
+export async function deleteGroup(input: unknown) {
+  const threadId = ThreadIdSchema.parse(input)
   const me = await getCurrentPlayer()
   if (!me) throw new Error("Non autenticato")
   const thread = await db.chatThread.findUnique({
@@ -265,7 +271,8 @@ export async function getThreads() {
 }
 
 // ── One conversation: metadata + messages (authorized) ───────────────────────
-export async function getThread(threadId: string) {
+export async function getThread(input: unknown) {
+  const threadId = ThreadIdSchema.parse(input)
   const me = await getCurrentPlayer()
   if (!me) throw new Error("Non autenticato")
 
@@ -421,15 +428,30 @@ export async function sendMessage(input: unknown) {
 }
 
 // ── Read tracking + global unread badge ──────────────────────────────────────
-export async function markThreadRead(threadId: string) {
+export async function markThreadRead(input: unknown) {
+  const threadId = ThreadIdSchema.parse(input)
   const me = await getCurrentPlayer()
   if (!me) return
   const now = new Date()
-  await db.chatParticipant.upsert({
-    where: { threadId_playerId: { threadId, playerId: me.id } },
-    create: { threadId, playerId: me.id, lastReadAt: now },
-    update: { lastReadAt: now },
+  // Never create a membership here: a participant row is what lets you into a
+  // DM or a group. Only a session chat adds the row late, for someone who
+  // joined the session after the chat was opened.
+  const updated = await db.chatParticipant.updateMany({
+    where: { threadId, playerId: me.id },
+    data: { lastReadAt: now },
   })
+  if (updated.count === 0) {
+    const thread = await db.chatThread.findUnique({
+      where: { id: threadId },
+      select: { kind: true, sessionId: true, participants: { select: { playerId: true } } },
+    })
+    if (!thread || thread.kind !== "SESSION" || !(await resolveMembers(thread, me.id)).isMember) return
+    await db.chatParticipant.upsert({
+      where: { threadId_playerId: { threadId, playerId: me.id } },
+      create: { threadId, playerId: me.id, lastReadAt: now },
+      update: { lastReadAt: now },
+    })
+  }
   revalidatePath("/messaggi")
   revalidatePath("/")
 }
