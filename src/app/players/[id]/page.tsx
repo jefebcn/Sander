@@ -17,6 +17,7 @@ import { Users, Swords, Trophy, Volleyball } from "lucide-react"
 import Link from "next/link"
 import type { Metadata } from "next"
 import { cn } from "@/lib/utils"
+import { notFound } from "next/navigation"
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
@@ -46,7 +47,7 @@ const AWARD_META: Record<number, { emoji: string; label: string; color: string }
 export default async function PlayerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const [player, streak, me, ratingHistory, advancedStats, monthlyAwards, tournamentWins, matchHistory, partnerStats] = await Promise.all([
-    getPlayer(id),
+    getPlayer(id).catch(() => null),
     getStreak(id),
     getCurrentPlayer(),
     db.ratingHistory.findMany({
@@ -63,6 +64,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
     getMatchHistory(id),
     getPartnerStats(id),
   ])
+  if (!player) notFound()
 
   // Only show H2H when a different logged-in player is viewing this profile
   const showH2H = me && me.id !== id

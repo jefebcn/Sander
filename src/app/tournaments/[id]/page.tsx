@@ -28,9 +28,9 @@ import { AdminSpectatorPriceForm } from "@/components/tournament/AdminSpectatorP
 import { AdminAddPlayerButton } from "@/components/tournament/AdminAddPlayerButton"
 import { formatDate, formatPrice } from "@/lib/utils"
 import { deriveRegistrationStatus } from "@/lib/tournament/registrationPayment"
-import { redirect } from "next/navigation"
 import { BackButton } from "@/components/layout/PageHeader"
 import { resizedPhoto } from "@/lib/photo"
+import { notFound, redirect } from "next/navigation"
 
 export const dynamic = "force-dynamic"
 
@@ -58,9 +58,10 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   const { id } = await params
 
   const [base, session] = await Promise.all([
-    db.tournament.findUniqueOrThrow({ where: { id }, select: { type: true } }),
+    db.tournament.findUnique({ where: { id }, select: { type: true } }),
     getCurrentSession(),
   ])
+  if (!base) notFound()
 
   const isAdmin = await canManageTournament(session?.user?.email, id)
 
