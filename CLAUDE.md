@@ -77,3 +77,8 @@ const mutation = useMutation({
 - Run: `npx vitest run`
 - All algorithm tests (`kotb.test.ts`, `bracket.test.ts`, `standings.test.ts`) must pass before any merge
 - Tests live alongside source: `src/lib/tournament/*.test.ts`
+
+## Social content
+- Instagram stories: start from `scripts/content-storie/` (approved style, generator, backgrounds, rules in its README)
+- Generated photos: barefoot players, no logos or text on clothes, no alcohol
+- Positioning: sport first, with a romantic side as a nuance only ("match in campo e fuori", "il primo appuntamento è un 2v2"); never promise dates or love. Ads stay sport-framed (no dating claims). Scopri is 18+ only.

@@ -26,6 +26,7 @@ import { startingRating, type StartLevel } from "@/lib/startLevel"
 import { getCityLeaderboards } from "@/actions/territories"
 import { parseCity } from "@/lib/cities"
 import { joinWindowOpen } from "@/lib/sessionRules"
+import { notFound } from "next/navigation"
 
 export async function generateMetadata(
   { params }: { params: Promise<{ id: string }> }
@@ -66,7 +67,9 @@ export default async function SessionPage({
   // credits them, so "come play with us" doubles as a referral.
   const { invite } = await searchParams
   const inviteCode = cleanInviteCode(invite)
-  const [session, currentPlayer] = await Promise.all([getSession(id), getCurrentPlayer()])
+  // A deleted or mistyped match is a "not found" page, not a crash.
+  const [session, currentPlayer] = await Promise.all([getSession(id).catch(() => null), getCurrentPlayer()])
+  if (!session) notFound()
 
   // Shared links carry the sharer's invite code (see `invite` above).
   const sharePath = currentPlayer

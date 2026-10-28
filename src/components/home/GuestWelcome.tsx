@@ -103,7 +103,7 @@ export function GuestWelcome() {
         className="relative rounded-t-[2.75rem] bg-[var(--background)] px-6 pb-4 pt-9 text-center"
         style={{ boxShadow: "0 -5px 0 0 var(--accent)" }}
       >
-        <p className="eyebrow text-[var(--muted-text)]">Beach volley · Riviera Romagnola</p>
+        <p className="eyebrow text-[var(--muted-text)]">Beach volley · in tutta Italia</p>
         <h1 id="welcome-title" className="mt-2 font-hand text-[3.4rem] leading-[0.9] text-white">
           Il campo è lì.
           <br />

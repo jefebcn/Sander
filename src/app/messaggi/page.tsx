@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic"
 
+import type { Metadata } from "next"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { MessageCircle, Users, Search } from "lucide-react"
@@ -9,6 +10,12 @@ import { PageHeader } from "@/components/layout/PageHeader"
 import { CompanionsStrip } from "@/components/chat/CompanionsStrip"
 import { NewGroupButton } from "@/components/chat/NewGroupButton"
 import { ChatNotifyPrompt } from "@/components/chat/ChatNotifyPrompt"
+
+export const metadata: Metadata = {
+  title: "Messaggi | SANDER",
+  description:
+    "Le chat con i tuoi compagni e i gruppi delle partite.",
+}
 
 function relTime(iso: string | null): string {
   if (!iso) return ""

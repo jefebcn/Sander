@@ -18,7 +18,7 @@ export function ScopriGuest() {
           <p className="eyebrow text-white/80">Nuovo su SANDER</p>
           <h1 className="font-hand mt-2 text-[2.6rem] leading-[0.98] text-white">Scopri chi gioca con te.</h1>
           <p className="mt-3 font-serif text-xl leading-snug text-white/90">
-            Swipe tra i giocatori della Riviera, fai match, scendete in campo.
+            Swipe tra i giocatori vicino a te, fai match, scendete in campo.
           </p>
         </div>
       </div>

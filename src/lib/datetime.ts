@@ -17,6 +17,16 @@ export function formatTime(d: Date | string): string {
   return time.format(new Date(d))
 }
 
+/**
+ * Whether an instant carries a real time of day. A date picked with
+ * <input type="date"> is stored as midnight UTC, which reads "02:00" (or
+ * "01:00") in Rimini: that is no start time, so it isn't shown.
+ */
+export function hasTimeOfDay(d: Date | string): boolean {
+  const date = new Date(d)
+  return date.getUTCHours() !== 0 || date.getUTCMinutes() !== 0 || date.getUTCSeconds() !== 0
+}
+
 /** "sab 18 ott" */
 export function formatDayShort(d: Date | string): string {
   return dayShort.format(new Date(d)).replace(/\./g, "")

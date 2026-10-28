@@ -35,7 +35,7 @@ export function InviteTab({ promoCode, inviteCount, leaderboard = [] }: InviteTa
   const invitePath = `/auth/signin?mode=register&invite=${promoCode}`
   const shareUrl = `${APP_URL}${invitePath}`
   const shareText =
-    `Ci vediamo in spiaggia? 🏐 Su SANDER trovi partite di beach volley in Riviera e una classifica per ogni bagno. ` +
+    `Ci vediamo in spiaggia? 🏐 Su SANDER trovi partite di beach volley vicino a te e una classifica per ogni comune. ` +
     `Iscriviti col mio codice ${promoCode}: alla prima partita ti regalano ${INVITEE_SC} SanderCredits.`
 
   const next = nextInviteMilestone(inviteCount)

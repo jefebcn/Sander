@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic"
 
+import type { Metadata } from "next"
 import Link from "next/link"
 import { Info } from "lucide-react"
 import { listPlayers, getMonthlyTopPlayers, awardMonthlyPodium } from "@/actions/players"
@@ -10,6 +11,12 @@ import { playerToCardData } from "@/components/player/SanderCardFut"
 import type { PrismaPlayerLike } from "@/components/player/SanderCardFut"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { SectionTabs, RANK_TABS } from "@/components/layout/SectionTabs"
+
+export const metadata: Metadata = {
+  title: "Giocatori di beach volley vicino a te | SANDER",
+  description:
+    "Trova giocatori di beach volley nel tuo comune: carte, livelli, rating e classifiche.",
+}
 
 interface Props {
   searchParams: Promise<{ tab?: string }>

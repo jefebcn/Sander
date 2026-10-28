@@ -1,9 +1,16 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import {
   ChevronLeft,
   Zap, Shield, Square, ArrowUp, Radio, Activity,
   Star, BarChart2, Trophy, ClipboardList, TrendingUp,
 } from "lucide-react"
+
+export const metadata: Metadata = {
+  title: "Guida ai parametri | SANDER",
+  description:
+    "Cosa misurano rating, affidabilità e statistiche della tua carta SANDER.",
+}
 
 export default function StatsGuidePage() {
   return (

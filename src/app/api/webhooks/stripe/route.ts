@@ -21,6 +21,22 @@ function isPrismaUniqueViolation(err: unknown): boolean {
   )
 }
 
+/** A refunded or disputed payment: the registration is no longer paid, a
+ *  SanderCredits pack is taken back. Both steps are idempotent. */
+async function undoPayment(paymentIntentId: string) {
+  await db.tournamentRegistration.updateMany({
+    where: { stripePaymentIntentId: paymentIntentId, paymentStatus: "PAID" },
+    data: { paymentStatus: "REFUNDED" },
+  })
+  const sessions = await stripe.checkout.sessions.list({ payment_intent: paymentIntentId, limit: 1 })
+  const s = sessions.data[0]
+  if (s?.metadata?.kind === "sc_topup") {
+    await revokeStripeTopUp(s.id)
+    revalidatePath("/profile")
+    revalidatePath("/admin/metriche")
+  }
+}
+
 export async function POST(req: NextRequest) {
   const signature = req.headers.get("stripe-signature")
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
@@ -41,23 +57,27 @@ export async function POST(req: NextRequest) {
     return new Response("Invalid signature", { status: 400 })
   }
 
-  // ── Idempotency layer 1: record event.id
+  // ── Idempotency layer 1: record event.id. A row whose processedAt is set
+  // was fully handled; one without was cut off mid-way and is handled again
+  // (every effect below is idempotent on its own).
   try {
     await db.stripeWebhookEvent.create({
       data: {
         id: event.id,
         type: event.type,
         payload: event as unknown as object,
+        processedAt: null,
       },
     })
   } catch (err) {
-    if (isPrismaUniqueViolation(err)) {
-      // Already processed — return 200 so Stripe stops retrying
-      return new Response(null, { status: 200 })
+    if (!isPrismaUniqueViolation(err)) {
+      // Any other DB error → 500 (Stripe will retry)
+      console.error("[stripe webhook] DB error storing event", err)
+      return new Response("DB error", { status: 500 })
     }
-    // Any other DB error → 500 (Stripe will retry)
-    console.error("[stripe webhook] DB error storing event", err)
-    return new Response("DB error", { status: 500 })
+    const seen = await db.stripeWebhookEvent.findUnique({ where: { id: event.id }, select: { processedAt: true } })
+    // Already processed — return 200 so Stripe stops retrying
+    if (seen?.processedAt) return new Response(null, { status: 200 })
   }
 
   try {
@@ -151,20 +171,20 @@ export async function POST(req: NextRequest) {
           : charge.payment_intent?.id
         // Only full refunds undo anything: a partial one (e.g. just the fee) is
         // a manual decision for the admin and must not cost the player a seat.
-        if (paymentIntentId && charge.refunded) {
-          await db.tournamentRegistration.updateMany({
-            where: { stripePaymentIntentId: paymentIntentId, paymentStatus: "PAID" },
-            data: { paymentStatus: "REFUNDED" },
-          })
-          // A refunded SanderCredits pack: take the credits back.
-          const sessions = await stripe.checkout.sessions.list({ payment_intent: paymentIntentId, limit: 1 })
-          const s = sessions.data[0]
-          if (s?.metadata?.kind === "sc_topup") {
-            await revokeStripeTopUp(s.id)
-            revalidatePath("/profile")
-            revalidatePath("/admin/metriche")
-          }
-        }
+        if (paymentIntentId && charge.refunded) await undoPayment(paymentIntentId)
+        break
+      }
+
+      // A chargeback: the bank takes the money back as soon as it opens, so
+      // the seat or the credits go with it. A dispute later won is restored
+      // by hand from the admin (it is rare and needs a look anyway).
+      case "charge.dispute.created": {
+        const dispute = event.data.object as Stripe.Dispute
+        const paymentIntentId = typeof dispute.payment_intent === "string"
+          ? dispute.payment_intent
+          : dispute.payment_intent?.id
+        if (paymentIntentId) await undoPayment(paymentIntentId)
+        console.error("[stripe webhook] dispute opened", dispute.id, paymentIntentId)
         break
       }
 
@@ -193,14 +213,12 @@ export async function POST(req: NextRequest) {
         break
     }
 
+    await db.stripeWebhookEvent.update({ where: { id: event.id }, data: { processedAt: new Date() } })
     return new Response(null, { status: 200 })
   } catch (err) {
     console.error("[stripe webhook] handler error", err)
-    // Forget the event so Stripe's retry is processed again instead of being
-    // skipped as a duplicate. Every effect above is idempotent on its own
-    // (unique stripeSessionId, conditional updates), so a re-run is safe.
-    await db.stripeWebhookEvent.delete({ where: { id: event.id } }).catch(() => {})
-    // Returning 500 lets Stripe retry the delivery
+    // processedAt stays null, so Stripe's retry is processed again instead of
+    // being skipped as a duplicate. Returning 500 lets Stripe retry.
     return new Response("Handler error", { status: 500 })
   }
 }

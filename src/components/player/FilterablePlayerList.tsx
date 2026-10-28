@@ -72,7 +72,7 @@ export function FilterablePlayerList({ players, tab }: Props) {
                 <div>
                   <p className="font-bold text-white">Ancora nessun giocatore</p>
                   <p className="mt-1 text-sm text-[var(--muted-text)]">
-                    Crea la tua carta e sii il primo della Riviera 🏐
+                    Crea la tua carta e sii il primo del tuo comune 🏐
                   </p>
                 </div>
                 <Link

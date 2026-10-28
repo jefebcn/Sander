@@ -26,7 +26,8 @@ export function ExtrasSheet({
   onBought?: (allowance: Allowance) => void
 }) {
   const [busy, setBusy] = useState<ScOfferId | null>(null)
-  // No SANDER+ upsell inside the Android app (Google Play billing rules).
+  // Inside the app no digital extra is sold, not even for SC bought on the web
+  // (App Store / Google Play billing rules): the sheet only says so.
   const native = useIsNativeApp()
   const offers = (Object.keys(SC_OFFERS) as ScOfferId[]).filter((k) => !only || only.includes(k))
 
@@ -60,6 +61,10 @@ export function ExtrasSheet({
         </span>
       </Link>
       )}
+      {native ? (
+        <p className="text-base text-[var(--muted-text)]">Gli extra non sono disponibili nell&apos;app.</p>
+      ) : (
+      <>
       <ul className="flex flex-col gap-2">
         {offers.map((id) => {
           const o = SC_OFFERS[id]
@@ -90,6 +95,8 @@ export function ExtrasSheet({
       <Link href="/profile" className="mt-4 flex min-h-[3.5rem] items-center justify-center text-base font-bold text-[var(--accent)]">
         Ricarica gli SC
       </Link>
+      </>
+      )}
     </Sheet>
   )
 }

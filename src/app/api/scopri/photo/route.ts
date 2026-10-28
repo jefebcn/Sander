@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { imageExtension, verifiedImageType } from "@/lib/imageUpload"
 import { MAX_PHOTOS } from "@/lib/scopri/rules"
+import { RATE_LIMITS, SLOW_DOWN, overLimit, since } from "@/lib/rateLimit"
 import { markReadyIfComplete } from "@/lib/scopri/server"
 
 /** Add a photo to the signed-in player's Scopri card (up to MAX_PHOTOS). */
@@ -16,7 +17,13 @@ export async function POST(req: Request) {
   const player = await db.player.findUnique({ where: { userId: session.user.id }, select: { id: true } })
   if (!player) return NextResponse.json({ error: "Profilo non trovato" }, { status: 404 })
 
-  const count = await db.playerPhoto.count({ where: { playerId: player.id } })
+  const [count, recent] = await Promise.all([
+    db.playerPhoto.count({ where: { playerId: player.id } }),
+    db.playerPhoto.count({ where: { playerId: player.id, createdAt: { gte: since("hour") } } }),
+  ])
+  if (overLimit(recent, RATE_LIMITS.photosPerHour)) {
+    return NextResponse.json({ error: SLOW_DOWN }, { status: 429 })
+  }
   if (count >= MAX_PHOTOS) {
     return NextResponse.json({ error: `Al massimo ${MAX_PHOTOS} foto: togline una` }, { status: 400 })
   }

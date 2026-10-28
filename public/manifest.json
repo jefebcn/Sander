@@ -1,7 +1,7 @@
 {
-  "name": "SANDER — Beach Volley Riviera",
+  "name": "SANDER — Beach Volley",
   "short_name": "SANDER",
-  "description": "Trova partite, classifiche dei bagni e tornei di beach volley in Riviera Romagnola.",
+  "description": "Trova con chi giocare a beach volley vicino a te: partite, tornei e classifica del tuo comune.",
   "lang": "it",
   "categories": ["sports", "lifestyle", "social"],
   "start_url": "/",

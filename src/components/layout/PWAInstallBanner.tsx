@@ -4,8 +4,27 @@ import { useState, useEffect, useCallback } from "react"
 import Image from "next/image"
 import { X, Share, Plus } from "lucide-react"
 import { usePathname } from "next/navigation"
+import { installPromptDue } from "@/lib/installPrompt"
 
 const STORAGE_KEY = "pwa_install_dismissed"
+const VISITS_KEY = "sander_visits"
+
+/** Counts this visit once per browser session, then asks the shared rule. */
+function promptDueNow(): boolean {
+  try {
+    if (!sessionStorage.getItem(VISITS_KEY)) {
+      sessionStorage.setItem(VISITS_KEY, "1")
+      localStorage.setItem(VISITS_KEY, String(Number(localStorage.getItem(VISITS_KEY) ?? 0) + 1))
+    }
+    return installPromptDue({
+      cookieChoice: localStorage.getItem("cookie_consent"),
+      hasProfile: !!localStorage.getItem("sander_has_profile"),
+      visits: Number(localStorage.getItem(VISITS_KEY) ?? 0),
+    })
+  } catch {
+    return false
+  }
+}
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>
@@ -35,6 +54,7 @@ export function PWAInstallBanner() {
     if (pathname.startsWith("/auth/") || pathname === "/auth") return
     if (isInStandaloneMode()) return
     if (localStorage.getItem(STORAGE_KEY)) return
+    if (!promptDueNow()) return
 
     const ios = isIOS()
     setIsIos(ios)

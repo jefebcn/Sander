@@ -52,9 +52,11 @@ export async function grantStripeTopUp(input: {
 }
 
 /**
- * Take back the credits of a refunded Stripe top-up. Idempotent through the
- * conditional claim on refundedAt. If some credits were already spent the
- * balance is floored at zero rather than going negative.
+ * Take back the credits of a refunded or disputed Stripe top-up. Idempotent
+ * through the conditional claim on refundedAt. The whole pack is taken back:
+ * if some credits were already spent the balance goes negative, which blocks
+ * any further spending until it is topped up again (otherwise a refund or a
+ * chargeback would let someone keep what they bought for free).
  */
 export async function revokeStripeTopUp(stripeSessionId: string): Promise<"revoked" | "not_found" | "already_revoked"> {
   return db.$transaction(async (tx) => {
@@ -68,11 +70,7 @@ export async function revokeStripeTopUp(stripeSessionId: string): Promise<"revok
       data: { refundedAt: new Date() },
     })
     if (claimed.count === 0) return "already_revoked"
-    const player = await tx.player.findUnique({ where: { id: topUp.playerId }, select: { sanderCredits: true } })
-    const take = Math.min(topUp.credits, Math.max(0, player?.sanderCredits ?? 0))
-    if (take > 0) {
-      await tx.player.update({ where: { id: topUp.playerId }, data: { sanderCredits: { decrement: take } } })
-    }
+    await tx.player.update({ where: { id: topUp.playerId }, data: { sanderCredits: { decrement: topUp.credits } } })
     return "revoked"
   })
 }

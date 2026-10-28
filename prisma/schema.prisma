@@ -307,6 +307,10 @@ model StripeWebhookEvent {
   id         String   @id                // Stripe event.id
   type       String
   receivedAt DateTime @default(now())
+  /// Set once every effect of the event is applied. A row still null was cut
+  /// off mid-way (timeout, crash): Stripe's retry processes it again. The
+  /// default only fills rows that existed before this column (all handled).
+  processedAt DateTime? @default(now())
   payload    Json
 
   @@map("stripe_webhook_events")

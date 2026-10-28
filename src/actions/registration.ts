@@ -7,6 +7,7 @@ import type { Prisma } from "@/generated/prisma/client"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { canManageTournament, isAdminEmail } from "@/lib/isAdmin"
 import { stripe, getAppUrl } from "@/lib/stripe"
+import { settleStripeRegistration } from "@/lib/tournamentRefunds"
 import {
   hasFreeSeat,
   seatLimit,
@@ -544,6 +545,9 @@ export async function adminRejectManualPayment(input: unknown) {
 
   if (reg.paymentStatus !== "PENDING") throw new Error("Iscrizione non in attesa")
 
+  // A card checkout still open for it must not take money after the rejection
+  // (and one paid in the meantime goes back).
+  await settleStripeRegistration(registrationId)
   await db.tournamentRegistration.update({
     where: { id: registrationId },
     data: { paymentStatus: "CANCELLED" },
@@ -680,6 +684,8 @@ export async function adminRemoveRegistration(input: unknown) {
   const allowed = await canManageTournament(session.user.email, reg.tournamentId)
   if (!allowed) throw new Error("Accesso non autorizzato")
 
+  // Card payments go back first; if Stripe can't confirm, the player stays.
+  await settleStripeRegistration(registrationId)
   await db.tournamentRegistration.delete({ where: { id: registrationId } })
   revalidatePath(`/tournaments/${reg.tournamentId}`)
   revalidatePath("/admin/payments")

@@ -139,6 +139,8 @@ export function PlusView({
         </label>
       )}
 
+      {/* In the app: nothing to buy or switch back on (store billing rules),
+          but cancelling must always be one tap away. */}
       {native && !active ? null : !active ? (
         <button
           type="button"
@@ -154,7 +156,7 @@ export function PlusView({
           {busy ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Crown className="h-5 w-5" aria-hidden="true" />}
           Attiva SANDER+ · {priceLabel}/mese
         </button>
-      ) : cancelAtEnd ? (
+      ) : cancelAtEnd ? (native ? null : (
         <button
           type="button"
           disabled={busy}
@@ -163,7 +165,7 @@ export function PlusView({
         >
           Riattiva il rinnovo
         </button>
-      ) : native ? null : (
+      )) : (
         <button
           type="button"
           disabled={busy}

@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import { Plus } from "lucide-react"
 import { listTournaments } from "@/actions/tournaments"
@@ -7,6 +8,12 @@ import { TournamentsInfoSheet } from "@/components/tournament/TournamentsInfoShe
 import { TournamentCard } from "@/components/tournament/TournamentCard"
 import { SectionTabs, PLAY_TABS } from "@/components/layout/SectionTabs"
 import { Gabbo } from "@/components/ui/Gabbo"
+
+export const metadata: Metadata = {
+  title: "Tornei di beach volley | SANDER",
+  description:
+    "Tornei di beach volley in programma: iscrizioni, quote, tabelloni e risultati in diretta.",
+}
 
 export const dynamic = "force-dynamic"
 
