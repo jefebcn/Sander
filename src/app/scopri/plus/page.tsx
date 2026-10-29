@@ -10,6 +10,9 @@ import { dayKey } from "@/lib/datetime"
 import { romeMonthStart } from "@/lib/romeMonth"
 import { daysAtLikeLimit, isPlus, PLUS_PASS } from "@/lib/scopri/rules"
 import { refreshPlusIfStale } from "@/lib/scopri/plus"
+import { sumupConfigured } from "@/lib/sumup"
+import { SumUpReturn } from "@/components/payments/SumUpReturn"
+import { Suspense } from "react"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { PlusView } from "@/components/scopri/PlusView"
 
@@ -59,7 +62,11 @@ export default async function PlusPage() {
           passUntil={passUntil}
           pass={{ ...PLUS_PASS, credits: player.sanderCredits }}
           month={{ games, likes: likes.length, daysAtLimit: daysAtLikeLimit(likes.map((l) => l.createdAt)) }}
+          cardPass={sumupConfigured()}
         />
+        <Suspense fallback={null}>
+          <SumUpReturn />
+        </Suspense>
       </div>
     </div>
   )
