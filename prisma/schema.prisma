@@ -418,6 +418,14 @@ model Session {
 
   liveScore Json?         // stato del tabellone dal vivo in corso (auto-save + resume + sync)
 
+  /// Score confirmation (lib/scoreConfirm.ts): a submitted score waits up to
+  /// 24 h for the other team. W/L and rating move only once it is confirmed.
+  /// All null on matches closed before this existed: their score already counts.
+  scoreSubmittedById String?
+  scoreSubmittedAt   DateTime?
+  scoreConfirmedAt   DateTime?
+  scoreDisputedAt    DateTime?
+
   participants   SessionParticipant[]
   sets           SessionSet[]
   sessionMatches SessionMatch[]
@@ -427,6 +435,7 @@ model Session {
 
   @@index([status, date])
   @@index([status, updatedAt])
+  @@index([scoreSubmittedAt])
   @@map("sessions")
 }
 
