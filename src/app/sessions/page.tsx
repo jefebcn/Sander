@@ -10,6 +10,7 @@ import { SessionsInfoSheet } from "@/components/session/SessionsInfoSheet"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { QuickActionsButton } from "@/components/layout/QuickActionsButton"
 import { SectionTabs, PLAY_TABS } from "@/components/layout/SectionTabs"
+import { db } from "@/lib/db"
 
 export const metadata: Metadata = {
   title: "Partite di beach volley vicino a te | SANDER",
@@ -19,7 +20,23 @@ export const metadata: Metadata = {
 
 export default async function SessionsPage() {
   const currentPlayer = await getCurrentPlayer()
-  const sessions = await getSessions(currentPlayer?.id)
+  const [sessions, recent] = await Promise.all([
+    getSessions(currentPlayer?.id),
+    // Shown only when nothing is open: proof that people play here.
+    db.session.findMany({
+      where: { status: "COMPLETED", date: { gte: new Date(Date.now() - 60 * 86_400_000) } },
+      orderBy: { date: "desc" },
+      take: 5,
+      select: { id: true, title: true, location: true, city: true, date: true, _count: { select: { participants: true } } },
+    }),
+  ])
+  const recentPlayed = recent.map((r) => ({
+    id: r.id,
+    title: r.title,
+    place: r.city ?? r.location,
+    date: r.date.toISOString(),
+    players: r._count.participants,
+  }))
 
   return (
     <div className="flex flex-col pb-6">
@@ -64,6 +81,7 @@ export default async function SessionsPage() {
       <FilterableSessionList
         sessions={sessions.map((s) => ({ ...s, status: s.status as "OPEN" | "FULL" | "COMPLETED" | "CANCELLED" }))}
         isLoggedIn={!!currentPlayer}
+        recentPlayed={recentPlayed}
       />
     </div>
   )
