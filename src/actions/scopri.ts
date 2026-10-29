@@ -27,6 +27,7 @@ import { isBlockedPair } from "@/lib/scopri/blocks"
 import { freeSlotLabel, DISPUTE_DAYS } from "@/lib/scopri/reliability"
 import { PLAY_AGAIN_FLAG_NOS } from "@/lib/scopri/playAgain"
 import { recentNoVoters } from "@/lib/scopri/playAgainServer"
+import { del } from "@vercel/blob"
 import {
   loadCardRow,
   readiness,
@@ -547,8 +548,17 @@ async function renumberPhotos(playerId: string) {
 export async function deletePhoto(input: unknown) {
   const { photoId } = PhotoRefSchema.parse(input)
   const me = await requireMe()
+  const photo = await db.playerPhoto.findFirst({ where: { id: photoId, playerId: me.id }, select: { url: true } })
   await db.playerPhoto.deleteMany({ where: { id: photoId, playerId: me.id } })
   await renumberPhotos(me.id)
+  // The file goes too, unless it is still in use (the avatar copied in as a photo).
+  if (photo && /\.public\.blob\.vercel-storage\.com\//.test(photo.url)) {
+    const [avatar, again] = await Promise.all([
+      db.player.count({ where: { avatarUrl: photo.url } }),
+      db.playerPhoto.count({ where: { url: photo.url } }),
+    ])
+    if (avatar === 0 && again === 0) await del(photo.url).catch((e) => console.error("[scopri] photo blob delete failed", e))
+  }
   revalidatePath("/scopri/profilo")
   return { ok: true as const }
 }

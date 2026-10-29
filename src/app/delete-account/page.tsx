@@ -1,10 +1,13 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { ChevronLeft, Trash2, Mail } from "lucide-react"
+import { getCurrentSession } from "@/lib/getCurrentPlayer"
+import { DeleteMyAccountForm } from "@/components/profile/DeleteMyAccountForm"
 
 export const metadata: Metadata = { title: "Elimina Account — SANDER" }
 
-export default function DeleteAccountPage() {
+export default async function DeleteAccountPage() {
+  const signedIn = !!(await getCurrentSession())?.user?.id
   return (
     <div className="pb-12">
       <header className="flex items-center gap-3 px-4 py-5">
@@ -45,6 +48,8 @@ export default function DeleteAccountPage() {
             <li>✓ SanderCredits residui</li>
             <li>✓ Partite in programma che organizzi (annullate, con rimborso agli iscritti)</li>
             <li>✓ Profilo Scopri: foto, risposte, preferenze, like, match e coppie</li>
+            <li>✓ Foto, selfie di verifica e video caricati, cancellati anche dall&apos;archivio</li>
+            <li>✓ Testo dei messaggi che hai scritto, uscita da gruppi e chat delle partite</li>
             <li>✓ Voti &quot;rigiocheresti&quot; dati e ricevuti e storico presenze</li>
             <li>✓ Abbonamento SANDER+, disdetto su Stripe prima dell&apos;eliminazione</li>
           </ul>
@@ -64,14 +69,16 @@ export default function DeleteAccountPage() {
         <div className="rounded-2xl bg-[var(--surface-2)] p-4">
           <p className="font-black text-white mb-1">Tempi di eliminazione</p>
           <p className="text-white/70">
-            I dati personali vengono eliminati entro <strong className="text-white">30 giorni</strong> dalla
-            ricezione della richiesta.
+            Dall&apos;app l&apos;eliminazione è <strong className="text-white">immediata</strong>. Con la richiesta via email
+            i dati vengono eliminati entro <strong className="text-white">30 giorni</strong>.
           </p>
         </div>
 
+        {signedIn && <DeleteMyAccountForm />}
+
         {/* How to request */}
         <div className="rounded-2xl bg-[var(--surface-2)] p-4 space-y-3">
-          <p className="font-black text-white">Come richiedere l&apos;eliminazione</p>
+          <p className="font-black text-white">{signedIn ? "Oppure via email" : "Come richiedere l\u2019eliminazione"}</p>
           <p className="text-white/70">
             Invia una email a{" "}
             <a

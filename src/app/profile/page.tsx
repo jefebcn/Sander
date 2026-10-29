@@ -635,6 +635,7 @@ export default async function ProfilePage({ searchParams }: Props) {
             { label: "Termini del servizio", href: "/terms" },
             { label: "Privacy policy", href: "/privacy" },
             { label: "Valuta l'app", href: "https://www.instagram.com" },
+            { label: "Elimina account", href: "/delete-account" },
           ].map(({ label, href }) => (
             <a
               key={label}
