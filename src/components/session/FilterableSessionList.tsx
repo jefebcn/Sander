@@ -15,12 +15,24 @@ const FORMAT_LABEL: Record<string, string> = {
 
 type Session = Parameters<typeof SessionCard>[0]["session"]
 
+/** A match played recently, shown when nothing is open: the app isn't empty, it's between games. */
+export interface RecentPlayed {
+  id: string
+  title: string
+  place: string
+  date: string
+  players: number
+}
+
 interface FilterableSessionListProps {
   sessions: Session[]
   isLoggedIn?: boolean
+  recentPlayed?: RecentPlayed[]
 }
 
-export function FilterableSessionList({ sessions, isLoggedIn = false }: FilterableSessionListProps) {
+const playedDay = new Intl.DateTimeFormat("it-IT", { timeZone: "Europe/Rome", weekday: "short", day: "numeric", month: "short" })
+
+export function FilterableSessionList({ sessions, isLoggedIn = false, recentPlayed = [] }: FilterableSessionListProps) {
   const [format, setFormat] = useState("")
 
   const filterFn = (s: Session) => !format || s.format === format
@@ -124,6 +136,31 @@ export function FilterableSessionList({ sessions, isLoggedIn = false }: Filterab
                   <Plus className="h-5 w-5" />
                   {isLoggedIn ? "Crea la prima partita" : "Accedi e crea la prima partita"}
                 </Link>
+                {recentPlayed.length > 0 && (
+                  <section className="mt-8 w-full text-left" aria-labelledby="recent-played">
+                    <p id="recent-played" className="mb-2 text-sm font-bold uppercase tracking-wider text-[var(--muted-text)]">
+                      Giocate di recente
+                    </p>
+                    <ul className="flex flex-col gap-2">
+                      {recentPlayed.map((r) => (
+                        <li key={r.id}>
+                          <Link
+                            href={`/sessions/${r.id}`}
+                            className="flex min-h-[3.5rem] items-center gap-3 rounded-2xl bg-[var(--surface-2)] px-4 py-3"
+                          >
+                            <Calendar className="h-5 w-5 shrink-0 text-[var(--accent)]" aria-hidden="true" />
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-base font-bold text-white">{r.title}</span>
+                              <span className="block truncate text-sm text-[var(--muted-text)]">
+                                {playedDay.format(new Date(r.date))} · {r.place} · {r.players} giocatori
+                              </span>
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                )}
               </>
             )}
           </div>

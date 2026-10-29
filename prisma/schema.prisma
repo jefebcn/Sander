@@ -303,6 +303,25 @@ model TournamentRegistration {
   @@map("tournament_registrations")
 }
 
+/// A SumUp hosted checkout started by the app: who pays for what. The row is
+/// claimed (fulfilledAt) in the same transaction that grants the purchase, so
+/// the webhook and the return page can both settle it and it counts once.
+model PaymentCheckout {
+  id            String    @id // SumUp checkout id
+  reference     String    @unique // our checkout_reference
+  kind          String // "sc_topup" | "plus_pass"
+  playerId      String
+  packId        String?
+  amountCents   Int
+  status        String    @default("PENDING") // PENDING | PAID | FAILED | EXPIRED
+  transactionId String?
+  createdAt     DateTime  @default(now())
+  fulfilledAt   DateTime?
+
+  @@index([playerId, createdAt])
+  @@map("payment_checkouts")
+}
+
 model StripeWebhookEvent {
   id         String   @id                // Stripe event.id
   type       String
@@ -418,6 +437,14 @@ model Session {
 
   liveScore Json?         // stato del tabellone dal vivo in corso (auto-save + resume + sync)
 
+  /// Score confirmation (lib/scoreConfirm.ts): a submitted score waits up to
+  /// 24 h for the other team. W/L and rating move only once it is confirmed.
+  /// All null on matches closed before this existed: their score already counts.
+  scoreSubmittedById String?
+  scoreSubmittedAt   DateTime?
+  scoreConfirmedAt   DateTime?
+  scoreDisputedAt    DateTime?
+
   participants   SessionParticipant[]
   sets           SessionSet[]
   sessionMatches SessionMatch[]
@@ -427,6 +454,7 @@ model Session {
 
   @@index([status, date])
   @@index([status, updatedAt])
+  @@index([scoreSubmittedAt])
   @@map("sessions")
 }
 
@@ -748,6 +776,7 @@ enum TopUpMethod {
   CONTANTI
   OMAGGIO // credits given for free — no money received
   STRIPE  // bought in-app through Stripe Checkout, credited by the webhook
+  SUMUP   // bought in-app through a SumUp hosted checkout (lib/sumupCheckout.ts)
 }
 
 /// Ledger of SanderCredits top-ups.

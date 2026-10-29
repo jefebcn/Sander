@@ -8,6 +8,7 @@ import { isAdminEmail } from "@/lib/isAdmin"
 import { nudgeSweep } from "@/lib/nudges"
 import { cancelStaleSessions } from "@/lib/sessionRefunds"
 import { scopriMorning } from "@/lib/scopri/digest"
+import { confirmDueScores } from "@/lib/sessionScore"
 
 export const runtime = "nodejs"
 
@@ -58,5 +59,12 @@ export async function GET(req: NextRequest) {
     return null
   })
 
-  return NextResponse.json({ ok: true, created, nudged, staleCancelled, scopri })
+  // Scores the other team left unanswered for 24 hours count from now (the
+  // match page also confirms them when opened; this catches the rest).
+  const scoresConfirmed = await confirmDueScores().catch((e) => {
+    console.error("[cron] score confirmation sweep failed", e)
+    return 0
+  })
+
+  return NextResponse.json({ ok: true, created, nudged, staleCancelled, scopri, scoresConfirmed })
 }

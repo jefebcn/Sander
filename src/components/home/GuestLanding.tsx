@@ -6,6 +6,7 @@ import { TournamentSpotlight, type SpotlightTournament } from "./TournamentSpotl
 import { WhySander } from "./WhySander"
 import { CrestHeading } from "./Crest"
 import { GuestWelcome } from "./GuestWelcome"
+import { proofStats } from "@/lib/proofStats"
 
 /* Three empty frames, one per tier: the card is shown, not someone's numbers. */
 const TIERS = [1000, 1600, 2100].map(
@@ -30,26 +31,25 @@ export function GuestLanding({
   stats: { players: number; matches: number; comuni: number }
   tournament: SpotlightTournament | null
 }) {
+  const proof = proofStats(stats)
   return (
     <div className="flex flex-col gap-9">
       <GuestWelcome />
 
-      {/* Proof, on the bar of the crest */}
-      <div
-        className="rise-in grid grid-cols-3 divide-x divide-[var(--crest-hair)] border-y border-[var(--crest-hair)] py-4"
-        style={{ "--i": 3 } as React.CSSProperties}
-      >
-        {[
-          { n: stats.players, label: "Giocatori" },
-          { n: stats.matches, label: "Partite" },
-          { n: stats.comuni, label: "Comuni" },
-        ].map((s) => (
-          <div key={s.label} className="text-center">
-            <CountUp value={s.n} className="num block text-4xl leading-none text-white" />
-            <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">{s.label}</p>
-          </div>
-        ))}
-      </div>
+      {/* Proof, on the bar of the crest — only the figures worth showing. */}
+      {proof.length > 0 && (
+        <div
+          className="rise-in grid divide-x divide-[var(--crest-hair)] border-y border-[var(--crest-hair)] py-4"
+          style={{ "--i": 3, gridTemplateColumns: `repeat(${proof.length}, minmax(0, 1fr))` } as React.CSSProperties}
+        >
+          {proof.map((s) => (
+            <div key={s.label} className="text-center">
+              <CountUp value={s.n} className="num block text-4xl leading-none text-white" />
+              <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       <WhySander variant="guest" />
 

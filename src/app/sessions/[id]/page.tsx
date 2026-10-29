@@ -6,7 +6,7 @@ import { PlayAgainCard } from "@/components/scopri/PlayAgainCard"
 import { MapPin, Calendar, Euro, FileText, Coins, RefreshCw, Gauge, Pencil } from "lucide-react"
 import Link from "next/link"
 import { getSession, getWaitlistInfo } from "@/actions/sessions"
-import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
+import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { ShareButton, WhatsAppShareButton } from "@/components/ui/ShareButton"
 import { QRCodeButton } from "@/components/ui/QRCode"
@@ -27,6 +27,9 @@ import { getCityLeaderboards } from "@/actions/territories"
 import { parseCity } from "@/lib/cities"
 import { joinWindowOpen } from "@/lib/sessionRules"
 import { notFound } from "next/navigation"
+import { ScoreConfirmBanner } from "@/components/session/ScoreConfirmBanner"
+import { autoConfirmAt, scoreConfirmers, scoreState } from "@/lib/scoreConfirm"
+import { isAdminEmail } from "@/lib/isAdmin"
 
 export async function generateMetadata(
   { params }: { params: Promise<{ id: string }> }
@@ -147,6 +150,18 @@ export default async function SessionPage({
     }
   }
 
+  // Score confirmation (lib/scoreConfirm.ts): who may answer a pending score.
+  const scoreStatus = scoreState(session)
+  const canAnswerScore =
+    !!currentPlayer &&
+    !!session.scoreSubmittedById &&
+    scoreConfirmers(
+      session.participants.map((p) => ({ playerId: p.player?.id ?? null, team: p.team })),
+      session.scoreSubmittedById,
+      session.matchMode,
+    ).includes(currentPlayer.id)
+  const isAdminViewer = scoreStatus === "disputed" && isAdminEmail((await getCurrentSession())?.user?.email)
+
   const playAgain =
     session.status === "COMPLETED" && currentPlayer && isParticipant
       ? await pendingPlayAgain(currentPlayer.id, new Date(), session.id)
@@ -260,6 +275,13 @@ export default async function SessionPage({
                     </tbody>
                   </table>
                 </div>
+                <ScoreConfirmBanner
+                  sessionId={session.id}
+                  state={scoreStatus}
+                  canAnswer={canAnswerScore}
+                  isAdmin={isAdminViewer}
+                  deadline={session.scoreSubmittedAt ? autoConfirmAt(session.scoreSubmittedAt).toISOString() : null}
+                />
                 {/* Viral moment: winner can share the victory as a Story */}
                 {didWin && currentPlayer && (
                   <div className="mt-2">
@@ -367,6 +389,16 @@ export default async function SessionPage({
             matches={sessionMatches as Parameters<typeof SessionMatchRounds>[0]["matches"]}
             isOrganizer={isOrganizer}
             sessionStatus={session.status}
+          />
+        )}
+        {/* Multi-match sessions have no sets card: the confirmation sits here. */}
+        {session.matchMode && session.status === "COMPLETED" && (
+          <ScoreConfirmBanner
+            sessionId={session.id}
+            state={scoreStatus}
+            canAnswer={canAnswerScore}
+            isAdmin={isAdminViewer}
+            deadline={session.scoreSubmittedAt ? autoConfirmAt(session.scoreSubmittedAt).toISOString() : null}
           />
         )}
 

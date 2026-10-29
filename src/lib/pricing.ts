@@ -35,3 +35,6 @@ export function packBonusPct(pack: CreditPack): number {
 
 /** SANDER+ monthly price (Stripe subscription, euro cents). */
 export const PLUS_MONTHLY_CENTS = 499
+
+/** SANDER+ paid by card through SumUp: 30 days, no automatic renewal. */
+export const PLUS_PASS_MONTH = { days: 30, priceCents: PLUS_MONTHLY_CENTS } as const

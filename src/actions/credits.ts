@@ -4,6 +4,8 @@ import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { stripe, getAppUrl } from "@/lib/stripe"
 import { getCreditPack } from "@/lib/pricing"
 import { StartCreditCheckoutSchema } from "@/lib/validators/credits.schema"
+import { sumupConfigured } from "@/lib/sumup"
+import { startSumUpCheckout } from "@/lib/sumupCheckout"
 
 /**
  * Start a Stripe Checkout for a SanderCredits pack.
@@ -20,6 +22,16 @@ export async function startCreditCheckout(
 
   const player = await getCurrentPlayer()
   if (!player) return { ok: false, error: "Accedi per ricaricare" }
+
+  // SumUp when it is configured (San Marino merchant), Stripe otherwise.
+  if (sumupConfigured()) {
+    try {
+      return { ok: true, redirectUrl: await startSumUpCheckout({ kind: "sc_topup", playerId: player.id, packId: pack.id }) }
+    } catch (err) {
+      console.error("[credits] SumUp checkout failed", err)
+      return { ok: false, error: "Pagamento non disponibile in questo momento" }
+    }
+  }
 
   try {
     const appUrl = getAppUrl()

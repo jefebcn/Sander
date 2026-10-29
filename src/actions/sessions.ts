@@ -27,13 +27,12 @@ import {
   JOIN_GRACE_MS,
 } from "@/lib/sessionRules"
 import { isLateCancel } from "@/lib/scopri/reliability"
-import { rateDuoMatch } from "@/lib/scopri/duos"
+import { confirmScore } from "@/lib/sessionScore"
+import { SCORE_CONFIRM_HOURS, scoreConfirmers, scoreState } from "@/lib/scoreConfirm"
 import { rewardInvitesAfterMatch } from "@/lib/referralRedeem"
 import { refundSessionCredits } from "@/lib/sessionRefunds"
-import { updateGlickoAfterSession } from "@/lib/rating"
 import { isAdminEmail } from "@/lib/isAdmin"
-import { generateKOTBSchedule, applyMatchResult, rankStandings } from "@/lib/tournament/kotb"
-import type { StandingEntry } from "@/lib/tournament/types"
+import { generateKOTBSchedule } from "@/lib/tournament/kotb"
 import { after } from "next/server"
 import { nudgeForSession } from "@/lib/nudges"
 import { creditCost } from "@/lib/joinPrice"
@@ -667,57 +666,6 @@ export async function completeSession(
     return
   }
 
-  // Multi-match mode: aggregate win/loss from SessionMatch results
-  if (session.matchMode) {
-    const completedMatches = await db.sessionMatch.findMany({
-      where: { sessionId, isCompleted: true },
-      include: { players: { select: { playerId: true, team: true } } },
-    })
-
-    if (completedMatches.length > 0) {
-      // Build initial standings for every participant (skip guests)
-      let standings: StandingEntry[] = session.participants
-        .filter(p => p.playerId !== null)
-        .map((p) => ({
-          playerId: p.playerId!,
-          points: 0, matchesWon: 0, matchesLost: 0, pointsFor: 0, pointsAgainst: 0, rank: 0,
-        }))
-
-      for (const m of completedMatches) {
-        if (m.teamAScore == null || m.teamBScore == null) continue
-        const teamAIds = m.players.filter((p) => p.team === 0).map((p) => p.playerId)
-        const teamBIds = m.players.filter((p) => p.team === 1).map((p) => p.playerId)
-        standings = applyMatchResult(standings, {
-          teamAPlayerIds: teamAIds,
-          teamBPlayerIds: teamBIds,
-          teamAScore: m.teamAScore,
-          teamBScore: m.teamBScore,
-        })
-      }
-
-      standings = rankStandings(standings)
-
-      // Update each player's aggregate stats
-      for (const s of standings) {
-        const cur = await db.player.findUniqueOrThrow({
-          where: { id: s.playerId },
-          select: { matchesWon: true, matchesLost: true },
-        })
-        const newWon = cur.matchesWon + s.matchesWon
-        const newLost = cur.matchesLost + s.matchesLost
-        const total = newWon + newLost
-        await db.player.update({
-          where: { id: s.playerId },
-          data: {
-            matchesWon: newWon,
-            matchesLost: newLost,
-            winRatePct: total > 0 ? Math.round((newWon / total) * 100) : 0,
-          },
-        })
-      }
-    }
-  }
-
   // Save sets if provided
   if (sets && sets.length > 0) {
     await db.sessionSet.createMany({
@@ -728,45 +676,30 @@ export async function completeSession(
         teamBScore: s.teamBScore,
       })),
     })
-
-    // Determine winning team (most sets won)
-    const teamAWins = sets.filter((s) => s.teamAScore > s.teamBScore).length
-    const teamBWins = sets.filter((s) => s.teamBScore > s.teamAScore).length
-    const winningTeam = teamAWins > teamBWins ? 0 : teamBWins > teamAWins ? 1 : null // null = draw
-
-    // Update matchesWon / matchesLost for participants with assigned teams
-    for (const p of session.participants) {
-      if (!p.playerId) continue  // skip guests
-      if (p.team === null || winningTeam === null) continue
-      const won = p.team === winningTeam
-      const current = await db.player.findUniqueOrThrow({
-        where: { id: p.playerId },
-        select: { matchesWon: true, matchesLost: true },
-      })
-      const newWon = current.matchesWon + (won ? 1 : 0)
-      const newLost = current.matchesLost + (won ? 0 : 1)
-      const total = newWon + newLost
-      await db.player.update({
-        where: { id: p.playerId },
-        data: {
-          matchesWon: newWon,
-          matchesLost: newLost,
-          winRatePct: total > 0 ? Math.round((newWon / total) * 100) : 0,
-        },
-      })
-    }
-
-    // A 2v2 between two Scopri pairs also moves the pair ratings (Coppie).
-    if (winningTeam !== null) {
-      await rateDuoMatch(sessionId, winningTeam).catch((e) => console.error("duo rating failed", e))
-    }
   }
 
-  // Update Glicko-2 ratings (dampened for friendly sessions)
-  try {
-    await updateGlickoAfterSession(sessionId)
-  } catch (e) {
-    console.error("Glicko update failed for session", sessionId, e)
+  // The score waits for the other side (lib/scoreConfirm.ts): W/L and rating
+  // move only once someone on the opposing team confirms, or after 24 hours.
+  const hasScore =
+    (!!sets && sets.length > 0) ||
+    (session.matchMode && (await db.sessionMatch.count({ where: { sessionId, isCompleted: true } })) > 0)
+  if (hasScore) {
+    const confirmers = scoreConfirmers(session.participants, player.id, session.matchMode)
+    await db.session.update({
+      where: { id: sessionId },
+      data: { scoreSubmittedById: player.id, scoreSubmittedAt: new Date() },
+    })
+    if (confirmers.length === 0) {
+      // Only guests on the other side: nobody can object, it stands now.
+      await confirmScore(sessionId)
+    } else {
+      const ask = {
+        title: "Confermi il risultato?",
+        body: `${session.title}: controlla il punteggio. Se non rispondi entro ${SCORE_CONFIRM_HOURS} ore vale così.`,
+        url: `/sessions/${sessionId}`,
+      }
+      await Promise.all(confirmers.map((id) => notifyPlayerNow(id, ask)))
+    }
   }
 
   // Update sessionsPlayed + XP for every participant (skip guests). A "match"
@@ -800,6 +733,61 @@ export async function completeSession(
   revalidatePath("/sessions")
   // The boards just changed: the recap's "Nº a Riccione" must read fresh.
   revalidateTag(LEADERBOARDS_TAG, { expire: 0 })
+}
+
+/** The session and whether the signed-in player may answer its pending score. */
+async function scoreAnswerer(input: unknown) {
+  const sessionId = SessionIdSchema.parse(input)
+  const auth = await getCurrentSession()
+  const me = await getCurrentPlayer()
+  if (!me) throw new Error("Non autenticato")
+  const session = await db.session.findUniqueOrThrow({
+    where: { id: sessionId },
+    select: {
+      id: true, title: true, matchMode: true,
+      scoreSubmittedById: true, scoreSubmittedAt: true, scoreConfirmedAt: true, scoreDisputedAt: true,
+      participants: { select: { playerId: true, team: true } },
+    },
+  })
+  const isAdmin = isAdminEmail(auth?.user?.email)
+  const confirmers = session.scoreSubmittedById
+    ? scoreConfirmers(session.participants, session.scoreSubmittedById, session.matchMode)
+    : []
+  if (!isAdmin && !confirmers.includes(me.id)) throw new Error("Solo la squadra avversaria può rispondere al risultato")
+  return { session, me, isAdmin }
+}
+
+/** The opposing team agrees with the score: it counts from now. An admin may also settle a disputed one. */
+export async function confirmSessionScore(input: unknown) {
+  const { session, isAdmin } = await scoreAnswerer(input)
+  const state = scoreState(session)
+  if (state === "disputed" && isAdmin) {
+    await db.session.update({ where: { id: session.id }, data: { scoreDisputedAt: null } })
+  } else if (state !== "pending" && state !== "due") {
+    throw new Error("Questo risultato non è in attesa di conferma")
+  }
+  await confirmScore(session.id)
+  return { ok: true as const }
+}
+
+/** The opposing team says the score is wrong: it stays out of W/L and rating. */
+export async function disputeSessionScore(input: unknown) {
+  const { session, me } = await scoreAnswerer(input)
+  const state = scoreState(session)
+  if (state !== "pending" && state !== "due") throw new Error("Questo risultato non è in attesa di conferma")
+  const marked = await db.session.updateMany({
+    where: { id: session.id, scoreConfirmedAt: null, scoreDisputedAt: null },
+    data: { scoreDisputedAt: new Date() },
+  })
+  if (marked.count > 0 && session.scoreSubmittedById && session.scoreSubmittedById !== me.id) {
+    await notifyPlayerNow(session.scoreSubmittedById, {
+      title: "Risultato contestato",
+      body: `${session.title}: l'altra squadra non è d'accordo con il punteggio. Non conta per la classifica finché non si chiarisce.`,
+      url: `/sessions/${session.id}`,
+    })
+  }
+  revalidatePath(`/sessions/${session.id}`)
+  return { ok: true as const }
 }
 
 export async function addPlayerToSession(sessionId: string, playerId: string) {

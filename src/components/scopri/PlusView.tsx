@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { Crown, Check, Loader2, Ticket } from "lucide-react"
 import { toast } from "sonner"
 import { startPlusCheckout, cancelPlus, resumePlus } from "@/actions/plus"
+import { startPlusPassCheckout } from "@/actions/payments"
 import { buyScopriExtra } from "@/actions/scopri"
 import { PLUS_BENEFITS } from "@/lib/scopri/plusBenefits"
 import { useIsNativeApp } from "@/lib/native"
@@ -23,8 +24,11 @@ export function PlusView({
   passUntil,
   pass,
   month,
+  cardPass = false,
 }: {
   priceLabel: string
+  /** Card payments go through SumUp: SANDER+ is a 30-day pass, no renewal. */
+  cardPass?: boolean
   /** A Stripe subscription is running. */
   active: boolean
   until: string | null
@@ -132,8 +136,9 @@ export function PlusView({
             className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--ace)]"
           />
           <span>
-            Chiedo di attivare SANDER+ subito e so che per il mese iniziato perdo il diritto di recesso.
-            Si rinnova ogni mese finché non lo disdico.{" "}
+            {cardPass
+              ? "Chiedo di attivare SANDER+ subito per 30 giorni e so che perdo il diritto di recesso. Non si rinnova da solo."
+              : "Chiedo di attivare SANDER+ subito e so che per il mese iniziato perdo il diritto di recesso. Si rinnova ogni mese finché non lo disdico."}{" "}
             <a href="/terms" className="font-bold text-[var(--ace)] underline">Termini</a>
           </span>
         </label>
@@ -147,14 +152,16 @@ export function PlusView({
           disabled={busy || !consent}
           onClick={() =>
             go(async () => {
-              const { url } = await startPlusCheckout()
+              const { url } = cardPass ? await startPlusPassCheckout() : await startPlusCheckout()
               window.location.href = url
             })
           }
           className="pressable flex min-h-[3.75rem] items-center justify-center gap-2 rounded-full bg-[var(--ace)] text-lg font-extrabold text-black disabled:opacity-60"
         >
           {busy ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Crown className="h-5 w-5" aria-hidden="true" />}
-          Attiva SANDER+ · {priceLabel}/mese
+          {cardPass
+            ? `${passUntil ? "Aggiungi" : "Attiva"} 30 giorni · ${priceLabel}`
+            : `Attiva SANDER+ · ${priceLabel}/mese`}
         </button>
       ) : cancelAtEnd ? (native ? null : (
         <button

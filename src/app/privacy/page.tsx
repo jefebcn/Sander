@@ -89,8 +89,8 @@ export default function PrivacyPage() {
             </li>
             <li>
               <strong className="text-white">Pagamenti:</strong> per i pacchetti di SanderCredits e per
-              l&apos;abbonamento SANDER+ conserviamo importi, date e gli identificativi di cliente e abbonamento
-              di Stripe. I dati della carta li gestisce solo Stripe: non passano mai da noi.
+              SANDER+ conserviamo importi, date e gli identificativi del pagamento (Stripe o SumUp). I dati
+              della carta li gestiscono solo Stripe e SumUp: non passano mai da noi.
             </li>
           </ul>
           <p className="mt-2">
@@ -189,6 +189,10 @@ export default function PrivacyPage() {
             <li>
               <strong className="text-white">Stripe:</strong> pagamenti dei SanderCredits e
               dell&apos;abbonamento SANDER+
+            </li>
+            <li>
+              <strong className="text-white">SumUp:</strong> pagamenti con carta, Apple Pay e Google Pay dei
+              SanderCredits e del pass SANDER+ di 30 giorni
             </li>
             <li>
               <strong className="text-white">Autorità competenti:</strong> esclusivamente in caso di

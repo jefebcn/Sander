@@ -124,6 +124,13 @@ export default function TermsPage() {
             fermo restando il diritto di disdire i rinnovi successivi.
           </p>
           <p className="mt-2">
+            Il <strong className="text-white">pass SANDER+ di 30 giorni</strong> si paga con carta, Apple Pay o
+            Google Pay tramite SumUp: dà le stesse funzioni di SANDER+ per 30 giorni dall&apos;acquisto (o dalla
+            scadenza del pass in corso) e <strong className="text-white">non si rinnova automaticamente</strong>.
+            Anche per il pass chiedi che il servizio inizi subito e prendi atto che non è rimborsabile dopo
+            l&apos;attivazione.
+          </p>
+          <p className="mt-2">
             Gli extra di Scopri acquistati con i SanderCredits (like, Ace, &quot;vedi tutti&quot;, pass SANDER+
             di 7 giorni) si usano subito e non sono rimborsabili. Il pass di 7 giorni non si rinnova e dà le
             stesse funzioni di SANDER+ fino alla scadenza indicata.

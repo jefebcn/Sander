@@ -46,6 +46,8 @@ import { ContentQueue } from "@/components/admin/ContentQueue"
 import { listContent } from "@/actions/content"
 import { NOT_DELETED_PLAYER } from "@/lib/publicPlayer"
 import { Gabbo } from "@/components/ui/Gabbo"
+import { Suspense } from "react"
+import { SumUpReturn } from "@/components/payments/SumUpReturn"
 
 export const metadata: Metadata = {
   title: "Il tuo profilo | SANDER",
@@ -284,6 +286,9 @@ export default async function ProfilePage({ searchParams }: Props) {
       />
 
       {/* Back from Stripe: say what happened, so nobody pays twice. */}
+      <Suspense fallback={null}>
+        <SumUpReturn />
+      </Suspense>
       {topup === "ok" && (
         <p role="status" className="mx-4 mb-3 rounded-[var(--radius-md)] bg-[var(--accent-soft)] px-4 py-3 text-sm font-semibold text-[var(--accent)]">
           Pagamento ricevuto: i crediti compaiono nel saldo entro pochi secondi.
@@ -635,6 +640,7 @@ export default async function ProfilePage({ searchParams }: Props) {
             { label: "Termini del servizio", href: "/terms" },
             { label: "Privacy policy", href: "/privacy" },
             { label: "Valuta l'app", href: "https://www.instagram.com" },
+            { label: "Elimina account", href: "/delete-account" },
           ].map(({ label, href }) => (
             <a
               key={label}
