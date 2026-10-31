@@ -27,4 +27,24 @@ In `bg/`, generati con Higgsfield `soul_2`, 9:16, qualità 1.5k. Modello di prom
 
 > 35mm film photo, [scena: stagione, ora del giorno, Riviera/Adriatico], young friends playing beach volleyball barefoot on the sand, candid, grainy film, slight motion blur, plain clothing without logos, no text, no brands
 
-Scarta e rigenera se ci sono scarpe o calzini, loghi o scritte sui vestiti, alcol, o se la persona è diversa tra due foto della stessa serie.
+Scarta e rigenera se ci sono scarpe o calzini, loghi o scritte sui vestiti, alcol, torso nudo o pose da modella, o se la persona è diversa tra due foto della stessa serie.
+
+## Regola: massimo due usi per foto
+
+Vale per storie, post e caroselli, su Instagram e TikTok insieme. La stessa foto di sfondo si usa al massimo due volte, anche se il testo sopra cambia. Al terzo uso genera un nuovo stock (stesso stile) e rifai la grafica con la foto nuova. Prima di programmare su Buffer, controlla qui e aggiorna il registro.
+
+| Foto | Usi |
+|------|-----|
+| `novembre-felpe` | storia 27 ott |
+| `tramonto-coppia` | storia 5 nov |
+| `palla-sabbia` | storia 8 nov |
+| `tuffo-sera` | TikTok 4 nov (carosello Scopri, 1) |
+| `gruppo-sera` | TikTok 4 nov (carosello Scopri, 3) |
+| `schiacciata-tramonto` | IG 14 nov (Libero oggi) |
+| `alzata-notte` | IG 17 nov (La giornata tipo) |
+| `batti-cinque` | IG 22 nov (Scopri 2v2) |
+| `bagher-notte` | IG 24 nov (Sander) |
+| `piedi-corsa` | libera |
+| `battuta-ombrelloni` | libera |
+
+Già esaurite, non riusarle: le foto del pacchetto Stagione 2 (coppia con la maglia 23, ragazza in viola, corsa sfocata verde, alzata sotto la rete) e il palo della rete (2 usi: IG 30 ott, 7 nov).
