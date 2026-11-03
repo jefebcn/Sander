@@ -61,3 +61,24 @@ export async function sendPasswordResetEmail(to: string, token: string) {
 </html>`,
   })
 }
+
+const escapeHtml = (s: string) =>
+  s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!)
+
+/** Short plain notice to the admins (ADMIN_EMAILS). Skipped without Resend. */
+export async function sendAdminEmail(subject: string, lines: string[], path = "/admin/metriche") {
+  const to = (process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? "")
+    .split(",")
+    .map((e) => e.trim())
+    .filter(Boolean)
+  if (!resend || !to.length) return
+  const url = `${APP_URL}${path}`
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject,
+    html: `<div style="font-family:system-ui,sans-serif;font-size:15px;line-height:1.6">${lines
+      .map((l) => `<p style="margin:0 0 8px">${escapeHtml(l)}</p>`)
+      .join("")}<p><a href="${url}">Apri il pannello</a></p></div>`,
+  })
+}

@@ -133,6 +133,9 @@ model Player {
   preferredRole PlayerRole @default(DEFENDER)
   avatarUrl     String?
 
+  // First-visit channel at sign-up (lib/signupSource.ts): instagram, tiktok, invito…
+  signupSource String?
+
   // Auth link (optional — existing players created before auth won't have this)
   userId String? @unique
   user   User?   @relation(fields: [userId], references: [id])

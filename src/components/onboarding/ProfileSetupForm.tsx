@@ -12,6 +12,7 @@ import { START_LEVELS, type StartLevel } from "@/lib/startLevel"
 import { resizedPhoto } from "@/lib/photo"
 import { shrinkImage } from "@/lib/shrinkImage"
 import { CityPicker } from "@/components/ui/CityPicker"
+import { SIGNUP_SOURCE_KEY, SIGNUP_SOURCE_RE } from "@/lib/signupSource"
 
 // ─── Countries list ────────────────────────────────────────────────────────────
 const COUNTRIES = [
@@ -85,6 +86,16 @@ function countryDisplay(name: string): string {
 
 const GENDERS = ["Uomo", "Donna", "Altro"] as const
 type Gender = typeof GENDERS[number]
+
+/** First-visit source saved by RefTracker; dropped if storage is blocked or odd. */
+function storedSignupSource(): string | undefined {
+  try {
+    const s = localStorage.getItem(SIGNUP_SOURCE_KEY)
+    return s && SIGNUP_SOURCE_RE.test(s) ? s : undefined
+  } catch {
+    return undefined
+  }
+}
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
 
@@ -308,6 +319,7 @@ export function ProfileSetupForm({ initialData, email }: { initialData?: Initial
           avatarUrl,
           homeCity: homeCity || undefined,
           startLevel: startLevel || undefined,
+          source: storedSignupSource(),
         })
         localStorage.setItem("sander_onboarded", "1")
         localStorage.setItem("sander_has_profile", "1")

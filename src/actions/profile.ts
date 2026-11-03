@@ -5,6 +5,8 @@ import { auth } from "@/lib/auth"
 import { SaveProfileSchema, NudgePrefSchema } from "@/lib/validators/profile.schema"
 import { canSeedRating, startingRating } from "@/lib/startLevel"
 import { revalidatePath } from "next/cache"
+import { after } from "next/server"
+import { notifyNewSignup } from "@/lib/signupNotify"
 
 export async function saveProfile(input: unknown) {
   const session = await auth()
@@ -55,7 +57,7 @@ export async function saveProfile(input: unknown) {
       },
     })
   } else {
-    await db.player.create({
+    const created = await db.player.create({
       data: {
         name:          fullName,
         firstName:     data.firstName,
@@ -63,9 +65,12 @@ export async function saveProfile(input: unknown) {
         ...optional,
         ...(data.startLevel ? { glickoRating: startingRating(data.startLevel) } : {}),
         avatarUrl:     data.avatarUrl ?? null,
+        signupSource:  data.source ?? null,
         userId:        session.user.id,
       },
     })
+    // After the response: the push and email must not slow down getting in.
+    after(() => notifyNewSignup(created.id))
   }
 
   revalidatePath("/")

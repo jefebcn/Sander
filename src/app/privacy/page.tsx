@@ -166,6 +166,11 @@ export default function PrivacyPage() {
             a fini pubblicitari senza il tuo consenso esplicito.
           </p>
           <p className="mt-2">
+            Alla prima visita il browser ricorda da dove sei arrivato (per esempio Instagram, TikTok o un
+            invito). Se crei il profilo, questa informazione viene salvata con il tuo account e usata solo
+            da noi, in forma aggregata, per capire quali canali funzionano. Non viene condivisa con terzi.
+          </p>
+          <p className="mt-2">
             Al primo accesso ti verrà mostrato un banner per accettare o rifiutare i cookie non necessari.
             Puoi modificare le tue preferenze in qualsiasi momento dalle impostazioni del browser.
           </p>

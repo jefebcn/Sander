@@ -2,13 +2,15 @@ export const dynamic = "force-dynamic"
 
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { ChevronLeft, Wallet, Receipt, Coins, UserPlus, Repeat, Sun, HeartHandshake } from "lucide-react"
+import { ChevronLeft, Wallet, Receipt, Coins, UserPlus, Repeat, Sun, HeartHandshake, Sparkles } from "lucide-react"
 import type { ReactNode } from "react"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { isAdminEmail } from "@/lib/isAdmin"
 import { getAdminMetrics, SC_PER_EURO } from "@/lib/adminMetrics"
 import { formatDate } from "@/lib/utils"
 import { getScopriMetrics } from "@/lib/scopri/metrics"
+import { getSignupStats } from "@/lib/signupStats"
+import { signupSourceLabel } from "@/lib/signupSource"
 
 const eur = new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" })
 const euro = (cents: number | null) => (cents === null ? "—" : eur.format(cents / 100))
@@ -17,6 +19,10 @@ const pct = (value: number | null) => (value === null ? "—" : `${Math.round(va
 const monthLabel = new Intl.DateTimeFormat("it-IT", { month: "short", year: "2-digit" })
 /** "2026-08" → "ago 26". Mid-month noon UTC so no time zone can shift it. */
 const month = (key: string) => monthLabel.format(new Date(`${key}-15T12:00:00Z`))
+
+const joinedAt = new Intl.DateTimeFormat("it-IT", {
+  timeZone: "Europe/Rome", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+})
 
 function Section({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
   return (
@@ -49,7 +55,7 @@ export default async function AdminMetricsPage() {
   if (!session?.user?.id) redirect("/auth/signin?callbackUrl=/admin/metriche")
   if (!isAdminEmail(session.user.email)) redirect("/admin/accesso")
 
-  const [m, sc] = await Promise.all([getAdminMetrics(), getScopriMetrics()])
+  const [m, sc, su] = await Promise.all([getAdminMetrics(), getScopriMetrics(), getSignupStats()])
   const { revenue, averages, credits, acquisition, retention } = m
 
   return (
@@ -69,6 +75,58 @@ export default async function AdminMetricsPage() {
       </div>
 
       <div className="space-y-4 px-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-4 lg:space-y-0">
+        {/* ── Ultimi iscritti ────────────────────────────────────────── */}
+        <div id="iscritti" className="scroll-mt-4 lg:col-span-2">
+          <Section icon={<Sparkles className="h-4 w-4 text-[var(--accent)]" />} title="Ultimi iscritti">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <Stat label="Oggi" value={String(su.today)} />
+              <Stat label="Ultimi 7 giorni" value={String(su.week)} />
+              <Stat label="Ultimi 30 giorni" value={String(su.month)} />
+              <Stat label="Totale" value={String(su.total)} />
+            </div>
+            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+              <Stat label="Profilo non finito" value={String(su.noProfile)} hint="account creati, profilo mai completato" />
+              <Stat label="Da invito (30 gg)" value={String(su.invited30)} />
+              <Stat label="Con Google (30 gg)" value={String(su.google30)} hint={`${su.month - su.google30} con email`} />
+            </div>
+
+            <h3 className="mt-4 mb-2 text-sm font-semibold text-white">Da dove arrivano (30 giorni)</h3>
+            {su.bySource.length === 0 ? (
+              <p className="text-base text-[var(--muted-text)]">Nessun iscritto negli ultimi 30 giorni.</p>
+            ) : (
+              <ul className="space-y-1 text-base">
+                {su.bySource.map((s) => (
+                  <li key={s.source ?? "none"} className="flex justify-between border-t border-[var(--border)] py-2">
+                    <span className="text-white">{signupSourceLabel(s.source)}</span>
+                    <span className="font-bold text-white">{s.count}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <h3 className="mt-4 mb-2 text-sm font-semibold text-white">Gli ultimi 20</h3>
+            <ul className="text-base">
+              {su.latest.map((p) => (
+                <li key={p.id} className="border-t border-[var(--border)] py-2">
+                  <Link href={`/players/${p.id}`} className="flex min-h-[3.5rem] items-center justify-between gap-3">
+                    <span className="min-w-0">
+                      <span className="block truncate font-semibold text-white">{p.name}</span>
+                      <span className="block truncate text-sm text-[var(--muted-text)]">
+                        {[p.homeCity, signupSourceLabel(p.source), p.method].filter(Boolean).join(" · ")}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-sm text-[var(--muted-text)]">{joinedAt.format(p.createdAt)}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <Note>
+              La provenienza si registra dagli iscritti di oggi in poi. Per un canale preciso usa link con{" "}
+              <code className="text-white">?ref=</code>, per esempio <code className="text-white">sanderbv.it/?ref=volantino</code>.
+            </Note>
+          </Section>
+        </div>
+
         {/* ── Scopri ─────────────────────────────────────────────────── */}
         <Section icon={<HeartHandshake className="h-4 w-4 text-[var(--accent)]" />} title="Scopri">
           <div className="grid grid-cols-2 gap-2">
