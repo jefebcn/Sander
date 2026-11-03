@@ -6,6 +6,7 @@ import { db } from "@/lib/db"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { isAdminEmail } from "@/lib/isAdmin"
 import { recompressBatch } from "@/lib/recompressPhotos"
+import { sendAdminEmail } from "@/lib/email"
 
 /* /admin/sistema: error log housekeeping and the old-photos clean-up. */
 
@@ -28,4 +29,14 @@ export async function adminDismissError(id: unknown) {
   await requireAdmin()
   await db.appError.delete({ where: { id: ErrorIdSchema.parse(id) } })
   revalidatePath("/admin/sistema")
+}
+
+/** Sends a test email to ADMIN_EMAILS and reports what Resend said. */
+export async function adminTestEmail() {
+  await requireAdmin()
+  const r = await sendAdminEmail("Email di prova da SANDER", [
+    "Se leggi questa email, Resend funziona.",
+    "Da ora ti arriva un'email a ogni nuovo iscritto.",
+  ], "/admin/sistema")
+  return r.ok ? `Inviata a ${r.to.join(", ")}. Controlla anche lo spam.` : `Non inviata: ${r.reason}`
 }
