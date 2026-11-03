@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react"
 import { Bell, X } from "lucide-react"
 import { subscribePush } from "@/actions/push"
+import { enableNativePush, nativePushPermission, nativePushSupported } from "@/lib/nativePush"
 
 const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""
 const DISMISS_KEY = "chat_notify_dismissed"
@@ -20,8 +21,13 @@ export function ChatNotifyPrompt() {
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
-    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !VAPID_PUBLIC) return
     if (localStorage.getItem(DISMISS_KEY)) return
+    // iPhone app: ask for the system notifications instead of web push.
+    if (nativePushSupported()) {
+      nativePushPermission().then((p) => setShow(p === "prompt")).catch(() => {})
+      return
+    }
+    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !VAPID_PUBLIC) return
     // "denied" → nothing we can do in-app; "granted" → only show if not yet subscribed here.
     if (Notification.permission === "denied") return
     if (Notification.permission === "granted") {
@@ -34,6 +40,13 @@ export function ChatNotifyPrompt() {
   }, [])
 
   async function enable() {
+    if (nativePushSupported()) {
+      startTransition(async () => {
+        await enableNativePush().catch(() => false)
+        setShow(false)
+      })
+      return
+    }
     if (!VAPID_PUBLIC) return
     try {
       const permission = await Notification.requestPermission()

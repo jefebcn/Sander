@@ -186,6 +186,7 @@ model Player {
   sessionMatchPlayers  SessionMatchPlayer[]
   tournamentsCreated   Tournament[]             @relation("TournamentCreator")
   pushSubscriptions    PushSubscription[]
+  nativePushTokens     NativePushToken[]
   notifications        Notification[]
   monthlyAwards        MonthlyAward[]
   videoSubmissions     VideoSubmission[]
@@ -552,6 +553,23 @@ model PushSubscription {
   player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@map("push_subscriptions")
+}
+
+/// Push token of the native app (APNs device token on iOS), see lib/apns.ts.
+/// Web push lives in PushSubscription: notifications don't reach the app's web view.
+model NativePushToken {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  playerId String
+  token    String @unique
+  platform String // "ios" | "android"
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
+  @@map("native_push_tokens")
 }
 
 model Notification {

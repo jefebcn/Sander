@@ -3,6 +3,7 @@
 import { useState, useEffect, useTransition } from "react"
 import { Bell, BellOff } from "lucide-react"
 import { subscribePush, unsubscribePush } from "@/actions/push"
+import { enableNativePush, nativePushPermission, nativePushSupported } from "@/lib/nativePush"
 
 const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""
 
@@ -17,8 +18,20 @@ export function NotifyPermission() {
   const [status, setStatus] = useState<"unknown" | "denied" | "granted" | "unsupported">("unknown")
   const [subscribed, setSubscribed] = useState(false)
   const [isPending, startTransition] = useTransition()
+  // iPhone app: web push never arrives there, the system notifications do.
+  const [native, setNative] = useState(false)
 
   useEffect(() => {
+    if (nativePushSupported()) {
+      setNative(true)
+      nativePushPermission()
+        .then((p) => {
+          setStatus(p === "granted" ? "granted" : p === "denied" ? "denied" : "unknown")
+          setSubscribed(p === "granted")
+        })
+        .catch(() => setStatus("unsupported"))
+      return
+    }
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
       setStatus("unsupported")
       return
@@ -32,6 +45,14 @@ export function NotifyPermission() {
   }, [])
 
   async function enable() {
+    if (native) {
+      startTransition(async () => {
+        const on = await enableNativePush().catch(() => false)
+        setStatus(on ? "granted" : "denied")
+        setSubscribed(on)
+      })
+      return
+    }
     if (!VAPID_PUBLIC) return
     try {
       const permission = await Notification.requestPermission()
@@ -71,6 +92,18 @@ export function NotifyPermission() {
 
   if (status === "unsupported") return null
 
+  if (native && subscribed && status === "granted") {
+    return (
+      <div className="flex min-h-[3.5rem] w-full items-center gap-3 rounded-2xl bg-[var(--surface-2)] px-4">
+        <Bell className="h-4 w-4 text-[var(--accent)]" />
+        <div className="flex-1 text-left">
+          <p className="text-sm font-semibold text-[var(--foreground)]">Notifiche attive</p>
+          <p className="text-xs text-[var(--muted-text)]">Per spegnerle: Impostazioni di iPhone › SANDER › Notifiche</p>
+        </div>
+      </div>
+    )
+  }
+
   if (subscribed && status === "granted") {
     return (
       <button
@@ -93,7 +126,9 @@ export function NotifyPermission() {
         <BellOff className="h-4 w-4 text-[var(--muted-text)]" />
         <div className="flex-1 text-left">
           <p className="text-sm font-semibold text-[var(--foreground)]">Notifiche bloccate</p>
-          <p className="text-xs text-[var(--muted-text)]">Abilitale dalle impostazioni del browser</p>
+          <p className="text-xs text-[var(--muted-text)]">
+            {native ? "Abilitale da Impostazioni di iPhone › SANDER › Notifiche" : "Abilitale dalle impostazioni del browser"}
+          </p>
         </div>
       </div>
     )

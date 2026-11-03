@@ -22,3 +22,9 @@ export const PushSubscriptionSchema = z.object({
     auth: z.string().min(1).max(100),
   }),
 })
+
+/** Native app token: an APNs device token (hex) on iOS. */
+export const NativePushTokenSchema = z.object({
+  token: z.string().regex(/^[0-9a-fA-F]{32,200}$/, "Token non valido"),
+  platform: z.literal("ios"),
+}).strict()

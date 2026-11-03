@@ -15,6 +15,7 @@ import {
   mutuallyEligible,
   likeMessage,
   ageOn,
+  MIN_AGE,
   isPlus,
   plusEnd,
   extendPass,
@@ -69,6 +70,8 @@ import {
 async function requireMe() {
   const me = await getCurrentPlayer()
   if (!me) throw new Error("Non autenticato")
+  // Scopri is adults only, on every action, not just in the pages (App Store 18+ rating).
+  if (me.birthDate && ageOn(me.birthDate) < MIN_AGE) throw new Error("Scopri è riservato ai maggiorenni")
   return me
 }
 

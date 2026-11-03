@@ -9,7 +9,7 @@ import { registerWithEmail } from "@/actions/auth"
 import { trackEvent } from "@/lib/analytics"
 import { cn } from "@/lib/utils"
 import { safeCallbackUrl } from "@/lib/safeRedirect"
-import { useIsNativeApp, useHasNativeGoogle, nativeGoogleIdToken } from "@/lib/native"
+import { useIsNativeApp, useHasNativeGoogle, useNativePlatform, nativeGoogleIdToken, nativeAppleSignIn } from "@/lib/native"
 
 type Mode = "login" | "register"
 
@@ -19,13 +19,15 @@ interface AuthFormProps {
   defaultMode?: Mode
   /** Google Web client id: the native app's sign-in asks Google for a token for it. */
   googleClientId?: string
+  /** Google iOS client id: without it the iPhone app shows no Google button. */
+  googleIosClientId?: string
 }
 
 const INPUT =
   "w-full rounded-2xl bg-[var(--surface-2)] px-4 py-3.5 text-base text-white placeholder:text-[var(--muted-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
 const LABEL = "mb-1 block px-1 text-sm font-semibold text-[var(--muted-text)]"
 
-export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInviteCode, defaultMode = "login", googleClientId }: AuthFormProps) {
+export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInviteCode, defaultMode = "login", googleClientId, googleIosClientId }: AuthFormProps) {
   const [mode, setMode] = useState<Mode>(defaultMode)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -38,7 +40,10 @@ export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInvit
   const nativeGoogle = useHasNativeGoogle()
   // On the web: Google's own page. In the app: the phone's account picker, only
   // in builds that ship it (older installs keep email and password).
-  const showGoogle = !native || (nativeGoogle && !!googleClientId)
+  const platform = useNativePlatform()
+  const showGoogle = !native || (nativeGoogle && !!googleClientId && (platform !== "ios" || !!googleIosClientId))
+  // Sign in with Apple: the iPhone app only (Apple requires it next to Google).
+  const showApple = platform === "ios" && nativeGoogle
   const router = useRouter()
   // Re-checked here too: this value ends up in router.push and signIn.
   const callbackUrl = safeCallbackUrl(rawCallbackUrl)
@@ -88,7 +93,7 @@ export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInvit
     setError(null)
     startTransition(async () => {
       try {
-        const idToken = await nativeGoogleIdToken(googleClientId!)
+        const idToken = await nativeGoogleIdToken(googleClientId!, platform === "ios" ? googleIosClientId : undefined)
         if (!idToken) return
         const result = await signIn("google-native", { idToken, redirect: false })
         if (!result || result.error) {
@@ -99,6 +104,25 @@ export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInvit
         router.refresh()
       } catch {
         setError("Accesso con Google non riuscito. Riprova o usa email e password.")
+      }
+    })
+  }
+
+  function appleSignIn() {
+    setError(null)
+    startTransition(async () => {
+      try {
+        const apple = await nativeAppleSignIn()
+        if (!apple) return
+        const result = await signIn("apple-native", { idToken: apple.idToken, name: apple.name ?? "", redirect: false })
+        if (!result || result.error) {
+          setError("Accesso con Apple non riuscito. Riprova o usa email e password.")
+          return
+        }
+        router.push(callbackUrl)
+        router.refresh()
+      } catch {
+        setError("Accesso con Apple non riuscito. Riprova o usa email e password.")
       }
     })
   }
@@ -231,13 +255,28 @@ export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInvit
 
       {/* Google: inside the app only through the native account picker, since
           Google refuses to sign in from an embedded web view. */}
+      {(showGoogle || showApple) && (
+        <div className="flex items-center gap-3">
+          <div className="h-px flex-1 bg-[var(--border)]" />
+          <span className="text-xs text-[var(--muted-text)]">oppure</span>
+          <div className="h-px flex-1 bg-[var(--border)]" />
+        </div>
+      )}
+      {/* Apple's own white button style. The \uF8FF glyph is the Apple logo on
+          Apple devices, the only place this button appears. */}
+      {showApple && (
+        <button
+          type="button"
+          onClick={appleSignIn}
+          disabled={isPending}
+          className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-white text-lg font-semibold text-black transition-all active:opacity-80 disabled:opacity-60"
+        >
+          <span aria-hidden="true">{"\uF8FF"}</span>
+          Continua con Apple
+        </button>
+      )}
       {showGoogle && (
         <>
-          <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-[var(--border)]" />
-            <span className="text-xs text-[var(--muted-text)]">oppure</span>
-            <div className="h-px flex-1 bg-[var(--border)]" />
-          </div>
           <button
             type="button"
             onClick={googleSignIn}

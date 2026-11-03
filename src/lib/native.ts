@@ -82,6 +82,17 @@ export async function capturePhoto(): Promise<Blob | null> {
   }
 }
 
+/** "ios" | "android" inside the app, "web" in a browser. */
+export function nativePlatform(): "ios" | "android" | "web" {
+  try {
+    const cap = (window as { Capacitor?: { getPlatform?: () => string } }).Capacitor
+    const p = cap?.getPlatform?.()
+    return p === "ios" || p === "android" ? p : "web"
+  } catch {
+    return "web"
+  }
+}
+
 function noopSubscribe() {
   return () => {}
 }
@@ -115,14 +126,41 @@ export function useHasNativeGoogle(): boolean {
  * from the app. Returns the ID token for the "google-native" provider, or null
  * when the user closes the picker. Throws on other failures.
  */
-export async function nativeGoogleIdToken(webClientId: string): Promise<string | null> {
+export async function nativeGoogleIdToken(webClientId: string, iosClientId?: string): Promise<string | null> {
   const { SocialLogin } = await import("@capgo/capacitor-social-login")
-  await SocialLogin.initialize({ google: { webClientId, mode: "online" } })
+  // iOSServerClientId = the Web client: the token's audience stays AUTH_GOOGLE_ID on both platforms.
+  await SocialLogin.initialize({
+    google: { webClientId, mode: "online", ...(iosClientId ? { iOSClientId: iosClientId, iOSServerClientId: webClientId } : {}) },
+  })
   try {
     const res = await SocialLogin.login({ provider: "google", options: { scopes: ["email", "profile"] } })
     return (res.result as { idToken?: string | null }).idToken ?? null
   } catch (e) {
     if (/cancel/i.test(e instanceof Error ? e.message : String(e))) return null
+    throw e
+  }
+}
+
+export function useNativePlatform(): "ios" | "android" | "web" {
+  return useSyncExternalStore(noopSubscribe, nativePlatform, () => "web" as const)
+}
+
+/**
+ * Sign in with Apple from the iOS app (Apple requires it next to Google, 4.8).
+ * Returns the identity token for the "apple-native" provider plus the name,
+ * which Apple only sends the first time; null when the user cancels.
+ */
+export async function nativeAppleSignIn(): Promise<{ idToken: string; name: string | null } | null> {
+  const { SocialLogin } = await import("@capgo/capacitor-social-login")
+  await SocialLogin.initialize({ apple: {} })
+  try {
+    const res = await SocialLogin.login({ provider: "apple", options: { scopes: ["email", "name"] } })
+    const r = res.result as { idToken?: string | null; profile?: { givenName?: string | null; familyName?: string | null } }
+    if (!r.idToken) return null
+    const name = [r.profile?.givenName, r.profile?.familyName].filter(Boolean).join(" ").trim()
+    return { idToken: r.idToken, name: name || null }
+  } catch (e) {
+    if (/cancel|1001/i.test(e instanceof Error ? e.message : String(e))) return null
     throw e
   }
 }
