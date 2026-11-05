@@ -107,3 +107,12 @@ describe("rankStandings", () => {
     expect(ranked.map((s) => s.rank)).toEqual([1, 2, 3, 4, 5])
   })
 })
+
+describe("rankStandings ties", () => {
+  it("gives the two players of a pair the same rank, next pair next rank", () => {
+    const e = (playerId: string, points: number, pf: number, pa: number) =>
+      ({ playerId, points, matchesWon: 0, matchesLost: 0, pointsFor: pf, pointsAgainst: pa, rank: 0 })
+    const ranked = rankStandings([e("luca", 9, 63, 42), e("sofia", 9, 63, 42), e("marco", 3, 50, 53), e("giulia", 3, 50, 53), e("paolo", 3, 40, 51)])
+    expect(ranked.map((r) => [r.playerId, r.rank])).toEqual([["luca", 1], ["sofia", 1], ["marco", 2], ["giulia", 2], ["paolo", 3]])
+  })
+})

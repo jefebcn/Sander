@@ -50,8 +50,10 @@ export function TournamentPaymentsList({
   isAdmin,
   tournamentStatus,
 }: TournamentPaymentsListProps) {
-  const paid = registrations.filter((r) => r.paymentStatus === "PAID" || r.paymentStatus === "FREE")
-  const total = registrations.length
+  // The counter is about the players' fee: free spectators don't count either way.
+  const counted = registrations.filter((r) => !(r.isSpectator && r.paymentStatus === "FREE"))
+  const paid = counted.filter((r) => r.paymentStatus === "PAID" || r.paymentStatus === "FREE")
+  const total = counted.length
   const allPaid = paid.length === total && total > 0
   const isDraft = tournamentStatus === "DRAFT"
 

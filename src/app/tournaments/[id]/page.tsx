@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { activeDuoOf, duoName } from "@/lib/scopri/duos"
 import { DuoRegisterButton } from "@/components/tournament/DuoRegisterButton"
 import { ClubRegisterBox } from "@/components/club/ClubRegisterBox"
+import { playingRegistrations, startProblem } from "@/lib/tournament/pairing"
 import Link from "next/link"
 import { ChevronRight, Play, Trophy, Shuffle, Trash2 } from "lucide-react"
 import { getTournamentDashboard } from "@/actions/standings"
@@ -115,6 +116,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
 
     const playerRegs = registrations.filter(r => !r.isSpectator)
     const spectatorRegs = registrations.filter(r => r.isSpectator)
+    const chiceceStartBlock = startProblem("CHICECE", playingRegistrations(registrations).length)
 
     return (
       <div className="pb-6">
@@ -313,9 +315,11 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 redirect(`/tournaments/${id}`)
               }}
             >
+              {chiceceStartBlock && <p className="mb-2 text-base text-white">{chiceceStartBlock}</p>}
               <button
                 type="submit"
-                className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--live)] font-bold text-black transition-all active:scale-[0.98]"
+                disabled={!!chiceceStartBlock}
+                className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--live)] font-bold text-black transition-all active:scale-[0.98] disabled:opacity-40"
               >
                 <Play className="h-5 w-5" />
                 Avvia Torneo Chicece
@@ -424,6 +428,10 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
 
   const playerRegs = tournament.registrations.filter(r => !r.isSpectator)
   const spectatorRegs = tournament.registrations.filter(r => r.isSpectator)
+  // Unplayed matches: "Concludi" waits until every result is in.
+  const openMatches = tournament.status === "LIVE" ? await db.match.count({ where: { tournamentId: id, isCompleted: false } }) : 0
+  // Why "Avvia" can't work yet (odd players, too few…), shown instead of failing silently.
+  const startBlock = startProblem(tournament.type, playingRegistrations(tournament.registrations).length)
   // The dashboard carries public fields only; the admin's payment list needs more.
   const payments = isAdmin && (tournament.priceCents ?? 0) > 0
     ? new Map(
@@ -622,13 +630,13 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             tournament.type === "ROUND_ROBIN") && (
             <TeamPairingEditor
               tournamentId={id}
-              registrations={tournament.registrations}
+              registrations={playingRegistrations(tournament.registrations)}
             />
           )}
 
           <div className="mx-4 mb-4 rounded-2xl bg-[var(--surface-1)] p-4">
             <p className="mb-3 text-sm text-[var(--muted-text)]">
-              Torneo in bozza con {tournament.registrations.length} giocatori registrati.
+              Torneo in bozza con {playingRegistrations(tournament.registrations).length} giocatori in campo.
             </p>
             <AdminTournamentSettingsForm
               tournamentId={id}
@@ -651,9 +659,11 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 redirect(`/tournaments/${id}`)
               }}
             >
+              {startBlock && <p className="mb-2 text-base text-white">{startBlock}</p>}
               <button
                 type="submit"
-                className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--live)] font-bold text-black transition-all active:scale-[0.98]"
+                disabled={!!startBlock}
+                className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--live)] font-bold text-black transition-all active:scale-[0.98] disabled:opacity-40"
               >
                 <Play className="h-5 w-5" aria-hidden="true" />
                 Avvia Torneo
@@ -707,7 +717,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
 
       {tournament.status === "LIVE" && (
         <ErrorBoundary label="La dashboard dal vivo non si è caricata">
-          <LiveDashboard tournamentId={id} initialData={data} canEditPlayers={!!session?.user?.id} />
+          <LiveDashboard tournamentId={id} initialData={data} canEditPlayers={isAdmin} canScore={isAdmin} />
         </ErrorBoundary>
       )}
 
@@ -754,7 +764,13 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             <ChevronRight className="h-5 w-5 text-[var(--muted-text)]" aria-hidden="true" />
           </Link>
 
-          {tournament.status === "LIVE" && (
+          {tournament.status === "LIVE" && isAdmin && openMatches > 0 && (
+            <p className="rounded-2xl bg-[var(--surface-1)] p-4 text-base text-[var(--muted-text)]">
+              {openMatches === 1 ? "Manca 1 risultato" : `Mancano ${openMatches} risultati`}: quando li hai inseriti tutti
+              puoi concludere il torneo.
+            </p>
+          )}
+          {tournament.status === "LIVE" && isAdmin && openMatches === 0 && (
             <ConfirmActionButton
               action={async () => {
                 "use server"

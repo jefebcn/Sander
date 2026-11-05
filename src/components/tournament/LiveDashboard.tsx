@@ -16,9 +16,11 @@ interface LiveDashboardProps {
   initialData: DashboardData
   readOnly?: boolean
   canEditPlayers?: boolean
+  /** The organiser: enters scores. Everyone else just follows live. */
+  canScore?: boolean
 }
 
-export function LiveDashboard({ tournamentId, initialData, readOnly, canEditPlayers }: LiveDashboardProps) {
+export function LiveDashboard({ tournamentId, initialData, readOnly, canEditPlayers, canScore = false }: LiveDashboardProps) {
   const { data, isRefetching } = useQuery({
     queryKey: ["dashboard", tournamentId],
     queryFn: () => getTournamentDashboard(tournamentId),
@@ -146,7 +148,7 @@ export function LiveDashboard({ tournamentId, initialData, readOnly, canEditPlay
                 key={match.id}
                 match={match}
                 tournamentId={tournamentId}
-                readOnly={readOnly}
+                readOnly={readOnly || !canScore}
                 canEditPlayers={canEditPlayers}
                 skillLevelMap={skillLevelMap}
               />

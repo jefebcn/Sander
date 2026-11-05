@@ -10,6 +10,8 @@ import {
 } from "@/lib/validators/tournament.schema"
 import type { CreateTournamentInput } from "@/lib/validators/tournament.schema"
 import { generateKOTBSchedule } from "@/lib/tournament/kotb"
+import { pairingOrder, playingRegistrations, regroupKeepingPairs, startProblem } from "@/lib/tournament/pairing"
+import { z } from "zod"
 import { generateBracket } from "@/lib/tournament/bracket"
 import { generateRoundRobinSchedule } from "@/lib/tournament/roundRobin"
 import { generateDoubleElimination } from "@/lib/tournament/doubleElim"
@@ -271,79 +273,79 @@ export async function listTournaments() {
   })
 }
 
-export async function randomizePairings(tournamentId: string) {
-  await requireAdmin()
-
+/** Who will play (no spectators, no cancelled rows), in pairing order. */
+async function playingInOrder(tournamentId: string) {
   const regs = await db.tournamentRegistration.findMany({
     where: { tournamentId },
-    orderBy: { seedPosition: "asc" },
-    select: { playerId: true },
+    select: { playerId: true, seedPosition: true, createdAt: true, paymentStatus: true, isSpectator: true, skillLevel: true, adminNotes: true },
   })
+  return pairingOrder(playingRegistrations(regs))
+}
 
-  // Fisher-Yates shuffle
-  const ids = regs.map((r) => r.playerId)
-  for (let i = ids.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[ids[i], ids[j]] = [ids[j], ids[i]]
-  }
-
+/** Seeds 1..n in this order: consecutive players form the pairs. */
+async function writeSeeds(tournamentId: string, playerIds: string[]) {
   await db.$transaction(
-    ids.map((playerId, i) =>
+    playerIds.map((playerId, i) =>
       db.tournamentRegistration.update({
         where: { tournamentId_playerId: { tournamentId, playerId } },
         data: { seedPosition: i + 1 },
       }),
     ),
   )
+}
 
+const PairingModeSchema = z.enum(["random", "mixed"]).default("random")
+
+/** New pairs at random, or one man and one woman per pair ("mixed"). Organiser only. */
+export async function randomizePairings(tournamentId: string, modeInput?: unknown) {
+  await requireTournamentManager(tournamentId)
+  const mode = PairingModeSchema.parse(modeInput)
+  const playing = await playingInOrder(tournamentId)
+  const genders = new Map(
+    (await db.player.findMany({ where: { id: { in: playing.map((r) => r.playerId) } }, select: { id: true, gender: true } }))
+      .map((p) => [p.id, p.gender]),
+  )
+  // Pairs that signed up together (registerPair notes them alike) stay together.
+  const order = regroupKeepingPairs(
+    playing.map((r) => ({
+      id: r.playerId,
+      pairKey: r.adminNotes?.startsWith("Coppia") ? r.adminNotes : null,
+      gender: genders.get(r.playerId) ?? null,
+    })),
+    mode,
+  )
+  await writeSeeds(tournamentId, order)
   revalidatePath(`/tournaments/${tournamentId}`)
 }
 
+/** Swap two players between pairs (or within the order). Organiser only. */
 export async function swapPlayers(tournamentId: string, playerAId: string, playerBId: string) {
-  await requireAdmin()
-
-  const [regA, regB] = await Promise.all([
-    db.tournamentRegistration.findUniqueOrThrow({
-      where: { tournamentId_playerId: { tournamentId, playerId: playerAId } },
-      select: { seedPosition: true },
-    }),
-    db.tournamentRegistration.findUniqueOrThrow({
-      where: { tournamentId_playerId: { tournamentId, playerId: playerBId } },
-      select: { seedPosition: true },
-    }),
-  ])
-
-  await db.$transaction([
-    db.tournamentRegistration.update({
-      where: { tournamentId_playerId: { tournamentId, playerId: playerAId } },
-      data: { seedPosition: regB.seedPosition },
-    }),
-    db.tournamentRegistration.update({
-      where: { tournamentId_playerId: { tournamentId, playerId: playerBId } },
-      data: { seedPosition: regA.seedPosition },
-    }),
-  ])
-
+  await requireTournamentManager(tournamentId)
+  // Players who signed up alone have no seed yet: number everyone first.
+  const ids = (await playingInOrder(tournamentId)).map((r) => r.playerId)
+  const a = ids.indexOf(playerAId)
+  const b = ids.indexOf(playerBId)
+  if (a < 0 || b < 0) throw new Error("Giocatore non iscritto")
+  ;[ids[a], ids[b]] = [ids[b], ids[a]]
+  await writeSeeds(tournamentId, ids)
   revalidatePath(`/tournaments/${tournamentId}`)
 }
 
 export async function startTournament(tournamentId: string) {
-  await requireAdmin()
-  const tournament = await db.tournament.findUniqueOrThrow({
-    where: { id: tournamentId },
-    include: {
-      registrations: { include: { player: true } },
-    },
-  })
+  await requireTournamentManager(tournamentId)
+  const tournament = await db.tournament.findUniqueOrThrow({ where: { id: tournamentId } })
 
   if (tournament.status !== "DRAFT") {
-    throw new Error("Tournament is not in DRAFT status")
+    throw new Error("Il torneo è già iniziato")
   }
 
-  const playerIds = tournament.registrations.map((r) => r.playerId)
-  const skillLevels = new Map<string, number | null>(
-    tournament.registrations.map((r) => [r.playerId, r.skillLevel]),
-  )
+  // Only who plays (spectators and cancelled rows stay out), in the order the
+  // organiser paired them: consecutive players are the pairs.
+  const playing = await playingInOrder(tournamentId)
+  const problem = startProblem(tournament.type, playing.length)
+  if (problem) throw new Error(problem)
+  const playerIds = playing.map((r) => r.playerId)
+  const skillLevels = new Map<string, number | null>(playing.map((r) => [r.playerId, r.skillLevel]))
 
   if (tournament.type === "KING_OF_THE_BEACH") {
     await startKOTBTournament(tournament, playerIds, skillLevels)
@@ -360,8 +362,7 @@ export async function startTournament(tournamentId: string) {
   // Notify all participants that the tournament has started
   try {
     const { notifyPlayers, notifyPlayer } = await import("@/lib/push")
-    const registeredPlayerIds = tournament.registrations.map((r) => r.playerId)
-    await notifyPlayers(registeredPlayerIds, {
+    await notifyPlayers(playerIds, {
       title: `🏐 ${tournament.name} è iniziato!`,
       body: "Il torneo è in corso. Controlla il tabellone e preparati per il tuo match.",
       url: `/tournaments/${tournamentId}`,
@@ -1401,7 +1402,10 @@ export async function submitChiceceFinalScore(
 }
 
 export async function completeTournament(tournamentId: string) {
-  await requireAdmin()
+  await requireTournamentManager(tournamentId)
+  // Closing with matches still unplayed froze a standings table of zeros.
+  const open = await db.match.count({ where: { tournamentId, isCompleted: false } })
+  if (open > 0) throw new Error(`Mancano ${open} risultati: inseriscili prima di concludere`)
 
   // Idempotency guard: a second click (or a retry) must not increment career
   // stats and trophies again for every registered player.
@@ -1421,13 +1425,14 @@ export async function completeTournament(tournamentId: string) {
   })
 
   await db.$transaction(
-    standings.map((s, i) =>
+    standings.map((s) =>
       db.player.update({
         where: { id: s.playerId },
         data: {
           matchesWon: { increment: s.matchesWon },
           matchesLost: { increment: s.matchesLost },
-          tournamentsWon: i === 0 ? { increment: 1 } : undefined,
+          // Everyone on rank 1: both players of the winning pair.
+          tournamentsWon: s.rank === 1 ? { increment: 1 } : undefined,
         },
       }),
     ),
@@ -1447,9 +1452,9 @@ export async function completeTournament(tournamentId: string) {
   // Notify all participants that the tournament is over
   try {
     const { notifyPlayers } = await import("@/lib/push")
-    const winner = standings[0]
-    const winnerName = winner
-      ? (await db.player.findUnique({ where: { id: winner.playerId }, select: { name: true } }))?.name
+    const winners = standings.filter((s) => s.rank === 1).map((s) => s.playerId)
+    const winnerName = winners.length
+      ? (await db.player.findMany({ where: { id: { in: winners } }, select: { name: true } })).map((p) => p.name).join(" & ")
       : null
     const tournamentName = (await db.tournament.findUnique({ where: { id: tournamentId }, select: { name: true } }))?.name ?? "Il torneo"
     await notifyPlayers(
@@ -1472,7 +1477,13 @@ export async function completeTournament(tournamentId: string) {
 }
 
 export async function deleteTournament(tournamentId: string) {
-  await requireAdmin()
+  // Admins delete anything; a club's staff only a tournament that hasn't started.
+  const session = await getCurrentSession()
+  if (!isAdminEmail(session?.user?.email)) {
+    await requireTournamentManager(tournamentId)
+    const t = await db.tournament.findUnique({ where: { id: tournamentId }, select: { status: true } })
+    if (t?.status !== "DRAFT") throw new Error("Solo un torneo non ancora iniziato si può eliminare")
+  }
 
   // Fetch before deletion so we can revert player stats
   const tournament = await db.tournament.findUniqueOrThrow({
@@ -2137,8 +2148,7 @@ export async function updateTeamInfo(
   teamName: string | null,
   teamLogoUrl: string | null,
 ) {
-  const session = await getCurrentSession()
-  if (!isAdminEmail(session?.user?.email)) throw new Error("Non autorizzato")
+  await requireTournamentManager(tournamentId)
 
   const tournament = await db.tournament.findUniqueOrThrow({
     where: { id: tournamentId },
