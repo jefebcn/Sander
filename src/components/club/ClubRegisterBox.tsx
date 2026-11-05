@@ -3,9 +3,9 @@
 import { useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { CheckCircle2, Copy, Loader2, MessageCircle, UserPlus, X } from "lucide-react"
+import { CheckCircle2, Clock, Copy, Loader2, MessageCircle, QrCode, UserPlus, X } from "lucide-react"
 import { toast } from "sonner"
-import { cancelPairInvite, createPairInvite, registerForTournament } from "@/actions/registration"
+import { cancelPairInvite, createPairInvite, joinWaitlist, leaveWaitlist, registerForTournament } from "@/actions/registration"
 
 interface Props {
   tournamentId: string
@@ -19,6 +19,12 @@ interface Props {
   open: boolean
   /** My invite still waiting for the partner. */
   pendingToken: string | null
+  /** No seats left: the waiting list replaces the sign-up buttons. */
+  full: boolean
+  /** My place in the waiting list, or null. */
+  waitlistPosition: number | null
+  /** My registration, for the check-in ticket. */
+  registrationId: string | null
 }
 
 /**
@@ -35,15 +41,52 @@ export function ClubRegisterBox(p: Props) {
 
   if (p.registered) {
     return (
-      <div className="flex items-start gap-3 rounded-2xl bg-[var(--surface-2)] p-4">
-        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[var(--live)]" aria-hidden="true" />
-        <p className="text-base text-white">
-          Sei iscritto. {p.price ? (p.paid ? "Quota pagata." : `Ricordati la quota: ${p.price}, al campo.`) : ""}
-        </p>
+      <div className="flex flex-col gap-2">
+        <div className="flex items-start gap-3 rounded-2xl bg-[var(--surface-2)] p-4">
+          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[var(--live)]" aria-hidden="true" />
+          <p className="text-base text-white">
+            Sei iscritto. {p.price ? (p.paid ? "Quota pagata." : `Ricordati la quota: ${p.price}, al campo.`) : ""}
+          </p>
+        </div>
+        {p.registrationId && (
+          <Link href={`/tournaments/${p.tournamentId}/checkin/${p.registrationId}`} className="btn btn-secondary w-full gap-2">
+            <QrCode className="h-5 w-5" aria-hidden="true" /> Il tuo QR per il check-in
+          </Link>
+        )}
       </div>
     )
   }
   if (!p.open) return null
+  if (p.full && p.isAuthed) {
+    const waitlist = (join: boolean) =>
+      startTransition(async () => {
+        const res = join ? await joinWaitlist(p.tournamentId) : await leaveWaitlist(p.tournamentId)
+        if (!res.ok) return void toast.error(res.error)
+        toast.success(join ? "Sei in lista d'attesa" : "Sei uscito dalla lista d'attesa")
+        router.refresh()
+      })
+    return p.waitlistPosition ? (
+      <div className="flex flex-col gap-2 rounded-2xl bg-[var(--surface-2)] p-4">
+        <p className="flex items-center gap-2 text-base font-bold text-white">
+          <Clock className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />
+          Sei {p.waitlistPosition}° in lista d&apos;attesa
+        </p>
+        <p className="text-base text-[var(--muted-text)]">Se si libera un posto entri da solo e ti arriva una notifica. {payNote}</p>
+        <button type="button" disabled={pending} onClick={() => waitlist(false)} className="flex min-h-[3.5rem] items-center justify-center text-base font-bold text-[var(--muted-text)]">
+          Esci dalla lista
+        </button>
+      </div>
+    ) : (
+      <div className="flex flex-col gap-2">
+        <p className="text-center text-base font-bold text-white">Torneo al completo</p>
+        <button type="button" disabled={pending} onClick={() => waitlist(true)} className="btn btn-primary w-full gap-2">
+          {pending ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Clock className="h-5 w-5" aria-hidden="true" />}
+          Mettimi in lista d&apos;attesa
+        </button>
+        <p className="text-center text-sm text-[var(--muted-text)]">Se qualcuno si ritira entri tu, in ordine di arrivo.</p>
+      </div>
+    )
+  }
   if (!p.isAuthed) {
     return (
       <Link href={`/auth/signin?callbackUrl=/tournaments/${p.tournamentId}&mode=register`} className="btn btn-primary w-full">

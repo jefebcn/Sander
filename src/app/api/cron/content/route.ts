@@ -9,6 +9,7 @@ import { nudgeSweep } from "@/lib/nudges"
 import { cancelStaleSessions } from "@/lib/sessionRefunds"
 import { scopriMorning } from "@/lib/scopri/digest"
 import { confirmDueScores } from "@/lib/sessionScore"
+import { tournamentReminders } from "@/lib/tournamentReminders"
 
 export const runtime = "nodejs"
 
@@ -66,5 +67,12 @@ export async function GET(req: NextRequest) {
     return 0
   })
 
-  return NextResponse.json({ ok: true, created, nudged, staleCancelled, scopri, scoresConfirmed })
+  // Tomorrow's tournaments: "domani si gioca" to every player, with the fee
+  // to bring when it is paid at the court.
+  const tournamentReminded = await tournamentReminders().catch((e) => {
+    console.error("[cron] tournament reminders failed", e)
+    return 0
+  })
+
+  return NextResponse.json({ ok: true, created, nudged, staleCancelled, scopri, scoresConfirmed, tournamentReminded })
 }

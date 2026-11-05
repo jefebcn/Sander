@@ -24,3 +24,9 @@ export async function myManagedClubs(playerId: string) {
     orderBy: { name: "asc" },
   })
 }
+
+/** SANDER admins or the club's owner: staff, invite link and other owner-only settings. */
+export async function isClubOwner(email: string | null | undefined, playerId: string | null, clubId: string): Promise<boolean> {
+  if (isAdminEmail(email)) return true
+  return !!playerId && (await clubRole(playerId, clubId)) === "OWNER"
+}

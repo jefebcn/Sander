@@ -46,3 +46,14 @@ export const PairInviteTokenSchema = z.string().trim().regex(/^[A-Za-z0-9_-]{16,
 export const CreateCircuitSchema = z.object({ clubId: ClubIdSchema, name: z.string().trim().min(3, "Nome troppo corto").max(60) })
 
 export const SetTournamentCircuitSchema = z.object({ tournamentId: z.string().trim().min(1).max(64), circuitId: z.string().trim().min(1).max(64).nullable() })
+
+export const StaffInviteTokenSchema = z.string().trim().regex(/^[A-Za-z0-9_-]{16,64}$/)
+
+export const RemoveStaffSchema = z.object({ clubId: ClubIdSchema, playerId: z.string().trim().min(1).max(64) })
+
+export const ClubMessageSchema = z.object({
+  clubId: ClubIdSchema,
+  /** null: the club's followers; otherwise the players of that club tournament. */
+  tournamentId: z.string().trim().min(1).max(64).nullable(),
+  body: z.string().trim().min(5, "Messaggio troppo corto").max(300, "Massimo 300 caratteri"),
+})

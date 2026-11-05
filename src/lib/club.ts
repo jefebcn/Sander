@@ -47,6 +47,9 @@ export const CLUB_SERVICE_KEYS = CLUB_SERVICES.map((s) => s.key) as [string, ...
 export const COURT_TYPES = { OUTDOOR: "All'aperto", INDOOR: "Coperti", BOTH: "All'aperto e coperti" } as const
 export const MAX_CLUB_PHOTOS = 6
 
+/** Notifications a club can send per day (followers or a tournament's players). */
+export const CLUB_MESSAGES_PER_DAY = 3
+
 /** "Portami lì": Google Maps directions to the club's courts. */
 export function mapsUrl(address: string | null | undefined, city: string): string {
   const q = [address, city].filter(Boolean).join(", ")

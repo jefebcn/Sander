@@ -2,10 +2,10 @@ export const dynamic = "force-dynamic"
 
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
-import { CheckCircle2, Circle, Download, Image as ImageIcon, Plus, QrCode, Users } from "lucide-react"
+import { CheckCircle2, Circle, ClipboardCheck, Download, Image as ImageIcon, Plus, QrCode, Users } from "lucide-react"
 import { db } from "@/lib/db"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
-import { canManageClub } from "@/lib/clubAccess"
+import { canManageClub, isClubOwner } from "@/lib/clubAccess"
 import { holdsSeat } from "@/lib/tournament/capacity"
 import { formatDate } from "@/lib/utils"
 import { PageHeader } from "@/components/layout/PageHeader"
@@ -14,6 +14,9 @@ import { CircuitCreateForm } from "@/components/club/CircuitCreateForm"
 import { TournamentCircuitSelect } from "@/components/club/TournamentCircuitSelect"
 import { CopyLinkButton } from "@/components/club/CopyLinkButton"
 import { clubChecklist } from "@/lib/club"
+import { StaffInviteButton } from "@/components/club/StaffInviteButton"
+import { RemoveStaffButton } from "@/components/club/RemoveStaffButton"
+import { ClubMessageForm } from "@/components/club/ClubMessageForm"
 
 interface Props { params: Promise<{ slug: string }> }
 
@@ -26,18 +29,28 @@ export default async function ClubManagePage({ params }: Props) {
   if (!club) notFound()
   if (!(await canManageClub(session?.user?.email, me.id, club.id))) redirect(`/c/${slug}`)
 
-  const [tournaments, circuits] = await Promise.all([
+  const [tournaments, circuits, staff, messages, followers, owner] = await Promise.all([
     db.tournament.findMany({
       where: { clubId: club.id },
       orderBy: { date: "desc" },
       take: 30,
       select: {
         id: true, name: true, date: true, status: true, priceCents: true, maxTeams: true, type: true, circuitId: true,
-        registrations: { select: { paymentStatus: true, isSpectator: true } },
+        registrations: { select: { paymentStatus: true, isSpectator: true, checkedInAt: true } },
+        _count: { select: { waitlist: true } },
       },
     }),
     db.clubCircuit.findMany({ where: { clubId: club.id }, orderBy: { createdAt: "desc" }, select: { id: true, name: true, _count: { select: { tournaments: true } } } }),
+    db.clubMember.findMany({ where: { clubId: club.id }, orderBy: [{ role: "asc" }, { createdAt: "asc" }], select: { role: true, player: { select: { id: true, name: true } } } }),
+    db.clubMessage.findMany({ where: { clubId: club.id }, orderBy: { createdAt: "desc" }, take: 5, select: { id: true, createdAt: true, body: true, sentTo: true, tournament: { select: { name: true } } } }),
+    db.clubFollow.count({ where: { clubId: club.id } }),
+    isClubOwner(session?.user?.email, me.id, club.id),
   ])
+  const upcoming = tournaments.filter((t) => t.status !== "COMPLETED")
+  const audiences = [
+    { tournamentId: null, label: `Follower del club (${followers})` },
+    ...upcoming.map((t) => ({ tournamentId: t.id, label: `Iscritti a ${t.name} (${t.registrations.filter(holdsSeat).length})` })),
+  ]
   const steps = clubChecklist({ ...club, tournaments: tournaments.length })
   const done = steps.filter((s) => s.done).length
 
@@ -97,9 +110,13 @@ export default async function ClubManagePage({ params }: Props) {
                 <p className="mt-2 flex items-center gap-1 text-base text-white">
                   <Users className="h-4 w-4 text-[var(--accent)]" aria-hidden="true" />
                   {players.length} iscritti{unpaid > 0 ? ` · ${unpaid} da pagare al campo` : ""}
+                  {t._count.waitlist > 0 ? ` · ${t._count.waitlist} in attesa` : ""}
                 </p>
-                <div className="mt-3 grid grid-cols-3 gap-2">
+                <div className="mt-3 grid grid-cols-2 gap-2">
                   <Link href={`/tournaments/${t.id}`} className="btn btn-secondary min-h-[3.5rem]">Apri</Link>
+                  <Link href={`/tournaments/${t.id}/checkin`} className="btn btn-secondary min-h-[3.5rem] gap-1 px-2">
+                    <ClipboardCheck className="h-5 w-5" aria-hidden="true" /> Check-in
+                  </Link>
                   <a href={`/tournaments/${t.id}/locandina`} download className="btn btn-secondary min-h-[3.5rem] gap-1 px-2" aria-label="Scarica la locandina per Instagram">
                     <ImageIcon className="h-5 w-5" aria-hidden="true" /> Storia
                   </a>
@@ -116,6 +133,50 @@ export default async function ClubManagePage({ params }: Props) {
             )
           })}
         </section>
+
+        <section className="flex flex-col gap-2">
+          <h2 className="eyebrow text-[var(--accent)]">Scrivi ai giocatori</h2>
+          <p className="text-base text-[var(--muted-text)]">Arriva come notifica sul telefono. Al massimo 3 al giorno.</p>
+          <ClubMessageForm clubId={club.id} audiences={audiences} />
+          {messages.length > 0 && (
+            <ul className="mt-1 flex flex-col gap-2">
+              {messages.map((m) => (
+                <li key={m.id} className="rounded-2xl bg-[var(--surface-2)] p-3">
+                  <p className="text-base text-white">{m.body}</p>
+                  <p className="mt-1 text-sm text-[var(--muted-text)]">
+                    {formatDate(m.createdAt)} · {m.tournament ? `iscritti a ${m.tournament.name}` : "follower"} · {m.sentTo} {m.sentTo === 1 ? "giocatore" : "giocatori"}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="flex flex-col gap-2">
+          <h2 className="eyebrow text-[var(--accent)]">Staff</h2>
+          <ul className="flex flex-col gap-2">
+            {staff.map((m) => (
+              <li key={m.player.id} className="flex min-h-[3.5rem] items-center justify-between gap-2 rounded-2xl bg-[var(--surface-2)] pl-4">
+                <span className="text-base font-bold text-white">{m.player.name}</span>
+                <span className="flex items-center gap-1">
+                  <span className="text-sm text-[var(--muted-text)]">{m.role === "OWNER" ? "Proprietario" : "Staff"}</span>
+                  {owner && m.role === "STAFF" ? <RemoveStaffButton clubId={club.id} playerId={m.player.id} name={m.player.name} /> : <span className="w-4" />}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {owner && <StaffInviteButton clubId={club.id} clubSlug={club.slug} clubName={club.name} />}
+        </section>
+
+        <details className="rounded-2xl bg-[var(--surface-2)] p-4">
+          <summary className="flex min-h-[2.5rem] cursor-pointer items-center text-base font-bold text-white">Come funziona il giorno del torneo</summary>
+          <ol className="mt-2 flex list-decimal flex-col gap-2 pl-5 text-base text-[var(--muted-text)]">
+            <li>Il giorno prima gli iscritti ricevono un promemoria, con la quota da portare.</li>
+            <li>All&apos;arrivo apri <b className="text-white">Check-in</b>: segni chi è arrivato e chi ha pagato, oppure inquadri il QR del giocatore con la fotocamera.</li>
+            <li>Se qualcuno si ritira, il primo in lista d&apos;attesa entra da solo e riceve una notifica.</li>
+            <li>Dalla pagina del torneo formi le coppie, lo avvii e segni i punteggi. A fine torneo lo concludi: classifica e circuito si aggiornano.</li>
+          </ol>
+        </details>
 
         <section className="flex flex-col gap-2">
           <h2 className="eyebrow text-[var(--accent)]">Circuiti</h2>

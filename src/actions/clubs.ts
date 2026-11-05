@@ -1,14 +1,16 @@
 "use server"
 
+import { randomBytes } from "node:crypto"
 import { revalidatePath } from "next/cache"
+import { after } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { isAdminEmail } from "@/lib/isAdmin"
-import { canManageClub } from "@/lib/clubAccess"
-import { clubSlug, freeSlug, instagramHandle } from "@/lib/club"
+import { canManageClub, isClubOwner } from "@/lib/clubAccess"
+import { CLUB_MESSAGES_PER_DAY, clubSlug, freeSlug, instagramHandle } from "@/lib/club"
 import { notifyAdmins } from "@/lib/adminNotify"
-import { notifyPlayer } from "@/lib/push"
-import { ClubFieldsSchema, ClubStatusSchema, CreateCircuitSchema, FollowClubSchema, SetTournamentCircuitSchema, UpdateClubSchema } from "@/lib/validators/club.schema"
+import { notifyPlayer, notifyPlayers } from "@/lib/push"
+import { ClubFieldsSchema, ClubIdSchema, ClubMessageSchema, ClubStatusSchema, CreateCircuitSchema, FollowClubSchema, RemoveStaffSchema, SetTournamentCircuitSchema, StaffInviteTokenSchema, UpdateClubSchema } from "@/lib/validators/club.schema"
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  Clubs: a player requests one, a SANDER admin approves it, its staff runs   */
@@ -151,6 +153,112 @@ export async function setTournamentCircuit(input: unknown): Promise<Result> {
       revalidatePath(`/c/${t.club.slug}/gestione`)
     }
     return { ok: true }
+  } catch (e) {
+    return { ok: false, error: errorOf(e) }
+  }
+}
+
+/* ── Staff ─────────────────────────────────────────────────────────────── */
+
+/** Owner: a link that adds whoever opens it to the staff. A new one replaces the old. */
+export async function createStaffInvite(input: unknown): Promise<Result<{ token: string }>> {
+  try {
+    const session = await getCurrentSession()
+    const me = await getCurrentPlayer()
+    const clubId = ClubIdSchema.parse(input)
+    if (!(await isClubOwner(session?.user?.email, me?.id ?? null, clubId))) return { ok: false, error: "Solo il proprietario del club può invitare lo staff" }
+    const token = randomBytes(18).toString("base64url")
+    await db.club.update({ where: { id: clubId }, data: { staffInviteToken: token } })
+    return { ok: true, token }
+  } catch (e) {
+    return { ok: false, error: errorOf(e) }
+  }
+}
+
+/** Opening the staff link: join the staff of an approved club. */
+export async function acceptStaffInvite(input: unknown): Promise<Result<{ slug: string }>> {
+  try {
+    const me = await getCurrentPlayer()
+    if (!me) return { ok: false, error: "Accedi per entrare nello staff" }
+    const token = StaffInviteTokenSchema.parse(input)
+    const club = await db.club.findUnique({
+      where: { staffInviteToken: token },
+      select: { id: true, slug: true, name: true, status: true, members: { where: { role: "OWNER" }, select: { playerId: true } } },
+    })
+    if (!club || club.status !== "APPROVED") return { ok: false, error: "Link non valido o scaduto: chiedine uno nuovo al club" }
+    const existing = await db.clubMember.findUnique({ where: { clubId_playerId: { clubId: club.id, playerId: me.id } }, select: { id: true } })
+    if (!existing) {
+      await db.clubMember.create({ data: { clubId: club.id, playerId: me.id, role: "STAFF" } })
+      for (const o of club.members) {
+        await notifyPlayer(o.playerId, { title: `${me.name} è nello staff`, body: `Ora può gestire i tornei di ${club.name}.`, url: `/c/${club.slug}/gestione` }).catch(() => {})
+      }
+    }
+    revalidatePath(`/c/${club.slug}/gestione`)
+    return { ok: true, slug: club.slug }
+  } catch (e) {
+    return { ok: false, error: errorOf(e) }
+  }
+}
+
+/** Owner: remove someone from the staff (never the owner). */
+export async function removeStaffMember(input: unknown): Promise<Result> {
+  try {
+    const session = await getCurrentSession()
+    const me = await getCurrentPlayer()
+    const { clubId, playerId } = RemoveStaffSchema.parse(input)
+    if (!(await isClubOwner(session?.user?.email, me?.id ?? null, clubId))) return { ok: false, error: "Solo il proprietario del club può togliere lo staff" }
+    const { count } = await db.clubMember.deleteMany({ where: { clubId, playerId, role: "STAFF" } })
+    if (count === 0) return { ok: false, error: "Persona non trovata nello staff" }
+    const club = await db.club.findUnique({ where: { id: clubId }, select: { slug: true } })
+    if (club) revalidatePath(`/c/${club.slug}/gestione`)
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: errorOf(e) }
+  }
+}
+
+/* ── Messages ──────────────────────────────────────────────────────────── */
+
+/**
+ * Staff: a notification to the club's followers or to the players of one of
+ * its tournaments ("Si inizia alle 10, portate i palloni"). A few per day, so
+ * followers don't mute the club.
+ */
+export async function sendClubMessage(input: unknown): Promise<Result<{ sentTo: number }>> {
+  try {
+    const session = await getCurrentSession()
+    const me = await getCurrentPlayer()
+    const { clubId, tournamentId, body } = ClubMessageSchema.parse(input)
+    if (!(await canManageClub(session?.user?.email, me?.id ?? null, clubId))) return { ok: false, error: "Non autorizzato" }
+    const club = await db.club.findUnique({ where: { id: clubId }, select: { name: true, slug: true } })
+    if (!club) return { ok: false, error: "Club non trovato" }
+
+    const today = await db.clubMessage.count({ where: { clubId, createdAt: { gte: new Date(Date.now() - 24 * 3600_000) } } })
+    if (today >= CLUB_MESSAGES_PER_DAY) return { ok: false, error: `Massimo ${CLUB_MESSAGES_PER_DAY} messaggi al giorno: riprova domani` }
+
+    let recipients: string[]
+    let url = `/c/${club.slug}`
+    if (tournamentId) {
+      const t = await db.tournament.findFirst({ where: { id: tournamentId, clubId }, select: { id: true } })
+      if (!t) return { ok: false, error: "Torneo non trovato" }
+      const regs = await db.tournamentRegistration.findMany({
+        where: { tournamentId, paymentStatus: { notIn: ["CANCELLED", "FAILED", "REFUNDED"] } },
+        select: { playerId: true },
+      })
+      recipients = regs.map((r) => r.playerId)
+      url = `/tournaments/${tournamentId}`
+    } else {
+      const follows = await db.clubFollow.findMany({ where: { clubId }, select: { playerId: true } })
+      recipients = follows.map((f) => f.playerId)
+    }
+    recipients = [...new Set(recipients)].filter((id) => id !== me?.id)
+    if (recipients.length === 0) return { ok: false, error: tournamentId ? "Nessun iscritto a cui scrivere" : "Il club non ha ancora follower" }
+
+    await db.clubMessage.create({ data: { clubId, tournamentId, body, authorId: me?.id ?? null, sentTo: recipients.length } })
+    // Delivery runs after the response: the staff member doesn't wait for every push.
+    after(() => notifyPlayers(recipients, { title: club.name, body, url }))
+    revalidatePath(`/c/${club.slug}/gestione`)
+    return { ok: true, sentTo: recipients.length }
   } catch (e) {
     return { ok: false, error: errorOf(e) }
   }
