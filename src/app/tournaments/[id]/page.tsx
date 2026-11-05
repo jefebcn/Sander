@@ -60,7 +60,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   const { id } = await params
 
   const [base, session] = await Promise.all([
-    db.tournament.findUnique({ where: { id }, select: { type: true, priceCents: true, priceCurrency: true, club: { select: { name: true, slug: true } } } }),
+    db.tournament.findUnique({ where: { id }, select: { type: true, priceCents: true, priceCurrency: true, club: { select: { name: true, slug: true } }, circuit: { select: { id: true, name: true } } } }),
     getCurrentSession(),
   ])
   if (!base) notFound()
@@ -78,9 +78,16 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
     ? await db.tournamentPairInvite.findFirst({ where: { tournamentId: id, fromId: currentPlayer.id, status: "PENDING" }, select: { token: true } })
     : null
   const clubChip = club && (
-    <Link href={`/c/${club.slug}`} className="mt-2 inline-flex min-h-[2.75rem] items-center gap-1 text-base font-bold text-[var(--tone)]">
-      Organizzato da {club.name} <ChevronRight className="h-4 w-4" aria-hidden="true" />
-    </Link>
+    <div className="mt-2 flex flex-col">
+      <Link href={`/c/${club.slug}`} className="inline-flex min-h-[2.75rem] items-center gap-1 text-base font-bold text-[var(--tone)]">
+        Organizzato da {club.name} <ChevronRight className="h-4 w-4" aria-hidden="true" />
+      </Link>
+      {base.circuit && (
+        <Link href={`/c/${club.slug}/circuiti/${base.circuit.id}`} className="inline-flex min-h-[2.75rem] items-center gap-1 text-base font-bold text-white">
+          Tappa di {base.circuit.name} <ChevronRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
+      )}
+    </div>
   )
 
   // ── Chicece path ────────────────────────────────────────────

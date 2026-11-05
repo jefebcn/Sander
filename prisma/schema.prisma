@@ -263,6 +263,9 @@ model Tournament {
   // Organised by a club (lib/club.ts): its staff manages it, players pay on site.
   clubId String?
   club   Club?   @relation(fields: [clubId], references: [id], onDelete: SetNull)
+  // A stage of the club's circuit, when it is one.
+  circuitId String?
+  circuit   ClubCircuit? @relation(fields: [circuitId], references: [id], onDelete: SetNull)
   pairInvites TournamentPairInvite[]
 
   // Cover image & display metadata
@@ -300,12 +303,37 @@ model Club {
   status      ClubStatus @default(PENDING)
   approvedAt  DateTime?
 
+  // Courts and services (lib/club.ts): what a player wants to know before going.
+  courts          Int?
+  courtType       String?  // OUTDOOR | INDOOR | BOTH
+  openingHours    String?
+  courtPriceCents Int?     // per hour
+  services        String[] @default([])
+  photos          String[] @default([])
+  bagno           Int?     // the bagno it is, for "Re dei Bagni"
+
   members     ClubMember[]
   followers   ClubFollow[]
   tournaments Tournament[]
+  circuits    ClubCircuit[]
 
   @@index([status])
   @@map("clubs")
+}
+
+/// A season-long series of a club's tournaments ("tappe") with an overall
+/// standings table: points per placement, see lib/circuit.ts.
+model ClubCircuit {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  clubId    String
+  name      String
+
+  club        Club         @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  tournaments Tournament[]
+
+  @@index([clubId])
+  @@map("club_circuits")
 }
 
 enum ClubStatus {

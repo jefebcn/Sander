@@ -8,7 +8,7 @@ import { canManageClub } from "@/lib/clubAccess"
 import { clubSlug, freeSlug, instagramHandle } from "@/lib/club"
 import { notifyAdmins } from "@/lib/adminNotify"
 import { notifyPlayer } from "@/lib/push"
-import { ClubFieldsSchema, ClubStatusSchema, FollowClubSchema, UpdateClubSchema } from "@/lib/validators/club.schema"
+import { ClubFieldsSchema, ClubStatusSchema, CreateCircuitSchema, FollowClubSchema, SetTournamentCircuitSchema, UpdateClubSchema } from "@/lib/validators/club.schema"
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  Clubs: a player requests one, a SANDER admin approves it, its staff runs   */
@@ -111,6 +111,45 @@ export async function followClub(input: unknown): Promise<Result> {
       await db.clubFollow.deleteMany({ where: { clubId, playerId: me.id } })
     }
     revalidatePath(`/c/${club.slug}`)
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: errorOf(e) }
+  }
+}
+
+/** A season series of the club's tournaments, with an overall standings table. */
+export async function createCircuit(input: unknown): Promise<Result<{ id: string }>> {
+  try {
+    const session = await getCurrentSession()
+    const me = await getCurrentPlayer()
+    const { clubId, name } = CreateCircuitSchema.parse(input)
+    if (!(await canManageClub(session?.user?.email, me?.id ?? null, clubId))) return { ok: false, error: "Non autorizzato" }
+    const c = await db.clubCircuit.create({ data: { clubId, name }, select: { id: true, club: { select: { slug: true } } } })
+    revalidatePath(`/c/${c.club.slug}`)
+    revalidatePath(`/c/${c.club.slug}/gestione`)
+    return { ok: true, id: c.id }
+  } catch (e) {
+    return { ok: false, error: errorOf(e) }
+  }
+}
+
+/** Make a club tournament a stage of one of the club's circuits (or none). */
+export async function setTournamentCircuit(input: unknown): Promise<Result> {
+  try {
+    const session = await getCurrentSession()
+    const me = await getCurrentPlayer()
+    const { tournamentId, circuitId } = SetTournamentCircuitSchema.parse(input)
+    const t = await db.tournament.findUnique({ where: { id: tournamentId }, select: { clubId: true, club: { select: { slug: true } } } })
+    if (!t?.clubId || !(await canManageClub(session?.user?.email, me?.id ?? null, t.clubId))) return { ok: false, error: "Non autorizzato" }
+    if (circuitId) {
+      const c = await db.clubCircuit.findFirst({ where: { id: circuitId, clubId: t.clubId }, select: { id: true } })
+      if (!c) return { ok: false, error: "Circuito non trovato" }
+    }
+    await db.tournament.update({ where: { id: tournamentId }, data: { circuitId } })
+    if (t.club) {
+      revalidatePath(`/c/${t.club.slug}`)
+      revalidatePath(`/c/${t.club.slug}/gestione`)
+    }
     return { ok: true }
   } catch (e) {
     return { ok: false, error: errorOf(e) }

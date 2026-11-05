@@ -41,6 +41,8 @@ const nextConfig: NextConfig = {
   // from disk: make sure those files ship with the functions that need them.
   outputFileTracingIncludes: {
     "/{players,tournaments}/*/opengraph-image*": ["./src/assets/fonts/**", "./public/icon-512.png"],
+    "/tournaments/*/locandina": ["./src/assets/fonts/**", "./public/icon-512.png"],
+    "/c/*/qr": ["./src/assets/fonts/**", "./public/icon-512.png"],
   },
   // Addresses people type by habit: both land on the sign-up form.
   async redirects() {

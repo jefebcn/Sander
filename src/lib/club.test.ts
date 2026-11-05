@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { clubSlug, freeSlug, instagramHandle } from "./club"
+import { clubChecklist, clubSlug, freeSlug, instagramHandle, mapsUrl } from "./club"
 
 describe("clubSlug", () => {
   it("makes a readable URL name", () => {
@@ -25,5 +25,19 @@ describe("instagramHandle", () => {
     expect(instagramHandle("@beachvolleycustorino")).toBe("beachvolleycustorino")
     expect(instagramHandle("https://www.instagram.com/beachvolleycustorino/")).toBe("beachvolleycustorino")
     expect(instagramHandle("javascript:alert(1)")).toBeNull()
+  })
+})
+
+describe("mapsUrl", () => {
+  it("builds directions to address and city", () => {
+    expect(mapsUrl("Via Panetti 30", "Torino")).toBe("https://www.google.com/maps/dir/?api=1&destination=Via%20Panetti%2030%2C%20Torino")
+    expect(mapsUrl(null, "Torino")).toContain("destination=Torino")
+  })
+})
+
+describe("clubChecklist", () => {
+  it("marks what's done", () => {
+    const list = clubChecklist({ logoUrl: "x", description: " ", courts: 3, photos: [], tournaments: 0 })
+    expect(list.filter((i) => i.done).map((i) => i.key)).toEqual(["logo", "campi"])
   })
 })
