@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest"
 import {
   sessionDateError,
+  completeWindowOpen,
   joinWindowOpen,
   completionError,
   countsForProgress,
@@ -67,5 +68,13 @@ describe("staleness", () => {
   it("marks matches older than a week as stale", () => {
     expect(isStale(new Date(now.getTime() - 8 * 86400_000), now)).toBe(true)
     expect(isStale(new Date(now.getTime() - 6 * 86400_000), now)).toBe(false)
+  })
+})
+
+describe("completeWindowOpen", () => {
+  const start = new Date("2026-11-05T10:00:00Z")
+  it("opens 15 minutes before the start", () => {
+    expect(completeWindowOpen(start, new Date("2026-11-05T09:44:00Z"))).toBe(false)
+    expect(completeWindowOpen(start, new Date("2026-11-05T09:45:00Z"))).toBe(true)
   })
 })

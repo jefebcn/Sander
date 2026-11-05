@@ -110,6 +110,9 @@ export async function createSession(input: unknown) {
       quotaAmount: data.paymentType === "QUOTA" || data.paymentType === "SC" ? (data.quotaAmount ?? null) : null,
       loserPays: data.paymentType === "LOSER_PAYS" ? (data.loserPays ?? null) : null,
       matchMode: data.format === "TWO_VS_TWO" ? (data.matchMode ?? false) : false,
+      // Whoever creates a match plays in it (they can still leave). Not for SC
+      // matches: there the seat is paid, so they join like everyone else.
+      ...(data.paymentType === "SC" ? {} : { participants: { create: { playerId: player.id } } }),
     },
   })
 

@@ -41,3 +41,16 @@ export function scoreState(
 export function autoConfirmAt(submittedAt: Date): Date {
   return new Date(submittedAt.getTime() + WINDOW_MS)
 }
+
+/** The push each player gets once a score counts: result, rating move, link to the match. */
+export function resultNotice(r: { won: boolean | null; title: string; delta: number | null; sessionId: string }) {
+  const pts = r.delta === null || r.delta === 0 ? "" : ` ${r.delta > 0 ? "+" : ""}${r.delta} punti.`
+  const title = r.won === null ? "Risultato confermato" : r.won ? "Vittoria confermata!" : "Risultato confermato"
+  const body =
+    r.won === null
+      ? `${r.title}: il risultato conta per la classifica.${pts}`
+      : r.won
+        ? `${r.title}:${pts || " il risultato conta."} Guarda come è cambiata la tua carta.`
+        : `${r.title}: sconfitta.${pts} La prossima vittoria contro avversari forti vale di più.`
+  return { title, body, url: `/sessions/${r.sessionId}` }
+}

@@ -5,7 +5,8 @@ import { rateDuoMatch } from "@/lib/scopri/duos"
 import { updateGlickoAfterSession } from "@/lib/rating"
 import { applyMatchResult, rankStandings } from "@/lib/tournament/kotb"
 import type { StandingEntry } from "@/lib/tournament/types"
-import { SCORE_CONFIRM_HOURS } from "@/lib/scoreConfirm"
+import { SCORE_CONFIRM_HOURS, resultNotice } from "@/lib/scoreConfirm"
+import { notifyPlayer } from "@/lib/push"
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  What a confirmed score does: wins and losses, pair ratings and Glicko.     */
@@ -79,6 +80,34 @@ async function applyScoreEffects(sessionId: string) {
   }
 }
 
+/** Each player hears the result once it counts, with their rating move: the reason to come back. */
+async function notifyResult(sessionId: string) {
+  const s = await db.session.findUniqueOrThrow({
+    where: { id: sessionId },
+    select: {
+      title: true,
+      participants: { select: { playerId: true, team: true } },
+      sets: { select: { teamAScore: true, teamBScore: true } },
+    },
+  })
+  const aWins = s.sets.filter((x) => x.teamAScore > x.teamBScore).length
+  const bWins = s.sets.filter((x) => x.teamBScore > x.teamAScore).length
+  const winningTeam = aWins > bWins ? 0 : bWins > aWins ? 1 : null
+  for (const p of s.participants) {
+    if (!p.playerId) continue
+    const [last, prev] = await db.ratingHistory.findMany({
+      where: { playerId: p.playerId },
+      orderBy: { createdAt: "desc" },
+      take: 2,
+      select: { rating: true, sourceId: true },
+    })
+    // No earlier row: the starting rating may come from the declared level, so no number.
+    const delta = last?.sourceId === sessionId && prev ? Math.round(last.rating - prev.rating) : null
+    const won = winningTeam === null || p.team === null ? null : p.team === winningTeam
+    await notifyPlayer(p.playerId, resultNotice({ won, title: s.title, delta, sessionId }))
+  }
+}
+
 /**
  * Confirm a submitted score and apply it, exactly once: only the call that
  * claims scoreConfirmedAt goes on, so a double tap, the sweep and a player
@@ -91,6 +120,7 @@ export async function confirmScore(sessionId: string): Promise<boolean> {
   })
   if (claimed.count === 0) return false
   await applyScoreEffects(sessionId)
+  await notifyResult(sessionId).catch((e) => console.error("result notice failed", e))
   revalidatePath(`/sessions/${sessionId}`)
   revalidatePath("/sessions")
   revalidateTag(LEADERBOARDS_TAG, { expire: 0 })
