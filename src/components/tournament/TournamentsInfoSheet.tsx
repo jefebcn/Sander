@@ -39,7 +39,7 @@ const ITEMS = [
     icon: <Trophy className="h-4 w-4" />,
     label: "Chi può creare un torneo?",
     description:
-      'Solo gli admin o il creatore dell\'app possono aprire nuovi tornei (tasto "+ Nuovo" in alto). Se vuoi organizzarne uno, contatta chi gestisce Sander.',
+      "I club approvati (società, circoli, bagni) e lo staff di SANDER. Se organizzi tornei, iscrivi il tuo club da sanderbv.it/club: è gratis.",
   },
 ]
 

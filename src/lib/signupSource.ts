@@ -59,6 +59,7 @@ export function signupSourceLabel(source: string | null): string {
   const labels: Record<string, string> = {
     instagram: "Instagram", tiktok: "TikTok", facebook: "Facebook", whatsapp: "WhatsApp",
     x: "X", google: "Google (ricerca)", ricerca: "Altri motori", invito: "Invito", diretto: "Diretto",
+    coppia: "Invito in coppia (torneo club)",
   }
   return labels[source] ?? source
 }

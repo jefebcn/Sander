@@ -180,6 +180,11 @@ export default function PrivacyPage() {
           <p>Non vendiamo i tuoi dati personali. Li condividiamo esclusivamente con:</p>
           <ul className="mt-2 ml-4 list-disc space-y-1">
             <li>
+              <strong className="text-white">Club che organizzano un torneo:</strong> se ti iscrivi a un torneo di un
+              club (società, circolo, bagno), il suo staff vede nome, comune, email e stato del pagamento, solo per
+              gestire quel torneo (lista iscritti, quote, contatti)
+            </li>
+            <li>
               <strong className="text-white">Neon (database cloud):</strong> hosting del database PostgreSQL
               in cui sono archiviati i dati della piattaforma
             </li>

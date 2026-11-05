@@ -16,7 +16,8 @@ export function isAdminEmail(email: string | null | undefined): boolean {
 }
 
 /**
- * Returns true if the user is a global admin OR the creator of the specific tournament.
+ * Returns true if the user is a global admin, the creator of the tournament, or
+ * staff of the approved club that organises it.
  */
 export async function canManageTournament(
   email: string | null | undefined,
@@ -33,7 +34,14 @@ export async function canManageTournament(
 
   const t = await db.tournament.findUnique({
     where: { id: tournamentId },
-    select: { createdByPlayerId: true },
+    select: { createdByPlayerId: true, clubId: true },
   })
-  return !!t?.createdByPlayerId && t.createdByPlayerId === player.id
+  if (!t) return false
+  if (t.createdByPlayerId && t.createdByPlayerId === player.id) return true
+  if (!t.clubId) return false
+  const staff = await db.clubMember.findFirst({
+    where: { clubId: t.clubId, playerId: player.id, club: { status: "APPROVED" } },
+    select: { id: true },
+  })
+  return !!staff
 }

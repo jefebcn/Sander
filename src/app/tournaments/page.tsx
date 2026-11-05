@@ -2,7 +2,9 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { Plus } from "lucide-react"
 import { listTournaments } from "@/actions/tournaments"
-import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
+import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
+import { isAdminEmail } from "@/lib/isAdmin"
+import { myManagedClubs } from "@/lib/clubAccess"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { TournamentsInfoSheet } from "@/components/tournament/TournamentsInfoSheet"
 import { TournamentCard } from "@/components/tournament/TournamentCard"
@@ -18,10 +20,13 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic"
 
 export default async function TournamentsPage() {
-  const [tournaments, currentPlayer] = await Promise.all([
+  const [tournaments, currentPlayer, session] = await Promise.all([
     listTournaments(),
     getCurrentPlayer(),
+    getCurrentSession(),
   ])
+  // "+ Nuovo" only for those who can create: admins and club staff.
+  const canCreate = isAdminEmail(session?.user?.email) || (!!currentPlayer && (await myManagedClubs(currentPlayer.id)).length > 0)
 
   return (
     <div>
@@ -33,9 +38,7 @@ export default async function TournamentsPage() {
         action={
           <div className="flex items-center gap-2">
             <TournamentsInfoSheet />
-            {/* Creating a tournament needs an account (and costs SanderCredits) —
-                don't push newcomers toward a wall; show it only when logged in. */}
-            {currentPlayer && (
+            {canCreate && (
               <Link
                 href="/tournaments/new"
                 className="flex min-h-[2.75rem] items-center gap-2 rounded-full bg-[var(--accent)] px-4 text-sm font-extrabold text-black"
@@ -54,16 +57,16 @@ export default async function TournamentsPage() {
           <Gabbo pose="attesa" size={128} />
           <div>
             <p className="text-lg font-semibold">Nessun torneo ancora</p>
-            <p className="text-sm text-[var(--muted-text)]">
-              {currentPlayer ? "Crea il primo torneo per iniziare" : "Accedi per creare il primo torneo"}
+            <p className="text-base text-[var(--muted-text)]">
+              {canCreate ? "Crea il primo torneo del tuo club" : "Sei una società o un circolo? Porta i tuoi tornei su SANDER"}
             </p>
           </div>
           <Link
-            href={currentPlayer ? "/tournaments/new" : "/auth/signin?callbackUrl=%2Ftournaments%2Fnew&mode=register"}
+            href={canCreate ? "/tournaments/new" : "/club"}
             className="flex h-14 items-center gap-2 rounded-2xl bg-[var(--accent)] px-6 font-bold text-black"
           >
             <Plus className="h-5 w-5" />
-            {currentPlayer ? "Crea Torneo" : "Accedi per creare"}
+            {canCreate ? "Crea Torneo" : "Iscrivi il tuo club"}
           </Link>
         </div>
       ) : (
@@ -71,6 +74,11 @@ export default async function TournamentsPage() {
           {tournaments.map((t) => (
             <TournamentCard key={t.id} tournament={t} />
           ))}
+          {!canCreate && (
+            <Link href="/club" className="flex min-h-[3.5rem] items-center justify-center text-base font-bold text-[var(--accent)]">
+              Organizzi tornei? Porta il tuo club su SANDER
+            </Link>
+          )}
         </div>
       )}
     </div>
