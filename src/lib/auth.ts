@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs"
 import { db } from "@/lib/db"
 import { findUserByEmail } from "@/lib/userByEmail"
 import { userFromGoogleIdToken } from "@/lib/googleNative"
+import { userFromAppleIdToken } from "@/lib/appleNative"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
@@ -45,6 +46,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return await userFromGoogleIdToken(credentials.idToken)
         } catch (e) {
           console.error("google-native sign-in refused", e instanceof Error ? e.message : e)
+          return null
+        }
+      },
+    }),
+    // Apple from inside the iOS app (required next to Google): native sign-in, identity token.
+    Credentials({
+      id: "apple-native",
+      name: "Apple (app)",
+      credentials: {
+        idToken: { label: "ID token", type: "text" },
+        name: { label: "Nome", type: "text" },
+      },
+      async authorize(credentials) {
+        if (typeof credentials?.idToken !== "string" || credentials.idToken.length > 4096) return null
+        const name = typeof credentials.name === "string" ? credentials.name.trim().slice(0, 80) || null : null
+        try {
+          return await userFromAppleIdToken(credentials.idToken, name)
+        } catch (e) {
+          console.error("apple-native sign-in refused", e instanceof Error ? e.message : e)
           return null
         }
       },

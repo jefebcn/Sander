@@ -133,6 +133,9 @@ model Player {
   preferredRole PlayerRole @default(DEFENDER)
   avatarUrl     String?
 
+  // First-visit channel at sign-up (lib/signupSource.ts): instagram, tiktok, invito…
+  signupSource String?
+
   // Auth link (optional — existing players created before auth won't have this)
   userId String? @unique
   user   User?   @relation(fields: [userId], references: [id])
@@ -183,6 +186,11 @@ model Player {
   sessionMatchPlayers  SessionMatchPlayer[]
   tournamentsCreated   Tournament[]             @relation("TournamentCreator")
   pushSubscriptions    PushSubscription[]
+  nativePushTokens     NativePushToken[]
+  clubMemberships      ClubMember[]
+  clubFollows          ClubFollow[]
+  pairInvitesSent      TournamentPairInvite[] @relation("PairInvitesSent")
+  pairInvitesReceived  TournamentPairInvite[] @relation("PairInvitesReceived")
   notifications        Notification[]
   monthlyAwards        MonthlyAward[]
   videoSubmissions     VideoSubmission[]
@@ -252,6 +260,11 @@ model Tournament {
   createdByPlayerId String?
   createdByPlayer   Player?  @relation("TournamentCreator", fields: [createdByPlayerId], references: [id], onDelete: SetNull)
 
+  // Organised by a club (lib/club.ts): its staff manages it, players pay on site.
+  clubId String?
+  club   Club?   @relation(fields: [clubId], references: [id], onDelete: SetNull)
+  pairInvites TournamentPairInvite[]
+
   // Cover image & display metadata
   coverUrl   String?
   skillLevel String?   // es. "Open", "B/C", "A/B/C", "Multilevel"
@@ -264,7 +277,101 @@ model Tournament {
 
   @@index([status])
   @@index([type, status])
+  @@index([clubId])
   @@map("tournaments")
+}
+
+/// A beach volley club or association (CUS Torino, a bagno…) that runs its own
+/// tournaments on SANDER. Requested by a player, approved by a SANDER admin.
+model Club {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  slug        String     @unique
+  name        String
+  city        String
+  address     String?
+  description String?
+  logoUrl     String?
+  instagram   String?
+  website     String?
+  contactEmail String?
+  status      ClubStatus @default(PENDING)
+  approvedAt  DateTime?
+
+  members     ClubMember[]
+  followers   ClubFollow[]
+  tournaments Tournament[]
+
+  @@index([status])
+  @@map("clubs")
+}
+
+enum ClubStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum ClubRole {
+  OWNER
+  STAFF
+}
+
+model ClubMember {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  clubId    String
+  playerId  String
+  role      ClubRole @default(STAFF)
+
+  club   Club   @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([clubId, playerId])
+  @@index([playerId])
+  @@map("club_members")
+}
+
+model ClubFollow {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  clubId    String
+  playerId  String
+
+  club   Club   @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([clubId, playerId])
+  @@index([playerId])
+  @@map("club_follows")
+}
+
+/// "Iscriviti in coppia": a player invites a partner by link; accepting
+/// registers both, side by side in the seeding.
+model TournamentPairInvite {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  token        String   @unique
+  tournamentId String
+  fromId       String
+  toId         String?
+  status       PairInviteStatus @default(PENDING)
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  from       Player     @relation("PairInvitesSent", fields: [fromId], references: [id], onDelete: Cascade)
+  to         Player?    @relation("PairInvitesReceived", fields: [toId], references: [id], onDelete: SetNull)
+
+  @@index([tournamentId, fromId])
+  @@map("tournament_pair_invites")
+}
+
+enum PairInviteStatus {
+  PENDING
+  ACCEPTED
+  CANCELLED
 }
 
 model TournamentRegistration {
@@ -549,6 +656,23 @@ model PushSubscription {
   player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@map("push_subscriptions")
+}
+
+/// Push token of the native app (APNs device token on iOS), see lib/apns.ts.
+/// Web push lives in PushSubscription: notifications don't reach the app's web view.
+model NativePushToken {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  playerId String
+  token    String @unique
+  platform String // "ios" | "android"
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
+  @@map("native_push_tokens")
 }
 
 model Notification {

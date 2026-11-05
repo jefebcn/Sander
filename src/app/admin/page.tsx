@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { Banknote, Bug, ChartColumn, ChevronRight, Coins, ShieldCheck, TrendingUp, type LucideIcon } from "lucide-react"
+import { Banknote, Bug, ChartColumn, ChevronRight, Coins, ShieldCheck, TrendingUp, Trophy, type LucideIcon } from "lucide-react"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { isAdminEmail } from "@/lib/isAdmin"
 import { db } from "@/lib/db"
@@ -27,15 +27,17 @@ export default async function AdminHomePage() {
   if (!session?.user?.id) redirect("/auth/signin?callbackUrl=/admin")
   if (!isAdminEmail(session.user.email)) redirect("/admin/accesso")
 
-  const [openReports, errors] = await Promise.all([
+  const [openReports, errors, clubRequests] = await Promise.all([
     db.playerBlock.count({ where: { reported: true, reviewedAt: null } }),
     db.appError.count(),
+    db.club.count({ where: { status: "PENDING" } }),
   ])
 
   const sections: Section[] = [
     { href: "/admin/investitori", icon: TrendingUp, color: "var(--accent)", title: "Numeri per investitori", hint: "Crescita, attivi, incassi, comuni: pronti da mostrare" },
     { href: "/admin/metriche", icon: ChartColumn, color: "var(--accent)", title: "Metriche", hint: "Iscritti, incassi, Scopri, chi torna a giocare" },
     { href: "/admin/segnalazioni", icon: ShieldCheck, color: "var(--danger)", title: "Moderazione Scopri", hint: "Segnalazioni, foto, sospensioni", pending: openReports },
+    { href: "/admin/club", icon: Trophy, color: "var(--compete)", title: "Club", hint: "Società da approvare e club attivi", pending: clubRequests },
     { href: "/admin/payments", icon: Banknote, color: "var(--accent)", title: "Pagamenti in attesa", hint: "Conferma o rifiuta i pagamenti in contanti" },
     { href: "/admin/sistema", icon: Bug, color: "var(--accent)", title: "Sistema", hint: "Errori dell'app, pulizia foto", pending: errors },
     { href: "/profile?tab=admin", icon: Coins, color: "var(--accent)", title: "Crediti, stagioni, contenuti", hint: "SanderCredits, sessioni, tornei, giocatori" },

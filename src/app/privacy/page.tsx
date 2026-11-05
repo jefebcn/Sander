@@ -166,6 +166,11 @@ export default function PrivacyPage() {
             a fini pubblicitari senza il tuo consenso esplicito.
           </p>
           <p className="mt-2">
+            Alla prima visita il browser ricorda da dove sei arrivato (per esempio Instagram, TikTok o un
+            invito). Se crei il profilo, questa informazione viene salvata con il tuo account e usata solo
+            da noi, in forma aggregata, per capire quali canali funzionano. Non viene condivisa con terzi.
+          </p>
+          <p className="mt-2">
             Al primo accesso ti verrà mostrato un banner per accettare o rifiutare i cookie non necessari.
             Puoi modificare le tue preferenze in qualsiasi momento dalle impostazioni del browser.
           </p>
@@ -174,6 +179,11 @@ export default function PrivacyPage() {
         <Section title="5. Condivisione dei dati">
           <p>Non vendiamo i tuoi dati personali. Li condividiamo esclusivamente con:</p>
           <ul className="mt-2 ml-4 list-disc space-y-1">
+            <li>
+              <strong className="text-white">Club che organizzano un torneo:</strong> se ti iscrivi a un torneo di un
+              club (società, circolo, bagno), il suo staff vede nome, comune, email e stato del pagamento, solo per
+              gestire quel torneo (lista iscritti, quote, contatti)
+            </li>
             <li>
               <strong className="text-white">Neon (database cloud):</strong> hosting del database PostgreSQL
               in cui sono archiviati i dati della piattaforma

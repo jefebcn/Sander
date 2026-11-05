@@ -11,9 +11,11 @@ import { TournamentCoverUpload } from "@/components/tournament/TournamentCoverUp
 
 interface CreateTournamentFormProps {
   players: Player[]
+  /** The organising club, when created from its page. */
+  clubId?: string | null
 }
 
-export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
+export function CreateTournamentForm({ players, clubId = null }: CreateTournamentFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -32,7 +34,8 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
   const [maxTeams, setMaxTeams] = useState("")
 
   // Registration & payment fields
-  const [isOpenForRegistration, setIsOpenForRegistration] = useState(false)
+  // A club creates a tournament to take sign-ups: open by default.
+  const [isOpenForRegistration, setIsOpenForRegistration] = useState(!!clubId)
   const [location, setLocation] = useState("")
   const [description, setDescription] = useState("")
   const [registrationDeadline, setRegistrationDeadline] = useState("")
@@ -84,6 +87,7 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
 
     startTransition(async () => {
       const result = await createTournament({
+        clubId,
         name,
         date: new Date(date),
         type,
@@ -241,7 +245,7 @@ export function CreateTournamentForm({ players }: CreateTournamentFormProps) {
           <div className="flex-1 pr-3">
             <p className="text-sm font-semibold text-white">Iscrizione libera</p>
             <p className="text-xs text-[var(--muted-text)]">
-              Chiunque può iscriversi (e pagare) da solo
+              {clubId ? "Chiunque può iscriversi dalla pagina del torneo (in coppia con un link)" : "Chiunque può iscriversi (e pagare) da solo"}
             </p>
           </div>
           <input

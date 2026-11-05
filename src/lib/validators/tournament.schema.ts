@@ -2,6 +2,8 @@ import { z } from "zod"
 
 export const CreateTournamentSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(80),
+  // The organising club (its staff manages it); required for non-admins.
+  clubId: z.string().trim().min(1).max(64).optional().nullable(),
   date: z.coerce.date(),
   type: z.enum(["KING_OF_THE_BEACH", "BRACKETS", "ROUND_ROBIN", "DOUBLE_ELIMINATION", "CHICECE"]),
   playerIds: z

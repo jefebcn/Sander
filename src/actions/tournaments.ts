@@ -17,7 +17,9 @@ import { assignCourtLabel } from "@/lib/tournament/courtSchedule"
 import { applyTournamentGlicko } from "@/lib/tournamentRating"
 import { updateRating } from "@/lib/tournament/glicko2"
 import { isAdminEmail, canManageTournament } from "@/lib/isAdmin"
-import { TOURNAMENT_CREATION_SC } from "@/lib/pricing"
+import { clubRole } from "@/lib/clubAccess"
+import { ON_SITE } from "@/lib/club"
+import { after } from "next/server"
 import { settleStripeBeforeDelete } from "@/lib/tournamentRefunds"
 
 async function requireAdmin() {
@@ -54,31 +56,20 @@ export async function createTournament(input: CreateTournamentInput): Promise<{ 
       ? await db.player.findUnique({ where: { userId: session.user.id }, select: { id: true } })
       : null
 
-    // Non-admins pay SanderCredits to create a tournament (admins create free).
+    // Tournaments are run by approved clubs (their staff) and by SANDER admins.
     const isAdmin = isAdminEmail(session?.user?.email)
     if (!isAdmin && !creatorPlayer) {
       return { ok: false, error: "Devi avere un profilo per creare un torneo." }
     }
+    const club = data.clubId
+      ? await db.club.findFirst({ where: { id: data.clubId, status: "APPROVED" }, select: { id: true, name: true, slug: true } })
+      : null
+    if (data.clubId && !club) return { ok: false, error: "Club non trovato o non ancora approvato." }
+    if (!isAdmin && (!club || !(await clubRole(creatorPlayer!.id, club.id)))) {
+      return { ok: false, error: "I tornei li organizzano i club: iscrivi la tua società da sanderbv.it/club." }
+    }
 
-    // Fee + creation happen atomically: the conditional decrement can't
-    // double-spend, and if the create fails the fee is rolled back.
     const tournament = await db.$transaction(async (tx) => {
-      if (!isAdmin && creatorPlayer) {
-        const paid = await tx.player.updateMany({
-          where: { id: creatorPlayer.id, sanderCredits: { gte: TOURNAMENT_CREATION_SC } },
-          data: { sanderCredits: { decrement: TOURNAMENT_CREATION_SC } },
-        })
-        if (paid.count === 0) {
-          const bal = await tx.player.findUnique({
-            where: { id: creatorPlayer.id },
-            select: { sanderCredits: true },
-          })
-          throw new Error(
-            `Ti servono ${TOURNAMENT_CREATION_SC} SC per creare un torneo (ne hai ${bal?.sanderCredits ?? 0}). Ricarica dal profilo.`,
-          )
-        }
-      }
-
       return tx.tournament.create({
         data: {
           name: data.name,
@@ -103,6 +94,7 @@ export async function createTournament(input: CreateTournamentInput): Promise<{ 
           gender:                data.gender ?? null,
           maxTeams:              data.maxTeams ?? null,
           createdByPlayerId:     creatorPlayer?.id ?? null,
+          clubId:                club?.id ?? null,
 
           registrations: {
             create: data.playerIds.map((playerId, i) =>
@@ -128,11 +120,11 @@ export async function createTournament(input: CreateTournamentInput): Promise<{ 
                   : {
                       // A non-admin creator can't declare money they haven't
                       // collected: players join as "registered, not paid" and
-                      // pay (or get confirmed) through the normal flow.
+                      // pay at the court; the club marks them paid.
                       playerId,
                       seedPosition: i + 1,
                       paymentStatus: "PENDING" as const,
-                      paymentMethod: null,
+                      paymentMethod: club ? ON_SITE : null,
                       paidAt: null,
                       amountPaidCents: null,
                     },
@@ -143,8 +135,14 @@ export async function createTournament(input: CreateTournamentInput): Promise<{ 
       })
     })
 
-    if (!isAdmin) revalidatePath("/profile")
     revalidatePath("/tournaments")
+    if (club) revalidatePath(`/c/${club.slug}`)
+
+    // The club's followers hear about a tournament they can sign up for.
+    if (club && data.isOpenForRegistration) {
+      const tournamentId = tournament.id
+      after(() => notifyClubFollowers(club.id, club.name, data.name, tournamentId).catch(() => {}))
+    }
 
     // Notify registered players of their tournament registration
     if (data.playerIds.length > 0) {
@@ -163,6 +161,16 @@ export async function createTournament(input: CreateTournamentInput): Promise<{ 
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) }
   }
+}
+
+async function notifyClubFollowers(clubId: string, clubName: string, name: string, tournamentId: string) {
+  const followers = await db.clubFollow.findMany({ where: { clubId }, select: { playerId: true } })
+  if (!followers.length) return
+  const { notifyPlayers } = await import("@/lib/push")
+  await notifyPlayers(
+    followers.map((f) => f.playerId),
+    { title: `Nuovo torneo di ${clubName}`, body: `${name}: iscrizioni aperte, trova il compagno e iscrivetevi.`, url: `/tournaments/${tournamentId}` },
+  )
 }
 
 export async function getTournament(id: string) {
@@ -202,6 +210,10 @@ export async function updateTournamentSettings(
   if (!ok) throw new Error("Non autorizzato")
 
   const parsed = UpdateTournamentSettingsSchema.parse(data)
+  const before = await db.tournament.findUnique({
+    where: { id: tournamentId },
+    select: { isOpenForRegistration: true, name: true, club: { select: { id: true, name: true } } },
+  })
 
   await db.tournament.update({
     where: { id: tournamentId },
@@ -211,6 +223,12 @@ export async function updateTournamentSettings(
       ...("registrationDeadline" in parsed && { registrationDeadline: parsed.registrationDeadline }),
     },
   })
+
+  // Registrations just opened on a club tournament: tell its followers.
+  const club = before?.club
+  if (club && parsed.isOpenForRegistration && !before.isOpenForRegistration) {
+    after(() => notifyClubFollowers(club.id, club.name, before.name, tournamentId).catch(() => {}))
+  }
 
   revalidatePath(`/tournaments/${tournamentId}`)
   revalidatePath("/tournaments")
@@ -245,6 +263,7 @@ export async function updateTournamentMeta(
 export async function listTournaments() {
   return db.tournament.findMany({
     include: {
+      club: { select: { name: true, slug: true } },
       registrations: { include: { player: { select: { id: true, name: true } } } },
       _count: { select: { matches: true } },
     },

@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { activeDuoOf, duoName } from "@/lib/scopri/duos"
 import { DuoRegisterButton } from "@/components/tournament/DuoRegisterButton"
+import { ClubRegisterBox } from "@/components/club/ClubRegisterBox"
 import Link from "next/link"
 import { ChevronRight, Play, Trophy, Shuffle, Trash2 } from "lucide-react"
 import { getTournamentDashboard } from "@/actions/standings"
@@ -58,7 +59,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   const { id } = await params
 
   const [base, session] = await Promise.all([
-    db.tournament.findUnique({ where: { id }, select: { type: true } }),
+    db.tournament.findUnique({ where: { id }, select: { type: true, priceCents: true, priceCurrency: true, club: { select: { name: true, slug: true } } } }),
     getCurrentSession(),
   ])
   if (!base) notFound()
@@ -68,6 +69,18 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   const currentPlayer = session?.user?.id
     ? await db.player.findUnique({ where: { userId: session.user.id }, select: { id: true } })
     : null
+
+  // Club tournaments: who runs it, and my pair invite still waiting for the partner.
+  const club = base.club
+  const clubPrice = (base.priceCents ?? 0) > 0 ? formatPrice(base.priceCents, base.priceCurrency) : null
+  const myInvite = club && currentPlayer
+    ? await db.tournamentPairInvite.findFirst({ where: { tournamentId: id, fromId: currentPlayer.id, status: "PENDING" }, select: { token: true } })
+    : null
+  const clubChip = club && (
+    <Link href={`/c/${club.slug}`} className="mt-2 inline-flex min-h-[2.75rem] items-center gap-1 text-base font-bold text-[var(--tone)]">
+      Organizzato da {club.name} <ChevronRight className="h-4 w-4" aria-hidden="true" />
+    </Link>
+  )
 
   // ── Chicece path ────────────────────────────────────────────
   if (base.type === "CHICECE") {
@@ -133,6 +146,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
           <p className="mt-1 text-sm text-[var(--muted-text)]">
             {formatDate(tournament.date)} · {playerRegs.length} giocatori
           </p>
+          {clubChip}
         </div>
 
         {/* Before the start the details are what people come for; once live
@@ -188,7 +202,20 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               )}
             </div>
             {/* CTA buttons only when registration is open and not already a spectator */}
-            {tournament.status === "DRAFT" && tournament.isOpenForRegistration && !alreadySpectator && (
+            {club && tournament.status === "DRAFT" && tournament.isOpenForRegistration && !alreadySpectator && (
+              <ClubRegisterBox
+                tournamentId={id}
+                tournamentName={tournament.name}
+                price={clubPrice}
+                pairFormat={PAIR_FORMATS.includes(tournament.type)}
+                registered={chiceceRegStatus !== "NOT_REGISTERED"}
+                paid={chiceceRegStatus === "PAID"}
+                isAuthed={!!currentPlayer}
+                open={registrationOpen}
+                pendingToken={myInvite?.token ?? null}
+              />
+            )}
+            {!club && tournament.status === "DRAFT" && tournament.isOpenForRegistration && !alreadySpectator && (
               <PaymentCtaButton
                 tournamentId={id}
                 isFree={!tournament.priceCents || tournament.priceCents === 0}
@@ -442,6 +469,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
         <p className="mt-1 text-sm text-[var(--muted-text)]">
           {formatDate(tournament.date)} · {playerRegs.length} giocatori
         </p>
+        {clubChip}
       </div>
 
       {/* Before the start the details are what people come for; once live
@@ -501,7 +529,20 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             <DuoRegisterButton tournamentId={id} duoName={duoName(myDuo)} />
           )}
           {/* CTA buttons only when registration is open and not already a spectator */}
-          {tournament.status === "DRAFT" && tournament.isOpenForRegistration && !alreadySpectator && (
+          {club && tournament.status === "DRAFT" && tournament.isOpenForRegistration && !alreadySpectator && (
+            <ClubRegisterBox
+              tournamentId={id}
+              tournamentName={tournament.name}
+              price={clubPrice}
+              pairFormat={PAIR_FORMATS.includes(tournament.type)}
+              registered={regStatus !== "NOT_REGISTERED"}
+              paid={regStatus === "PAID"}
+              isAuthed={!!currentPlayer}
+              open={registrationOpen}
+              pendingToken={myInvite?.token ?? null}
+            />
+          )}
+          {!club && tournament.status === "DRAFT" && tournament.isOpenForRegistration && !alreadySpectator && (
             <PaymentCtaButton
               tournamentId={id}
               isFree={!tournament.priceCents || tournament.priceCents === 0}

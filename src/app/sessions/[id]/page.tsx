@@ -12,6 +12,7 @@ import { ShareButton, WhatsAppShareButton } from "@/components/ui/ShareButton"
 import { QRCodeButton } from "@/components/ui/QRCode"
 import { SessionStatusBadge } from "@/components/session/SessionStatusBadge"
 import { ParticipantList } from "@/components/session/ParticipantList"
+import { ChatNotifyPrompt } from "@/components/chat/ChatNotifyPrompt"
 import { SessionChat } from "@/components/chat/SessionChat"
 import { SessionMatchRounds } from "@/components/session/SessionMatchRounds"
 import { RematchButton } from "@/components/session/RematchButton"
@@ -333,6 +334,16 @@ export default async function SessionPage({
           currentPlayerId={currentPlayer?.id ?? null}
           myWaitlistPosition={waitlist.myPosition}
         />
+
+        {/* Just joined: the moment "tell me when it fills up" makes sense. Hidden once push is on. */}
+        {isParticipant && session.status === "OPEN" && (
+          <ChatNotifyPrompt
+            title="Ti avvisiamo noi"
+            text="Quando la partita si riempie, cambia qualcosa o c'è da confermare il risultato."
+            dismissKey="session_notify_dismissed"
+            className=""
+          />
+        )}
 
         {/* Group chat — coordinate this game (participants only). Right under
             the line-up: it's what players open most before a match. */}

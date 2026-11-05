@@ -8,6 +8,9 @@ import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { canManageTournament, isAdminEmail } from "@/lib/isAdmin"
 import { stripe, getAppUrl } from "@/lib/stripe"
 import { settleStripeRegistration } from "@/lib/tournamentRefunds"
+import { ON_SITE } from "@/lib/club"
+import { randomBytes } from "node:crypto"
+import { PairInviteTokenSchema } from "@/lib/validators/club.schema"
 import {
   hasFreeSeat,
   seatLimit,
@@ -64,6 +67,7 @@ async function assertRegistrable(tournamentId: string) {
       priceCurrency: true,
       isOpenForRegistration: true,
       registrationDeadline: true,
+      clubId: true,
     },
   })
   if (!tournament) throw new Error("Torneo non trovato")
@@ -79,6 +83,14 @@ type RegistrableTournament = Awaited<ReturnType<typeof assertRegistrable>>
 
 function isFreeTournament(t: { priceCents: number | null }) {
   return t.priceCents == null || t.priceCents === 0
+}
+
+/** Club tournaments are paid at the court: SANDER never collects money for a club. */
+const CLUB_PAYS_ON_SITE = "Per i tornei dei club la quota si paga al campo: iscriviti e paghi il giorno del torneo."
+
+/** The payment method of a new unpaid row: on site for clubs, chosen later otherwise. */
+function unpaidMethod(t: { clubId: string | null }) {
+  return t.clubId ? ON_SITE : null
 }
 
 /** A row in one of these states no longer counts as a registration. */
@@ -233,6 +245,7 @@ export async function startCheckout(input: unknown): Promise<
     const player = await requireCurrentPlayer()
     const tournament = await assertRegistrable(tournamentId)
     const isFree = isFreeTournament(tournament)
+    if (tournament.clubId && !isFree) return { ok: false, error: CLUB_PAYS_ON_SITE }
     const successUrl = `/tournaments/${tournamentId}/register/success`
 
     const existing = await db.tournamentRegistration.findUnique({
@@ -353,6 +366,7 @@ async function createManualRegistration(
     const player = await requireCurrentPlayer()
     const tournament = await assertRegistrable(tournamentId)
     const isFree = isFreeTournament(tournament)
+    if (tournament.clubId && !isFree) return { ok: false, error: CLUB_PAYS_ON_SITE }
 
     const existing = await db.tournamentRegistration.findUnique({
       where: { tournamentId_playerId: { tournamentId, playerId: player.id } },
@@ -472,7 +486,7 @@ export async function registerForTournament(input: unknown): Promise<
           tournamentId,
           playerId: player.id,
           paymentStatus: isFree ? "PAID" : "PENDING",
-          paymentMethod: isFree ? "FREE" : null,
+          paymentMethod: isFree ? "FREE" : unpaidMethod(tournament),
           paidAt: isFree ? new Date() : null,
           amountPaidCents: isFree ? 0 : null,
           skillLevel: skillLevel ?? null,
@@ -486,7 +500,9 @@ export async function registerForTournament(input: unknown): Promise<
         title: `🏐 Iscrizione confermata!`,
         body: isFree
           ? `Sei nella lista per ${tournament.name}. Ti avviseremo quando inizia.`
-          : `Sei in lista per ${tournament.name}. Completa il pagamento per confermare il posto.`,
+          : tournament.clubId
+            ? `Sei in lista per ${tournament.name}. La quota si paga al campo.`
+            : `Sei in lista per ${tournament.name}. Completa il pagamento per confermare il posto.`,
         url: `/tournaments/${tournamentId}`,
       }),
     ).catch(() => {})
@@ -910,38 +926,17 @@ export async function registerDuoForTournament(input: unknown): Promise<{ ok: tr
     const partnerId = duo.aId === player.id ? duo.bId : duo.aId
     const isFree = isFreeTournament(tournament)
     const label = duoName(duo)
-
-    await db.$transaction(async (tx) => {
-      const top = await tx.tournamentRegistration.aggregate({ where: { tournamentId }, _max: { seedPosition: true } })
-      let seed = (top._max.seedPosition ?? 0) + 1
-      for (const [i, playerId] of [player.id, partnerId].entries()) {
-        const existing = await tx.tournamentRegistration.findUnique({
-          where: { tournamentId_playerId: { tournamentId, playerId } },
-        })
-        if (existing && !isStaleRow(existing)) continue
-        await assertSeatAvailable(tx, tournament, playerId)
-        if (existing) await tx.tournamentRegistration.deleteMany({ where: { id: existing.id } })
-        await tx.tournamentRegistration.create({
-          data: {
-            tournamentId,
-            playerId,
-            seedPosition: seed++,
-            teamName: i === 0 ? label : null,
-            adminNotes: `Coppia Scopri: ${label}`,
-            paymentStatus: isFree ? "PAID" : "PENDING",
-            paymentMethod: isFree ? "FREE" : null,
-            paidAt: isFree ? new Date() : null,
-            amountPaidCents: isFree ? 0 : null,
-          },
-        })
-      }
-    })
+    await registerPair(tournament, [player.id, partnerId], label, `Coppia Scopri: ${label}`)
 
     const me = player.firstName ?? player.name.split(" ")[0]
     import("@/lib/push").then(({ notifyPlayer }) =>
       notifyPlayer(partnerId, {
         title: `${me} ha iscritto la vostra coppia`,
-        body: isFree ? `Siete in lista per ${tournament.name}.` : `${tournament.name}: completa il pagamento per confermare il tuo posto.`,
+        body: isFree
+          ? `Siete in lista per ${tournament.name}.`
+          : tournament.clubId
+            ? `Siete in lista per ${tournament.name}. La quota si paga al campo.`
+            : `${tournament.name}: completa il pagamento per confermare il tuo posto.`,
         url: `/tournaments/${tournamentId}`,
       }),
     ).catch(() => {})
@@ -950,5 +945,124 @@ export async function registerDuoForTournament(input: unknown): Promise<{ ok: tr
     return { ok: true }
   } catch (e) {
     return { ok: false, error: toUserError(e, "registerDuoForTournament") }
+  }
+}
+
+/**
+ * Both players of a pair, side by side in the seeding (the default pairing
+ * keeps consecutive seeds together). A player already in keeps their row.
+ */
+async function registerPair(tournament: RegistrableTournament, ids: [string, string], label: string, note: string) {
+  const isFree = isFreeTournament(tournament)
+  await db.$transaction(async (tx) => {
+    const top = await tx.tournamentRegistration.aggregate({ where: { tournamentId: tournament.id }, _max: { seedPosition: true } })
+    let seed = (top._max.seedPosition ?? 0) + 1
+    for (const [i, playerId] of ids.entries()) {
+      const existing = await tx.tournamentRegistration.findUnique({
+        where: { tournamentId_playerId: { tournamentId: tournament.id, playerId } },
+      })
+      if (existing && !isStaleRow(existing)) continue
+      await assertSeatAvailable(tx, tournament, playerId)
+      if (existing) await tx.tournamentRegistration.deleteMany({ where: { id: existing.id } })
+      await tx.tournamentRegistration.create({
+        data: {
+          tournamentId: tournament.id,
+          playerId,
+          seedPosition: seed++,
+          teamName: i === 0 ? label : null,
+          adminNotes: note,
+          paymentStatus: isFree ? "PAID" : "PENDING",
+          paymentMethod: isFree ? "FREE" : unpaidMethod(tournament),
+          paidAt: isFree ? new Date() : null,
+          amountPaidCents: isFree ? 0 : null,
+        },
+      })
+    }
+  })
+}
+
+async function isRegistered(tournamentId: string, playerId: string) {
+  const r = await db.tournamentRegistration.findUnique({
+    where: { tournamentId_playerId: { tournamentId, playerId } },
+    select: { paymentStatus: true, isSpectator: true },
+  })
+  return !!r && !r.isSpectator && !isStaleRow(r)
+}
+
+/**
+ * "Iscriviti in coppia": a link for the partner. One open invite per player
+ * and tournament; asking again returns the same link.
+ */
+export async function createPairInvite(input: unknown): Promise<{ ok: true; token: string } | { ok: false; error: string }> {
+  try {
+    const tournamentId = TournamentIdSchema.parse(input)
+    const player = await requireCurrentPlayer()
+    const tournament = await assertRegistrable(tournamentId)
+    if (!PAIR_FORMATS.includes(tournament.type)) {
+      return { ok: false, error: "In questo torneo le coppie cambiano a ogni turno: iscrivetevi uno alla volta" }
+    }
+    if (await isRegistered(tournamentId, player.id)) return { ok: false, error: "Sei già iscritto a questo torneo" }
+    const open = await db.tournamentPairInvite.findFirst({
+      where: { tournamentId, fromId: player.id, status: "PENDING" },
+      select: { token: true },
+    })
+    if (open) return { ok: true, token: open.token }
+    const token = randomBytes(18).toString("base64url")
+    await db.tournamentPairInvite.create({ data: { token, tournamentId, fromId: player.id } })
+    return { ok: true, token }
+  } catch (e) {
+    return { ok: false, error: toUserError(e, "createPairInvite") }
+  }
+}
+
+export async function cancelPairInvite(input: unknown): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const token = PairInviteTokenSchema.parse(input)
+    const player = await requireCurrentPlayer()
+    const r = await db.tournamentPairInvite.updateMany({
+      where: { token, fromId: player.id, status: "PENDING" },
+      data: { status: "CANCELLED" },
+    })
+    if (r.count === 0) return { ok: false, error: "Invito non trovato" }
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: toUserError(e, "cancelPairInvite") }
+  }
+}
+
+/** The partner accepts: both are registered as a pair, the inviter hears about it. */
+export async function acceptPairInvite(input: unknown): Promise<{ ok: true; tournamentId: string } | { ok: false; error: string }> {
+  try {
+    const token = PairInviteTokenSchema.parse(input)
+    const player = await requireCurrentPlayer()
+    const invite = await db.tournamentPairInvite.findUnique({
+      where: { token },
+      select: { id: true, status: true, tournamentId: true, fromId: true, from: { select: { name: true, firstName: true } } },
+    })
+    if (!invite || invite.status !== "PENDING") return { ok: false, error: "Questo invito non è più valido" }
+    if (invite.fromId === player.id) return { ok: false, error: "È il tuo invito: mandalo al compagno" }
+    const tournament = await assertRegistrable(invite.tournamentId)
+    if (await isRegistered(tournament.id, player.id)) return { ok: false, error: "Sei già iscritto a questo torneo" }
+    if (await isRegistered(tournament.id, invite.fromId)) return { ok: false, error: "Chi ti ha invitato è già iscritto con un'altra coppia" }
+
+    const a = invite.from.firstName ?? invite.from.name.split(" ")[0]
+    const b = player.firstName ?? player.name.split(" ")[0]
+    const label = `${a} & ${b}`
+    await registerPair(tournament, [invite.fromId, player.id], label, `Coppia su invito: ${label}`)
+    await db.tournamentPairInvite.update({ where: { id: invite.id }, data: { status: "ACCEPTED", toId: player.id } })
+
+    import("@/lib/push").then(({ notifyPlayer }) =>
+      notifyPlayer(invite.fromId, {
+        title: `${b} ha accettato: siete iscritti!`,
+        body: tournament.clubId && !isFreeTournament(tournament)
+          ? `${tournament.name}: la quota si paga al campo.`
+          : `Siete in lista per ${tournament.name}.`,
+        url: `/tournaments/${tournament.id}`,
+      }),
+    ).catch(() => {})
+    revalidateTournament(tournament.id)
+    return { ok: true, tournamentId: tournament.id }
+  } catch (e) {
+    return { ok: false, error: toUserError(e, "acceptPairInvite") }
   }
 }

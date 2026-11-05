@@ -61,3 +61,35 @@ export async function sendPasswordResetEmail(to: string, token: string) {
 </html>`,
   })
 }
+
+const escapeHtml = (s: string) =>
+  s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!)
+
+/** Short plain notice to the admins (ADMIN_EMAILS). Skipped without Resend.
+ *  Resend reports failures in the result instead of throwing, so it is returned. */
+export async function sendAdminEmail(
+  subject: string,
+  lines: string[],
+  path = "/admin/metriche",
+): Promise<{ ok: true; to: string[] } | { ok: false; reason: string }> {
+  const to = (process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? "")
+    .split(",")
+    .map((e) => e.trim())
+    .filter(Boolean)
+  if (!resend) return { ok: false, reason: "RESEND_API_KEY non impostata su Vercel" }
+  if (!to.length) return { ok: false, reason: "ADMIN_EMAILS non impostata su Vercel" }
+  const url = `${APP_URL}${path}`
+  const { error } = await resend.emails.send({
+    from: FROM,
+    to,
+    subject,
+    html: `<div style="font-family:system-ui,sans-serif;font-size:15px;line-height:1.6">${lines
+      .map((l) => `<p style="margin:0 0 8px">${escapeHtml(l)}</p>`)
+      .join("")}<p><a href="${url}">Apri il pannello</a></p></div>`,
+  })
+  if (error) {
+    console.error("sendAdminEmail failed", error)
+    return { ok: false, reason: `Resend: ${error.message} (mittente ${FROM})` }
+  }
+  return { ok: true, to }
+}

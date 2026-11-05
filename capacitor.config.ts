@@ -23,7 +23,7 @@ const config: CapacitorConfig = {
     // Native Google sign-in (Google refuses OAuth inside the web view). Only
     // the Google provider is bundled: no Facebook SDK, nothing unused.
     SocialLogin: {
-      providers: { google: true, facebook: false, apple: false, twitter: false },
+      providers: { google: true, facebook: false, apple: true, twitter: false },
       logLevel: 1,
     },
     SplashScreen: {

@@ -36,6 +36,7 @@ function statusDot(status: string) {
 function methodLabel(method: string | null, status: string) {
   if (status === "FREE" || method === "FREE") return "Gratis"
   if (method === "STRIPE") return "Carta"
+  if (method === "ON_SITE") return "Al campo"
   if (method === "CASH") return "Contanti"
   if (method === "PAYPAL") return "PayPal"
   if (status === "CANCELLED") return "Annullato"

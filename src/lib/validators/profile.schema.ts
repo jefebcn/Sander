@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { isKnownPlace } from "@/lib/comuni"
 import { START_LEVEL_IDS } from "@/lib/startLevel"
+import { SIGNUP_SOURCE_RE } from "@/lib/signupSource"
 
 /**
  * Onboarding profile.
@@ -26,6 +27,8 @@ export const SaveProfileSchema = z.object({
   // what makes the first home screen about *your* town and *your* level.
   homeCity:      z.string().refine(isKnownPlace, "Comune non riconosciuto").optional(),
   startLevel:    z.enum(START_LEVEL_IDS).optional(),
+  // First-visit channel (instagram, tiktok, invito…), saved only at creation.
+  source:        z.string().regex(SIGNUP_SOURCE_RE).optional(),
 })
 
 export type SaveProfileInput = z.infer<typeof SaveProfileSchema>

@@ -29,6 +29,11 @@ export function sessionDateError(date: Date, now: Date = new Date()): string | n
 }
 
 /** Can someone still join (or queue for) a match starting at `date`? */
+/** From 15 minutes before the start the score can be entered (same rule as completionError). */
+export function completeWindowOpen(date: Date, now: Date = new Date()): boolean {
+  return now.getTime() >= date.getTime() - COMPLETE_EARLY_MS
+}
+
 export function joinWindowOpen(date: Date, now: Date = new Date()): boolean {
   return now.getTime() <= date.getTime() + JOIN_GRACE_MS
 }

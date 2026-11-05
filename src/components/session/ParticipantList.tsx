@@ -6,7 +6,7 @@ import { UserPlus, UserMinus, Search, User, X, BellRing } from "lucide-react"
 import { toast } from "sonner"
 import { isLateCancel } from "@/lib/scopri/reliability"
 import { joinSession, leaveSession, assignTeam, cancelSession, removeParticipantFromSession, markNoShow, joinWaitlist, leaveWaitlist } from "@/actions/sessions"
-import { joinWindowOpen } from "@/lib/sessionRules"
+import { completeWindowOpen, joinWindowOpen } from "@/lib/sessionRules"
 import { cn } from "@/lib/utils"
 import { CompleteSessionForm } from "./CompleteSessionForm"
 import { AddPlayerSheet } from "./AddPlayerSheet"
@@ -51,6 +51,8 @@ export function ParticipantList({ session, participants, currentPlayerId, myWait
   const isParticipant = participants.some((p) => p.player?.id === currentPlayerId)
   const spotsLeft = session.maxPlayers - participants.length
   const started = !joinWindowOpen(new Date(session.date))
+  // Same window as the server (completionError): before it, the form only led to an error.
+  const canComplete = completeWindowOpen(new Date(session.date))
   const canJoin = !isParticipant && spotsLeft > 0 && session.status === "OPEN" && !started
 
   const teamA = participants.filter((p) => p.team === 0)
@@ -156,7 +158,7 @@ export function ParticipantList({ session, participants, currentPlayerId, myWait
         <span className="text-sm text-[var(--muted-text)]">
           {participants.length}/{session.maxPlayers} giocatori
           {session.status === "OPEN" && spotsLeft > 0 && (
-            <span className="ml-1 text-[var(--accent)]">({spotsLeft} posti liberi)</span>
+            <span className="ml-1 text-[var(--accent)]">({spotsLeft} {spotsLeft === 1 ? "posto libero" : "posti liberi"})</span>
           )}
         </span>
       </div>
@@ -319,7 +321,13 @@ export function ParticipantList({ session, participants, currentPlayerId, myWait
 
           {/* The home's "Com'è andata?" card links straight here. */}
           <div id="risultato" className="scroll-mt-24">
-            <CompleteSessionForm sessionId={session.id} participants={participants} />
+            {canComplete ? (
+              <CompleteSessionForm sessionId={session.id} participants={participants} />
+            ) : (
+              <p className="rounded-2xl bg-[var(--surface-1)] p-4 text-base text-[var(--muted-text)]">
+                Il risultato si segna qui a partita iniziata.
+              </p>
+            )}
           </div>
           <button
             onClick={handleCancel}

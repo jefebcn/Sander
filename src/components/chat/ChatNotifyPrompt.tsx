@@ -3,9 +3,9 @@
 import { useEffect, useState, useTransition } from "react"
 import { Bell, X } from "lucide-react"
 import { subscribePush } from "@/actions/push"
+import { enableNativePush, nativePushPermission, nativePushSupported } from "@/lib/nativePush"
 
 const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""
-const DISMISS_KEY = "chat_notify_dismissed"
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4)
@@ -14,14 +14,27 @@ function urlBase64ToUint8Array(base64String: string) {
   return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)))
 }
 
-/** Nudge to enable push, shown atop the chat inbox only when notifications are off. */
-export function ChatNotifyPrompt() {
+/**
+ * Nudge to enable push, shown only when notifications are off: atop the chat
+ * inbox, and on a match the player just joined (the moment the reason is obvious).
+ */
+export function ChatNotifyPrompt({
+  title = "Attiva le notifiche",
+  text = "Per non perderti i messaggi quando l'app è chiusa.",
+  dismissKey = "chat_notify_dismissed",
+  className = "mx-4 mb-2 mt-1",
+}: { title?: string; text?: string; dismissKey?: string; className?: string } = {}) {
   const [show, setShow] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
+    if (localStorage.getItem(dismissKey)) return
+    // iPhone app: ask for the system notifications instead of web push.
+    if (nativePushSupported()) {
+      nativePushPermission().then((p) => setShow(p === "prompt")).catch(() => {})
+      return
+    }
     if (!("serviceWorker" in navigator) || !("PushManager" in window) || !VAPID_PUBLIC) return
-    if (localStorage.getItem(DISMISS_KEY)) return
     // "denied" → nothing we can do in-app; "granted" → only show if not yet subscribed here.
     if (Notification.permission === "denied") return
     if (Notification.permission === "granted") {
@@ -31,9 +44,16 @@ export function ChatNotifyPrompt() {
       return
     }
     setShow(true) // permission === "default"
-  }, [])
+  }, [dismissKey])
 
   async function enable() {
+    if (nativePushSupported()) {
+      startTransition(async () => {
+        await enableNativePush().catch(() => false)
+        setShow(false)
+      })
+      return
+    }
     if (!VAPID_PUBLIC) return
     try {
       const permission = await Notification.requestPermission()
@@ -57,7 +77,7 @@ export function ChatNotifyPrompt() {
   }
 
   function dismiss() {
-    localStorage.setItem(DISMISS_KEY, "1")
+    localStorage.setItem(dismissKey, "1")
     setShow(false)
   }
 
@@ -65,7 +85,7 @@ export function ChatNotifyPrompt() {
 
   return (
     <div
-      className="mx-4 mb-2 mt-1 flex items-center gap-3 rounded-2xl p-3"
+      className={`${className} flex items-center gap-3 rounded-2xl p-3`}
       style={{ background: "var(--surface-2)", border: "1px solid rgba(198,247,54,0.3)" }}
     >
       <div
@@ -75,8 +95,8 @@ export function ChatNotifyPrompt() {
         <Bell className="h-5 w-5 text-[var(--accent)]" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold text-white">Attiva le notifiche</p>
-        <p className="text-xs text-[var(--muted-text)]">Per non perderti i messaggi quando l&apos;app è chiusa.</p>
+        <p className="text-sm font-bold text-white">{title}</p>
+        <p className="text-xs text-[var(--muted-text)]">{text}</p>
       </div>
       <button
         onClick={enable}

@@ -15,6 +15,7 @@ import { SwRegistrar } from "@/components/push/SwRegistrar"
 import { PageWrapper } from "@/components/layout/PageWrapper"
 import { RefTracker } from "@/components/analytics/RefTracker"
 import { ErrorReporter } from "@/components/analytics/ErrorReporter"
+import { NativePushBridge } from "@/components/push/NativePushBridge"
 import { AppBackground, type BackgroundVariant } from "@/components/layout/AppBackground"
 import { PagePhoto } from "@/components/layout/PagePhoto"
 
@@ -154,6 +155,7 @@ export default function RootLayout({
           <Toaster />
           <RefTracker />
           <ErrorReporter />
+          <NativePushBridge />
         </Providers>
         <Analytics />
         {/* Real load times from the players' phones (Vercel → Speed Insights). */}

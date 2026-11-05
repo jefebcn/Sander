@@ -4,6 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
+import { db } from "@/lib/db"
 import { safeCallbackUrl } from "@/lib/safeRedirect"
 import { AuthForm } from "@/components/auth/AuthForm"
 import { BackButton } from "@/components/auth/BackButton"
@@ -18,9 +19,17 @@ export default async function SignInPage({
   const resolvedCallback = safeCallbackUrl(callbackUrl)
 
   // Already signed in: the form has nothing to offer, go where they were headed.
+  // Pages send signed-in users without a Player here too, so bouncing them back
+  // to the callback looped forever (Safari: "replaceState more than 100 times").
   const session = await auth()
   if (session?.user?.id) {
-    redirect(resolvedCallback.startsWith("/auth/") ? "/" : resolvedCallback)
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: { player: { select: { id: true } } },
+    })
+    // No user row: the account was erased on another device. Show the form.
+    if (user && !user.player) redirect("/onboarding/profile")
+    if (user) redirect(resolvedCallback.startsWith("/auth/") ? "/" : resolvedCallback)
   }
 
   const defaultMode = mode === "register" ? "register" : "login"
@@ -88,7 +97,7 @@ export default async function SignInPage({
         </div>
 
         {/* Form */}
-        <AuthForm callbackUrl={resolvedCallback} inviteCode={invite} defaultMode={defaultMode} googleClientId={process.env.AUTH_GOOGLE_ID} />
+        <AuthForm callbackUrl={resolvedCallback} inviteCode={invite} defaultMode={defaultMode} googleClientId={process.env.AUTH_GOOGLE_ID} googleIosClientId={process.env.AUTH_GOOGLE_IOS_ID} />
 
         <p className="text-center text-sm text-[var(--muted-text)]">
           Accedendo accetti i nostri{" "}

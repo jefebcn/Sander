@@ -31,6 +31,8 @@ export async function notifyPlayer(playerId: string, payload: PushPayload) {
       .catch(() => {})
   }
 
+  await notifyNativeApp(playerId, payload)
+
   if (!VAPID_PUBLIC || !VAPID_PRIVATE) return
 
   // Lazy-require web-push so it's never bundled into the client/SSR graph
@@ -54,6 +56,21 @@ export async function notifyPlayer(playerId: string, payload: PushPayload) {
         }),
     ),
   )
+}
+
+/** The iPhone app: web push doesn't reach its web view, so it gets APNs. Never throws. */
+async function notifyNativeApp(playerId: string, payload: PushPayload) {
+  try {
+    const { apnsConfigured, sendApns } = await import("@/lib/apns")
+    if (!apnsConfigured()) return
+    const rows = await db.nativePushToken.findMany({ where: { playerId, platform: "ios" }, select: { token: true } })
+    if (!rows.length) return
+    const results = await sendApns(rows.map((r) => r.token), payload)
+    const gone = [...results].filter(([, r]) => r === "gone").map(([t]) => t)
+    if (gone.length) await db.nativePushToken.deleteMany({ where: { token: { in: gone } } })
+  } catch (e) {
+    console.error("native push failed", e)
+  }
 }
 
 /** Send push notifications to multiple players at once. */
