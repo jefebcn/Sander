@@ -318,7 +318,9 @@ model Club {
   bagno           Int?     // the bagno it is, for "Re dei Bagni"
 
   // Link that adds whoever opens it to the staff; the owner can replace it.
-  staffInviteToken String? @unique
+  // Random, so no unique constraint (adding one to an existing table needs a
+  // data-loss prompt in prisma db push, which the build cannot answer).
+  staffInviteToken String?
 
   members     ClubMember[]
   followers   ClubFollow[]
@@ -327,6 +329,7 @@ model Club {
   messages    ClubMessage[]
 
   @@index([status])
+  @@index([staffInviteToken])
   @@map("clubs")
 }
 

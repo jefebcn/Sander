@@ -181,7 +181,7 @@ export async function acceptStaffInvite(input: unknown): Promise<Result<{ slug: 
     const me = await getCurrentPlayer()
     if (!me) return { ok: false, error: "Accedi per entrare nello staff" }
     const token = StaffInviteTokenSchema.parse(input)
-    const club = await db.club.findUnique({
+    const club = await db.club.findFirst({
       where: { staffInviteToken: token },
       select: { id: true, slug: true, name: true, status: true, members: { where: { role: "OWNER" }, select: { playerId: true } } },
     })
