@@ -49,3 +49,9 @@ export const AdminSetPaymentStatusSchema = z.object({
   registrationId: z.string().min(1),
   paid: z.boolean(),
 })
+export const CheckInSchema = z.object({
+  registrationId: z.string().trim().min(1).max(64),
+  checkedIn: z.boolean(),
+  /** Also mark the fee as paid (cash or Satispay at the desk). */
+  markPaid: z.boolean().default(false),
+})

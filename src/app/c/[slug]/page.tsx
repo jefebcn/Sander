@@ -4,11 +4,14 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { Camera, Globe, Mail, MapPin, Settings, Trophy } from "lucide-react"
+import { BadgeCheck, Camera, Clock, Crown, Globe, LayoutGrid, Mail, MapPin, Navigation, Settings, Trophy } from "lucide-react"
 import { db } from "@/lib/db"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { canManageClub } from "@/lib/clubAccess"
 import { TOURNAMENT_CARD_SELECT } from "@/lib/clubQueries"
+import { CLUB_SERVICES, COURT_TYPES, mapsUrl } from "@/lib/club"
+import { bagnoLabel } from "@/lib/bagni"
+import { formatPrice } from "@/lib/utils"
 import { BackButton } from "@/components/layout/PageHeader"
 import { TournamentCard } from "@/components/tournament/TournamentCard"
 import { FollowClubButton } from "@/components/club/FollowClubButton"
@@ -34,7 +37,7 @@ export default async function ClubPage({ params }: Props) {
   const [club, session, me] = await Promise.all([
     db.club.findUnique({
       where: { slug },
-      include: { _count: { select: { followers: true } } },
+      include: { _count: { select: { followers: true } }, circuits: { orderBy: { createdAt: "desc" }, select: { id: true, name: true } } },
     }),
     getCurrentSession(),
     getCurrentPlayer(),
@@ -86,7 +89,14 @@ export default async function ClubPage({ params }: Props) {
           )}
         </span>
         <div className="min-w-0">
-          <p className="eyebrow text-[var(--tone)]">Club</p>
+          <p className="eyebrow flex items-center gap-1 text-[var(--tone)]">
+            Club
+            {club.status === "APPROVED" && (
+              <span className="flex items-center gap-1 normal-case tracking-normal text-[var(--accent)]">
+                · <BadgeCheck className="h-4 w-4" aria-hidden="true" /> verificato
+              </span>
+            )}
+          </p>
           <h1 className="font-hand text-[2.3rem] leading-[0.95] text-white">{club.name}</h1>
           <p className="mt-1 flex items-center gap-1 text-base text-[var(--muted-text)]">
             <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" /> {club.address ? `${club.address}, ${club.city}` : club.city}
@@ -115,6 +125,52 @@ export default async function ClubPage({ params }: Props) {
         )}
 
         {club.description && <p className="whitespace-pre-line text-base text-white/85">{club.description}</p>}
+
+        {club.photos.length > 0 && (
+          <div className="-mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1">
+            {club.photos.map((url) => (
+              <span key={url} className="relative h-40 w-60 shrink-0 snap-start overflow-hidden rounded-2xl bg-[var(--surface-2)]">
+                <Image src={url} alt={`Campi di ${club.name}`} fill sizes="240px" className="object-cover" />
+              </span>
+            ))}
+          </div>
+        )}
+
+        {(club.courts || club.openingHours || club.courtPriceCents != null || club.services.length > 0) && (
+          <section className="flex flex-col gap-3 rounded-2xl bg-[var(--surface-2)] p-4">
+            <h2 className="eyebrow text-[var(--tone)]">I campi</h2>
+            {(club.courts || club.courtType) && (
+              <p className="flex items-center gap-2 text-base text-white">
+                <LayoutGrid className="h-5 w-5 shrink-0 text-[var(--tone)]" aria-hidden="true" />
+                {[club.courts ? `${club.courts} ${club.courts === 1 ? "campo" : "campi"}` : null, club.courtType ? COURT_TYPES[club.courtType as keyof typeof COURT_TYPES] : null].filter(Boolean).join(" · ")}
+                {club.courtPriceCents != null && ` · ${formatPrice(club.courtPriceCents)}/ora`}
+              </p>
+            )}
+            {club.openingHours && (
+              <p className="flex items-center gap-2 text-base text-white">
+                <Clock className="h-5 w-5 shrink-0 text-[var(--tone)]" aria-hidden="true" /> {club.openingHours}
+              </p>
+            )}
+            {club.services.length > 0 && (
+              <ul className="flex flex-wrap gap-2">
+                {CLUB_SERVICES.filter((sv) => club.services.includes(sv.key)).map((sv) => (
+                  <li key={sv.key} className="rounded-full bg-[var(--surface-3)] px-3 py-1.5 text-sm font-bold text-white">{sv.label}</li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
+
+        <div className="grid grid-cols-1 gap-2">
+          <a href={mapsUrl(club.address, club.city)} target="_blank" rel="noopener noreferrer" className="btn btn-secondary w-full gap-2">
+            <Navigation className="h-5 w-5" aria-hidden="true" /> Portami lì
+          </a>
+          {club.bagno && (
+            <Link href="/bagni" className="btn btn-secondary w-full gap-2">
+              <Crown className="h-5 w-5" aria-hidden="true" /> Re del {bagnoLabel(club.bagno)}
+            </Link>
+          )}
+        </div>
 
         {(club.instagram || club.website || club.contactEmail) && (
           <div className="flex flex-wrap gap-2">
@@ -146,6 +202,18 @@ export default async function ClubPage({ params }: Props) {
             upcoming.map((t) => <TournamentCard key={t.id} tournament={t} />)
           )}
         </section>
+
+        {club.circuits.length > 0 && (
+          <section className="flex flex-col gap-2">
+            <h2 className="eyebrow text-[var(--tone)]">Circuiti</h2>
+            {club.circuits.map((c) => (
+              <Link key={c.id} href={`/c/${club.slug}/circuiti/${c.id}`} className="flex min-h-[3.5rem] items-center justify-between rounded-2xl bg-[var(--surface-2)] px-4">
+                <span className="text-base font-bold text-white">{c.name}</span>
+                <span className="text-sm text-[var(--tone)]">Classifica generale</span>
+              </Link>
+            ))}
+          </section>
+        )}
 
         {past.length > 0 && (
           <section className="flex flex-col gap-3">

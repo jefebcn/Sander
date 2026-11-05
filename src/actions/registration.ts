@@ -13,6 +13,7 @@ import { randomBytes } from "node:crypto"
 import { PairInviteTokenSchema } from "@/lib/validators/club.schema"
 import {
   hasFreeSeat,
+  holdsSeat,
   seatLimit,
   SEAT_FREE_STATUSES,
   TOURNAMENT_FULL_MESSAGE,
@@ -32,6 +33,7 @@ import {
   AdminSetPaymentStatusSchema,
   TournamentIdSchema,
   PlayerIdSchema,
+  CheckInSchema,
 } from "@/lib/validators/registration.schema"
 
 type Tx = Prisma.TransactionClient
@@ -492,6 +494,7 @@ export async function registerForTournament(input: unknown): Promise<
           skillLevel: skillLevel ?? null,
         },
       })
+      await tx.tournamentWaitlist.deleteMany({ where: { tournamentId, playerId: player.id } })
     })
 
     // Notify player of successful registration
@@ -670,6 +673,7 @@ export async function cancelRegistration(input: unknown) {
   }
 
   await db.tournamentRegistration.deleteMany({ where: { id: registrationId } })
+  await promoteFromWaitlist(reg.tournamentId).catch((e) => console.error("[registration] waitlist promotion failed", e))
   revalidateTournament(reg.tournamentId)
 }
 
@@ -703,6 +707,7 @@ export async function adminRemoveRegistration(input: unknown) {
   // Card payments go back first; if Stripe can't confirm, the player stays.
   await settleStripeRegistration(registrationId)
   await db.tournamentRegistration.delete({ where: { id: registrationId } })
+  await promoteFromWaitlist(reg.tournamentId).catch((e) => console.error("[registration] waitlist promotion failed", e))
   revalidatePath(`/tournaments/${reg.tournamentId}`)
   revalidatePath("/admin/payments")
 }
@@ -1064,5 +1069,139 @@ export async function acceptPairInvite(input: unknown): Promise<{ ok: true; tour
     return { ok: true, tournamentId: tournament.id }
   } catch (e) {
     return { ok: false, error: toUserError(e, "acceptPairInvite") }
+  }
+}
+
+// ───────────────────────────── waiting list ──────────────────────────────────
+
+/** Full tournament: join the waiting list. The first in line gets the next free seat. */
+export async function joinWaitlist(tournamentIdInput: string): Promise<{ ok: true; position: number } | { ok: false; error: string }> {
+  try {
+    const tournamentId = TournamentIdSchema.parse(tournamentIdInput)
+    const player = await requireCurrentPlayer()
+    const t = await assertRegistrable(tournamentId)
+    if (await isRegistered(tournamentId, player.id)) return { ok: false, error: "Sei già iscritto a questo torneo" }
+    const limit = seatLimit(t.type, t.maxTeams)
+    const taken = await db.tournamentRegistration.count({
+      where: { tournamentId, isSpectator: false, paymentStatus: { notIn: [...SEAT_FREE_STATUSES] } },
+    })
+    if (limit == null || taken < limit) return { ok: false, error: "Ci sono ancora posti: iscriviti direttamente" }
+    await db.tournamentWaitlist.upsert({
+      where: { tournamentId_playerId: { tournamentId, playerId: player.id } },
+      create: { tournamentId, playerId: player.id },
+      update: {},
+    })
+    const me = await db.tournamentWaitlist.findUniqueOrThrow({ where: { tournamentId_playerId: { tournamentId, playerId: player.id } }, select: { createdAt: true } })
+    const position = await db.tournamentWaitlist.count({ where: { tournamentId, createdAt: { lte: me.createdAt } } })
+    revalidateTournament(tournamentId)
+    return { ok: true, position }
+  } catch (e) {
+    return { ok: false, error: toUserError(e, "joinWaitlist") }
+  }
+}
+
+export async function leaveWaitlist(tournamentIdInput: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const tournamentId = TournamentIdSchema.parse(tournamentIdInput)
+    const player = await requireCurrentPlayer()
+    await db.tournamentWaitlist.deleteMany({ where: { tournamentId, playerId: player.id } })
+    revalidateTournament(tournamentId)
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: toUserError(e, "leaveWaitlist") }
+  }
+}
+
+/**
+ * A seat was freed: fill it from the waiting list, first come first served.
+ * Free and club tournaments (paid at the court) sign the player up straight
+ * away; for card payments the first in line is told to sign up, since the seat
+ * goes to whoever pays first.
+ */
+async function promoteFromWaitlist(tournamentId: string) {
+  const t = await db.tournament.findUnique({
+    where: { id: tournamentId },
+    select: { id: true, name: true, type: true, maxTeams: true, priceCents: true, status: true, clubId: true, isOpenForRegistration: true },
+  })
+  if (!t || t.status !== "DRAFT" || !t.isOpenForRegistration) return
+  const { notifyPlayer } = await import("@/lib/push")
+  const isFree = isFreeTournament(t)
+
+  for (let guard = 0; guard < 20; guard++) {
+    const next = await db.tournamentWaitlist.findFirst({ where: { tournamentId }, orderBy: { createdAt: "asc" }, select: { id: true, playerId: true } })
+    if (!next) return
+    const existing = await db.tournamentRegistration.findUnique({
+      where: { tournamentId_playerId: { tournamentId, playerId: next.playerId } },
+      select: { id: true, paymentStatus: true, isSpectator: true },
+    })
+    if (existing && holdsSeat(existing)) {
+      await db.tournamentWaitlist.deleteMany({ where: { id: next.id } })
+      continue
+    }
+    if (!t.clubId && !isFree) {
+      await notifyPlayer(next.playerId, {
+        title: "Si è liberato un posto",
+        body: `${t.name}: iscriviti ora, il posto va a chi paga per primo.`,
+        url: `/tournaments/${tournamentId}`,
+      }).catch(() => {})
+      return
+    }
+    try {
+      await db.$transaction(async (tx) => {
+        await assertSeatAvailable(tx, t, next.playerId)
+        if (existing) await tx.tournamentRegistration.deleteMany({ where: { id: existing.id } })
+        await tx.tournamentRegistration.create({
+          data: {
+            tournamentId,
+            playerId: next.playerId,
+            paymentStatus: isFree ? "PAID" : "PENDING",
+            paymentMethod: isFree ? "FREE" : unpaidMethod(t),
+            paidAt: isFree ? new Date() : null,
+            amountPaidCents: isFree ? 0 : null,
+          },
+        })
+        await tx.tournamentWaitlist.deleteMany({ where: { id: next.id } })
+      })
+    } catch {
+      return // full again
+    }
+    await notifyPlayer(next.playerId, {
+      title: "Sei dentro!",
+      body: `Si è liberato un posto: sei iscritto a ${t.name}.${isFree ? "" : " La quota si paga al campo."}`,
+      url: `/tournaments/${tournamentId}`,
+    }).catch(() => {})
+  }
+}
+
+// ──────────────────────────────── check-in ───────────────────────────────────
+
+/**
+ * Organiser at the court: mark a player as arrived (or not), and optionally
+ * as paid in the same tap.
+ */
+export async function setCheckIn(input: unknown): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const { registrationId, checkedIn, markPaid } = CheckInSchema.parse(input)
+    const session = await getCurrentSession()
+    if (!session?.user?.id) return { ok: false, error: "Non autenticato" }
+    const reg = await db.tournamentRegistration.findUnique({
+      where: { id: registrationId },
+      select: { tournamentId: true, paymentStatus: true, tournament: { select: { priceCents: true } } },
+    })
+    if (!reg) return { ok: false, error: "Iscrizione non trovata" }
+    if (!(await canManageTournament(session.user.email, reg.tournamentId))) return { ok: false, error: "Solo lo staff del torneo può fare il check-in" }
+    const pay = markPaid && reg.paymentStatus === "PENDING"
+    await db.tournamentRegistration.update({
+      where: { id: registrationId },
+      data: {
+        checkedInAt: checkedIn ? new Date() : null,
+        ...(pay ? { paymentStatus: "PAID", paymentMethod: "CASH", paidAt: new Date(), amountPaidCents: reg.tournament.priceCents ?? 0 } : {}),
+      },
+    })
+    revalidatePath(`/tournaments/${reg.tournamentId}`)
+    revalidatePath(`/tournaments/${reg.tournamentId}/checkin`)
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: toUserError(e, "setCheckIn") }
   }
 }

@@ -13,17 +13,26 @@ interface CreateTournamentFormProps {
   players: Player[]
   /** The organising club, when created from its page. */
   clubId?: string | null
+  /** Pre-filled values from a ready-made template (lib/club.ts), and the club's venue. */
+  initial?: {
+    type?: "KING_OF_THE_BEACH" | "BRACKETS" | "ROUND_ROBIN" | "DOUBLE_ELIMINATION" | "CHICECE"
+    maxTeams?: number
+    priceEuros?: string
+    numCourts?: number
+    description?: string
+    location?: string
+  }
 }
 
-export function CreateTournamentForm({ players, clubId = null }: CreateTournamentFormProps) {
+export function CreateTournamentForm({ players, clubId = null, initial = {} }: CreateTournamentFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
   const [name, setName] = useState("")
   const [date, setDate] = useState(new Date().toISOString().split("T")[0])
-  const [type, setType] = useState<"KING_OF_THE_BEACH" | "BRACKETS" | "ROUND_ROBIN" | "DOUBLE_ELIMINATION" | "CHICECE">("KING_OF_THE_BEACH")
+  const [type, setType] = useState<"KING_OF_THE_BEACH" | "BRACKETS" | "ROUND_ROBIN" | "DOUBLE_ELIMINATION" | "CHICECE">(initial.type ?? "KING_OF_THE_BEACH")
   const [chiceceMatchCount, setChiceceMatchCount] = useState<4 | 6>(4)
-  const [numCourts, setNumCourts] = useState(2)
+  const [numCourts, setNumCourts] = useState(initial.numCourts ?? 2)
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
 
@@ -31,18 +40,18 @@ export function CreateTournamentForm({ players, clubId = null }: CreateTournamen
   const [coverUrl, setCoverUrl] = useState("")
   const [skillLevel, setSkillLevel] = useState("")
   const [gender, setGender] = useState("")
-  const [maxTeams, setMaxTeams] = useState("")
+  const [maxTeams, setMaxTeams] = useState(initial.maxTeams ? String(initial.maxTeams) : "")
 
   // Registration & payment fields
   // A club creates a tournament to take sign-ups: open by default.
   const [isOpenForRegistration, setIsOpenForRegistration] = useState(!!clubId)
-  const [location, setLocation] = useState("")
-  const [description, setDescription] = useState("")
+  const [location, setLocation] = useState(initial.location ?? "")
+  const [description, setDescription] = useState(initial.description ?? "")
   const [registrationDeadline, setRegistrationDeadline] = useState("")
   const [prizePool, setPrizePool] = useState("")
   const [prize2nd, setPrize2nd] = useState("")
   const [prize3rd, setPrize3rd] = useState("")
-  const [priceEuros, setPriceEuros] = useState("")
+  const [priceEuros, setPriceEuros] = useState(initial.priceEuros ?? "")
   const [spectatorPriceEuros, setSpectatorPriceEuros] = useState("")
 
   function togglePlayer(id: string) {

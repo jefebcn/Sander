@@ -112,3 +112,14 @@ export function ShareLayout({
     </div>
   )
 }
+
+/** A QR code for a link, as a PNG data URL (black on white, scannable from paper or a phone). */
+export async function qrDataUrl(url: string, width = 520): Promise<string> {
+  const QR = await import("qrcode")
+  return QR.toDataURL(url, { margin: 1, width, color: { dark: "#0b0b0b", light: "#ffffff" }, errorCorrectionLevel: "M" })
+}
+
+/** The public site address, for links printed on images. */
+export function siteUrl(): string {
+  return (process.env.NEXT_PUBLIC_APP_URL ?? "https://www.sanderbv.it").replace(/\/$/, "")
+}

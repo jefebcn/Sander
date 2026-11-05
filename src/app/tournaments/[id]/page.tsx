@@ -2,9 +2,10 @@ import type { Metadata } from "next"
 import { activeDuoOf, duoName } from "@/lib/scopri/duos"
 import { DuoRegisterButton } from "@/components/tournament/DuoRegisterButton"
 import { ClubRegisterBox } from "@/components/club/ClubRegisterBox"
+import { waitlistState } from "@/lib/waitlist"
 import { playingRegistrations, startProblem } from "@/lib/tournament/pairing"
 import Link from "next/link"
-import { ChevronRight, Play, Trophy, Shuffle, Trash2 } from "lucide-react"
+import { ChevronRight, ClipboardCheck, Play, Trophy, Shuffle, Trash2 } from "lucide-react"
 import { getTournamentDashboard } from "@/actions/standings"
 import { startTournament, completeTournament } from "@/actions/tournaments"
 import { adminRemoveRegistration } from "@/actions/registration"
@@ -60,7 +61,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   const { id } = await params
 
   const [base, session] = await Promise.all([
-    db.tournament.findUnique({ where: { id }, select: { type: true, priceCents: true, priceCurrency: true, club: { select: { name: true, slug: true } } } }),
+    db.tournament.findUnique({ where: { id }, select: { type: true, priceCents: true, priceCurrency: true, club: { select: { name: true, slug: true } }, circuit: { select: { id: true, name: true } } } }),
     getCurrentSession(),
   ])
   if (!base) notFound()
@@ -77,10 +78,18 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   const myInvite = club && currentPlayer
     ? await db.tournamentPairInvite.findFirst({ where: { tournamentId: id, fromId: currentPlayer.id, status: "PENDING" }, select: { token: true } })
     : null
+  const seats = club ? await waitlistState(id, currentPlayer?.id ?? null) : null
   const clubChip = club && (
-    <Link href={`/c/${club.slug}`} className="mt-2 inline-flex min-h-[2.75rem] items-center gap-1 text-base font-bold text-[var(--tone)]">
-      Organizzato da {club.name} <ChevronRight className="h-4 w-4" aria-hidden="true" />
-    </Link>
+    <div className="mt-2 flex flex-col">
+      <Link href={`/c/${club.slug}`} className="inline-flex min-h-[2.75rem] items-center gap-1 text-base font-bold text-[var(--tone)]">
+        Organizzato da {club.name} <ChevronRight className="h-4 w-4" aria-hidden="true" />
+      </Link>
+      {base.circuit && (
+        <Link href={`/c/${club.slug}/circuiti/${base.circuit.id}`} className="inline-flex min-h-[2.75rem] items-center gap-1 text-base font-bold text-white">
+          Tappa di {base.circuit.name} <ChevronRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
+      )}
+    </div>
   )
 
   // ── Chicece path ────────────────────────────────────────────
@@ -215,6 +224,9 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 isAuthed={!!currentPlayer}
                 open={registrationOpen}
                 pendingToken={myInvite?.token ?? null}
+                full={seats?.full ?? false}
+                waitlistPosition={seats?.waitlistPosition ?? null}
+                registrationId={seats?.myRegistrationId ?? null}
               />
             )}
             {!club && tournament.status === "DRAFT" && tournament.isOpenForRegistration && !alreadySpectator && (
@@ -286,6 +298,11 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               mode="spectator"
             />
           </div>
+        )}
+        {isAdmin && tournament.status !== "COMPLETED" && (
+          <Link href={`/tournaments/${id}/checkin`} className="btn btn-secondary mx-4 mb-4 gap-2">
+            <ClipboardCheck className="h-5 w-5" aria-hidden="true" /> Check-in e quote al campo
+          </Link>
         )}
 
         {/* Draft — start */}
@@ -548,6 +565,9 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               isAuthed={!!currentPlayer}
               open={registrationOpen}
               pendingToken={myInvite?.token ?? null}
+              full={seats?.full ?? false}
+              waitlistPosition={seats?.waitlistPosition ?? null}
+              registrationId={seats?.myRegistrationId ?? null}
             />
           )}
           {!club && tournament.status === "DRAFT" && tournament.isOpenForRegistration && !alreadySpectator && (
@@ -619,6 +639,11 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             mode="spectator"
           />
         </div>
+      )}
+      {isAdmin && tournament.status !== "COMPLETED" && (
+        <Link href={`/tournaments/${id}/checkin`} className="btn btn-secondary mx-4 mb-4 gap-2">
+          <ClipboardCheck className="h-5 w-5" aria-hidden="true" /> Check-in e quote al campo
+        </Link>
       )}
 
       {/* Draft — admin pairing editor + start action */}

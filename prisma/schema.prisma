@@ -191,6 +191,7 @@ model Player {
   clubFollows          ClubFollow[]
   pairInvitesSent      TournamentPairInvite[] @relation("PairInvitesSent")
   pairInvitesReceived  TournamentPairInvite[] @relation("PairInvitesReceived")
+  tournamentWaitlist   TournamentWaitlist[]
   notifications        Notification[]
   monthlyAwards        MonthlyAward[]
   videoSubmissions     VideoSubmission[]
@@ -263,7 +264,14 @@ model Tournament {
   // Organised by a club (lib/club.ts): its staff manages it, players pay on site.
   clubId String?
   club   Club?   @relation(fields: [clubId], references: [id], onDelete: SetNull)
+  // A stage of the club's circuit, when it is one.
+  circuitId String?
+  circuit   ClubCircuit? @relation(fields: [circuitId], references: [id], onDelete: SetNull)
   pairInvites TournamentPairInvite[]
+  waitlist    TournamentWaitlist[]
+  messages    ClubMessage[]
+  // The "domani si gioca" reminder went out (lib/tournamentReminders.ts).
+  reminderSentAt DateTime?
 
   // Cover image & display metadata
   coverUrl   String?
@@ -300,12 +308,78 @@ model Club {
   status      ClubStatus @default(PENDING)
   approvedAt  DateTime?
 
+  // Courts and services (lib/club.ts): what a player wants to know before going.
+  courts          Int?
+  courtType       String?  // OUTDOOR | INDOOR | BOTH
+  openingHours    String?
+  courtPriceCents Int?     // per hour
+  services        String[] @default([])
+  photos          String[] @default([])
+  bagno           Int?     // the bagno it is, for "Re dei Bagni"
+
+  // Link that adds whoever opens it to the staff; the owner can replace it.
+  // Random, so no unique constraint (adding one to an existing table needs a
+  // data-loss prompt in prisma db push, which the build cannot answer).
+  staffInviteToken String?
+
   members     ClubMember[]
   followers   ClubFollow[]
   tournaments Tournament[]
+  circuits    ClubCircuit[]
+  messages    ClubMessage[]
 
   @@index([status])
+  @@index([staffInviteToken])
   @@map("clubs")
+}
+
+/// A season-long series of a club's tournaments ("tappe") with an overall
+/// standings table: points per placement, see lib/circuit.ts.
+model ClubCircuit {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  clubId    String
+  name      String
+
+  club        Club         @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  tournaments Tournament[]
+
+  @@index([clubId])
+  @@map("club_circuits")
+}
+
+/// A notification the club sent to its followers or to a tournament's players.
+/// Kept for the history in the back office and the daily limit.
+model ClubMessage {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  clubId       String
+  authorId     String?
+  tournamentId String?
+  body         String
+  sentTo       Int      @default(0)
+
+  club       Club        @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  tournament Tournament? @relation(fields: [tournamentId], references: [id], onDelete: SetNull)
+
+  @@index([clubId, createdAt])
+  @@map("club_messages")
+}
+
+/// "Lista d'attesa": a full tournament keeps the players who still want in,
+/// first come first served. A freed seat goes to the first in line.
+model TournamentWaitlist {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  tournamentId String
+  playerId     String
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  player     Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, playerId])
+  @@index([tournamentId, createdAt])
+  @@map("tournament_waitlist")
 }
 
 enum ClubStatus {
@@ -400,6 +474,8 @@ model TournamentRegistration {
   stripeSessionId       String?       @unique
   stripePaymentIntentId String?       @unique
   adminNotes            String?
+  // Arrived at the court: set by the organiser at check-in.
+  checkedInAt           DateTime?
 
   tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   player     Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
