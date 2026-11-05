@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation"
 import { Shuffle, Users, Pencil, X } from "lucide-react"
 import { randomizePairings, swapPlayers, updateTeamInfo } from "@/actions/tournaments"
 import { cn } from "@/lib/utils"
+import { pairingOrder } from "@/lib/tournament/pairing"
 import type { TournamentRegistration } from "@/generated/prisma/client"
 import type { PublicPlayer as Player } from "@/lib/publicPlayer"
 import { resizedPhoto } from "@/lib/photo"
 
-type RegWithPlayer = Pick<TournamentRegistration, "id" | "playerId" | "seedPosition" | "teamName" | "teamLogoUrl" | "skillLevel"> & {
+type RegWithPlayer = Pick<TournamentRegistration, "id" | "playerId" | "seedPosition" | "teamName" | "teamLogoUrl" | "skillLevel" | "createdAt"> & {
   player: Player
 }
 
@@ -25,20 +26,18 @@ export function TeamPairingEditor({ tournamentId, registrations }: TeamPairingEd
   // Which pair index has the team-info panel open
   const [editingPair, setEditingPair] = useState<number | null>(null)
 
-  // Sort by seedPosition, build consecutive pairs
-  const sorted = [...registrations].sort(
-    (a, b) => (a.seedPosition ?? 0) - (b.seedPosition ?? 0),
-  )
+  // Same order the start uses: seeds, then whoever signed up alone, by time.
+  const sorted = pairingOrder(registrations)
   const pairs: [RegWithPlayer, RegWithPlayer | undefined][] = []
   for (let i = 0; i < sorted.length; i += 2) {
     pairs.push([sorted[i], sorted[i + 1]])
   }
 
-  function handleRandomize() {
+  function handleRandomize(mode: "random" | "mixed") {
     setSelected(null)
     setEditingPair(null)
     startTransition(async () => {
-      await randomizePairings(tournamentId)
+      await randomizePairings(tournamentId, mode)
       router.refresh()
     })
   }
@@ -69,20 +68,32 @@ export function TeamPairingEditor({ tournamentId, registrations }: TeamPairingEd
           <Users className="h-4 w-4 text-[var(--accent)]" aria-hidden="true" />
           <p className="text-xs font-bold uppercase tracking-wider">Formazione Coppie</p>
         </div>
-        <button
-          type="button"
-          onClick={handleRandomize}
-          disabled={isPending}
-          className="flex items-center gap-1.5 rounded-full bg-[var(--surface-3)] px-3 py-1.5 text-xs font-bold transition-all hover:bg-[var(--surface-4)] active:scale-95 disabled:opacity-50"
-        >
-          {isPending ? (
-            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-          ) : (
-            <Shuffle className="h-3.5 w-3.5" aria-hidden="true" />
-          )}
-          Casuale
-        </button>
+        <div className="flex items-center gap-2">
+          {(["random", "mixed"] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => handleRandomize(mode)}
+              disabled={isPending}
+              aria-label={mode === "mixed" ? "Coppie miste casuali: un uomo e una donna" : "Coppie casuali"}
+              className="flex min-h-[2.75rem] items-center gap-1.5 rounded-full bg-[var(--surface-3)] px-3 text-sm font-bold transition-all hover:bg-[var(--surface-4)] active:scale-95 disabled:opacity-50"
+            >
+              {isPending ? (
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              ) : (
+                <Shuffle className="h-3.5 w-3.5" aria-hidden="true" />
+              )}
+              {mode === "mixed" ? "Miste" : "Casuale"}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {sorted.length % 2 !== 0 && (
+        <p className="mb-3 rounded-xl bg-[var(--surface-2)] p-3 text-sm text-white">
+          Numero dispari: l&apos;ultima coppia ha un posto vuoto. Aggiungi un giocatore o togline uno per poter iniziare.
+        </p>
+      )}
 
       {/* Contextual hint */}
       <p className="mb-3 text-xs text-[var(--muted-text)]">

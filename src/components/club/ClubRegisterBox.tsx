@@ -52,20 +52,21 @@ export function ClubRegisterBox(p: Props) {
     )
   }
 
+  const registerAlone = () =>
+    startTransition(async () => {
+      const res = await registerForTournament({ tournamentId: p.tournamentId })
+      if (!res.ok) return void toast.error(res.error)
+      toast.success("Sei iscritto!")
+      router.refresh()
+    })
+
   if (!p.pairFormat) {
     return (
       <div className="flex flex-col gap-2">
         <button
           type="button"
           disabled={pending}
-          onClick={() =>
-            startTransition(async () => {
-              const res = await registerForTournament({ tournamentId: p.tournamentId })
-              if (!res.ok) return void toast.error(res.error)
-              toast.success("Sei iscritto!")
-              router.refresh()
-            })
-          }
+          onClick={registerAlone}
           className="btn btn-primary w-full gap-2"
         >
           {pending ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <UserPlus className="h-5 w-5" aria-hidden="true" />}
@@ -97,6 +98,10 @@ export function ClubRegisterBox(p: Props) {
         <p className="text-center text-sm text-[var(--muted-text)]">
           Inviti il compagno con un link: quando accetta, la coppia è iscritta. {payNote}
         </p>
+        <button type="button" disabled={pending} onClick={registerAlone} className="btn btn-secondary w-full">
+          Non ho un compagno: iscrivimi da solo
+        </button>
+        <p className="text-center text-sm text-[var(--muted-text)]">Le coppie di chi si iscrive da solo le forma il club.</p>
       </div>
     )
   }

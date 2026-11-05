@@ -6,7 +6,8 @@ import { SubmitScoreSchema } from "@/lib/validators/match.schema"
 import type { SubmitScoreInput } from "@/lib/validators/match.schema"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
 
-import { isAdminEmail, canManageTournament } from "@/lib/isAdmin"
+import { canManageTournament } from "@/lib/isAdmin"
+import { rankStandings } from "@/lib/tournament/standings"
 import { PUBLIC_PLAYER_SELECT } from "@/lib/publicPlayer"
 import { z } from "zod"
 
@@ -25,9 +26,10 @@ export async function submitScore(input: SubmitScoreInput) {
     },
   })
 
-  // Only admin can submit scores
-  const isAdmin = isAdminEmail(session.user.email)
-  if (!isAdmin) throw new Error("Solo l'amministratore può inserire i risultati")
+  // The organiser enters scores: SANDER admins, the creator, the club's staff.
+  if (!(await canManageTournament(session.user.email, match.tournamentId))) {
+    throw new Error("Solo l'organizzatore può inserire i risultati")
+  }
 
   if (match.isCompleted) {
     throw new Error("Match is already completed")
@@ -93,20 +95,9 @@ export async function submitScore(input: SubmitScoreInput) {
       ],
     })
 
-    // Sort by (points DESC, diff DESC, ptsFor DESC) and assign ranks
-    const sorted = allStandings
-      .map((s) => ({ ...s, diff: s.pointsFor - s.pointsAgainst }))
-      .sort((a, b) => {
-        if (b.points !== a.points) return b.points - a.points
-        if (b.diff !== a.diff) return b.diff - a.diff
-        return b.pointsFor - a.pointsFor
-      })
-
-    for (let i = 0; i < sorted.length; i++) {
-      await tx.tournamentStanding.update({
-        where: { id: sorted[i].id },
-        data: { rank: i + 1 },
-      })
+    // Points, then diff, then points scored; full ties share a rank (a pair's two players).
+    for (const s of rankStandings(allStandings)) {
+      await tx.tournamentStanding.update({ where: { id: s.id }, data: { rank: s.rank } })
     }
 
     // For BRACKETS and DOUBLE_ELIMINATION: advance winner to next match

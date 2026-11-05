@@ -57,17 +57,21 @@ export function calculateStandings(
 /**
  * Sorts standings entries and assigns 1-based rank numbers.
  * Sort priority: 1) points DESC, 2) point diff DESC, 3) points scored DESC.
+ * Entries level on all three share a rank, and the next one follows on
+ * (1, 1, 2, 2, 3…): the two players of a fixed pair are always level, so the
+ * podium is per pair (1ª, 2ª, 3ª coppia) and both get the win.
  */
-export function rankStandings(entries: StandingEntry[]): StandingEntry[] {
-  return [...entries]
-    .sort((a, b) => {
-      const byPoints = b.points - a.points
-      if (byPoints !== 0) return byPoints
-      const aDiff = a.pointsFor - a.pointsAgainst
-      const bDiff = b.pointsFor - b.pointsAgainst
-      const byDiff = bDiff - aDiff
-      if (byDiff !== 0) return byDiff
-      return b.pointsFor - a.pointsFor
-    })
-    .map((s, i) => ({ ...s, rank: i + 1 }))
+export function rankStandings<T extends Pick<StandingEntry, "points" | "pointsFor" | "pointsAgainst">>(entries: T[]): (T & { rank: number })[] {
+  const key = (e: T) => [e.points, e.pointsFor - e.pointsAgainst, e.pointsFor] as const
+  const sorted = [...entries].sort((a, b) => {
+    const [ap, ad, af] = key(a)
+    const [bp, bd, bf] = key(b)
+    return bp - ap || bd - ad || bf - af
+  })
+  let rank = 0
+  return sorted.map((s, i) => {
+    const prev = sorted[i - 1]
+    if (!prev || key(prev).some((v, k) => v !== key(s)[k])) rank++
+    return { ...s, rank }
+  })
 }
