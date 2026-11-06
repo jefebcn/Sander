@@ -3,9 +3,9 @@
 import { useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { CheckCircle2, Clock, Copy, Loader2, MessageCircle, QrCode, UserPlus, X } from "lucide-react"
+import { CheckCircle2, Clock, Copy, CreditCard, Hourglass, Loader2, MessageCircle, QrCode, UserPlus, X } from "lucide-react"
 import { toast } from "sonner"
-import { cancelPairInvite, createPairInvite, joinWaitlist, leaveWaitlist, registerForTournament } from "@/actions/registration"
+import { cancelPairInvite, claimLinkPayment, createPairInvite, joinWaitlist, leaveWaitlist, registerForTournament } from "@/actions/registration"
 
 interface Props {
   tournamentId: string
@@ -27,6 +27,11 @@ interface Props {
   waitlistPartner: string | null
   /** My registration, for the check-in ticket. */
   registrationId: string | null
+  /** The club's payment link (amount filled in where the service allows), or null: pay at the court. */
+  paymentUrl: string | null
+  paymentProvider: string | null
+  /** "Ho pagato" already tapped: waiting for the staff to confirm. */
+  paymentClaimed: boolean
 }
 
 /**
@@ -39,7 +44,11 @@ export function ClubRegisterBox(p: Props) {
   const router = useRouter()
   // Built on tap: the origin isn't known while rendering on the server.
   const link = () => `${window.location.origin}/tournaments/${p.tournamentId}/coppia/${token}?ref=coppia`
-  const payNote = p.price ? `Quota ${p.price} a testa, si paga al campo (contanti o Satispay).` : "Iscrizione gratuita."
+  const payNote = !p.price
+    ? "Iscrizione gratuita."
+    : p.paymentUrl
+      ? `Quota ${p.price} a testa: la paghi online al club${p.paymentProvider ? ` (${p.paymentProvider})` : ""} o al campo.`
+      : `Quota ${p.price} a testa, si paga al campo (contanti o Satispay).`
   const invitePartner = () =>
     startTransition(async () => {
       const res = await createPairInvite(p.tournamentId)
@@ -72,9 +81,49 @@ export function ClubRegisterBox(p: Props) {
         <div className="flex items-start gap-3 rounded-2xl bg-[var(--surface-2)] p-4">
           <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[var(--live)]" aria-hidden="true" />
           <p className="text-base text-white">
-            Sei iscritto. {p.price ? (p.paid ? "Quota pagata." : `Ricordati la quota: ${p.price}, al campo.`) : ""}
+            Sei iscritto.{" "}
+            {p.price
+              ? p.paid
+                ? "Quota pagata."
+                : p.paymentClaimed
+                  ? "Hai segnalato il pagamento: il club lo conferma appena lo vede."
+                  : p.paymentUrl
+                    ? `Quota ${p.price}: pagala ora online, oppure al campo.`
+                    : `Ricordati la quota: ${p.price}, al campo.`
+              : ""}
           </p>
         </div>
+        {p.price && !p.paid && p.paymentUrl && p.registrationId && !p.paymentClaimed && (
+          <>
+            <a href={p.paymentUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary w-full gap-2">
+              <CreditCard className="h-5 w-5" aria-hidden="true" /> Paga ora la quota ({p.price})
+            </a>
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() =>
+                startTransition(async () => {
+                  const res = await claimLinkPayment(p.registrationId!)
+                  if (!res.ok) return void toast.error(res.error)
+                  toast.success("Grazie! Il club conferma il pagamento appena lo vede")
+                  router.refresh()
+                })
+              }
+              className="btn btn-secondary w-full gap-2"
+            >
+              {pending ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <CheckCircle2 className="h-5 w-5" aria-hidden="true" />}
+              Ho pagato
+            </button>
+            <p className="text-center text-sm text-[var(--muted-text)]">
+              Paghi direttamente al club{p.paymentProvider ? ` su ${p.paymentProvider}` : ""}: SANDER non tocca i soldi. Poi torna qui e tocca «Ho pagato».
+            </p>
+          </>
+        )}
+        {p.price && !p.paid && p.paymentClaimed && (
+          <p className="flex items-center justify-center gap-2 text-sm text-[var(--muted-text)]">
+            <Hourglass className="h-4 w-4" aria-hidden="true" /> Pagamento in attesa di conferma
+          </p>
+        )}
         {p.registrationId && (
           <Link href={`/tournaments/${p.tournamentId}/checkin/${p.registrationId}`} className="btn btn-secondary w-full gap-2">
             <QrCode className="h-5 w-5" aria-hidden="true" /> Il tuo QR per il check-in

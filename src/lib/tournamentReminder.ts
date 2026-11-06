@@ -13,6 +13,8 @@ export interface ReminderInput {
   priceCurrency?: string | null
   /** Paid at the court (club tournaments). */
   paysOnSite: boolean
+  /** The club also takes the fee online, with its payment link. */
+  payOnline?: boolean
 }
 
 export interface ReminderReg {
@@ -24,7 +26,8 @@ export function tournamentReminder(t: ReminderInput, reg: ReminderReg): { title:
   const when = hasTimeOfDay(t.date) ? ` alle ${formatTime(t.date)}` : ""
   const where = t.location ? `, ${t.location}` : ""
   const owes = t.paysOnSite && !reg.isSpectator && (t.priceCents ?? 0) > 0 && reg.paymentStatus === "PENDING"
-  const fee = owes ? ` Ricordati la quota: ${formatPrice(t.priceCents, t.priceCurrency ?? "EUR")}, al campo.` : ""
+  const price = formatPrice(t.priceCents, t.priceCurrency ?? "EUR")
+  const fee = owes ? (t.payOnline ? ` Ricordati la quota: ${price}, online dalla pagina del torneo o al campo.` : ` Ricordati la quota: ${price}, al campo.`) : ""
   return {
     title: `Domani: ${t.name}`,
     body: `Si gioca domani${when}${where}.${fee} Arriva 15 minuti prima per il check-in.`,

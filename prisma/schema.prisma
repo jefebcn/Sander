@@ -273,6 +273,8 @@ model Tournament {
   messages    ClubMessage[]
   // The "domani si gioca" reminder went out (lib/tournamentReminders.ts).
   reminderSentAt DateTime?
+  // A payment link for this tournament only; otherwise the club's one.
+  paymentLink    String?
 
   // Cover image & display metadata
   coverUrl   String?
@@ -320,6 +322,8 @@ model Club {
   // Link-in-bio page (/c/[slug]/link): WhatsApp number and up to 4 links.
   whatsapp        String?
   bioLinks        Json?    // [{ label, url }]
+  // The club's own payment link (lib/paymentLink.ts): players pay the club directly.
+  paymentLink     String?
 
   // Link that adds whoever opens it to the staff; the owner can replace it.
   // Random, so no unique constraint (adding one to an existing table needs a
@@ -486,6 +490,8 @@ model TournamentRegistration {
   adminNotes            String?
   // Arrived at the court: set by the organiser at check-in.
   checkedInAt           DateTime?
+  // "Ho pagato" through the club's payment link: the staff confirms it.
+  paymentClaimedAt      DateTime?
 
   tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   player     Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)

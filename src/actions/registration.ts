@@ -1256,6 +1256,33 @@ async function promoteFromWaitlist(tournamentId: string) {
   }
 }
 
+// ─────────────────────────── club payment link ───────────────────────────────
+
+/**
+ * "Ho pagato": the player paid through the club's own payment link. SANDER
+ * can't see that payment, so the row stays to pay until the staff confirms it
+ * (check-in page); this only tells them to look.
+ */
+export async function claimLinkPayment(registrationIdInput: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const registrationId = PlayerIdSchema.parse(registrationIdInput)
+    const player = await requireCurrentPlayer()
+    const reg = await db.tournamentRegistration.findUnique({
+      where: { id: registrationId },
+      select: { playerId: true, tournamentId: true, paymentStatus: true, tournament: { select: { paymentLink: true, club: { select: { paymentLink: true } } } } },
+    })
+    if (!reg || reg.playerId !== player.id) return { ok: false, error: "Iscrizione non trovata" }
+    if (reg.paymentStatus !== "PENDING") return { ok: false, error: "La quota risulta già a posto" }
+    if (!reg.tournament.paymentLink && !reg.tournament.club?.paymentLink) return { ok: false, error: "Questo torneo si paga al campo" }
+    await db.tournamentRegistration.update({ where: { id: registrationId }, data: { paymentClaimedAt: new Date() } })
+    revalidatePath(`/tournaments/${reg.tournamentId}`)
+    revalidatePath(`/tournaments/${reg.tournamentId}/checkin`)
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: toUserError(e, "claimLinkPayment") }
+  }
+}
+
 // ──────────────────────────────── check-in ───────────────────────────────────
 
 /**

@@ -15,6 +15,10 @@ describe("tournamentReminder", () => {
     expect(tournamentReminder(base, { paymentStatus: "PENDING", isSpectator: true }).body).not.toContain("quota")
     expect(tournamentReminder({ ...base, paysOnSite: false }, { paymentStatus: "PENDING", isSpectator: false }).body).not.toContain("quota")
   })
+  it("club with a payment link: online or at the court", () => {
+    const r = tournamentReminder({ ...base, payOnline: true }, { paymentStatus: "PENDING", isSpectator: false })
+    expect(r.body).toContain("online dalla pagina del torneo o al campo")
+  })
   it("date without a time: no 'alle'", () => {
     const r = tournamentReminder({ ...base, date: new Date("2026-11-07T00:00:00Z"), location: null }, { paymentStatus: "PAID", isSpectator: false })
     expect(r.body).toBe("Si gioca domani. Arriva 15 minuti prima per il check-in.")

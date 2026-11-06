@@ -28,7 +28,7 @@ export default async function CheckInPage({ params }: Props) {
       name: true, priceCents: true, priceCurrency: true, clubId: true,
       registrations: {
         where: { paymentStatus: { notIn: [...SEAT_FREE_STATUSES] } },
-        select: { id: true, isSpectator: true, paymentStatus: true, checkedInAt: true, player: { select: { name: true } } },
+        select: { id: true, isSpectator: true, paymentStatus: true, checkedInAt: true, paymentClaimedAt: true, player: { select: { name: true } } },
       },
       waitlist: { orderBy: { createdAt: "asc" }, select: { id: true, player: { select: { name: true } }, partner: { select: { name: true } } } },
     },
@@ -41,10 +41,12 @@ export default async function CheckInPage({ params }: Props) {
     spectator: r.isSpectator,
     arrived: !!r.checkedInAt,
     owes: !!price && r.paymentStatus === "PENDING",
+    claimed: !!price && r.paymentStatus === "PENDING" && !!r.paymentClaimedAt,
   }))
   const players = entries.filter((e) => !e.spectator)
   const arrived = players.filter((e) => e.arrived).length
   const toPay = entries.filter((e) => e.owes).length
+  const toConfirm = entries.filter((e) => e.claimed).length
 
   return (
     <div className="pb-10">
@@ -58,10 +60,11 @@ export default async function CheckInPage({ params }: Props) {
           <div className="rounded-2xl bg-[var(--surface-2)] p-4">
             <p className="eyebrow text-[var(--muted-text)]">Da pagare</p>
             <p className="text-2xl font-black text-white">{toPay}</p>
+            {toConfirm > 0 && <p className="text-sm text-[var(--accent)]">{toConfirm} da confermare</p>}
           </div>
         </div>
         <p className="text-base text-[var(--muted-text)]">
-          Tocca <b className="text-white">Arrivato?</b> quando un giocatore arriva, <b className="text-white">Pagato</b> se paga ora. Puoi anche inquadrare con la fotocamera il QR che il giocatore trova nella pagina del torneo.
+          Tocca <b className="text-white">Arrivato?</b> quando un giocatore arriva, <b className="text-white">Pagato</b> se paga ora. Puoi anche inquadrare con la fotocamera il QR che il giocatore trova nella pagina del torneo. «Dice di aver pagato» vuol dire che ha pagato con il vostro link: controlla sul conto e tocca Pagato.
         </p>
         <CheckInList entries={entries} price={price} />
         {t.waitlist.length > 0 && (

@@ -1,9 +1,20 @@
 import { z } from "zod"
 import { CLUB_SERVICE_KEYS, MAX_BIO_LINKS, MAX_CLUB_PHOTOS } from "@/lib/club"
 import { MAX_BAGNO } from "@/lib/bagni"
+import { PAYMENT_PROVIDER_NAMES, paymentProvider } from "@/lib/paymentLink"
 
 const optionalText = (max: number) =>
   z.string().trim().max(max).optional().nullable().transform((v) => (v ? v : null))
+
+/** A link of an accepted payment service (PayPal.me, SumUp…), or nothing. */
+const paymentLinkField = z
+  .string()
+  .trim()
+  .max(300)
+  .refine((u) => u === "" || !!paymentProvider(u), `Link di pagamento non valido: usa ${PAYMENT_PROVIDER_NAMES}`)
+  .optional()
+  .nullable()
+  .transform((u) => (u ? u : null))
 
 const httpsUrl = z
   .string()
@@ -30,6 +41,7 @@ export const ClubFieldsSchema = z.object({
   bagno: z.number().int().min(1).max(MAX_BAGNO).optional().nullable(),
   // Link-in-bio page.
   whatsapp: z.string().trim().regex(/^[+\d\s().-]{6,24}$/, "Numero WhatsApp non valido").optional().nullable().or(z.literal("").transform(() => null)),
+  paymentLink: paymentLinkField,
   bioLinks: z
     .array(z.object({ label: z.string().trim().min(2, "Nome del link troppo corto").max(40), url: httpsUrl }))
     .max(MAX_BIO_LINKS)
@@ -63,3 +75,5 @@ export const ClubMessageSchema = z.object({
   tournamentId: z.string().trim().min(1).max(64).nullable(),
   body: z.string().trim().min(5, "Messaggio troppo corto").max(300, "Massimo 300 caratteri"),
 })
+
+export const SetTournamentPaymentLinkSchema = z.object({ tournamentId: z.string().trim().min(1).max(64), paymentLink: paymentLinkField })

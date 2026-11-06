@@ -8,6 +8,7 @@ import { toast } from "sonner"
 import { requestClub, updateClub } from "@/actions/clubs"
 import { shrinkImage } from "@/lib/shrinkImage"
 import { CLUB_SERVICES, COURT_TYPES, MAX_BIO_LINKS, MAX_CLUB_PHOTOS, type BioLink } from "@/lib/club"
+import { PAYMENT_PROVIDER_NAMES } from "@/lib/paymentLink"
 import { cn } from "@/lib/utils"
 
 const INPUT =
@@ -34,12 +35,13 @@ export interface ClubFormValues {
   // Link-in-bio page: edited from the back office only.
   whatsapp: string
   bioLinks: BioLink[]
+  paymentLink: string
 }
 
 const EMPTY: ClubFormValues = {
   name: "", city: "", address: "", description: "", instagram: "", website: "", contactEmail: "", logoUrl: null,
   courts: "", courtType: "", openingHours: "", courtPriceEuros: "", services: [], photos: [], bagno: "",
-  whatsapp: "", bioLinks: [],
+  whatsapp: "", bioLinks: [], paymentLink: "",
 }
 
 /** "12,50" → 1250; empty → null. */
@@ -252,6 +254,20 @@ export function ClubForm({ clubId, initial }: { clubId?: string; initial?: ClubF
             </div>
             <input ref={photoRef} type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && addPhoto(e.target.files[0])} />
           </div>
+        </fieldset>
+      )}
+
+      {clubId && (
+        <fieldset className="flex flex-col gap-3 rounded-2xl bg-[var(--surface-1)] p-4">
+          <legend className="eyebrow px-1 text-[var(--accent)]">Pagamento online</legend>
+          <p className="text-base text-[var(--muted-text)]">
+            Il vostro link di pagamento ({PAYMENT_PROVIDER_NAMES}): i giocatori pagano la quota direttamente a voi, SANDER non tocca i soldi. Chi vuole può sempre pagare al campo.
+          </p>
+          <div>
+            <label htmlFor={`${id}-pay`} className={LABEL}>Link di pagamento</label>
+            <input id={`${id}-pay`} type="url" value={v.paymentLink} onChange={set("paymentLink")} placeholder="Es. https://paypal.me/vostroclub" className={INPUT} maxLength={300} />
+          </div>
+          <p className="text-sm text-[var(--muted-text)]">Con PayPal.me l&apos;importo si compila da solo. Quando un giocatore tocca «Ho pagato», nel check-in lo vedete da confermare.</p>
         </fieldset>
       )}
 

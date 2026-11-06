@@ -38,7 +38,7 @@ export default async function ClubManagePage({ params }: Props) {
       take: 30,
       select: {
         id: true, name: true, date: true, status: true, priceCents: true, maxTeams: true, type: true, circuitId: true,
-        registrations: { select: { paymentStatus: true, isSpectator: true, checkedInAt: true } },
+        registrations: { select: { paymentStatus: true, isSpectator: true, checkedInAt: true, paymentClaimedAt: true } },
         _count: { select: { waitlist: true } },
       },
     }),
@@ -106,6 +106,7 @@ export default async function ClubManagePage({ params }: Props) {
           {tournaments.map((t) => {
             const players = t.registrations.filter(holdsSeat)
             const unpaid = (t.priceCents ?? 0) > 0 ? players.filter((r) => r.paymentStatus === "PENDING").length : 0
+            const claimed = (t.priceCents ?? 0) > 0 ? players.filter((r) => r.paymentStatus === "PENDING" && r.paymentClaimedAt).length : 0
             return (
               <div key={t.id} className="rounded-2xl bg-[var(--surface-2)] p-4">
                 <Link href={`/tournaments/${t.id}`} className="block">
@@ -114,7 +115,7 @@ export default async function ClubManagePage({ params }: Props) {
                 </Link>
                 <p className="mt-2 flex items-center gap-1 text-base text-white">
                   <Users className="h-4 w-4 text-[var(--accent)]" aria-hidden="true" />
-                  {players.length} iscritti{unpaid > 0 ? ` · ${unpaid} da pagare al campo` : ""}
+                  {players.length} iscritti{unpaid > 0 ? ` · ${unpaid} da pagare` : ""}{claimed > 0 ? ` (${claimed} da confermare)` : ""}
                   {t._count.waitlist > 0 ? ` · ${t._count.waitlist} in attesa` : ""}
                 </p>
                 <div className="mt-3 grid grid-cols-2 gap-2">
@@ -230,6 +231,7 @@ export default async function ClubManagePage({ params }: Props) {
               bagno: club.bagno?.toString() ?? "",
               whatsapp: club.whatsapp ?? "",
               bioLinks: bioLinksOf(club.bioLinks),
+              paymentLink: club.paymentLink ?? "",
             }}
           />
         </section>

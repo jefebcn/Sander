@@ -13,6 +13,8 @@ export interface CheckInEntry {
   arrived: boolean
   /** Fee still to pay at the court. */
   owes: boolean
+  /** Tapped "Ho pagato" after paying through the club's link: check and confirm. */
+  claimed: boolean
 }
 
 /** Organiser at the court: who arrived and who paid, one tap each. */
@@ -26,7 +28,7 @@ export function CheckInList({ entries, price }: { entries: CheckInEntry[]; price
     const needle = q.trim().toLowerCase()
     return entries
       .filter((e) => !needle || e.name.toLowerCase().includes(needle))
-      .sort((a, b) => Number(a.arrived) - Number(b.arrived) || a.name.localeCompare(b.name, "it"))
+      .sort((a, b) => Number(a.arrived) - Number(b.arrived) || Number(b.claimed) - Number(a.claimed) || a.name.localeCompare(b.name, "it"))
   }, [entries, q])
 
   const act = (e: CheckInEntry, checkedIn: boolean, markPaid: boolean) => {
@@ -57,7 +59,9 @@ export function CheckInList({ entries, price }: { entries: CheckInEntry[]; price
             <div className="min-w-0 flex-1">
               <p className={`truncate text-base font-bold ${e.arrived ? "text-[var(--muted-text)]" : "text-white"}`}>{e.name}</p>
               <p className="text-sm text-[var(--muted-text)]">
-                {e.spectator ? "Spettatore" : e.owes ? `Da pagare${price ? ` · ${price}` : ""}` : "Quota a posto"}
+                {e.claimed ? (
+                  <span className="font-bold text-[var(--accent)]">Dice di aver pagato online · controlla</span>
+                ) : e.spectator ? "Spettatore" : e.owes ? `Da pagare${price ? ` · ${price}` : ""}` : "Quota a posto"}
               </p>
             </div>
             {e.owes && (
