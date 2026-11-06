@@ -82,3 +82,43 @@ export function isPaidAsExpected(remote: Pick<SumUpCheckout, "status" | "checkou
     Math.round(remote.amount * 100) === expected.amountCents
   )
 }
+
+/**
+ * Admin check (/admin/sistema): the key works, belongs to SUMUP_MERCHANT_CODE,
+ * and online payments are on. Creates a 1 € checkout and deactivates it at
+ * once: nothing is charged.
+ */
+export async function sumupHealth(): Promise<string> {
+  if (!sumupConfigured()) return "Non configurato: su Vercel mancano SUMUP_API_KEY e/o SUMUP_MERCHANT_CODE (Production), poi serve un nuovo deploy."
+  let profile: { merchant_profile?: { merchant_code?: string; company_name?: string } }
+  try {
+    profile = await call("/me")
+  } catch (e) {
+    const m = e instanceof Error ? e.message : ""
+    return m.includes("401") ? "Chiave API non valida: ricopiala dalla dashboard SumUp (Impostazioni → Sviluppatori)." : `SumUp non risponde: ${m.slice(0, 160)}`
+  }
+  const code = profile.merchant_profile?.merchant_code
+  if (code && code !== process.env.SUMUP_MERCHANT_CODE) {
+    return `La chiave è del conto ${code}, ma SUMUP_MERCHANT_CODE è ${process.env.SUMUP_MERCHANT_CODE}: correggi uno dei due.`
+  }
+  try {
+    const c = await call<SumUpCheckout>("/checkouts", {
+      method: "POST",
+      body: JSON.stringify({
+        checkout_reference: `healthcheck_${Date.now()}`,
+        amount: 1,
+        currency: "EUR",
+        merchant_code: process.env.SUMUP_MERCHANT_CODE,
+        description: "Prova SANDER (non viene addebitata)",
+      }),
+    })
+    await call(`/checkouts/${encodeURIComponent(c.id)}`, { method: "DELETE" }).catch(() => {})
+  } catch (e) {
+    const m = e instanceof Error ? e.message : ""
+    return m.includes("403") || m.toLowerCase().includes("scope")
+      ? "Chiave valida, ma i pagamenti online non sono attivi sul conto: chiedi a SumUp di attivarli (Online Payments / Checkouts)."
+      : `Chiave valida, ma la prova di pagamento non è riuscita: ${m.slice(0, 160)}`
+  }
+  const name = profile.merchant_profile?.company_name
+  return `Tutto a posto: conto ${code ?? process.env.SUMUP_MERCHANT_CODE}${name ? ` (${name})` : ""}, pagamenti online attivi. Gli acquisti di SC e SANDER+ dal sito passano da SumUp.`
+}
