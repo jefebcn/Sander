@@ -9,13 +9,22 @@ const TYPE: Record<string, string> = {
   KING_OF_THE_BEACH: "King of the Beach", BRACKETS: "Eliminazione diretta", ROUND_ROBIN: "Girone 2v2", DOUBLE_ELIMINATION: "Doppia eliminazione", CHICECE: "Chicece",
 }
 
+/** Story (default) or feed post: same poster, two Instagram sizes. */
+const FORMATS = {
+  storia: { width: 1080, height: 1920, top: 290, bottom: 420, title: [128, 104], gap: 70, qr: 300 },
+  post: { width: 1080, height: 1350, top: 110, bottom: 110, title: [104, 84], gap: 44, qr: 250 },
+} as const
+
 /**
- * The tournament poster for an Instagram story (1080×1920): club, name, when,
- * where, fee, seats and a QR to the sign-up page. Downloaded from the club's
- * back office; anyone with the link can open it, like the share preview.
+ * The tournament poster for Instagram (story 1080×1920, or ?formato=post for a
+ * 1080×1350 feed post): club, name, when, where, fee, seats and a QR to the
+ * sign-up page. Downloaded from the club's back office; anyone with the link
+ * can open it, like the share preview.
  */
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  const kind = new URL(req.url).searchParams.get("formato") === "post" ? "post" : "storia"
+  const f = FORMATS[kind]
   const t = await db.tournament.findUnique({
     where: { id },
     select: {
@@ -36,9 +45,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   return new ImageResponse(
     (
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", background: INK, color: "white", fontFamily: "Inter", position: "relative" }}>
-        {cover && <img src={cover} alt="" width={1080} height={1920} style={{ position: "absolute", top: 0, left: 0, width: 1080, height: 1920, objectFit: "cover", opacity: 0.35 }} />}
-        <div style={{ position: "absolute", top: 0, left: 0, width: 1080, height: 1920, display: "flex", background: "linear-gradient(180deg, rgba(11,11,11,0.55) 0%, rgba(11,11,11,0.2) 35%, rgba(11,11,11,0.92) 70%)" }} />
-        <div style={{ display: "flex", flexDirection: "column", padding: "290px 90px 0", flex: 1, position: "relative" }}>
+        {cover && <img src={cover} alt="" width={f.width} height={f.height} style={{ position: "absolute", top: 0, left: 0, width: f.width, height: f.height, objectFit: "cover", opacity: 0.35 }} />}
+        <div style={{ position: "absolute", top: 0, left: 0, width: f.width, height: f.height, display: "flex", background: "linear-gradient(180deg, rgba(11,11,11,0.55) 0%, rgba(11,11,11,0.2) 35%, rgba(11,11,11,0.92) 70%)" }} />
+        <div style={{ display: "flex", flexDirection: "column", padding: `${f.top}px 90px 0`, flex: 1, position: "relative" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
             {(clubLogo || logo) && <img src={clubLogo ?? logo} alt="" width={120} height={120} style={{ borderRadius: 28, objectFit: "cover" }} />}
             <div style={{ display: "flex", flexDirection: "column" }}>
@@ -46,8 +55,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
               {t.club && <span style={{ fontSize: 40, fontFamily: "Bricolage" }}>{t.club.name}</span>}
             </div>
           </div>
-          <div style={{ display: "flex", marginTop: 70, fontFamily: "Bricolage", fontSize: t.name.length > 28 ? 104 : 128, lineHeight: 1.02 }}>{t.name}</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 18, marginTop: 60, fontSize: 44 }}>
+          <div style={{ display: "flex", marginTop: f.gap, fontFamily: "Bricolage", fontSize: t.name.length > 28 ? f.title[1] : f.title[0], lineHeight: 1.02 }}>{t.name}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 18, marginTop: f.gap - 10, fontSize: 44 }}>
             <span style={{ display: "flex" }}>{when}</span>
             {t.location && <span style={{ display: "flex" }}>{t.location}</span>}
             <span style={{ display: "flex", gap: 20 }}>
@@ -56,8 +65,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             </span>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 44, padding: "0 90px 420px", position: "relative" }}>
-          <img src={qr} alt="" width={300} height={300} style={{ borderRadius: 24 }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 44, padding: `0 90px ${f.bottom}px`, position: "relative" }}>
+          <img src={qr} alt="" width={f.qr} height={f.qr} style={{ borderRadius: 24 }} />
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <span style={{ fontFamily: "Bricolage", fontSize: 58, color: LIME }}>Iscriviti su SANDER</span>
             <span style={{ fontSize: 34, color: "rgba(255,255,255,0.8)" }}>In coppia o da solo · sanderbv.it</span>
@@ -66,10 +75,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       </div>
     ),
     {
-      width: 1080,
-      height: 1920,
+      width: f.width,
+      height: f.height,
       fonts,
-      headers: { "Content-Disposition": `inline; filename="locandina-${id}.png"`, "Cache-Control": "public, max-age=300" },
+      headers: { "Content-Disposition": `inline; filename="locandina-${kind}-${id}.png"`, "Cache-Control": "public, max-age=300" },
     },
   )
 }

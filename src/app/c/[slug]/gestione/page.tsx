@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic"
 
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
-import { CheckCircle2, Circle, ClipboardCheck, Download, Image as ImageIcon, Plus, QrCode, Users } from "lucide-react"
+import { CheckCircle2, Circle, ClipboardCheck, ExternalLink, Download, Image as ImageIcon, Plus, QrCode, Users } from "lucide-react"
 import { db } from "@/lib/db"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { canManageClub, isClubOwner } from "@/lib/clubAccess"
@@ -13,9 +13,11 @@ import { ClubForm } from "@/components/club/ClubForm"
 import { CircuitCreateForm } from "@/components/club/CircuitCreateForm"
 import { TournamentCircuitSelect } from "@/components/club/TournamentCircuitSelect"
 import { CopyLinkButton } from "@/components/club/CopyLinkButton"
-import { clubChecklist } from "@/lib/club"
+import { bioLinksOf, clubChecklist } from "@/lib/club"
 import { StaffInviteButton } from "@/components/club/StaffInviteButton"
 import { RemoveStaffButton } from "@/components/club/RemoveStaffButton"
+import { MakeOwnerButton } from "@/components/club/MakeOwnerButton"
+import { CloseClubButton } from "@/components/club/CloseClubButton"
 import { ClubMessageForm } from "@/components/club/ClubMessageForm"
 
 interface Props { params: Promise<{ slug: string }> }
@@ -85,7 +87,10 @@ export default async function ClubManagePage({ params }: Props) {
 
         <section className="flex flex-col gap-2">
           <h2 className="eyebrow text-[var(--accent)]">Promuovi il club</h2>
-          <CopyLinkButton path={`/c/${club.slug}?ref=bio`} label="Copia il link per la bio di Instagram" />
+          <CopyLinkButton path={`/c/${club.slug}/link?ref=bio`} label="Copia il link per la bio di Instagram" />
+          <Link href={`/c/${club.slug}/link`} className="btn btn-secondary w-full gap-2">
+            <ExternalLink className="h-5 w-5" aria-hidden="true" /> Guarda la pagina link in bio
+          </Link>
           <a href={`/c/${club.slug}/qr`} download className="btn btn-secondary w-full gap-2">
             <QrCode className="h-5 w-5" aria-hidden="true" /> QR da stampare al campo
           </a>
@@ -117,10 +122,13 @@ export default async function ClubManagePage({ params }: Props) {
                   <Link href={`/tournaments/${t.id}/checkin`} className="btn btn-secondary min-h-[3.5rem] gap-1 px-2">
                     <ClipboardCheck className="h-5 w-5" aria-hidden="true" /> Check-in
                   </Link>
-                  <a href={`/tournaments/${t.id}/locandina`} download className="btn btn-secondary min-h-[3.5rem] gap-1 px-2" aria-label="Scarica la locandina per Instagram">
+                  <a href={`/tournaments/${t.id}/locandina`} download className="btn btn-secondary min-h-[3.5rem] gap-1 px-2" aria-label="Scarica la locandina per la storia Instagram">
                     <ImageIcon className="h-5 w-5" aria-hidden="true" /> Storia
                   </a>
-                  <a href={`/api/tournaments/${t.id}/iscritti`} className="btn btn-secondary min-h-[3.5rem] gap-1 px-2">
+                  <a href={`/tournaments/${t.id}/locandina?formato=post`} download className="btn btn-secondary min-h-[3.5rem] gap-1 px-2" aria-label="Scarica la locandina per un post Instagram">
+                    <ImageIcon className="h-5 w-5" aria-hidden="true" /> Post
+                  </a>
+                  <a href={`/api/tournaments/${t.id}/iscritti`} className="btn btn-secondary col-span-2 min-h-[3.5rem] gap-1 px-2">
                     <Download className="h-5 w-5" aria-hidden="true" /> Excel
                   </a>
                 </div>
@@ -160,12 +168,20 @@ export default async function ClubManagePage({ params }: Props) {
                 <span className="text-base font-bold text-white">{m.player.name}</span>
                 <span className="flex items-center gap-1">
                   <span className="text-sm text-[var(--muted-text)]">{m.role === "OWNER" ? "Proprietario" : "Staff"}</span>
-                  {owner && m.role === "STAFF" ? <RemoveStaffButton clubId={club.id} playerId={m.player.id} name={m.player.name} /> : <span className="w-4" />}
+                  {owner && m.role === "STAFF" ? (
+                    <>
+                      <MakeOwnerButton clubId={club.id} playerId={m.player.id} name={m.player.name} />
+                      <RemoveStaffButton clubId={club.id} playerId={m.player.id} name={m.player.name} />
+                    </>
+                  ) : <span className="w-4" />}
                 </span>
               </li>
             ))}
           </ul>
           {owner && <StaffInviteButton clubId={club.id} clubSlug={club.slug} clubName={club.name} />}
+          {owner && staff.some((m) => m.role === "STAFF") && (
+            <p className="text-sm text-[var(--muted-text)]">Con la corona passi il club a una persona dello staff.</p>
+          )}
         </section>
 
         <details className="rounded-2xl bg-[var(--surface-2)] p-4">
@@ -212,9 +228,19 @@ export default async function ClubManagePage({ params }: Props) {
               services: club.services,
               photos: club.photos,
               bagno: club.bagno?.toString() ?? "",
+              whatsapp: club.whatsapp ?? "",
+              bioLinks: bioLinksOf(club.bioLinks),
             }}
           />
         </section>
+
+        {owner && (
+          <section className="flex flex-col gap-2 pt-4">
+            <h2 className="eyebrow text-[var(--muted-text)]">Chiudere il club</h2>
+            <p className="text-base text-[var(--muted-text)]">Il club sparisce da SANDER; tornei passati e classifiche restano. Servono zero tornei in programma.</p>
+            <CloseClubButton clubId={club.id} name={club.name} />
+          </section>
+        )}
       </div>
     </div>
   )

@@ -3,11 +3,11 @@
 import { useId, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { Camera, Loader2, Plus, X } from "lucide-react"
+import { Camera, Loader2, Plus, Trash2, X } from "lucide-react"
 import { toast } from "sonner"
 import { requestClub, updateClub } from "@/actions/clubs"
 import { shrinkImage } from "@/lib/shrinkImage"
-import { CLUB_SERVICES, COURT_TYPES, MAX_CLUB_PHOTOS } from "@/lib/club"
+import { CLUB_SERVICES, COURT_TYPES, MAX_BIO_LINKS, MAX_CLUB_PHOTOS, type BioLink } from "@/lib/club"
 import { cn } from "@/lib/utils"
 
 const INPUT =
@@ -31,11 +31,15 @@ export interface ClubFormValues {
   services: string[]
   photos: string[]
   bagno: string
+  // Link-in-bio page: edited from the back office only.
+  whatsapp: string
+  bioLinks: BioLink[]
 }
 
 const EMPTY: ClubFormValues = {
   name: "", city: "", address: "", description: "", instagram: "", website: "", contactEmail: "", logoUrl: null,
   courts: "", courtType: "", openingHours: "", courtPriceEuros: "", services: [], photos: [], bagno: "",
+  whatsapp: "", bioLinks: [],
 }
 
 /** "12,50" → 1250; empty → null. */
@@ -87,6 +91,9 @@ export function ClubForm({ clubId, initial }: { clubId?: string; initial?: ClubF
   const toggleService = (key: string) =>
     setV((x) => ({ ...x, services: x.services.includes(key) ? x.services.filter((k) => k !== key) : [...x.services, key] }))
 
+  const setLink = (i: number, k: keyof BioLink, value: string) =>
+    setV((x) => ({ ...x, bioLinks: x.bioLinks.map((l, j) => (j === i ? { ...l, [k]: value } : l)) }))
+
   function submit(e: React.FormEvent) {
     e.preventDefault()
     startTransition(async () => {
@@ -98,6 +105,8 @@ export function ClubForm({ clubId, initial }: { clubId?: string; initial?: ClubF
         bagno: intOrNull(bagno),
         courtType: courtType || null,
         courtPriceCents: euroCents(courtPriceEuros),
+        // Half-filled rows are dropped instead of failing the whole save.
+        bioLinks: v.bioLinks.filter((l) => l.label.trim() && l.url.trim()),
       }
       if (clubId) {
         const res = await updateClub({ clubId, ...payload })
@@ -243,6 +252,58 @@ export function ClubForm({ clubId, initial }: { clubId?: string; initial?: ClubF
             </div>
             <input ref={photoRef} type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && addPhoto(e.target.files[0])} />
           </div>
+        </fieldset>
+      )}
+
+      {clubId && (
+        <fieldset className="flex flex-col gap-4 rounded-2xl bg-[var(--surface-1)] p-4">
+          <legend className="eyebrow px-1 text-[var(--accent)]">Pagina link in bio</legend>
+          <p className="text-base text-[var(--muted-text)]">
+            Una pagina con tutti i vostri link, da mettere nella bio di Instagram al posto di Linktree. I prossimi tornei compaiono da soli.
+          </p>
+          <div>
+            <label htmlFor={`${id}-wa`} className={LABEL}>WhatsApp</label>
+            <input id={`${id}-wa`} type="tel" inputMode="tel" value={v.whatsapp} onChange={set("whatsapp")} placeholder="Es. 333 123 4567" className={INPUT} maxLength={24} />
+          </div>
+          {v.bioLinks.map((l, i) => (
+            <div key={i} className="flex flex-col gap-2 rounded-2xl bg-[var(--surface-2)] p-3">
+              <div className="flex items-center gap-2">
+                <input
+                  aria-label={`Nome del link ${i + 1}`}
+                  value={l.label}
+                  onChange={(e) => setLink(i, "label", e.target.value)}
+                  placeholder="Es. Iscrizione ai corsi"
+                  maxLength={40}
+                  className={cn(INPUT, "bg-[var(--surface-1)]")}
+                />
+                <button
+                  type="button"
+                  aria-label={`Togli il link ${i + 1}`}
+                  onClick={() => setV((x) => ({ ...x, bioLinks: x.bioLinks.filter((_, j) => j !== i) }))}
+                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-[var(--muted-text)]"
+                >
+                  <Trash2 className="h-5 w-5" aria-hidden="true" />
+                </button>
+              </div>
+              <input
+                aria-label={`Indirizzo del link ${i + 1}`}
+                type="url"
+                value={l.url}
+                onChange={(e) => setLink(i, "url", e.target.value)}
+                placeholder="https://…"
+                className={cn(INPUT, "bg-[var(--surface-1)]")}
+              />
+            </div>
+          ))}
+          {v.bioLinks.length < MAX_BIO_LINKS && (
+            <button
+              type="button"
+              onClick={() => setV((x) => ({ ...x, bioLinks: [...x.bioLinks, { label: "", url: "" }] }))}
+              className="btn btn-secondary w-full gap-2"
+            >
+              <Plus className="h-5 w-5" aria-hidden="true" /> Aggiungi un link
+            </button>
+          )}
         </fieldset>
       )}
 

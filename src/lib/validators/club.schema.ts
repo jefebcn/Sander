@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { CLUB_SERVICE_KEYS, MAX_CLUB_PHOTOS } from "@/lib/club"
+import { CLUB_SERVICE_KEYS, MAX_BIO_LINKS, MAX_CLUB_PHOTOS } from "@/lib/club"
 import { MAX_BAGNO } from "@/lib/bagni"
 
 const optionalText = (max: number) =>
@@ -28,6 +28,12 @@ export const ClubFieldsSchema = z.object({
   services: z.array(z.enum(CLUB_SERVICE_KEYS)).max(CLUB_SERVICE_KEYS.length).default([]),
   photos: z.array(httpsUrl).max(MAX_CLUB_PHOTOS).default([]),
   bagno: z.number().int().min(1).max(MAX_BAGNO).optional().nullable(),
+  // Link-in-bio page.
+  whatsapp: z.string().trim().regex(/^[+\d\s().-]{6,24}$/, "Numero WhatsApp non valido").optional().nullable().or(z.literal("").transform(() => null)),
+  bioLinks: z
+    .array(z.object({ label: z.string().trim().min(2, "Nome del link troppo corto").max(40), url: httpsUrl }))
+    .max(MAX_BIO_LINKS)
+    .default([]),
 })
 
 export const ClubIdSchema = z.string().trim().min(1).max(64)

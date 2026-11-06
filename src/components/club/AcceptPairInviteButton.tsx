@@ -17,7 +17,7 @@ export function AcceptPairInviteButton({ token }: { token: string }) {
         startTransition(async () => {
           const res = await acceptPairInvite(token)
           if (!res.ok) return void toast.error(res.error)
-          toast.success("Siete iscritti!")
+          toast.success(res.waitlisted ? "Siete in lista d'attesa insieme" : "Siete iscritti!")
           router.push(`/tournaments/${res.tournamentId}`)
         })
       }

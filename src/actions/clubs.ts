@@ -263,3 +263,50 @@ export async function sendClubMessage(input: unknown): Promise<Result<{ sentTo: 
     return { ok: false, error: errorOf(e) }
   }
 }
+
+/* ── Ownership ─────────────────────────────────────────────────────────── */
+
+/** Owner: hand the club to someone already in the staff; the owner stays as staff. */
+export async function transferClubOwnership(input: unknown): Promise<Result> {
+  try {
+    const session = await getCurrentSession()
+    const me = await getCurrentPlayer()
+    const { clubId, playerId } = RemoveStaffSchema.parse(input)
+    if (!(await isClubOwner(session?.user?.email, me?.id ?? null, clubId))) return { ok: false, error: "Solo il proprietario può passare il club" }
+    const target = await db.clubMember.findUnique({ where: { clubId_playerId: { clubId, playerId } }, select: { role: true } })
+    if (!target || target.role !== "STAFF") return { ok: false, error: "Il nuovo proprietario deve essere già nello staff" }
+    const club = await db.$transaction(async (tx) => {
+      await tx.clubMember.updateMany({ where: { clubId, role: "OWNER" }, data: { role: "STAFF" } })
+      await tx.clubMember.update({ where: { clubId_playerId: { clubId, playerId } }, data: { role: "OWNER" } })
+      return tx.club.findUniqueOrThrow({ where: { id: clubId }, select: { slug: true, name: true } })
+    })
+    await notifyPlayer(playerId, { title: `Ora sei il proprietario di ${club.name}`, body: "Puoi invitare e togliere lo staff e gestire tutto il club.", url: `/c/${club.slug}/gestione` }).catch(() => {})
+    revalidatePath(`/c/${club.slug}/gestione`)
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: errorOf(e) }
+  }
+}
+
+/**
+ * Owner: close the club. It disappears from the app (suspended) but its past
+ * tournaments and standings stay; SANDER admins can reopen it on request.
+ */
+export async function closeClub(input: unknown): Promise<Result<{ slug: string }>> {
+  try {
+    const session = await getCurrentSession()
+    const me = await getCurrentPlayer()
+    const clubId = ClubIdSchema.parse(input)
+    if (!(await isClubOwner(session?.user?.email, me?.id ?? null, clubId))) return { ok: false, error: "Solo il proprietario può chiudere il club" }
+    const open = await db.tournament.count({ where: { clubId, status: { in: ["DRAFT", "LIVE"] }, date: { gte: new Date(Date.now() - 86_400_000) } } })
+    if (open > 0) return { ok: false, error: "Prima concludi o elimina i tornei in programma: i giocatori iscritti vanno avvisati" }
+    const club = await db.club.update({ where: { id: clubId }, data: { status: "SUSPENDED", staffInviteToken: null }, select: { slug: true, name: true, city: true } })
+    await notifyAdmins({ title: "Club chiuso dal proprietario", body: `${club.name} · ${club.city}`, url: "/admin/club" })
+    revalidatePath(`/c/${club.slug}`)
+    revalidatePath("/club")
+    revalidatePath("/admin/club")
+    return { ok: true, slug: club.slug }
+  } catch (e) {
+    return { ok: false, error: errorOf(e) }
+  }
+}

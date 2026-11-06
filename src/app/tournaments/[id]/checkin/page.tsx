@@ -30,7 +30,7 @@ export default async function CheckInPage({ params }: Props) {
         where: { paymentStatus: { notIn: [...SEAT_FREE_STATUSES] } },
         select: { id: true, isSpectator: true, paymentStatus: true, checkedInAt: true, player: { select: { name: true } } },
       },
-      waitlist: { orderBy: { createdAt: "asc" }, select: { id: true, player: { select: { name: true } } } },
+      waitlist: { orderBy: { createdAt: "asc" }, select: { id: true, player: { select: { name: true } }, partner: { select: { name: true } } } },
     },
   })
   if (!t) notFound()
@@ -70,11 +70,11 @@ export default async function CheckInPage({ params }: Props) {
             <ol className="flex flex-col gap-2">
               {t.waitlist.map((w, i) => (
                 <li key={w.id} className="flex min-h-[3.5rem] items-center gap-3 rounded-2xl bg-[var(--surface-2)] px-4 text-base text-white">
-                  <span className="font-black text-[var(--accent)]">{i + 1}</span> {w.player.name}
+                  <span className="font-black text-[var(--accent)]">{i + 1}</span> {w.partner ? `${w.player.name} e ${w.partner.name} (coppia)` : w.player.name}
                 </li>
               ))}
             </ol>
-            <p className="text-sm text-[var(--muted-text)]">Se qualcuno si ritira, il primo della lista entra da solo e riceve una notifica.</p>
+            <p className="text-sm text-[var(--muted-text)]">Se qualcuno si ritira, il primo della lista entra da solo e riceve una notifica. Una coppia entra quando si liberano due posti.</p>
           </section>
         )}
         <Link href={`/tournaments/${id}`} className="btn btn-secondary w-full">Torna al torneo</Link>

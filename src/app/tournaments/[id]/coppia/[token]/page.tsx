@@ -10,6 +10,7 @@ import { PairInviteTokenSchema } from "@/lib/validators/club.schema"
 import { formatDate, formatPrice } from "@/lib/utils"
 import { BackButton } from "@/components/layout/PageHeader"
 import { AcceptPairInviteButton } from "@/components/club/AcceptPairInviteButton"
+import { waitlistState } from "@/lib/waitlist"
 
 interface Props { params: Promise<{ id: string; token: string }> }
 
@@ -36,6 +37,7 @@ export default async function PairInvitePage({ params }: Props) {
   const from = invite.from.firstName ?? invite.from.name.split(" ")[0]
   const t = invite.tournament
   const callback = `/tournaments/${id}/coppia/${token}`
+  const { freeSeats } = await waitlistState(id, null)
 
   return (
     <div className="tone-compete pb-10">
@@ -57,6 +59,12 @@ export default async function PairInvitePage({ params }: Props) {
             {(t.priceCents ?? 0) > 0 ? `${formatPrice(t.priceCents, t.priceCurrency)} a testa, al campo` : "Gratis"}
           </p>
         </div>
+
+        {invite.status === "PENDING" && freeSeats < 2 && (
+          <p className="rounded-2xl bg-[var(--surface-2)] p-4 text-base text-white">
+            Il torneo è pieno: accettando entrate insieme in lista d&apos;attesa, ed entrate appena si liberano due posti.
+          </p>
+        )}
 
         {invite.status !== "PENDING" ? (
           <p className="rounded-2xl bg-[var(--surface-2)] p-4 text-base text-[var(--muted-text)]">

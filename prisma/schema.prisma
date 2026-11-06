@@ -191,7 +191,8 @@ model Player {
   clubFollows          ClubFollow[]
   pairInvitesSent      TournamentPairInvite[] @relation("PairInvitesSent")
   pairInvitesReceived  TournamentPairInvite[] @relation("PairInvitesReceived")
-  tournamentWaitlist   TournamentWaitlist[]
+  tournamentWaitlist   TournamentWaitlist[] @relation("WaitlistPlayer")
+  waitlistAsPartner    TournamentWaitlist[] @relation("WaitlistPartner")
   notifications        Notification[]
   monthlyAwards        MonthlyAward[]
   videoSubmissions     VideoSubmission[]
@@ -316,6 +317,9 @@ model Club {
   services        String[] @default([])
   photos          String[] @default([])
   bagno           Int?     // the bagno it is, for "Re dei Bagni"
+  // Link-in-bio page (/c/[slug]/link): WhatsApp number and up to 4 links.
+  whatsapp        String?
+  bioLinks        Json?    // [{ label, url }]
 
   // Link that adds whoever opens it to the staff; the owner can replace it.
   // Random, so no unique constraint (adding one to an existing table needs a
@@ -366,19 +370,25 @@ model ClubMessage {
   @@map("club_messages")
 }
 
-/// "Lista d'attesa": a full tournament keeps the players who still want in,
-/// first come first served. A freed seat goes to the first in line.
+/// "Lista d'attesa": a full tournament keeps the players (or pairs) who still
+/// want in, first come first served. A freed seat goes to the first in line
+/// that fits: a pair waits for two seats, a single player for one.
 model TournamentWaitlist {
   id           String   @id @default(cuid())
   createdAt    DateTime @default(now())
   tournamentId String
   playerId     String
+  // In line as a pair (fixed-pair formats): both get in together, when two
+  // seats are free.
+  partnerId    String?
 
   tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  player     Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  player     Player     @relation("WaitlistPlayer", fields: [playerId], references: [id], onDelete: Cascade)
+  partner    Player?    @relation("WaitlistPartner", fields: [partnerId], references: [id], onDelete: SetNull)
 
   @@unique([tournamentId, playerId])
   @@index([tournamentId, createdAt])
+  @@index([partnerId])
   @@map("tournament_waitlist")
 }
 

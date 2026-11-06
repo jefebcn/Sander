@@ -5,7 +5,7 @@ import { ClubRegisterBox } from "@/components/club/ClubRegisterBox"
 import { waitlistState } from "@/lib/waitlist"
 import { playingRegistrations, startProblem } from "@/lib/tournament/pairing"
 import Link from "next/link"
-import { ChevronRight, ClipboardCheck, Play, Trophy, Shuffle, Trash2 } from "lucide-react"
+import { BadgeCheck, ChevronRight, ClipboardCheck, Play, Trophy, Shuffle, Trash2 } from "lucide-react"
 import { getTournamentDashboard } from "@/actions/standings"
 import { startTournament, completeTournament } from "@/actions/tournaments"
 import { adminRemoveRegistration } from "@/actions/registration"
@@ -61,7 +61,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   const { id } = await params
 
   const [base, session] = await Promise.all([
-    db.tournament.findUnique({ where: { id }, select: { type: true, priceCents: true, priceCurrency: true, club: { select: { name: true, slug: true } }, circuit: { select: { id: true, name: true } } } }),
+    db.tournament.findUnique({ where: { id }, select: { type: true, priceCents: true, priceCurrency: true, club: { select: { name: true, slug: true, status: true } }, circuit: { select: { id: true, name: true } } } }),
     getCurrentSession(),
   ])
   if (!base) notFound()
@@ -82,7 +82,9 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   const clubChip = club && (
     <div className="mt-2 flex flex-col">
       <Link href={`/c/${club.slug}`} className="inline-flex min-h-[2.75rem] items-center gap-1 text-base font-bold text-[var(--tone)]">
-        Organizzato da {club.name} <ChevronRight className="h-4 w-4" aria-hidden="true" />
+        Organizzato da {club.name}
+        {club.status === "APPROVED" && <BadgeCheck className="h-4 w-4 text-[var(--accent)]" aria-label="club verificato" />}
+        <ChevronRight className="h-4 w-4" aria-hidden="true" />
       </Link>
       {base.circuit && (
         <Link href={`/c/${club.slug}/circuiti/${base.circuit.id}`} className="inline-flex min-h-[2.75rem] items-center gap-1 text-base font-bold text-white">
@@ -226,6 +228,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 pendingToken={myInvite?.token ?? null}
                 full={seats?.full ?? false}
                 waitlistPosition={seats?.waitlistPosition ?? null}
+                waitlistPartner={seats?.waitlistPartner ?? null}
                 registrationId={seats?.myRegistrationId ?? null}
               />
             )}
@@ -567,6 +570,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               pendingToken={myInvite?.token ?? null}
               full={seats?.full ?? false}
               waitlistPosition={seats?.waitlistPosition ?? null}
+              waitlistPartner={seats?.waitlistPartner ?? null}
               registrationId={seats?.myRegistrationId ?? null}
             />
           )}

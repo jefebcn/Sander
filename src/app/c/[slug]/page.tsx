@@ -4,13 +4,14 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { BadgeCheck, Camera, Clock, Crown, Globe, LayoutGrid, Mail, MapPin, Navigation, Settings, Trophy } from "lucide-react"
+import { BadgeCheck, Camera, ChevronRight, Clock, Crown, Globe, LayoutGrid, Mail, MapPin, Navigation, Settings, Trophy, Users } from "lucide-react"
 import { db } from "@/lib/db"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { canManageClub } from "@/lib/clubAccess"
 import { TOURNAMENT_CARD_SELECT } from "@/lib/clubQueries"
 import { CLUB_SERVICES, COURT_TYPES, mapsUrl } from "@/lib/club"
-import { bagnoLabel } from "@/lib/bagni"
+import { bagnoLabel, parseBagno } from "@/lib/bagni"
+import { formatWhen } from "@/lib/datetime"
 import { formatPrice } from "@/lib/utils"
 import { BackButton } from "@/components/layout/PageHeader"
 import { TournamentCard } from "@/components/tournament/TournamentCard"
@@ -63,6 +64,15 @@ export default async function ClubPage({ params }: Props) {
     }),
     me ? db.clubFollow.findUnique({ where: { clubId_playerId: { clubId: club.id, playerId: me.id } }, select: { id: true } }) : null,
   ])
+  // Games players set up at this bagno: the club's beach is alive between tournaments too.
+  const bagnoGames = club.bagno
+    ? (await db.session.findMany({
+        where: { location: { contains: String(club.bagno) }, status: { in: ["OPEN", "FULL"] }, date: { gte: new Date(Date.now() - 3 * 3600_000) } },
+        orderBy: { date: "asc" },
+        take: 20,
+        select: { id: true, title: true, date: true, location: true, maxPlayers: true, _count: { select: { participants: true } } },
+      })).filter((g) => parseBagno(g.location) === club.bagno).slice(0, 4)
+    : []
 
   return (
     <div className="tone-compete pb-10">
@@ -111,7 +121,7 @@ export default async function ClubPage({ params }: Props) {
               ? "Richiesta inviata: stiamo controllando il club. Ti avvisiamo appena è approvato, poi potrai creare i tornei."
               : club.status === "REJECTED"
                 ? "Richiesta non approvata. Scrivici se pensi sia un errore."
-                : "Club sospeso: per ora non è visibile. Scrivici per chiarire."}
+                : "Club non attivo: non è visibile su SANDER. Per riaprirlo scrivici."}
           </p>
         )}
 
@@ -202,6 +212,24 @@ export default async function ClubPage({ params }: Props) {
             upcoming.map((t) => <TournamentCard key={t.id} tournament={t} />)
           )}
         </section>
+
+        {bagnoGames.length > 0 && club.bagno && (
+          <section className="flex flex-col gap-2">
+            <h2 className="eyebrow text-[var(--tone)]">Partite al {bagnoLabel(club.bagno)}</h2>
+            {bagnoGames.map((g) => (
+              <Link key={g.id} href={`/sessions/${g.id}`} className="flex min-h-[3.5rem] items-center gap-3 rounded-2xl bg-[var(--surface-2)] px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-base font-bold text-white">{g.title}</p>
+                  <p className="text-sm text-[var(--muted-text)]">{formatWhen(g.date)}</p>
+                </div>
+                <span className="flex shrink-0 items-center gap-1 text-sm text-white">
+                  <Users className="h-4 w-4 text-[var(--tone)]" aria-hidden="true" /> {g._count.participants}/{g.maxPlayers}
+                </span>
+                <ChevronRight className="h-5 w-5 shrink-0 text-[var(--muted-text)]" aria-hidden="true" />
+              </Link>
+            ))}
+          </section>
+        )}
 
         {club.circuits.length > 0 && (
           <section className="flex flex-col gap-2">
