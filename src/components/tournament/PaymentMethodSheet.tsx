@@ -219,7 +219,7 @@ export function PaymentMethodSheet({
                     Carta, Apple/Google Pay
                   </p>
                   <p className="text-sm text-[var(--muted-text)]">
-                    Pagamento sicuro via Stripe
+                    Pagamento sicuro con carta
                   </p>
                 </div>
                 {isPending && <Loader2 className="h-5 w-5 animate-spin text-[var(--accent)]" />}

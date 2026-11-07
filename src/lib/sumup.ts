@@ -5,7 +5,8 @@
 /*  Docs: https://developer.sumup.com/online-payments/checkouts/hosted-checkout */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-const API = "https://api.sumup.com/v0.1"
+// SUMUP_API_BASE only points local end-to-end tests at a fake SumUp; production uses the real one.
+const API = process.env.SUMUP_API_BASE || "https://api.sumup.com/v0.1"
 
 export function sumupConfigured(): boolean {
   return !!process.env.SUMUP_API_KEY && !!process.env.SUMUP_MERCHANT_CODE
@@ -36,6 +37,7 @@ async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
     const text = await res.text().catch(() => "")
     throw new Error(`SumUp ${init.method ?? "GET"} ${path} → ${res.status} ${text.slice(0, 200)}`)
   }
+  if (res.status === 204) return undefined as T
   return (await res.json()) as T
 }
 
@@ -67,6 +69,19 @@ export async function createHostedCheckout(input: {
 
 export function getCheckout(id: string): Promise<SumUpCheckout> {
   return call<SumUpCheckout>(`/checkouts/${encodeURIComponent(id)}`)
+}
+
+/** Close an open checkout so it can no longer take money. */
+export async function deactivateCheckout(id: string): Promise<void> {
+  await call(`/checkouts/${encodeURIComponent(id)}`, { method: "DELETE" })
+}
+
+/** Refund a paid transaction, in full unless an amount is given. */
+export async function refundTransaction(transactionId: string, amountCents?: number): Promise<void> {
+  await call(`/me/refund/${encodeURIComponent(transactionId)}`, {
+    method: "POST",
+    body: JSON.stringify(amountCents ? { amount: amountCents / 100 } : {}),
+  })
 }
 
 /**

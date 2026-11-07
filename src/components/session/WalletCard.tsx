@@ -110,7 +110,7 @@ export function WalletCard({ credits, playerName }: WalletCardProps) {
                 })}
               </div>
               <p className="flex items-center justify-center gap-1.5 text-xs text-[var(--muted-text)]">
-                <ShieldCheck className="h-4 w-4" aria-hidden="true" /> Pagamento sicuro con Stripe · accredito immediato
+                <ShieldCheck className="h-4 w-4" aria-hidden="true" /> Pagamento sicuro con carta · accredito immediato
               </p>
               {error && <p className="text-center text-sm text-[var(--danger)]">{error}</p>}
             </>

@@ -117,7 +117,7 @@ export function RegistrationStatusPoller({
         <p className="text-lg font-bold text-white">In attesa di conferma…</p>
         <p className="text-sm text-[var(--muted-text)]">
           {elapsedSec < 30
-            ? "Stiamo verificando il pagamento con Stripe."
+            ? "Stiamo verificando il pagamento con carta."
             : "Se il problema persiste, contatta l'organizzatore."}
         </p>
       </div>

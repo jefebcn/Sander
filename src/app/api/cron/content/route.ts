@@ -10,6 +10,8 @@ import { cancelStaleSessions } from "@/lib/sessionRefunds"
 import { scopriMorning } from "@/lib/scopri/digest"
 import { confirmDueScores } from "@/lib/sessionScore"
 import { tournamentReminders } from "@/lib/tournamentReminders"
+import { sweepStaleSumUpSeats } from "@/actions/registration"
+import { plusPassReminders } from "@/lib/scopri/passReminder"
 
 export const runtime = "nodejs"
 
@@ -74,5 +76,18 @@ export async function GET(req: NextRequest) {
     return 0
   })
 
-  return NextResponse.json({ ok: true, created, nudged, staleCancelled, scopri, scoresConfirmed, tournamentReminded })
+  // Card sign-ups abandoned on SumUp's page: free their seats (Stripe has an
+  // expiry webhook, SumUp doesn't; sign-up pages also do this on the spot).
+  const seatsFreed = await sweepStaleSumUpSeats(process.env.CRON_SECRET ?? "").catch((e) => {
+    console.error("[cron] SumUp seat sweep failed", e)
+    return 0
+  })
+
+  // SANDER+ by card is a 30-day pass with no renewal: a reminder before it ends.
+  const passReminded = await plusPassReminders().catch((e) => {
+    console.error("[cron] pass reminders failed", e)
+    return 0
+  })
+
+  return NextResponse.json({ ok: true, created, nudged, staleCancelled, scopri, scoresConfirmed, tournamentReminded, seatsFreed, passReminded })
 }

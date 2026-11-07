@@ -8,6 +8,8 @@ import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { canManageTournament, isAdminEmail } from "@/lib/isAdmin"
 import { stripe, getAppUrl } from "@/lib/stripe"
 import { settleStripeRegistration } from "@/lib/tournamentRefunds"
+import { sumupConfigured } from "@/lib/sumup"
+import { closeSumUpCheckout, resolveSumUpCheckout, startSumUpRegistrationCheckout } from "@/lib/sumupCheckout"
 import { ON_SITE } from "@/lib/club"
 import { randomBytes } from "node:crypto"
 import { PairInviteTokenSchema } from "@/lib/validators/club.schema"
@@ -41,6 +43,9 @@ type Tx = Prisma.TransactionClient
 
 const STRIPE_UNVERIFIABLE_MESSAGE =
   "Non riusciamo a verificare il pagamento con carta in questo momento. Riprova tra qualche minuto."
+
+/** A SumUp page lives 30 minutes: after this, an unpaid PENDING row stops holding a seat. */
+const SUMUP_SEAT_HOLD_MS = 35 * 60_000
 
 async function requireAdmin() {
   const session = await getCurrentSession()
@@ -259,7 +264,24 @@ export async function startCheckout(input: unknown): Promise<
       if (existing.paymentStatus === "PAID" || existing.paymentStatus === "FREE") {
         return { ok: false, error: "Sei già iscritto a questo torneo" }
       }
-      if (existing.paymentStatus === "PENDING" && existing.stripeSessionId) {
+      if (existing.paymentStatus === "PENDING" && existing.sumupCheckoutId) {
+        const res = await resolveSumUpCheckout(existing.sumupCheckoutId)
+        if (res.state === "open") return { ok: true, redirectUrl: res.url }
+        if (res.state === "paid") {
+          revalidateTournament(tournamentId)
+          return { ok: true, redirectUrl: successUrl }
+        }
+        if (res.state === "unknown") {
+          // Open but too old to hand out (or SumUp slow): close it before a new one.
+          const closed = await closeSumUpCheckout(existing.sumupCheckoutId)
+          if (closed === "paid") {
+            revalidateTournament(tournamentId)
+            return { ok: true, redirectUrl: successUrl }
+          }
+          if (closed === "unknown") return { ok: false, error: CARD_PAYMENT_UNAVAILABLE_MESSAGE }
+        }
+        // closed: replaced below by a fresh row
+      } else if (existing.paymentStatus === "PENDING" && existing.stripeSessionId) {
         const res = await resolveCheckoutSession(existing.stripeSessionId)
         if (res.state === "open") return { ok: true, redirectUrl: res.url }
         if (res.state === "paid") {
@@ -275,6 +297,11 @@ export async function startCheckout(input: unknown): Promise<
         return { ok: false, error: "Hai già scelto il pagamento in contanti" }
       }
     }
+
+    // Card payments go through SumUp when it is configured, Stripe otherwise.
+    const useSumUp = !isFree && sumupConfigured()
+    // Abandoned SumUp checkouts no longer hold seats (no expiry webhook as with Stripe).
+    await releaseStaleSumUpSeats(tournamentId)
 
     // A player already on the list stays there (as "registered, not paid") if
     // the card payment then fails to start.
@@ -293,7 +320,7 @@ export async function startCheckout(input: unknown): Promise<
           ...carriedFields(wasOnList),
           ...(isFree
             ? { paymentStatus: "PAID" as const, paymentMethod: "FREE", paidAt: new Date(), amountPaidCents: 0 }
-            : { paymentStatus: "PENDING" as const, paymentMethod: "STRIPE" }),
+            : { paymentStatus: "PENDING" as const, paymentMethod: useSumUp ? "SUMUP" : "STRIPE" }),
         },
       })
     })
@@ -301,6 +328,28 @@ export async function startCheckout(input: unknown): Promise<
     if (isFree) {
       revalidateTournament(tournamentId)
       return { ok: true, redirectUrl: successUrl }
+    }
+
+    if (useSumUp) {
+      try {
+        const url = await startSumUpRegistrationCheckout({
+          registrationId: registration.id,
+          playerId: player.id,
+          tournamentId,
+          tournamentName: tournament.name,
+          amountCents: tournament.priceCents ?? 0,
+        })
+        return { ok: true, redirectUrl: url }
+      } catch (err) {
+        console.error("[registration] startCheckout: cannot create SumUp checkout", err)
+        if (wasOnList) {
+          await db.tournamentRegistration.update({ where: { id: registration.id }, data: { paymentMethod: null } }).catch(() => {})
+        } else {
+          await db.tournamentRegistration.deleteMany({ where: { id: registration.id } }).catch(() => {})
+        }
+        revalidateTournament(tournamentId)
+        return { ok: false, error: CARD_PAYMENT_UNAVAILABLE_MESSAGE }
+      }
     }
 
     let checkoutSession: Stripe.Checkout.Session
@@ -379,7 +428,16 @@ async function createManualRegistration(
       if (existing.paymentStatus === "PAID" || existing.paymentStatus === "FREE") {
         return { ok: false, error: "Sei già iscritto a questo torneo" }
       }
-      if (existing.paymentStatus === "PENDING" && existing.stripeSessionId) {
+      if (existing.paymentStatus === "PENDING" && existing.sumupCheckoutId) {
+        // Switching away from card: the SumUp checkout must not take money anymore.
+        const closed = await closeSumUpCheckout(existing.sumupCheckoutId)
+        if (closed === "paid") {
+          revalidateTournament(tournamentId)
+          return { ok: true, registrationId: existing.id }
+        }
+        if (closed === "unknown") return { ok: false, error: CARD_PAYMENT_UNAVAILABLE_MESSAGE }
+        // closed: the row is replaced below (new id)
+      } else if (existing.paymentStatus === "PENDING" && existing.stripeSessionId) {
         // Switching away from card: the Stripe session must not be able to
         // take money anymore.
         const res = await closeCheckoutSession(existing.stripeSessionId)
@@ -652,10 +710,19 @@ export async function cancelRegistration(input: unknown) {
 
   const reg = await db.tournamentRegistration.findUnique({
     where: { id: registrationId },
-    select: { playerId: true, tournamentId: true, paymentStatus: true, paymentMethod: true, stripeSessionId: true },
+    select: { playerId: true, tournamentId: true, paymentStatus: true, paymentMethod: true, stripeSessionId: true, sumupCheckoutId: true },
   })
   if (!reg) throw new Error("Iscrizione non trovata")
   if (reg.playerId !== player.id) throw new Error("Non autorizzato")
+  if (reg.paymentStatus === "PENDING" && reg.sumupCheckoutId) {
+    // The open SumUp page must not take money for a sign-up that is gone.
+    const closed = await closeSumUpCheckout(reg.sumupCheckoutId)
+    if (closed === "paid") {
+      revalidateTournament(reg.tournamentId)
+      throw new Error("Il pagamento con carta risulta completato: sei iscritto. Per annullare contatta l'organizzatore.")
+    }
+    if (closed === "unknown") throw new Error(STRIPE_UNVERIFIABLE_MESSAGE)
+  }
   // Free-tournament sign-ups are stored as PAID/FREE: nothing to refund there.
   if (reg.paymentStatus === "PAID" && reg.paymentMethod !== "FREE") {
     throw new Error("Iscrizione già pagata: contatta l'organizzatore per un rimborso")
@@ -1090,6 +1157,56 @@ export async function acceptPairInvite(input: unknown): Promise<{ ok: true; tour
   }
 }
 
+// ─────────────────────── abandoned SumUp checkouts ───────────────────────────
+
+/**
+ * Stripe tells us when a checkout expires; SumUp doesn't. A PENDING card
+ * sign-up older than the checkout's life is checked with SumUp: paid → it
+ * counts, still unpaid → the row goes and the seat (and the waiting list) moves.
+ */
+async function releaseStaleSumUpSeats(tournamentId: string) {
+  const stale = await db.tournamentRegistration.findMany({
+    where: {
+      tournamentId,
+      paymentStatus: "PENDING",
+      paymentMethod: "SUMUP",
+      sumupCheckoutId: { not: null },
+      createdAt: { lt: new Date(Date.now() - SUMUP_SEAT_HOLD_MS) },
+    },
+    select: { id: true, sumupCheckoutId: true },
+    take: 20,
+  })
+  let freed = 0
+  for (const r of stale) {
+    if ((await closeSumUpCheckout(r.sumupCheckoutId!)) === "closed") {
+      freed += (await db.tournamentRegistration.deleteMany({ where: { id: r.id, paymentStatus: "PENDING" } })).count
+    }
+  }
+  if (freed > 0) {
+    await promoteFromWaitlist(tournamentId).catch((e) => console.error("[registration] waitlist promotion failed", e))
+    revalidateTournament(tournamentId)
+  }
+  return freed
+}
+
+/**
+ * Daily sweep (cron): abandoned SumUp sign-ups of every open tournament.
+ * Exported from a "use server" file, so callable from outside: it does
+ * nothing without the cron secret.
+ */
+export async function sweepStaleSumUpSeats(cronKey: string): Promise<number> {
+  if (!process.env.CRON_SECRET || cronKey !== process.env.CRON_SECRET) return 0
+  const rows = await db.tournamentRegistration.findMany({
+    where: { paymentStatus: "PENDING", paymentMethod: "SUMUP", createdAt: { lt: new Date(Date.now() - SUMUP_SEAT_HOLD_MS) } },
+    select: { tournamentId: true },
+    distinct: ["tournamentId"],
+    take: 50,
+  })
+  let freed = 0
+  for (const r of rows) freed += await releaseStaleSumUpSeats(r.tournamentId)
+  return freed
+}
+
 // ───────────────────────────── waiting list ──────────────────────────────────
 
 /** Seats still free (Infinity when unlimited). */
@@ -1129,6 +1246,7 @@ export async function joinWaitlist(tournamentIdInput: string): Promise<{ ok: tru
     const tournamentId = TournamentIdSchema.parse(tournamentIdInput)
     const player = await requireCurrentPlayer()
     const t = await assertRegistrable(tournamentId)
+    await releaseStaleSumUpSeats(tournamentId)
     if (await isRegistered(tournamentId, player.id)) return { ok: false, error: "Sei già iscritto a questo torneo" }
     if ((await freeSeats(t)) > 0) return { ok: false, error: "Ci sono ancora posti: iscriviti direttamente" }
     if (!(await myWaitlistEntry(tournamentId, player.id))) {

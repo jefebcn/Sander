@@ -218,7 +218,11 @@ export function PlusView({
         </section>
       )}
       {!native && (
-        <p className="text-center text-xs text-[var(--muted-text)]">Pagamento sicuro con Stripe. L&apos;abbonamento si rinnova ogni mese finché non lo disdici.</p>
+        <p className="text-center text-xs text-[var(--muted-text)]">
+          {cardPass
+            ? "Pagamento sicuro con carta (SumUp). Dura 30 giorni e non si rinnova da solo: qualche giorno prima della fine ti avvisiamo."
+            : "Pagamento sicuro con carta. L'abbonamento si rinnova ogni mese finché non lo disdici."}
+        </p>
       )}
     </div>
   )

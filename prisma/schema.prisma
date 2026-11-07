@@ -491,6 +491,8 @@ model TournamentRegistration {
   amountPaidCents       Int?
   stripeSessionId       String?       @unique
   stripePaymentIntentId String?       @unique
+  /// Card payment through SumUp (paymentMethod "SUMUP"): the hosted checkout.
+  sumupCheckoutId       String?
   adminNotes            String?
   // Arrived at the court: set by the organiser at check-in.
   checkedInAt           DateTime?
@@ -512,9 +514,13 @@ model TournamentRegistration {
 model PaymentCheckout {
   id            String    @id // SumUp checkout id
   reference     String    @unique // our checkout_reference
-  kind          String // "sc_topup" | "plus_pass"
+  kind          String // "sc_topup" | "plus_pass" | "tournament_reg"
   playerId      String
   packId        String?
+  /// kind "tournament_reg": the registration this checkout pays for.
+  registrationId String?
+  /// SumUp's hosted page, reused while the checkout is still open.
+  url           String?
   amountCents   Int
   status        String    @default("PENDING") // PENDING | PAID | FAILED | EXPIRED
   transactionId String?
@@ -522,6 +528,7 @@ model PaymentCheckout {
   fulfilledAt   DateTime?
 
   @@index([playerId, createdAt])
+  @@index([registrationId])
   @@map("payment_checkouts")
 }
 
@@ -1171,6 +1178,8 @@ model DiscoverProfile {
   /// from plusUntil so a Stripe webhook never shortens a pass and a pass never
   /// blocks subscribing.
   plusPassUntil        DateTime?
+  /// The pass end date the "SANDER+ sta per scadere" reminder went out for.
+  plusPassRemindedFor  DateTime?
   stripeCustomerId     String?
   stripeSubscriptionId String?
   /// SANDER+ filters on the deck.
