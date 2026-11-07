@@ -1,5 +1,6 @@
 import { db } from "@/lib/db"
 import { stripe } from "@/lib/stripe"
+import { closeSumUpCheckout, refundSumUpRegistration } from "@/lib/sumupCheckout"
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  Before a registration (or a whole tournament) goes away: no open card      */
@@ -10,17 +11,31 @@ import { stripe } from "@/lib/stripe"
 type StripeRegistration = {
   id: string
   paymentStatus: string
+  paymentMethod: string | null
   stripeSessionId: string | null
   stripePaymentIntentId: string | null
+  sumupCheckoutId: string | null
 }
 
-const REG_SELECT = { id: true, paymentStatus: true, stripeSessionId: true, stripePaymentIntentId: true } as const
+const REG_SELECT = { id: true, paymentStatus: true, paymentMethod: true, stripeSessionId: true, stripePaymentIntentId: true, sumupCheckoutId: true } as const
+
+/** SumUp: close an open checkout, then refund what was paid. Throws when SumUp can't confirm. */
+async function settleSumUp(reg: StripeRegistration): Promise<boolean> {
+  if (reg.paymentStatus === "PENDING" && reg.sumupCheckoutId) {
+    const closed = await closeSumUpCheckout(reg.sumupCheckoutId)
+    if (closed === "unknown") throw new Error("SumUp non raggiungibile")
+    if (closed === "closed") return false
+    // "paid": settled just now, refunded below.
+  }
+  return refundSumUpRegistration(reg.id)
+}
 
 /**
  * Close the registration's checkout and refund its card payment, if any.
  * Returns true when a refund was issued; throws when Stripe can't confirm.
  */
 async function settleOne(reg: StripeRegistration, metadata: Record<string, string>): Promise<boolean> {
+  if (reg.paymentMethod === "SUMUP" || reg.sumupCheckoutId) return settleSumUp(reg)
   let paymentIntent = reg.paymentStatus === "PAID" ? reg.stripePaymentIntentId : null
   if (!paymentIntent && reg.stripeSessionId) {
     const session = await stripe.checkout.sessions.retrieve(reg.stripeSessionId)
@@ -48,7 +63,7 @@ async function settleOne(reg: StripeRegistration, metadata: Record<string, strin
 /** One registration an admin rejects or removes. Throws if Stripe can't settle it. */
 export async function settleStripeRegistration(registrationId: string): Promise<{ refunded: boolean }> {
   const reg = await db.tournamentRegistration.findUnique({ where: { id: registrationId }, select: REG_SELECT })
-  if (!reg || (!reg.stripeSessionId && !reg.stripePaymentIntentId)) return { refunded: false }
+  if (!reg || (!reg.stripeSessionId && !reg.stripePaymentIntentId && !reg.sumupCheckoutId)) return { refunded: false }
   try {
     return { refunded: await settleOne(reg, { reason: "admin_removed" }) }
   } catch (e) {
@@ -59,7 +74,7 @@ export async function settleStripeRegistration(registrationId: string): Promise<
 
 export async function settleStripeBeforeDelete(tournamentId: string): Promise<{ refunded: number }> {
   const regs = await db.tournamentRegistration.findMany({
-    where: { tournamentId, OR: [{ stripeSessionId: { not: null } }, { stripePaymentIntentId: { not: null } }] },
+    where: { tournamentId, OR: [{ stripeSessionId: { not: null } }, { stripePaymentIntentId: { not: null } }, { sumupCheckoutId: { not: null } }] },
     select: REG_SELECT,
   })
   let refunded = 0

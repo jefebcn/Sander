@@ -78,7 +78,7 @@ export async function getAdminMetrics(now = new Date(), windowMonths = WINDOW_MO
 
   const tournamentTotal = paidRegistrations.reduce((s, r) => s + (r.amountPaidCents ?? 0), 0)
   const stripeTotal = paidRegistrations
-    .filter((r) => r.paymentMethod === "STRIPE")
+    .filter((r) => r.paymentMethod === "STRIPE" || r.paymentMethod === "SUMUP")
     .reduce((s, r) => s + (r.amountPaidCents ?? 0), 0)
   const topUpTotal = paidTopUps.reduce((s, t) => s + t.amountCents, 0)
 

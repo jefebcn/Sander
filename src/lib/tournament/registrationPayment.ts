@@ -43,7 +43,8 @@ export function deriveRegistrationStatus(
   const { paymentStatus, paymentMethod } = reg
   if (paymentStatus === "PAID" || paymentStatus === "FREE") return "PAID"
   if (paymentStatus !== "PENDING") return "NOT_REGISTERED"
-  if (paymentMethod === "STRIPE") return "PENDING_STRIPE"
+  // Card payment still open (Stripe or SumUp): "Completa il pagamento".
+  if (paymentMethod === "STRIPE" || paymentMethod === "SUMUP") return "PENDING_STRIPE"
   if (paymentMethod === "CASH") return "PENDING_CASH"
   if (paymentMethod === "PAYPAL") return "PENDING_PAYPAL"
   return "REGISTERED_UNPAID"

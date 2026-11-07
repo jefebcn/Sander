@@ -181,7 +181,7 @@ export default async function AdminMetricsPage() {
           </div>
 
           <div className="mt-3 grid grid-cols-2 gap-2">
-            <Stat label="Tornei, da sempre" value={euro(revenue.tournamentTotalCents)} hint={`di cui Stripe ${euro(revenue.stripeTotalCents)}`} />
+            <Stat label="Tornei, da sempre" value={euro(revenue.tournamentTotalCents)} hint={`di cui con carta ${euro(revenue.stripeTotalCents)}`} />
             <Stat label="Ricariche SC, da sempre" value={euro(revenue.topUpTotalCents)} />
           </div>
 

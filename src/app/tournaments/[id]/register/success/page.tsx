@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic"
 import Link from "next/link"
 import { ChevronLeft } from "lucide-react"
 import { getTournamentForRegistration } from "@/actions/registration"
+import { Suspense } from "react"
+import { SumUpReturn } from "@/components/payments/SumUpReturn"
 import { RegistrationStatusPoller } from "@/components/tournament/RegistrationStatusPoller"
 
 export default async function SuccessPage({ params }: { params: Promise<{ id: string }> }) {
@@ -38,6 +40,10 @@ export default async function SuccessPage({ params }: { params: Promise<{ id: st
         </h2>
       </div>
 
+      {/* Back from SumUp (?pagamento=…): settle at once, before its notification arrives. */}
+      <Suspense fallback={null}>
+        <SumUpReturn />
+      </Suspense>
       <div className="mt-6">
         <RegistrationStatusPoller tournamentId={id} initialStatus={initialStatus} paymentMethod={paymentMethod} />
       </div>

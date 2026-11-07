@@ -21,7 +21,7 @@ const ITEMS = [
     icon: <Users className="h-4 w-4" />,
     label: "Come ci si iscrive?",
     description:
-      "Se il torneo è aperto alle iscrizioni, trovi un tasto per iscriverti direttamente dalla pagina del torneo. Alcuni tornei sono a pagamento (con Stripe o contanti), altri sono gratuiti.",
+      "Se il torneo è aperto alle iscrizioni, trovi un tasto per iscriverti direttamente dalla pagina del torneo. Alcuni tornei sono a pagamento (con carta o in contanti), altri sono gratuiti.",
   },
   {
     icon: <Lock className="h-4 w-4" />,
