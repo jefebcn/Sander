@@ -6,7 +6,7 @@ import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { CreatePlayerSchema, UpdateStatPctSchema, AdminAddCreditsSchema } from "@/lib/validators/player.schema"
 import type { CreatePlayerInput, UpdateStatPctInput } from "@/lib/validators/player.schema"
 import { isAdminEmail } from "@/lib/isAdmin"
-import { PUBLIC_PLAYER_SELECT, NOT_DELETED_PLAYER, type PublicPlayer } from "@/lib/publicPlayer"
+import { PUBLIC_PLAYER_SELECT, NOT_DELETED_PLAYER, RANKED_PLAYER, type PublicPlayer } from "@/lib/publicPlayer"
 import { romeMonthRange } from "@/lib/romeMonth"
 import { z } from "zod"
 import { eraseAccount } from "@/lib/accountDeletion"
@@ -502,7 +502,7 @@ export async function getMonthlyTopPlayers() {
     .map(([id]) => id)
 
   const players = await db.player.findMany({
-    where: { id: { in: topIds }, ...NOT_DELETED_PLAYER },
+    where: { id: { in: topIds }, ...RANKED_PLAYER },
     select: {
       id: true,
       name: true,

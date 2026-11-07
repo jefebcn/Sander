@@ -165,6 +165,10 @@ model Player {
   glickoRating     Float @default(1500)
   glickoRD         Float @default(350)
   glickoVolatility Float @default(0.06)
+  /// Admin: left out of every leaderboard (fair play, see /admin/sospetti).
+  rankingExcluded  Boolean @default(false)
+  sessionResults   SessionResult[]
+  ratingFlags      RatingFlag[]
 
   // Session stats
   sessionsPlayed Int @default(0)
@@ -643,6 +647,12 @@ model Session {
   scoreSubmittedAt   DateTime?
   scoreConfirmedAt   DateTime?
   scoreDisputedAt    DateTime?
+  /// Fair play (lib/rankingGuard.ts): why a confirmed score left W/L and rating
+  /// as they were (GUESTS, SAME_OPPONENTS, VOIDED); null = it counted.
+  unrankedReason     String?
+  /// An admin voided the result: its W/L and rating moves were taken back.
+  voidedAt           DateTime?
+  results            SessionResult[]
 
   participants   SessionParticipant[]
   sets           SessionSet[]
@@ -717,6 +727,41 @@ model SessionParticipant {
   @@unique([sessionId, playerId])
   @@index([playerId])
   @@map("session_participants")
+}
+
+/// What a confirmed session did to each player (W/L and rating), so an admin
+/// can take it back exactly (voidSession).
+model SessionResult {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  sessionId    String
+  playerId     String
+  won          Int      @default(0)
+  lost         Int      @default(0)
+  ratingBefore Float?
+  ratingAfter  Float?
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  player  Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, playerId])
+  @@index([playerId, createdAt])
+  @@map("session_results")
+}
+
+/// A fair-play event worth an admin look: GUESTS, SAME_OPPONENTS, NEW_OPPONENTS.
+model RatingFlag {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  playerId  String
+  sessionId String?
+  kind      String
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId, createdAt])
+  @@index([createdAt])
+  @@map("rating_flags")
 }
 
 model RatingHistory {

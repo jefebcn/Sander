@@ -56,7 +56,7 @@ export default async function SeasonPage() {
     standings.length
       ? db.player.findMany({
           where: { id: { in: standings.map((s) => s.id) } },
-          select: { id: true, matchesWon: true, matchesLost: true },
+          select: { id: true, matchesWon: true, matchesLost: true, rankingExcluded: true },
         })
       : [],
   ])

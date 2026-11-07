@@ -18,7 +18,9 @@ export const PROVISIONAL_GAMES = 5
 export type RankStatus = "unranked" | "provisional" | "established"
 
 /** Decided games (wins + losses, tournaments and sessions) a player has on record. */
-export function ratedGames(p: { matchesWon: number; matchesLost: number }): number {
+export function ratedGames(p: { matchesWon: number; matchesLost: number; rankingExcluded?: boolean }): number {
+  // Left out by an admin for fair play: off every board, like a player with no games.
+  if (p.rankingExcluded) return 0
   return Math.max(0, p.matchesWon) + Math.max(0, p.matchesLost)
 }
 

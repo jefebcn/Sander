@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { Banknote, Bug, ChartColumn, ChevronRight, Coins, ShieldCheck, TrendingUp, Trophy, type LucideIcon } from "lucide-react"
+import { Banknote, Bug, ChartColumn, ChevronRight, Coins, ShieldCheck, TrendingUp, Trophy, type LucideIcon, Scale } from "lucide-react"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { isAdminEmail } from "@/lib/isAdmin"
 import { db } from "@/lib/db"
@@ -37,6 +37,7 @@ export default async function AdminHomePage() {
     { href: "/admin/investitori", icon: TrendingUp, color: "var(--accent)", title: "Numeri per investitori", hint: "Crescita, attivi, incassi, comuni: pronti da mostrare" },
     { href: "/admin/metriche", icon: ChartColumn, color: "var(--accent)", title: "Metriche", hint: "Iscritti, incassi, Scopri, chi torna a giocare" },
     { href: "/admin/segnalazioni", icon: ShieldCheck, color: "var(--danger)", title: "Moderazione Scopri", hint: "Segnalazioni, foto, sospensioni", pending: openReports },
+    { href: "/admin/sospetti", icon: Scale, color: "var(--danger)", title: "Fair play", hint: "Classifiche gonfiate: partite da annullare, giocatori da escludere" },
     { href: "/admin/club", icon: Trophy, color: "var(--compete)", title: "Club", hint: "Società da approvare e club attivi", pending: clubRequests },
     { href: "/admin/payments", icon: Banknote, color: "var(--accent)", title: "Pagamenti in attesa", hint: "Conferma o rifiuta i pagamenti in contanti" },
     { href: "/admin/sistema", icon: Bug, color: "var(--accent)", title: "Sistema", hint: "Errori dell'app, pulizia foto", pending: errors },
