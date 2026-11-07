@@ -50,6 +50,30 @@ export const MAX_CLUB_PHOTOS = 6
 /** Notifications a club can send per day (followers or a tournament's players). */
 export const CLUB_MESSAGES_PER_DAY = 3
 
+/** Links a club adds to its link-in-bio page, besides WhatsApp and Instagram. */
+export const MAX_BIO_LINKS = 4
+
+export interface BioLink { label: string; url: string }
+
+/**
+ * wa.me link from a number as people type it ("333 123 4567", "+39 333…",
+ * "0039…"). An Italian mobile without the country code gets +39.
+ */
+export function whatsappUrl(phone: string | null | undefined): string | null {
+  let d = (phone ?? "").replace(/\D/g, "")
+  if (d.startsWith("00")) d = d.slice(2)
+  if (d.length === 10 && d.startsWith("3")) d = `39${d}`
+  return d.length >= 8 && d.length <= 15 ? `https://wa.me/${d}` : null
+}
+
+/** The stored bioLinks JSON, kept only when well formed. */
+export function bioLinksOf(json: unknown): BioLink[] {
+  if (!Array.isArray(json)) return []
+  return json
+    .filter((l): l is BioLink => !!l && typeof l.label === "string" && typeof l.url === "string" && /^https?:\/\//.test(l.url))
+    .slice(0, MAX_BIO_LINKS)
+}
+
 /** "Portami lì": Google Maps directions to the club's courts. */
 export function mapsUrl(address: string | null | undefined, city: string): string {
   const q = [address, city].filter(Boolean).join(", ")

@@ -7,6 +7,7 @@ import { getCurrentSession } from "@/lib/getCurrentPlayer"
 import { isAdminEmail } from "@/lib/isAdmin"
 import { recompressBatch } from "@/lib/recompressPhotos"
 import { sendAdminEmail } from "@/lib/email"
+import { sumupHealth } from "@/lib/sumup"
 
 /* /admin/sistema: error log housekeeping and the old-photos clean-up. */
 
@@ -39,4 +40,10 @@ export async function adminTestEmail() {
     "Da ora ti arriva un'email a ogni nuovo iscritto.",
   ], "/admin/sistema")
   return r.ok ? `Inviata a ${r.to.join(", ")}. Controlla anche lo spam.` : `Non inviata: ${r.reason}`
+}
+
+/** Checks the SumUp key, merchant code and online payments (nothing is charged). */
+export async function adminTestSumUp() {
+  await requireAdmin()
+  return sumupHealth()
 }

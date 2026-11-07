@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic"
 
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { ChevronLeft, Bug, ImageDown, Mail, Monitor, Server } from "lucide-react"
+import { ChevronLeft, Bug, CreditCard, ImageDown, Mail, Monitor, Server } from "lucide-react"
 import type { ReactNode } from "react"
 import { db } from "@/lib/db"
 import { getCurrentSession } from "@/lib/getCurrentPlayer"
@@ -11,6 +11,7 @@ import { formatDate } from "@/lib/utils"
 import { RecompressPhotosButton } from "@/components/admin/RecompressPhotosButton"
 import { DismissErrorButton } from "@/components/admin/DismissErrorButton"
 import { TestEmailButton } from "@/components/admin/TestEmailButton"
+import { TestSumUpButton } from "@/components/admin/TestSumUpButton"
 
 function Section({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
   return (
@@ -86,6 +87,13 @@ export default async function AdminSystemPage() {
             Gli avvisi dei nuovi iscritti arrivano via email agli indirizzi admin. Prova che l&apos;invio funzioni.
           </p>
           <TestEmailButton />
+        </Section>
+
+        <Section icon={<CreditCard className="h-4 w-4 text-[var(--accent)]" />} title="SumUp">
+          <p className="mb-3 text-base text-[var(--muted-text)]">
+            Controlla chiave API, codice esercente e pagamenti online. Crea un pagamento di prova da 1 € e lo annulla subito: non viene addebitato nulla.
+          </p>
+          <TestSumUpButton />
         </Section>
 
         <Section icon={<ImageDown className="h-4 w-4 text-[var(--accent)]" />} title="Foto vecchie">

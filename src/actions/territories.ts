@@ -5,7 +5,7 @@ import { db } from "@/lib/db"
 import { LEADERBOARDS_TAG } from "@/lib/cacheTags"
 import { canonicalLocation, parseBagno } from "@/lib/bagni"
 import { parseCity } from "@/lib/cities"
-import { NOT_DELETED_PLAYER } from "@/lib/publicPlayer"
+import { RANKED_PLAYER } from "@/lib/publicPlayer"
 import { orderLeaderboard, ratedGames, rankStatus } from "@/lib/rankingEligibility"
 
 /* ────────────────────────────────────────────────────────────────────────── */
@@ -35,7 +35,7 @@ type TallyPlayer = { id: string; name: string; avatarUrl: string | null; matches
 type Tally = { player: TallyPlayer; wins: number; matches: number }
 
 const PARTICIPANT_SELECT = {
-  where: { playerId: { not: null }, player: NOT_DELETED_PLAYER },
+  where: { playerId: { not: null }, player: RANKED_PLAYER },
   select: {
     team: true,
     player: { select: { id: true, name: true, avatarUrl: true, matchesWon: true, matchesLost: true } },

@@ -24,7 +24,11 @@ const FRIENDLY_DAMPENING = 0.4
  * Uses actual SessionSet results with dampening so friendly sessions
  * affect ratings less than tournament matches.
  */
-export async function updateGlickoAfterSession(sessionId: string) {
+export async function updateGlickoAfterSession(
+  sessionId: string,
+  /** Fair play (lib/rankingGuard.ts): whether `playerId`'s result against `opponentId` counts. */
+  counts: (playerId: string, opponentId: string) => boolean = () => true,
+) {
   const session = await db.session.findUnique({
     where: { id: sessionId },
     include: {
@@ -77,8 +81,8 @@ export async function updateGlickoAfterSession(sessionId: string) {
         for (const pB of teamB) {
           const sB = snap.get(pB.playerId)
           if (!sB) continue
-          playerResults.get(pA.playerId)!.push({ opponent: { rating: sB.glickoRating, rd: sB.glickoRD, volatility: sB.glickoVolatility }, score: scoreA })
-          playerResults.get(pB.playerId)!.push({ opponent: { rating: sA.glickoRating, rd: sA.glickoRD, volatility: sA.glickoVolatility }, score: 1 - scoreA })
+          if (counts(pA.playerId, pB.playerId)) playerResults.get(pA.playerId)!.push({ opponent: { rating: sB.glickoRating, rd: sB.glickoRD, volatility: sB.glickoVolatility }, score: scoreA })
+          if (counts(pB.playerId, pA.playerId)) playerResults.get(pB.playerId)!.push({ opponent: { rating: sA.glickoRating, rd: sA.glickoRD, volatility: sA.glickoVolatility }, score: 1 - scoreA })
         }
       }
     }
@@ -136,10 +140,12 @@ export async function updateGlickoAfterSession(sessionId: string) {
 
     // Opponents are on the other team
     const opponents = participant.team === 0 ? teamB : teamA
-    const results = opponents.map((opp) => ({
-      opponent: snapshot.get(opp.playerId!)!,
-      score,
-    }))
+    const results = opponents
+      .filter((opp) => counts(participant.playerId!, opp.playerId!))
+      .map((opp) => ({
+        opponent: snapshot.get(opp.playerId!)!,
+        score,
+      }))
 
     if (results.length === 0) continue
 

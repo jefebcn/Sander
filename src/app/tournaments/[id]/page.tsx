@@ -3,9 +3,11 @@ import { activeDuoOf, duoName } from "@/lib/scopri/duos"
 import { DuoRegisterButton } from "@/components/tournament/DuoRegisterButton"
 import { ClubRegisterBox } from "@/components/club/ClubRegisterBox"
 import { waitlistState } from "@/lib/waitlist"
+import { paymentLinkFor, paymentProvider } from "@/lib/paymentLink"
+import { TournamentPaymentLinkForm } from "@/components/club/TournamentPaymentLinkForm"
 import { playingRegistrations, startProblem } from "@/lib/tournament/pairing"
 import Link from "next/link"
-import { ChevronRight, ClipboardCheck, Play, Trophy, Shuffle, Trash2 } from "lucide-react"
+import { BadgeCheck, ChevronRight, ClipboardCheck, Play, Trophy, Shuffle, Trash2 } from "lucide-react"
 import { getTournamentDashboard } from "@/actions/standings"
 import { startTournament, completeTournament } from "@/actions/tournaments"
 import { adminRemoveRegistration } from "@/actions/registration"
@@ -61,7 +63,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   const { id } = await params
 
   const [base, session] = await Promise.all([
-    db.tournament.findUnique({ where: { id }, select: { type: true, priceCents: true, priceCurrency: true, club: { select: { name: true, slug: true } }, circuit: { select: { id: true, name: true } } } }),
+    db.tournament.findUnique({ where: { id }, select: { type: true, priceCents: true, priceCurrency: true, paymentLink: true, club: { select: { name: true, slug: true, status: true, paymentLink: true } }, circuit: { select: { id: true, name: true } } } }),
     getCurrentSession(),
   ])
   if (!base) notFound()
@@ -79,10 +81,14 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
     ? await db.tournamentPairInvite.findFirst({ where: { tournamentId: id, fromId: currentPlayer.id, status: "PENDING" }, select: { token: true } })
     : null
   const seats = club ? await waitlistState(id, currentPlayer?.id ?? null) : null
+  // The club's own payment link (or this tournament's): paid to the club directly.
+  const payLink = club ? paymentLinkFor(base.paymentLink ?? club.paymentLink, base.priceCents) : null
   const clubChip = club && (
     <div className="mt-2 flex flex-col">
       <Link href={`/c/${club.slug}`} className="inline-flex min-h-[2.75rem] items-center gap-1 text-base font-bold text-[var(--tone)]">
-        Organizzato da {club.name} <ChevronRight className="h-4 w-4" aria-hidden="true" />
+        Organizzato da {club.name}
+        {club.status === "APPROVED" && <BadgeCheck className="h-4 w-4 text-[var(--accent)]" aria-label="club verificato" />}
+        <ChevronRight className="h-4 w-4" aria-hidden="true" />
       </Link>
       {base.circuit && (
         <Link href={`/c/${club.slug}/circuiti/${base.circuit.id}`} className="inline-flex min-h-[2.75rem] items-center gap-1 text-base font-bold text-white">
@@ -226,7 +232,11 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 pendingToken={myInvite?.token ?? null}
                 full={seats?.full ?? false}
                 waitlistPosition={seats?.waitlistPosition ?? null}
+                waitlistPartner={seats?.waitlistPartner ?? null}
                 registrationId={seats?.myRegistrationId ?? null}
+                paymentUrl={payLink}
+                paymentProvider={payLink ? paymentProvider(payLink)?.name ?? null : null}
+                paymentClaimed={seats?.paymentClaimed ?? false}
               />
             )}
             {!club && tournament.status === "DRAFT" && tournament.isOpenForRegistration && !alreadySpectator && (
@@ -317,6 +327,9 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               date={tournament.date}
               registrationDeadline={tournament.registrationDeadline ?? null}
             />
+            {club && (base.priceCents ?? 0) > 0 && (
+              <TournamentPaymentLinkForm tournamentId={id} initial={base.paymentLink} clubLink={club.paymentLink} />
+            )}
             <AdminSpectatorPriceForm
               tournamentId={id}
               currentCents={tournament.spectatorPriceCents ?? null}
@@ -567,7 +580,11 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               pendingToken={myInvite?.token ?? null}
               full={seats?.full ?? false}
               waitlistPosition={seats?.waitlistPosition ?? null}
+              waitlistPartner={seats?.waitlistPartner ?? null}
               registrationId={seats?.myRegistrationId ?? null}
+              paymentUrl={payLink}
+              paymentProvider={payLink ? paymentProvider(payLink)?.name ?? null : null}
+              paymentClaimed={seats?.paymentClaimed ?? false}
             />
           )}
           {!club && tournament.status === "DRAFT" && tournament.isOpenForRegistration && !alreadySpectator && (
@@ -669,6 +686,9 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
               date={tournament.date}
               registrationDeadline={tournament.registrationDeadline ?? null}
             />
+            {club && (base.priceCents ?? 0) > 0 && (
+              <TournamentPaymentLinkForm tournamentId={id} initial={base.paymentLink} clubLink={club.paymentLink} />
+            )}
             <AdminSpectatorPriceForm
               tournamentId={id}
               currentCents={tournament.spectatorPriceCents ?? null}

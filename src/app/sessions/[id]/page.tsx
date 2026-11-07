@@ -30,6 +30,7 @@ import { joinWindowOpen } from "@/lib/sessionRules"
 import { notFound } from "next/navigation"
 import { ScoreConfirmBanner } from "@/components/session/ScoreConfirmBanner"
 import { autoConfirmAt, scoreConfirmers, scoreState } from "@/lib/scoreConfirm"
+import { unrankedLabel } from "@/lib/rankingGuard"
 import { isAdminEmail } from "@/lib/isAdmin"
 
 export async function generateMetadata(
@@ -283,6 +284,9 @@ export default async function SessionPage({
                   isAdmin={isAdminViewer}
                   deadline={session.scoreSubmittedAt ? autoConfirmAt(session.scoreSubmittedAt).toISOString() : null}
                 />
+                {unrankedLabel(session.unrankedReason) && (
+                  <p className="mt-2 rounded-2xl bg-[var(--surface-2)] p-4 text-base text-[var(--muted-text)]">{unrankedLabel(session.unrankedReason)}</p>
+                )}
                 {/* Viral moment: winner can share the victory as a Story */}
                 {didWin && currentPlayer && (
                   <div className="mt-2">
@@ -404,13 +408,18 @@ export default async function SessionPage({
         )}
         {/* Multi-match sessions have no sets card: the confirmation sits here. */}
         {session.matchMode && session.status === "COMPLETED" && (
-          <ScoreConfirmBanner
-            sessionId={session.id}
-            state={scoreStatus}
-            canAnswer={canAnswerScore}
-            isAdmin={isAdminViewer}
-            deadline={session.scoreSubmittedAt ? autoConfirmAt(session.scoreSubmittedAt).toISOString() : null}
-          />
+          <>
+            <ScoreConfirmBanner
+              sessionId={session.id}
+              state={scoreStatus}
+              canAnswer={canAnswerScore}
+              isAdmin={isAdminViewer}
+              deadline={session.scoreSubmittedAt ? autoConfirmAt(session.scoreSubmittedAt).toISOString() : null}
+            />
+            {unrankedLabel(session.unrankedReason) && (
+              <p className="rounded-2xl bg-[var(--surface-2)] p-4 text-base text-[var(--muted-text)]">{unrankedLabel(session.unrankedReason)}</p>
+            )}
+          </>
         )}
 
         {/* Ricrea sessione + Rematch CTA for completed sessions */}

@@ -41,3 +41,24 @@ describe("clubChecklist", () => {
     expect(list.filter((i) => i.done).map((i) => i.key)).toEqual(["logo", "campi"])
   })
 })
+
+describe("whatsappUrl", () => {
+  it("normalises Italian numbers", async () => {
+    const { whatsappUrl } = await import("./club")
+    expect(whatsappUrl("333 123 4567")).toBe("https://wa.me/393331234567")
+    expect(whatsappUrl("+39 333 1234567")).toBe("https://wa.me/393331234567")
+    expect(whatsappUrl("0039 3331234567")).toBe("https://wa.me/393331234567")
+    expect(whatsappUrl("+34 612 34 56 78")).toBe("https://wa.me/34612345678")
+    expect(whatsappUrl("12")).toBeNull()
+    expect(whatsappUrl(null)).toBeNull()
+  })
+})
+
+describe("bioLinksOf", () => {
+  it("keeps only well formed links, at most 4", async () => {
+    const { bioLinksOf } = await import("./club")
+    expect(bioLinksOf(null)).toEqual([])
+    expect(bioLinksOf([{ label: "Corsi", url: "https://x.it" }, { label: 3, url: "https://y.it" }, { label: "Bad", url: "javascript:alert(1)" }])).toEqual([{ label: "Corsi", url: "https://x.it" }])
+    expect(bioLinksOf(Array.from({ length: 6 }, (_, i) => ({ label: `L${i}`, url: "https://x.it" })))).toHaveLength(4)
+  })
+})

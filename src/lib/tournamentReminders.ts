@@ -15,7 +15,7 @@ export async function tournamentReminders(now: Date = new Date()): Promise<numbe
       reminderSentAt: null,
       date: { gte: new Date(now.getTime() - 86_400_000), lte: new Date(now.getTime() + 3 * 86_400_000) },
     },
-    select: { id: true, name: true, date: true, location: true, priceCents: true, priceCurrency: true, clubId: true },
+    select: { id: true, name: true, date: true, location: true, priceCents: true, priceCurrency: true, clubId: true, paymentLink: true, club: { select: { paymentLink: true } } },
   })
   let sent = 0
   for (const t of soon.filter((x) => daysFromNow(x.date, now) === 1)) {
@@ -27,7 +27,7 @@ export async function tournamentReminders(now: Date = new Date()): Promise<numbe
       select: { playerId: true, paymentStatus: true, isSpectator: true },
     })
     for (const r of regs) {
-      const msg = tournamentReminder({ ...t, paysOnSite: !!t.clubId }, r)
+      const msg = tournamentReminder({ ...t, paysOnSite: !!t.clubId, payOnline: !!(t.paymentLink ?? t.club?.paymentLink) }, r)
       await notifyPlayer(r.playerId, { ...msg, url: `/tournaments/${t.id}` }).catch(() => {})
       sent++
     }

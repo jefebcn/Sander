@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { NOT_DELETED_PLAYER } from "@/lib/publicPlayer"
+import { RANKED_PLAYER } from "@/lib/publicPlayer"
 import { orderLeaderboard, ratedGames, rankStatus } from "@/lib/rankingEligibility"
 
 /* ────────────────────────────────────────────────────────────────────────── */
@@ -44,7 +44,7 @@ export async function getWeeklyRecap(referenceDate?: Date): Promise<WeeklyRecap>
   const weekStart = new Date(now.getTime() - WEEK_MS)
 
   const inWindow = await db.ratingHistory.findMany({
-    where: { createdAt: { gte: weekStart, lte: now }, player: NOT_DELETED_PLAYER },
+    where: { createdAt: { gte: weekStart, lte: now }, player: RANKED_PLAYER },
     orderBy: { createdAt: "asc" },
     include: {
       player: {

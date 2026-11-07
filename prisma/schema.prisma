@@ -165,6 +165,10 @@ model Player {
   glickoRating     Float @default(1500)
   glickoRD         Float @default(350)
   glickoVolatility Float @default(0.06)
+  /// Admin: left out of every leaderboard (fair play, see /admin/sospetti).
+  rankingExcluded  Boolean @default(false)
+  sessionResults   SessionResult[]
+  ratingFlags      RatingFlag[]
 
   // Session stats
   sessionsPlayed Int @default(0)
@@ -191,7 +195,8 @@ model Player {
   clubFollows          ClubFollow[]
   pairInvitesSent      TournamentPairInvite[] @relation("PairInvitesSent")
   pairInvitesReceived  TournamentPairInvite[] @relation("PairInvitesReceived")
-  tournamentWaitlist   TournamentWaitlist[]
+  tournamentWaitlist   TournamentWaitlist[] @relation("WaitlistPlayer")
+  waitlistAsPartner    TournamentWaitlist[] @relation("WaitlistPartner")
   notifications        Notification[]
   monthlyAwards        MonthlyAward[]
   videoSubmissions     VideoSubmission[]
@@ -272,6 +277,8 @@ model Tournament {
   messages    ClubMessage[]
   // The "domani si gioca" reminder went out (lib/tournamentReminders.ts).
   reminderSentAt DateTime?
+  // A payment link for this tournament only; otherwise the club's one.
+  paymentLink    String?
 
   // Cover image & display metadata
   coverUrl   String?
@@ -316,6 +323,11 @@ model Club {
   services        String[] @default([])
   photos          String[] @default([])
   bagno           Int?     // the bagno it is, for "Re dei Bagni"
+  // Link-in-bio page (/c/[slug]/link): WhatsApp number and up to 4 links.
+  whatsapp        String?
+  bioLinks        Json?    // [{ label, url }]
+  // The club's own payment link (lib/paymentLink.ts): players pay the club directly.
+  paymentLink     String?
 
   // Link that adds whoever opens it to the staff; the owner can replace it.
   // Random, so no unique constraint (adding one to an existing table needs a
@@ -366,19 +378,25 @@ model ClubMessage {
   @@map("club_messages")
 }
 
-/// "Lista d'attesa": a full tournament keeps the players who still want in,
-/// first come first served. A freed seat goes to the first in line.
+/// "Lista d'attesa": a full tournament keeps the players (or pairs) who still
+/// want in, first come first served. A freed seat goes to the first in line
+/// that fits: a pair waits for two seats, a single player for one.
 model TournamentWaitlist {
   id           String   @id @default(cuid())
   createdAt    DateTime @default(now())
   tournamentId String
   playerId     String
+  // In line as a pair (fixed-pair formats): both get in together, when two
+  // seats are free.
+  partnerId    String?
 
   tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  player     Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  player     Player     @relation("WaitlistPlayer", fields: [playerId], references: [id], onDelete: Cascade)
+  partner    Player?    @relation("WaitlistPartner", fields: [partnerId], references: [id], onDelete: SetNull)
 
   @@unique([tournamentId, playerId])
   @@index([tournamentId, createdAt])
+  @@index([partnerId])
   @@map("tournament_waitlist")
 }
 
@@ -476,6 +494,8 @@ model TournamentRegistration {
   adminNotes            String?
   // Arrived at the court: set by the organiser at check-in.
   checkedInAt           DateTime?
+  // "Ho pagato" through the club's payment link: the staff confirms it.
+  paymentClaimedAt      DateTime?
 
   tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   player     Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
@@ -627,6 +647,12 @@ model Session {
   scoreSubmittedAt   DateTime?
   scoreConfirmedAt   DateTime?
   scoreDisputedAt    DateTime?
+  /// Fair play (lib/rankingGuard.ts): why a confirmed score left W/L and rating
+  /// as they were (GUESTS, SAME_OPPONENTS, VOIDED); null = it counted.
+  unrankedReason     String?
+  /// An admin voided the result: its W/L and rating moves were taken back.
+  voidedAt           DateTime?
+  results            SessionResult[]
 
   participants   SessionParticipant[]
   sets           SessionSet[]
@@ -701,6 +727,41 @@ model SessionParticipant {
   @@unique([sessionId, playerId])
   @@index([playerId])
   @@map("session_participants")
+}
+
+/// What a confirmed session did to each player (W/L and rating), so an admin
+/// can take it back exactly (voidSession).
+model SessionResult {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  sessionId    String
+  playerId     String
+  won          Int      @default(0)
+  lost         Int      @default(0)
+  ratingBefore Float?
+  ratingAfter  Float?
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  player  Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, playerId])
+  @@index([playerId, createdAt])
+  @@map("session_results")
+}
+
+/// A fair-play event worth an admin look: GUESTS, SAME_OPPONENTS, NEW_OPPONENTS.
+model RatingFlag {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  playerId  String
+  sessionId String?
+  kind      String
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId, createdAt])
+  @@index([createdAt])
+  @@map("rating_flags")
 }
 
 model RatingHistory {

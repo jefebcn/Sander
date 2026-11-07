@@ -32,6 +32,8 @@ export const PUBLIC_PLAYER_SELECT = {
   alzPct: true,
   ricPct: true,
   staPct: true,
+  // Fair play: an excluded player has no rated games on the boards (lib/rankingEligibility).
+  rankingExcluded: true,
 } as const satisfies Prisma.PlayerSelect
 
 export type PublicPlayer = Prisma.PlayerGetPayload<{ select: typeof PUBLIC_PLAYER_SELECT }>
@@ -46,4 +48,10 @@ export const DELETED_PLAYER_NAME = "Giocatore eliminato"
 /** Prisma filter that skips anonymised (deleted) players. */
 export const NOT_DELETED_PLAYER = {
   NOT: { name: DELETED_PLAYER_NAME, userId: null },
+} as const satisfies Prisma.PlayerWhereInput
+
+/** On the leaderboards: not deleted, not excluded by an admin for fair play (/admin/sospetti). */
+export const RANKED_PLAYER = {
+  ...NOT_DELETED_PLAYER,
+  rankingExcluded: false,
 } as const satisfies Prisma.PlayerWhereInput
