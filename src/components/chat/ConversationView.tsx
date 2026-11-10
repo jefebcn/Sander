@@ -9,6 +9,7 @@ import { ProposeMatchSheet } from "./ProposeMatchSheet"
 import { resizedPhoto } from "@/lib/photo"
 import { GroupInfoSheet } from "./GroupInfoSheet"
 import { ProposalCard } from "./ProposalCard"
+import { PUSH_EVENT } from "@/lib/nativePush"
 
 type ThreadData = Awaited<ReturnType<typeof getThread>>
 
@@ -55,9 +56,15 @@ export function ConversationView({
     queryKey: ["thread", threadId],
     queryFn: () => getThread(threadId),
     initialData: initial,
-    refetchInterval: 5000,
+    refetchInterval: 3000,
     refetchOnWindowFocus: true,
   })
+  // A push for a new message while the app is open: fetch now, not at the next poll.
+  useEffect(() => {
+    const onPush = () => void qc.invalidateQueries({ queryKey: ["thread", threadId] })
+    window.addEventListener(PUSH_EVENT, onPush)
+    return () => window.removeEventListener(PUSH_EVENT, onPush)
+  }, [qc, threadId])
 
   const thread = data ?? initial
   const messages = thread.messages

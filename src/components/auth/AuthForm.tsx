@@ -4,7 +4,7 @@ import { useId, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { signIn } from "next-auth/react"
-import { Eye, EyeOff, LogIn } from "lucide-react"
+import { AlertCircle, Eye, EyeOff, LogIn } from "lucide-react"
 import { registerWithEmail } from "@/actions/auth"
 import { trackEvent } from "@/lib/analytics"
 import { cn } from "@/lib/utils"
@@ -74,7 +74,9 @@ export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInvit
           redirect: false,
         })
         if (!result || result.error) {
-          setError("Email o password non corretti")
+          setError(
+            "Accesso non riuscito: email o password sbagliate. Se ti sei iscritto con Google o Apple, usa quel pulsante qui sotto.",
+          )
           return
         }
         router.push(callbackUrl)
@@ -232,8 +234,9 @@ export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInvit
         )}
 
         {error && (
-          <p role="alert" className="rounded-xl bg-[var(--danger)]/15 px-4 py-2.5 text-base text-[var(--danger)]">
-            {error}
+          <p role="alert" className="flex items-start gap-2 rounded-xl bg-[var(--danger)]/15 px-4 py-3 text-base font-semibold text-[var(--danger)]">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+            <span>{error}</span>
           </p>
         )}
 
