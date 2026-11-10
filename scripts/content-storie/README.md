@@ -16,7 +16,7 @@ per farne una nuova copia la più simile e cambia testo e sfondo.
 - **Tre fondi, da alternare** per non ripetersi:
   - foto pellicola con sfumatura scura in alto e in basso (`.shade`);
   - card lime `#c6f736` con testo nero;
-  - card scura con numeri lime (liste, "come funziona").
+  - card scura con numeri lime (liste, "come funziona"): **solo dentro un carosello, mai come prima immagine o come storia/post singolo**. Da sola o in copertina non rispetta i colori del progetto: lì si usa la card lime o una foto.
 - **Titoli**: Gochi Hand, grandi, bianco + una parola o una riga in lime. Sulle foto vanno nel cielo o nel vuoto, mai sopra i volti.
 - **Etichette**: Inter maiuscolo spaziato in alto (es. STAGIONE 2 · RIVIERA · GRATIS), pillola con bordo per la frase breve.
 - **Chiusura**: icona dell'app (`public/icon-512.png`) + `sanderbv.it` in Gochi Hand + "LINK IN BIO".
