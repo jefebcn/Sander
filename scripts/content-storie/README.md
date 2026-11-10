@@ -40,11 +40,17 @@ Vale per storie, post e caroselli, su Instagram e TikTok insieme. La stessa foto
 | `palla-sabbia` | storia 8 nov |
 | `tuffo-sera` | TikTok 4 nov (carosello Scopri, 1) |
 | `gruppo-sera` | TikTok 4 nov (carosello Scopri, 3) |
-| `schiacciata-tramonto` | IG 14 nov (Libero oggi) |
+| `battuta-ombrelloni` | IG 14 nov (Ci sei davvero?) |
+| `piedi-corsa` | TikTok 14 nov (Coppie, 1) |
 | `alzata-notte` | IG 17 nov (La giornata tipo) |
-| `batti-cinque` | IG 22 nov (Scopri 2v2) |
-| `bagher-notte` | IG 24 nov (Sander) |
-| `piedi-corsa` | libera |
-| `battuta-ombrelloni` | libera |
+| `schiacciata-tramonto` | TikTok 19 nov (Foto verificata, 1) |
+| `batti-cinque` | IG 22 nov (Rigiocheresti) |
+| `bagher-notte` | IG 24 nov (Chi porta il pallone?) |
 
-Già esaurite, non riusarle: le foto del pacchetto Stagione 2 (coppia con la maglia 23, ragazza in viola, corsa sfocata verde, alzata sotto la rete) e il palo della rete (2 usi: IG 30 ott, 7 nov).
+Già esaurite, non riusarle: le foto del pacchetto Stagione 2 (coppia con la maglia 23, ragazza in viola, corsa sfocata verde, alzata sotto la rete, gambe in corsa) e il palo della rete (2 usi: IG 30 ott, 7 nov).
+
+## Regola: niente temi o testi ripetuti
+
+Oltre alle foto, non si ripetono titoli, temi e frasi delle didascalie, tra Instagram e TikTok insieme. Prima di programmare, scarica da Buffer i contenuti già usciti e in coda e controlla l'elenco qui sotto: un tema già fatto si può riprendere solo con un'angolazione nuova e un titolo diverso. Niente alcol nemmeno nei testi e negli sticker.
+
+Temi già usati (fino al 24 nov 2026): Stagione 1 e Stagione 2 · Come funziona / In tre tocchi / Entra in 1 minuto / Gioca e sali · Trova con chi giocare / Scopri · Manca sempre il quarto / Manca sempre uno (serie) · Proponi una partita · Libero oggi · Porta un amico · Livelli · Novità di novembre · Sander Club 2v2 · Si gioca anche a novembre · Gioca fino al tramonto · La prossima palla è tua · A piedi nudi / dress code zero scarpe · Tornei SANDER · 21-19 · La giornata tipo · Classifica pulita (fair play) · Presenze verificate · Coppie 2v2 · Foto verificata · Kit del sabato · Rigiocheresti · La chat della partita.
