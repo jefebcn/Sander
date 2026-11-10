@@ -159,6 +159,9 @@ export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInvit
             required
             autoComplete="email"
             inputMode="email"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="nome@esempio.it"
@@ -216,6 +219,9 @@ export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInvit
                 id={`${id}-invite`}
                 type="text"
                 autoComplete="off"
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
                 value={inviteCode}
                 onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
                 maxLength={9}
