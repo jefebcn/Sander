@@ -5,7 +5,12 @@ const resend = process.env.RESEND_API_KEY
   : null
 
 const FROM = process.env.EMAIL_FROM ?? "Sander <noreply@sander.app>"
-const APP_URL = process.env.NEXTAUTH_URL ?? process.env.APP_URL ?? "http://localhost:3000"
+// Links in emails. NEXT_PUBLIC_APP_URL is the one the payment returns already
+// use; the old APP_URL / NEXTAUTH_URL pointed at a retired Vercel project.
+const APP_URL = (
+  process.env.NEXT_PUBLIC_APP_URL ??
+  (process.env.NODE_ENV === "production" ? "https://www.sanderbv.it" : "http://localhost:3000")
+).replace(/\/$/, "")
 
 export async function sendPasswordResetEmail(to: string, token: string) {
   const url = `${APP_URL}/auth/reset-password?token=${token}`
