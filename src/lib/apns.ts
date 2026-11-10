@@ -15,12 +15,26 @@ export function apnsConfigured(): boolean {
   return Boolean(process.env.APNS_KEY_ID && process.env.APNS_TEAM_ID && process.env.APNS_PRIVATE_KEY)
 }
 
+/**
+ * The .p8 as a clean PEM, whatever the paste into Vercel did to it: surrounding
+ * quotes, "\n" escapes, line breaks turned into spaces, or BEGIN/END lines
+ * missing. Only the base64 body matters; it is re-wrapped at 64 characters.
+ */
+export function normalizeP8(raw: string): string {
+  const body = raw
+    .replace(/\\n/g, "\n")
+    .replace(/-----(BEGIN|END)[^-]*-----/g, "")
+    .replace(/["'\s]/g, "")
+  const lines = body.match(/.{1,64}/g) ?? []
+  return `-----BEGIN PRIVATE KEY-----\n${lines.join("\n")}\n-----END PRIVATE KEY-----\n`
+}
+
 // Apple wants a fresh provider token at most every 60 minutes and no more than every 20.
 let cached: { jwt: string; at: number } | null = null
 
 async function providerToken(): Promise<string> {
   if (cached && Date.now() - cached.at < 40 * 60_000) return cached.jwt
-  const key = await importPKCS8(process.env.APNS_PRIVATE_KEY!.replace(/\\n/g, "\n"), "ES256")
+  const key = await importPKCS8(normalizeP8(process.env.APNS_PRIVATE_KEY!), "ES256")
   const jwt = await new SignJWT({})
     .setProtectedHeader({ alg: "ES256", kid: process.env.APNS_KEY_ID! })
     .setIssuer(process.env.APNS_TEAM_ID!)
