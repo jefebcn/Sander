@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/layout/PageHeader"
 import { CompanionsStrip } from "@/components/chat/CompanionsStrip"
 import { NewGroupButton } from "@/components/chat/NewGroupButton"
 import { ChatNotifyPrompt } from "@/components/chat/ChatNotifyPrompt"
+import { AutoRefresh } from "@/components/layout/AutoRefresh"
 
 export const metadata: Metadata = {
   title: "Messaggi | SANDER",
@@ -40,6 +41,7 @@ export default async function MessagesPage() {
   return (
     <div className="pb-24">
       <PageHeader title="Messaggi" action={<NewGroupButton meId={me.id} />} />
+      <AutoRefresh everyMs={10_000} />
 
       <ChatNotifyPrompt />
 

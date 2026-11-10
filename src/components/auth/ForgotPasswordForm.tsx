@@ -37,8 +37,13 @@ export function ForgotPasswordForm() {
           <p className="text-lg font-bold text-white">Controlla la tua email</p>
           <p className="text-sm text-[var(--muted-text)]">
             Se l&apos;indirizzo <strong className="text-white">{email}</strong> è
-            registrato, riceverai un link per reimpostare la password entro qualche
-            minuto.
+            registrato, riceverai un&apos;email entro qualche minuto: il link per
+            reimpostare la password, oppure come accedere se ti sei iscritto con
+            Google o Apple.
+          </p>
+          <p className="text-sm text-[var(--muted-text)]">
+            Non la trovi? Guarda anche in <strong className="text-white">Spam</strong> o{" "}
+            <strong className="text-white">Promozioni</strong>.
           </p>
         </div>
         <Link

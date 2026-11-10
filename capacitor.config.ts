@@ -10,7 +10,9 @@ const config: CapacitorConfig = {
     allowNavigation: ["sanderbv.it", "*.sanderbv.it", "sander-two.vercel.app"],
   },
   ios: {
-    contentInset: "always",
+    // Edge to edge: the pages already pad with env(safe-area-inset-*), as in
+    // the installed PWA. "always" added the status bar height a second time.
+    contentInset: "never",
     backgroundColor: "#0b0b0c",
     preferredContentMode: "mobile",
     limitsNavigationsToAppBoundDomains: true,

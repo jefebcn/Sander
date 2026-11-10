@@ -176,8 +176,10 @@ try {
     await app.getByText("Non disponibile nell'app.").waitFor({ timeout: 15_000 })
     assert.equal(await app.getByRole("button", { name: /Attiva SANDER\+/ }).count(), 0)
     await app.goto(`${BASE}/profile`, { waitUntil: "networkidle" })
-    await app.getByRole("button", { name: /Ricarica/ }).click()
+    // No top-up at all in the app: no button, no price, only the free way to earn SC.
     await app.getByText(/Guadagna SC gratis/).waitFor({ timeout: 15_000 })
+    assert.equal(await app.getByRole("button", { name: /Ricarica/ }).count(), 0)
+    assert.equal(await app.getByText(/1 € = 10 SC/).count(), 0)
     assert.equal(await app.getByText(/PayPal o bonifico/).count(), 0)
     assert.equal(await app.getByText(/Pagamento sicuro con Stripe/).count(), 0)
   })

@@ -72,4 +72,12 @@ export async function listenForTaps(): Promise<void> {
     const url = (action.notification.data as { url?: unknown } | undefined)?.url
     if (typeof url === "string" && url.startsWith("/") && !url.startsWith("//")) window.location.assign(url)
   })
+  // A push while the app is open (a new message, say): open pages refresh at once
+  // instead of waiting for their next poll. See AutoRefresh and ConversationView.
+  await PushNotifications.addListener("pushNotificationReceived", () => {
+    window.dispatchEvent(new Event(PUSH_EVENT))
+  })
 }
+
+/** Window event fired when a push arrives while the app is in the foreground. */
+export const PUSH_EVENT = "sander:push"

@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic"
 
+import { AutoRefresh } from "@/components/layout/AutoRefresh"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { unstable_cache } from "next/cache"
@@ -400,6 +401,8 @@ function HomeShell({ children }: { children: React.ReactNode }) {
         className="relative z-10 flex flex-col gap-6 px-4 pb-8"
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}
       >
+        {/* Unread badges follow new messages: on return to the app and on a push. */}
+        <AutoRefresh />
         {children}
       </div>
     </div>
