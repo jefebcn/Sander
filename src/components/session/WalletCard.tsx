@@ -1,12 +1,12 @@
 "use client"
 
-import { useEffect, useState, useTransition } from "react"
+import { useState, useTransition } from "react"
 import Link from "next/link"
 import { Coins, Copy, Check, ChevronDown, ExternalLink, ShieldCheck, UserPlus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { CREDIT_PACKS, packBonusPct } from "@/lib/pricing"
 import { startCreditCheckout } from "@/actions/credits"
-import { isNativeApp } from "@/lib/native"
+import { useIsNativeApp } from "@/lib/native"
 
 const IBAN = "IE06 SUMU 9903 6511 9972 84"
 const BIC = "SUMUIE22XXX"
@@ -24,10 +24,9 @@ export function WalletCard({ credits, playerName }: WalletCardProps) {
   const [buying, setBuying] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
-  // In-app card purchases are web-only: inside the Android app, digital
-  // credits bought outside Google Play billing can breach Play policy.
-  const [native, setNative] = useState(false)
-  useEffect(() => setNative(isNativeApp()), [])
+  // In-app card purchases are web-only: inside the iOS/Android app, digital
+  // credits bought outside store billing breach App Store and Play policy.
+  const native = useIsNativeApp()
 
   function copyIban() {
     navigator.clipboard.writeText(IBAN.replace(/\s/g, "")).then(() => {
@@ -63,6 +62,7 @@ export function WalletCard({ credits, playerName }: WalletCardProps) {
             {credits} <span className="text-base text-[var(--accent)]">SC</span>
           </p>
         </div>
+        {!native && (
         <button
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
@@ -71,9 +71,24 @@ export function WalletCard({ credits, playerName }: WalletCardProps) {
           Ricarica
           <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} aria-hidden="true" />
         </button>
+        )}
       </div>
 
-      {open && (
+      {/* In the iOS/Android app there is no top-up at all (store rules on digital
+          credits): no button, no price, only the free way to earn SC. */}
+      {native && (
+        <div className="border-t border-[var(--border)] px-4 pb-4 pt-4">
+          <Link
+            href="/profile?tab=invita"
+            className="flex min-h-[3.5rem] items-center gap-3 rounded-[var(--radius-md)] bg-[var(--surface-3)] px-4"
+          >
+            <UserPlus className="h-5 w-5 text-[var(--social)]" aria-hidden="true" />
+            <span className="flex-1 text-sm font-bold text-white">Guadagna SC gratis invitando un amico</span>
+          </Link>
+        </div>
+      )}
+
+      {open && !native && (
         <div className="flex flex-col gap-3 border-t border-[var(--border)] px-4 pb-4 pt-4">
           <p className="text-sm text-[var(--muted-text)]">
             Con i SC entri nelle partite a pagamento e crei tornei. 1 € = 10 SC.
