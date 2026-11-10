@@ -2,9 +2,10 @@
 
 import bcrypt from "bcryptjs"
 import crypto from "crypto"
+import { z } from "zod"
 import { db } from "@/lib/db"
 import { RegisterSchema, ForgotPasswordSchema, ResetPasswordSchema } from "@/lib/validators/auth.schema"
-import { sendPasswordResetEmail } from "@/lib/email"
+import { sendNoPasswordEmail, sendPasswordResetEmail } from "@/lib/email"
 import { findPlayerByInviteCode } from "@/actions/invite"
 import { linkInvite } from "@/lib/referralRedeem"
 import { findUserByEmail } from "@/lib/userByEmail"
@@ -75,15 +76,20 @@ export async function requestPasswordReset(input: unknown): Promise<ActionResult
       })
 
       await sendPasswordResetEmail(email, token)
+    } else if (user) {
+      // Made with Google or Apple: no password to reset. Say so to that inbox
+      // (the page still answers the same either way: nothing is revealed).
+      const accounts = await db.account.findMany({ where: { userId: user.id }, select: { provider: true } })
+      await sendNoPasswordEmail(email, accounts.map((a) => a.provider.replace(/-native$/, "")))
     }
 
     // Always succeed — don't reveal whether the email exists
     return { success: true }
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Errore"
-    if (msg.includes("invalid") || msg.includes("Email")) {
+    if (e instanceof z.ZodError) {
       return { error: "Inserisci un indirizzo email valido" }
     }
+    console.error("requestPasswordReset failed", e)
     return { error: "Errore nell'invio. Riprova tra qualche istante." }
   }
 }

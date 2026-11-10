@@ -16,10 +16,13 @@ export async function sendPasswordResetEmail(to: string, token: string) {
     return
   }
 
-  await resend.emails.send({
+  // Resend reports failures in the result instead of throwing: surface them,
+  // or a rejected sender looks like a sent email.
+  const { error } = await resend.emails.send({
     from: FROM,
     to,
     subject: "Reimposta la tua password — Sander",
+    text: `Hai chiesto di reimpostare la password del tuo account SANDER.\n\nApri questo link (vale 1 ora):\n${url}\n\nSe non sei stato tu, ignora questa email: la password resta quella di prima.`,
     html: `
 <!DOCTYPE html>
 <html lang="it">
@@ -60,6 +63,41 @@ export async function sendPasswordResetEmail(to: string, token: string) {
 </body>
 </html>`,
   })
+  if (error) {
+    console.error("sendPasswordResetEmail failed", error)
+    throw new Error(`Resend: ${error.message}`)
+  }
+}
+
+/** "Password dimenticata?" for an account with no password (made with Google
+ *  or Apple): tell that inbox how it actually signs in, instead of silence. */
+export async function sendNoPasswordEmail(to: string, providers: string[]) {
+  const how = providers.includes("google") && providers.includes("apple")
+    ? "«Continua con Google» o «Continua con Apple»"
+    : providers.includes("apple")
+      ? "«Continua con Apple»"
+      : "«Continua con Google»"
+  const url = `${APP_URL}/auth/signin`
+  if (!resend) {
+    console.log(`[DEV] No-password notice for ${to}: ${how}`)
+    return
+  }
+  const { error } = await resend.emails.send({
+    from: FROM,
+    to,
+    subject: "Come accedere a SANDER",
+    text: `Hai chiesto di reimpostare la password, ma il tuo account SANDER non ne ha una: lo hai creato con ${how.replace(/[«»]/g, "")}.\n\nPer entrare apri ${url} e tocca ${how.replace(/[«»]/g, "")}.\n\nSe non sei stato tu, ignora questa email.`,
+    html: `<div style="font-family:system-ui,sans-serif;font-size:15px;line-height:1.6;max-width:480px">
+<p style="margin:0 0 12px">Hai chiesto di reimpostare la password, ma il tuo account SANDER <strong>non ha una password</strong>: lo hai creato con ${escapeHtml(how)}.</p>
+<p style="margin:0 0 16px">Per entrare tocca ${escapeHtml(how)} nella pagina di accesso.</p>
+<p style="margin:0 0 16px"><a href="${url}" style="display:inline-block;background:#c6f736;color:#000;font-weight:800;padding:12px 28px;border-radius:12px;text-decoration:none">Vai all'accesso</a></p>
+<p style="margin:0;font-size:12px;color:#777">Se non sei stato tu, ignora questa email.</p>
+</div>`,
+  })
+  if (error) {
+    console.error("sendNoPasswordEmail failed", error)
+    throw new Error(`Resend: ${error.message}`)
+  }
 }
 
 const escapeHtml = (s: string) =>
