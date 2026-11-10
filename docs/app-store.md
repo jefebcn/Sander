@@ -32,8 +32,8 @@ L'app iPhone è un guscio Capacitor (`ios/`) che apre www.sanderbv.it, con funzi
 
 ## In Xcode (o Codemagic) prima della prima build
 
-- `Info.plist` → *URL Types*: aggiungi lo "iOS URL scheme" di Google (`com.googleusercontent.apps.…`), serve al login Google.
-- *Signing & Capabilities*: scegli il Team. Push e Sign in with Apple arrivano già da `App.entitlements`.
+- `Info.plist` → *URL Types*: lo "iOS URL scheme" di Google è già inserito (serve al login Google).
+- *Signing & Capabilities*: Team `8VQ5WP5Y4L` già impostato. Push e Sign in with Apple arrivano già da `App.entitlements`.
 - Icona: `ios/App/App/Assets.xcassets/AppIcon.appiconset` (1024×1024, senza trasparenza).
 
 ## App Store Connect

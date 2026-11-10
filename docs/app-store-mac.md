@@ -40,10 +40,10 @@ Nella colonna a sinistra clicca **App** (l'icona blu in alto), poi il target **A
 
 1. **Signing & Capabilities**
    - Spunta *Automatically manage signing*.
-   - **Team**: scegli l'account Apple Developer (se non c'è: Xcode → Settings → Accounts → + → accedi con l'ID Apple dell'account sviluppatore).
+   - **Team**: già impostato (Team ID `8VQ5WP5Y4L`). Se Xcode lo segna in rosso: Xcode → Settings → Accounts → + → accedi con l'ID Apple dell'account sviluppatore, poi sceglilo qui.
    - Bundle Identifier: `com.sanderbv.app` (già impostato).
    - Devono comparire **Push Notifications** e **Sign in with Apple**. Se mancano: **+ Capability** e aggiungile.
-2. **Info** → *URL Types* → **+** → in *URL Schemes* incolla lo "iOS URL scheme" di Google (`com.googleusercontent.apps.…`). Serve al login con Google.
+2. **Info** → *URL Types*: lo schema di Google (`com.googleusercontent.apps.1098684246416-…`) è già inserito. Serve al login con Google: controlla solo che ci sia.
 3. **General** → *Version* `1.0`, *Build* `1`. A ogni nuovo invio ad Apple alza *Build* di 1.
 
 ## 4. Provare l'app (30-60 minuti)
