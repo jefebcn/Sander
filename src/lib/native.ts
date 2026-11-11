@@ -133,7 +133,11 @@ export async function nativeGoogleIdToken(webClientId: string, iosClientId?: str
     google: { webClientId, mode: "online", ...(iosClientId ? { iOSClientId: iosClientId, iOSServerClientId: webClientId } : {}) },
   })
   try {
-    const res = await SocialLogin.login({ provider: "google", options: { scopes: ["email", "profile"] } })
+    // Android: passing scopes needs a change to the app's MainActivity (plugin
+    // error "You CANNOT use scopes without modifying the main activity"), and
+    // the ID token already carries email and name, so ask for none there.
+    const options = nativePlatform() === "android" ? {} : { scopes: ["email", "profile"] }
+    const res = await SocialLogin.login({ provider: "google", options })
     return (res.result as { idToken?: string | null }).idToken ?? null
   } catch (e) {
     if (/cancel/i.test(e instanceof Error ? e.message : String(e))) return null
