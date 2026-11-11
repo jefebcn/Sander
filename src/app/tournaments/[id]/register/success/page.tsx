@@ -6,6 +6,7 @@ import { getTournamentForRegistration } from "@/actions/registration"
 import { Suspense } from "react"
 import { SumUpReturn } from "@/components/payments/SumUpReturn"
 import { RegistrationStatusPoller } from "@/components/tournament/RegistrationStatusPoller"
+import { ShopUpsell } from "@/components/shop/ShopEntry"
 
 export default async function SuccessPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -49,6 +50,7 @@ export default async function SuccessPage({ params }: { params: Promise<{ id: st
       </div>
 
       <div className="mt-6 flex flex-col gap-3 px-4">
+        {initialStatus !== "UNKNOWN" && <ShopUpsell />}
         <Link
           href={`/tournaments/${id}`}
           className="flex min-h-[3.5rem] items-center justify-center rounded-full bg-[var(--accent)] font-bold text-black active:brightness-90"

@@ -209,6 +209,7 @@ model Player {
   chatParticipants     ChatParticipant[]
   sentMessages         ChatMessage[]
   creditTopUps         CreditTopUp[]
+  shopOrders           ShopOrder[]
 
   // Scopri: profile for finding teammates, swipes, matches, duos.
   discoverPhotos       PlayerPhoto[]
@@ -519,6 +520,8 @@ model PaymentCheckout {
   packId        String?
   /// kind "tournament_reg": the registration this checkout pays for.
   registrationId String?
+  /// kind "shop_order": the shop order this checkout pays for.
+  orderId        String?
   /// SumUp's hosted page, reused while the checkout is still open.
   url           String?
   amountCents   Int
@@ -529,6 +532,7 @@ model PaymentCheckout {
 
   @@index([playerId, createdAt])
   @@index([registrationId])
+  @@index([orderId])
   @@map("payment_checkouts")
 }
 
@@ -1494,4 +1498,93 @@ model GameProposal {
   @@index([threadId])
   @@index([toId, status])
   @@map("game_proposals")
+}
+
+
+// ── Shop: SANDER merchandise (shirts, caps…), paid by card through SumUp ──
+// Physical goods: allowed with any payment method inside the iOS/Android app.
+// The shop is visible only while at least one product is active.
+
+model ShopProduct {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  description String        @default("")
+  /// "MAGLIE" | "ACCESSORI"
+  category    String        @default("MAGLIE")
+  priceCents  Int
+  /// Photo URLs, first one is the cover.
+  images      Json          @default("[]")
+  active      Boolean       @default(false)
+  /// Shown as the "novità" card on the home.
+  featured    Boolean       @default(false)
+  sortOrder   Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  variants    ShopVariant[]
+
+  @@index([active, sortOrder])
+  @@map("shop_products")
+}
+
+/// A size (or "Taglia unica") with the pieces left. Stock goes down when an
+/// order is placed and back up when an unpaid order expires or is refunded.
+model ShopVariant {
+  id        String      @id @default(cuid())
+  productId String
+  label     String
+  stock     Int         @default(0)
+  sortOrder Int         @default(0)
+  product   ShopProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("shop_variants")
+}
+
+model ShopOrder {
+  id              String          @id @default(cuid())
+  /// Short number shown to the buyer and at pickup (#1042).
+  number          Int             @unique @default(autoincrement())
+  playerId        String
+  player          Player          @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  /// PENDING (waiting for the card) | PAID | READY | DELIVERED | CANCELLED
+  status          String          @default("PENDING")
+  /// "PICKUP" | "SHIP"
+  delivery        String
+  shipName        String?
+  shipAddress     String?
+  shipCity        String?
+  shipZip         String?
+  shipPhone       String?
+  itemsCents      Int
+  shippingCents   Int             @default(0)
+  totalCents      Int
+  sumupCheckoutId String?
+  paidAt          DateTime?
+  readyAt         DateTime?
+  deliveredAt     DateTime?
+  cancelledAt     DateTime?
+  createdAt       DateTime        @default(now())
+  items           ShopOrderItem[]
+
+  @@index([playerId, createdAt])
+  @@index([status, createdAt])
+  @@map("shop_orders")
+}
+
+/// What was bought, copied at order time so later product edits change nothing.
+model ShopOrderItem {
+  id        String    @id @default(cuid())
+  orderId   String
+  order     ShopOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  variantId String
+  name      String
+  size      String
+  qty       Int
+  unitCents Int
+
+  @@index([orderId])
+  @@index([variantId])
+  @@map("shop_order_items")
 }

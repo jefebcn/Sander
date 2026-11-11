@@ -15,7 +15,7 @@ import { notifyPlayer } from "@/lib/push"
 /*  can grant anything.                                                        */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-export type SumUpKind = "sc_topup" | "plus_pass" | "tournament_reg"
+export type SumUpKind = "sc_topup" | "plus_pass" | "tournament_reg" | "shop_order"
 
 function appUrl(): string {
   const url = process.env.NEXT_PUBLIC_APP_URL
@@ -76,6 +76,7 @@ export async function settleSumUpCheckout(checkoutId: string): Promise<SettleRes
   if (!isPaidAsExpected(remote, row)) return "pending"
 
   let orphanPayment = false
+  let shopOrderNumber: number | null = null
   const transactionId = remote.transactions?.find((t) => t.status === "SUCCESSFUL")?.id ?? remote.transactions?.[0]?.id ?? null
   const done = await db.$transaction(async (tx) => {
     const claimed = await tx.paymentCheckout.updateMany({
@@ -91,6 +92,21 @@ export async function settleSumUpCheckout(checkoutId: string): Promise<SettleRes
         data: { paymentStatus: "PAID", paymentMethod: "SUMUP", paidAt: new Date(), amountPaidCents: row.amountCents },
       })
       if (paid.count === 0) orphanPayment = true
+    } else if (row.kind === "shop_order") {
+      const orderId = row.orderId ?? ""
+      const paid = await tx.shopOrder.updateMany({ where: { id: orderId, status: "PENDING" }, data: { status: "PAID", paidAt: new Date() } })
+      if (paid.count === 0) {
+        // Paid after the hold ran out and the pieces went back on sale: take
+        // them again (stock may go below zero) and let the admins check.
+        const revived = await tx.shopOrder.updateMany({ where: { id: orderId, status: "CANCELLED", paidAt: null }, data: { status: "PAID", paidAt: new Date(), cancelledAt: null } })
+        if (revived.count > 0) {
+          const items = await tx.shopOrderItem.findMany({ where: { orderId }, select: { variantId: true, qty: true } })
+          for (const it of items) await tx.shopVariant.updateMany({ where: { id: it.variantId }, data: { stock: { decrement: it.qty } } })
+        }
+        orphanPayment = true
+      }
+      const order = await tx.shopOrder.findUnique({ where: { id: orderId }, select: { number: true } })
+      shopOrderNumber = order?.number ?? null
     } else if (row.kind === "sc_topup") {
       const pack = row.packId ? getCreditPack(row.packId) : null
       if (!pack) throw new Error(`SumUp checkout ${row.id}: unknown pack ${row.packId}`)
@@ -122,6 +138,20 @@ export async function settleSumUpCheckout(checkoutId: string): Promise<SettleRes
     return true
   })
   if (!done) return "already"
+  if (row.kind === "shop_order") {
+    const n = shopOrderNumber !== null ? `#${shopOrderNumber}` : ""
+    await notifyAdmins({
+      title: orphanPayment ? `Ordine shop ${n} pagato in ritardo` : `🛍️ Nuovo ordine shop ${n}`,
+      body: orphanPayment
+        ? "Era scaduto e i pezzi erano tornati in vendita: controlla che ci sia ancora la taglia."
+        : `${(row.amountCents / 100).toFixed(2)} € pagati con carta.`,
+      url: "/admin/shop/ordini",
+    }).catch(() => {})
+    await notifyPlayer(row.playerId, { title: `Ordine ${n} confermato`, body: "Pagamento ricevuto: ti avvisiamo quando è pronto.", url: `/shop/ordini/${row.orderId}` }).catch(() => {})
+    revalidatePath("/shop")
+    revalidatePath("/admin/shop/ordini")
+    return "fulfilled"
+  }
   if (row.kind === "tournament_reg") {
     const reg = row.registrationId
       ? await db.tournamentRegistration.findUnique({ where: { id: row.registrationId }, select: { tournamentId: true, paymentStatus: true, tournament: { select: { name: true } } } })

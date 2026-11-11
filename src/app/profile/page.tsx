@@ -9,6 +9,8 @@ import { db } from "@/lib/db"
 import { SanderCardFut, playerToCardData } from "@/components/player/SanderCardFut"
 import { StatPercentageEditor } from "@/components/player/StatPercentageEditor"
 import { ShareCardButton } from "@/components/player/ShareCardButton"
+import { ShopProfileRow } from "@/components/shop/ShopEntry"
+import { shopIsOpen } from "@/lib/shopOrders"
 import { ShareStoryButton } from "@/components/share/ShareStoryButton"
 import { WrappedShareButton } from "@/components/share/WrappedShareButton"
 import { DuoShareButton } from "@/components/share/DuoShareButton"
@@ -165,6 +167,7 @@ export default async function ProfilePage({ searchParams }: Props) {
       })
     : []
 
+  const shopOpen = activeTab === "profilo" ? await shopIsOpen().catch(() => false) : false
   const [matchHistory, partnerStats, playerRecap] = activeTab === "profilo"
     ? await Promise.all([
         getMatchHistory(player.id),
@@ -337,6 +340,7 @@ export default async function ProfilePage({ searchParams }: Props) {
           <ShareStoryButton playerData={playerToCardData(fullPlayer)} variant="card" lazy />
           {/* Square card download — kept next to the story share, one sharing block */}
           <ShareCardButton playerData={playerToCardData(fullPlayer)} />
+          {shopOpen && <ShopProfileRow />}
 
           {/* SANDER Wrapped — personal 30-day recap (only when there's activity) */}
           {playerRecap && playerRecap.matches > 0 && (

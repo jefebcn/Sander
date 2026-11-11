@@ -85,7 +85,7 @@ export function QRCodeButton({ path, title, label = "Mostra QR Code" }: QRCodeBu
  * QR generated on the device with the `qrcode` package: works offline on the
  * beach and doesn't hand the (invite) URL to a third-party image service.
  */
-function QRCanvas({ url }: { url: string }) {
+export function QRCanvas({ url }: { url: string }) {
   const [imgSrc, setImgSrc] = useState<string | null>(null)
   const [error, setError] = useState(false)
 
