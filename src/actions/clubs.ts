@@ -9,6 +9,7 @@ import { isAdminEmail } from "@/lib/isAdmin"
 import { canManageClub, isClubOwner } from "@/lib/clubAccess"
 import { CLUB_MESSAGES_PER_DAY, clubSlug, freeSlug, instagramHandle } from "@/lib/club"
 import { notifyAdmins } from "@/lib/adminNotify"
+import { clubVerifyCode } from "@/lib/clubVerify"
 import { notifyPlayer, notifyPlayers } from "@/lib/push"
 import { ClubFieldsSchema, ClubIdSchema, ClubMessageSchema, ClubStatusSchema, CreateCircuitSchema, FollowClubSchema, RemoveStaffSchema, SetTournamentCircuitSchema, SetTournamentPaymentLinkSchema, StaffInviteTokenSchema, UpdateClubSchema } from "@/lib/validators/club.schema"
 
@@ -43,10 +44,11 @@ export async function requestClub(input: unknown): Promise<Result<{ slug: string
     const base = clubSlug(data.name)
     const taken = await db.club.findMany({ where: { slug: { startsWith: base || "club" } }, select: { slug: true } })
     const slug = freeSlug(base, taken.map((t) => t.slug))
-    await db.club.create({
+    const club = await db.club.create({
       data: { ...data, slug, members: { create: { playerId: me.id, role: "OWNER" } } },
+      select: { id: true },
     })
-    await notifyAdmins({ title: "Nuovo club da approvare", body: `${data.name} · ${data.city}`, url: "/admin/club" })
+    await notifyAdmins({ title: "Nuovo club da approvare", body: `${data.name} · ${data.city} · codice ${clubVerifyCode(club.id)}`, url: "/admin/club" })
     revalidatePath("/admin/club")
     return { ok: true, slug }
   } catch (e) {

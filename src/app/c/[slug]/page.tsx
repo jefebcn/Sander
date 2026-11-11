@@ -9,7 +9,7 @@ import { db } from "@/lib/db"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { canManageClub } from "@/lib/clubAccess"
 import { TOURNAMENT_CARD_SELECT } from "@/lib/clubQueries"
-import { CLUB_SERVICES, COURT_TYPES, mapsUrl } from "@/lib/club"
+import { CLUB_SERVICES, COURT_TYPES, instagramHandle, mapsUrl } from "@/lib/club"
 import { bagnoLabel, parseBagno } from "@/lib/bagni"
 import { formatWhen } from "@/lib/datetime"
 import { formatPrice } from "@/lib/utils"
@@ -17,6 +17,7 @@ import { BackButton } from "@/components/layout/PageHeader"
 import { TournamentCard } from "@/components/tournament/TournamentCard"
 import { FollowClubButton } from "@/components/club/FollowClubButton"
 import { ShareButton } from "@/components/ui/ShareButton"
+import { ClubVerifyCard } from "@/components/club/ClubVerifyCard"
 
 interface Props { params: Promise<{ slug: string }> }
 
@@ -115,6 +116,7 @@ export default async function ClubPage({ params }: Props) {
       </header>
 
       <div className="flex flex-col gap-4 px-4">
+        {club.status === "PENDING" && (owner || manager) && <ClubVerifyCard clubId={club.id} instagram={instagramHandle(club.instagram)} />}
         {club.status !== "APPROVED" && (
           <p className="rounded-2xl bg-[var(--surface-2)] p-4 text-base text-white">
             {club.status === "PENDING"
