@@ -116,7 +116,7 @@ function VideoThumb({ src, heavy, autoplayAllowed, index }: { src: string; heavy
           className="absolute inset-0 flex flex-col items-center justify-center gap-2"
           style={{
             background: loaded
-              ? "color-mix(in srgb, black 30%, transparent)"
+              ? "rgb(0 0 0 / 0.3)"
               : "linear-gradient(180deg, var(--sea-deep) 0%, var(--surface-2) 100%)",
           }}
         >
@@ -179,7 +179,7 @@ export function VideoCarousel() {
                   className="block h-1.5 rounded-full transition-all"
                   style={{
                     width: i === page ? "1.5rem" : "0.375rem",
-                    background: i === page ? "var(--accent)" : "color-mix(in srgb, white 25%, transparent)",
+                    background: i === page ? "var(--accent)" : "rgb(255 255 255 / 0.25)",
                   }}
                 />
               </button>

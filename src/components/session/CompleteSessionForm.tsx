@@ -75,7 +75,7 @@ export function CompleteSessionForm({ sessionId, participants }: Props) {
         </p>
 
         {unassigned.length > 0 && (
-          <div className="rounded-xl p-3 text-sm" style={{ background: "color-mix(in srgb, var(--danger) 12%, transparent)", color: "var(--danger)" }}>
+          <div className="rounded-xl p-3 text-sm" style={{ background: "rgb(255 77 109 / 0.12)", color: "var(--danger)" }}>
             ⚠ {unassigned.length} giocator{unassigned.length > 1 ? "i" : "e"} senza squadra assegnata —
             i punteggi non aggiorneranno le statistiche.
           </div>

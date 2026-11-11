@@ -99,7 +99,7 @@ export function PWAInstallBanner() {
         <div
           className="flex w-full items-center gap-1 rounded-2xl pl-4 pr-1"
           style={{
-            background: "color-mix(in srgb, var(--surface-2) 97%, transparent)",
+            background: "rgb(26 27 30 / 0.97)",
             border: "1px solid var(--accent-line)",
             backdropFilter: "blur(12px)",
             boxShadow: "var(--shadow-card)",
@@ -144,7 +144,7 @@ export function PWAInstallBanner() {
       <div
         className="rounded-2xl p-4"
         style={{
-          background: "color-mix(in srgb, var(--surface-2) 97%, transparent)",
+          background: "rgb(26 27 30 / 0.97)",
           border: "1px solid var(--accent-line)",
           backdropFilter: "blur(12px)",
           boxShadow: "var(--shadow-card)",

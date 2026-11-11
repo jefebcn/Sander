@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { signIn } from "next-auth/react"
 import { AlertCircle, Eye, EyeOff, LogIn } from "lucide-react"
-import { registerWithEmail } from "@/actions/auth"
+import { registerWithEmail, reportNativeAuthError } from "@/actions/auth"
 import { trackEvent } from "@/lib/analytics"
 import { cn } from "@/lib/utils"
 import { safeCallbackUrl } from "@/lib/safeRedirect"
@@ -95,8 +95,12 @@ export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInvit
     setError(null)
     startTransition(async () => {
       try {
-        const idToken = await nativeGoogleIdToken(googleClientId!, platform === "ios" ? googleIosClientId : undefined)
-        if (!idToken) return
+        const { idToken, reason } = await nativeGoogleIdToken(googleClientId!, platform === "ios" ? googleIosClientId : undefined)
+        if (!idToken) {
+          void reportNativeAuthError({ provider: "google", platform, message: (reason ?? "no id token").slice(0, 500) }).catch(() => {})
+          setError("Accesso con Google non completato. Se non l'hai annullato tu, riprova o usa email e password.")
+          return
+        }
         const result = await signIn("google-native", { idToken, redirect: false })
         if (!result || result.error) {
           setError("Accesso con Google non riuscito. Riprova o usa email e password.")
@@ -104,7 +108,8 @@ export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInvit
         }
         router.push(callbackUrl)
         router.refresh()
-      } catch {
+      } catch (e) {
+        void reportNativeAuthError({ provider: "google", platform, message: (e instanceof Error ? e.message : String(e)).slice(0, 500) }).catch(() => {})
         setError("Accesso con Google non riuscito. Riprova o usa email e password.")
       }
     })

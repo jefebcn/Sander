@@ -135,3 +135,19 @@ export async function resetPassword(input: unknown): Promise<ActionResult> {
     return { error: "Errore durante il reset. Riprova." }
   }
 }
+
+// ── Native sign-in diagnostics ────────────────────────────────────────────────
+// The phone's Google/Apple sheet fails silently from the user's side (wrong
+// SHA-1, consent screen in test…): log its message so it shows in the server logs.
+
+const NativeAuthErrorSchema = z.object({
+  provider: z.enum(["google", "apple"]),
+  platform: z.enum(["ios", "android", "web"]),
+  message: z.string().max(500),
+})
+
+export async function reportNativeAuthError(input: unknown): Promise<void> {
+  const parsed = NativeAuthErrorSchema.safeParse(input)
+  if (!parsed.success) return
+  console.error(`[native-auth] ${parsed.data.provider} on ${parsed.data.platform}: ${parsed.data.message}`)
+}

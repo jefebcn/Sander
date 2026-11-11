@@ -41,7 +41,7 @@ export function AdminDeletePlayerButton({ id }: { id: string }) {
     <button
       onClick={(e) => { e.preventDefault(); setConfirm(true) }}
       className="flex min-h-[2.75rem] shrink-0 items-center rounded-lg px-3 text-sm font-semibold"
-      style={{ background: "color-mix(in srgb, var(--danger) 13%, transparent)", color: "var(--danger)" }}
+      style={{ background: "rgb(255 77 109 / 0.13)", color: "var(--danger)" }}
     >
       Elimina
     </button>
