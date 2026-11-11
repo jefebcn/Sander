@@ -49,6 +49,7 @@ import { NOT_DELETED_PLAYER } from "@/lib/publicPlayer"
 import { Gabbo } from "@/components/ui/Gabbo"
 import { Suspense } from "react"
 import { SumUpReturn } from "@/components/payments/SumUpReturn"
+import { RateAppLink } from "@/components/app/StoreReview"
 import { PROFILE_MODE_COOKIE, parseProfileMode } from "@/lib/profileMode"
 import { ProfileSwitcher, type SwitcherClub } from "@/components/profile/ProfileSwitcher"
 import { SheetButton } from "@/components/profile/SheetButton"
@@ -767,7 +768,6 @@ export default async function ProfilePage({ searchParams }: Props) {
             { label: "Chiedi aiuto o segnala un problema", href: `mailto:${CONTACT_EMAIL}` },
             { label: "Termini del servizio", href: "/terms" },
             { label: "Privacy policy", href: "/privacy" },
-            { label: "Valuta l'app", href: "https://www.instagram.com" },
             { label: "Elimina account", href: "/delete-account" },
           ].map(({ label, href }) => (
             <a
@@ -783,6 +783,7 @@ export default async function ProfilePage({ searchParams }: Props) {
             </a>
           ))}
 
+          <RateAppLink className="flex min-h-[3.5rem] items-center justify-between border-b border-[var(--border)] px-2 py-4 text-base font-semibold text-[var(--accent)] transition-opacity active:opacity-60" />
           <p className="pt-4 text-xs text-[var(--muted-text)] px-2">
             Versione app {APP_VERSION_DISPLAY}
           </p>
