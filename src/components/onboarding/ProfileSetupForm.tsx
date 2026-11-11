@@ -131,10 +131,9 @@ function BottomSheet({
       {/* Sheet */}
       <div
         className={cn(
-          "relative z-10 flex flex-col rounded-t-3xl bg-[var(--surface-2)] transition-transform duration-300",
+          "relative z-10 flex max-h-[80dvh] flex-col rounded-t-3xl bg-[var(--surface-2)] transition-transform duration-300",
           open ? "translate-y-0" : "translate-y-full",
         )}
-        style={{ maxHeight: "80dvh" }}
       >
         <div className="flex items-center justify-between px-5 pb-3 pt-5">
           <h3 className="text-lg font-bold text-white">{title}</h3>
@@ -626,7 +625,7 @@ export function ProfileSetupForm({ initialData, email }: { initialData?: Initial
             autoFocus={nationalityOpen}
           />
         </div>
-        <div className="overflow-y-auto pb-8" style={{ maxHeight: "50dvh" }}>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-8">
           {filteredCountries.map((country) => (
             <button
               key={country}

@@ -85,7 +85,7 @@ export default async function ClubManagePage({ params }: Props) {
           <Plus className="h-5 w-5" aria-hidden="true" /> Nuovo torneo del club
         </Link>
 
-        <section className="flex flex-col gap-2">
+        <section id="promuovi" className="flex scroll-mt-4 flex-col gap-2">
           <h2 className="eyebrow text-[var(--accent)]">Promuovi il club</h2>
           <CopyLinkButton path={`/c/${club.slug}/link?ref=bio`} label="Copia il link per la bio di Instagram" />
           <Link href={`/c/${club.slug}/link`} className="btn btn-secondary w-full gap-2">
@@ -96,7 +96,7 @@ export default async function ClubManagePage({ params }: Props) {
           </a>
         </section>
 
-        <section className="flex flex-col gap-2">
+        <section id="tornei" className="flex scroll-mt-4 flex-col gap-2">
           <h2 className="eyebrow text-[var(--accent)]">Tornei</h2>
           {tournaments.length === 0 && (
             <p className="rounded-2xl bg-[var(--surface-2)] p-4 text-base text-[var(--muted-text)]">
@@ -143,7 +143,7 @@ export default async function ClubManagePage({ params }: Props) {
           })}
         </section>
 
-        <section className="flex flex-col gap-2">
+        <section id="scrivi" className="flex scroll-mt-4 flex-col gap-2">
           <h2 className="eyebrow text-[var(--accent)]">Scrivi ai giocatori</h2>
           <p className="text-base text-[var(--muted-text)]">Arriva come notifica sul telefono. Al massimo 3 al giorno.</p>
           <ClubMessageForm clubId={club.id} audiences={audiences} />
@@ -161,7 +161,7 @@ export default async function ClubManagePage({ params }: Props) {
           )}
         </section>
 
-        <section className="flex flex-col gap-2">
+        <section id="staff" className="flex scroll-mt-4 flex-col gap-2">
           <h2 className="eyebrow text-[var(--accent)]">Staff</h2>
           <ul className="flex flex-col gap-2">
             {staff.map((m) => (
@@ -195,7 +195,7 @@ export default async function ClubManagePage({ params }: Props) {
           </ol>
         </details>
 
-        <section className="flex flex-col gap-2">
+        <section id="circuiti" className="flex scroll-mt-4 flex-col gap-2">
           <h2 className="eyebrow text-[var(--accent)]">Circuiti</h2>
           <p className="text-base text-[var(--muted-text)]">
             Più tornei nella stessa stagione con una classifica generale: 100 punti al primo, 80 al secondo, 65 al terzo… e 10 a chi partecipa.
@@ -209,7 +209,7 @@ export default async function ClubManagePage({ params }: Props) {
           <CircuitCreateForm clubId={club.id} />
         </section>
 
-        <section className="flex flex-col gap-3">
+        <section id="pagina" className="flex scroll-mt-4 flex-col gap-3">
           <h2 className="eyebrow text-[var(--accent)]">Pagina del club</h2>
           <ClubForm
             clubId={club.id}

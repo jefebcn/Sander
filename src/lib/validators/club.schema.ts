@@ -2,6 +2,7 @@ import { z } from "zod"
 import { CLUB_SERVICE_KEYS, MAX_BIO_LINKS, MAX_CLUB_PHOTOS } from "@/lib/club"
 import { MAX_BAGNO } from "@/lib/bagni"
 import { PAYMENT_PROVIDER_NAMES, paymentProvider } from "@/lib/paymentLink"
+import { CLUB_SLUG_RE } from "@/lib/profileMode"
 
 const optionalText = (max: number) =>
   z.string().trim().max(max).optional().nullable().transform((v) => (v ? v : null))
@@ -77,3 +78,8 @@ export const ClubMessageSchema = z.object({
 })
 
 export const SetTournamentPaymentLinkSchema = z.object({ tournamentId: z.string().trim().min(1).max(64), paymentLink: paymentLinkField })
+
+/** Profile switcher: use SANDER as a club (its slug) or as yourself (null). */
+export const ProfileModeSchema = z.object({
+  clubSlug: z.string().trim().regex(CLUB_SLUG_RE, "Club non valido").nullable(),
+})

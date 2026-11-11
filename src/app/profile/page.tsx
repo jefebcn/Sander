@@ -3,13 +3,13 @@ export const dynamic = "force-dynamic"
 import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { ArrowUpRight, MapPin, Calendar, Settings, ShieldCheck, Users, Trophy, Pencil, MessageCircle, ChartColumn, Bug, ChevronRight, HeartHandshake, CalendarCheck } from "lucide-react"
+import { cookies } from "next/headers"
+import { ArrowUpRight, MapPin, Calendar, ShieldCheck, Users, Trophy, Pencil, MessageCircle, ChartColumn, Bug, ChevronRight, HeartHandshake, CalendarCheck, Eye, Share2, SlidersHorizontal, ClipboardList, ShoppingBag, Gift, Building2, Smartphone, Star, LogOut } from "lucide-react"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { SanderCardFut, playerToCardData } from "@/components/player/SanderCardFut"
 import { StatPercentageEditor } from "@/components/player/StatPercentageEditor"
 import { ShareCardButton } from "@/components/player/ShareCardButton"
-import { ShopProfileRow } from "@/components/shop/ShopEntry"
 import { shopIsOpen } from "@/lib/shopOrders"
 import { ShareStoryButton } from "@/components/share/ShareStoryButton"
 import { WrappedShareButton } from "@/components/share/WrappedShareButton"
@@ -17,7 +17,6 @@ import { DuoShareButton } from "@/components/share/DuoShareButton"
 import { getPlayerRecap } from "@/actions/recap"
 import { SignOutButton } from "@/components/auth/SignOutButton"
 import { InviteTab } from "@/components/profile/InviteTab"
-import { PageHeader } from "@/components/layout/PageHeader"
 import { NudgeToggle } from "@/components/profile/NudgeToggle"
 import { buildPromoCode } from "@/lib/referral"
 import { getReferralLeaderboard } from "@/actions/invite"
@@ -50,6 +49,11 @@ import { NOT_DELETED_PLAYER } from "@/lib/publicPlayer"
 import { Gabbo } from "@/components/ui/Gabbo"
 import { Suspense } from "react"
 import { SumUpReturn } from "@/components/payments/SumUpReturn"
+import { PROFILE_MODE_COOKIE, parseProfileMode } from "@/lib/profileMode"
+import { ProfileSwitcher, type SwitcherClub } from "@/components/profile/ProfileSwitcher"
+import { SheetButton } from "@/components/profile/SheetButton"
+import { BackRow, Eyebrow, ListGroup, ListRow, Segments } from "@/components/profile/ProfileUI"
+import { ClubProfile, CLUB_TABS, type ClubTab } from "@/components/profile/ClubProfile"
 
 export const metadata: Metadata = {
   title: "Il tuo profilo | SANDER",
@@ -61,6 +65,8 @@ const MONTH_NAMES_IT = [
   "", "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
   "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre",
 ]
+
+const MONTH_SHORT = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"]
 
 const AWARD_META: Record<number, { emoji: string; label: string; color: string }> = {
   1: { emoji: "👑", label: "1° Posto", color: "#FFD700" },
@@ -120,19 +126,53 @@ const STATUS_COLORS: Record<string, string> = {
 
 interface Props { searchParams: Promise<{ tab?: string; topup?: string }> }
 
+/** Player sections, and the pages opened from their lists (with the section they belong to). */
+const PLAYER_TABS = ["carta", "attivita", "account"] as const
+const SUBVIEWS: Record<string, "attivita" | "account"> = {
+  partite: "attivita",
+  organizzate: "attivita",
+  compagni: "attivita",
+  invita: "account",
+  app: "account",
+  supporter: "account",
+  admin: "account",
+}
+const BACK_LABEL = { attivita: "Attività", account: "Account" } as const
+const ROLE_LABEL: Record<string, string> = { BLOCKER: "Muro", DEFENDER: "Difensore" }
+
 export default async function ProfilePage({ searchParams }: Props) {
-  const { tab, topup } = await searchParams
-  const validTabs = ["profilo", "partite", "organizzate", "invita", "app", "supporter", "admin"]
-  const requestedTab = validTabs.includes(tab ?? "") ? (tab as string) : "profilo"
+  const { tab: rawTab, topup } = await searchParams
+  // Old links (?tab=profilo) land on the card.
+  const tab = rawTab === "profilo" ? "carta" : rawTab
 
   const [player, session] = await Promise.all([getCurrentPlayer(), getCurrentSession()])
   if (!player) redirect("/auth/signin?callbackUrl=/profile")
-
   const isAdmin = isAdminEmail(session?.user?.email)
-  // The admin tab doesn't exist for everyone else: show the profile instead of a blank page.
-  const activeTab = requestedTab === "admin" && !isAdmin ? "profilo" : requestedTab
 
-  // Always fetch core player data
+  // ── Who is using the profile: the player, or one of their clubs ──
+  const [memberships, cookieStore] = await Promise.all([
+    db.clubMember.findMany({
+      where: { playerId: player.id },
+      orderBy: { createdAt: "asc" },
+      select: { role: true, club: { select: { id: true, slug: true, name: true, city: true, logoUrl: true, status: true, _count: { select: { followers: true } } } } },
+    }),
+    cookies(),
+  ])
+  const switcherClubs: SwitcherClub[] = memberships.map((m) => ({
+    slug: m.club.slug,
+    name: m.club.name,
+    city: m.club.city,
+    logoUrl: m.club.logoUrl,
+    role: m.role,
+    approved: m.club.status === "APPROVED",
+    followers: m.club._count.followers,
+  }))
+  const modeSlug = parseProfileMode(cookieStore.get(PROFILE_MODE_COOKIE)?.value)
+  const modeClub = memberships.find((m) => m.club.slug === modeSlug && m.club.status === "APPROVED")?.club ?? null
+  // Club mode answers the bare /profile and the club's own sections; any
+  // other link (an old "?tab=invita" in a notification) still opens the player page.
+  const clubView = modeClub && (!tab || (CLUB_TABS as string[]).includes(tab)) ? modeClub : null
+
   const [fullPlayer, streak, monthlyAwards, tournamentWins] = await Promise.all([
     db.player.findUniqueOrThrow({
       where: { id: player.id },
@@ -147,6 +187,46 @@ export default async function ProfilePage({ searchParams }: Props) {
     }),
     getTournamentWins(player.id),
   ])
+  const firstName = fullPlayer.firstName ?? fullPlayer.name.split(" ")[0]
+
+  const header = (
+    <div className="flex items-center justify-between gap-2 pb-1" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}>
+      <ProfileSwitcher
+        me={{
+          name: firstName,
+          subtitle: [fullPlayer.homeCity, ROLE_LABEL[fullPlayer.preferredRole]].filter(Boolean).join(" · ") || "La tua carta",
+          avatarUrl: fullPlayer.avatarUrl,
+        }}
+        clubs={switcherClubs}
+        active={clubView?.slug ?? null}
+        staleMode={!!modeSlug && !modeClub}
+      />
+      {clubView ? (
+        <Link href={`/c/${clubView.slug}`} aria-label="Guarda la pagina pubblica del club" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--surface-2)] text-white">
+          <Eye className="h-5 w-5" aria-hidden="true" />
+        </Link>
+      ) : (
+        <Link href="/onboarding/profile" aria-label="Modifica profilo" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--surface-2)] text-white">
+          <Pencil className="h-5 w-5" aria-hidden="true" />
+        </Link>
+      )}
+    </div>
+  )
+
+  if (clubView) {
+    return (
+      <div className="flex min-h-dvh flex-col">
+        <h1 className="sr-only">{clubView.name}: gestione club</h1>
+        <ClubProfile clubId={clubView.id} tab={(tab as ClubTab | undefined) ?? "plancia"} header={header} />
+      </div>
+    )
+  }
+
+  const known = (PLAYER_TABS as readonly string[]).includes(tab ?? "") || (tab ?? "") in SUBVIEWS
+  const requested = known ? (tab as string) : "carta"
+  // The admin page doesn't exist for everyone else: show the card instead of a blank page.
+  const activeTab = requested === "admin" && !isAdmin ? "carta" : requested
+  const section = SUBVIEWS[activeTab] ?? activeTab
 
   // Tab-specific data
   const playerSessions = activeTab === "partite"
@@ -167,16 +247,46 @@ export default async function ProfilePage({ searchParams }: Props) {
       })
     : []
 
-  const shopOpen = activeTab === "profilo" ? await shopIsOpen().catch(() => false) : false
-  const [matchHistory, partnerStats, playerRecap] = activeTab === "profilo"
-    ? await Promise.all([
-        getMatchHistory(player.id),
-        getPartnerStats(player.id),
-        getPlayerRecap(player.id, 30),
-      ])
-    : [[], [], null]
+  const now = new Date()
+  const startOfToday = new Date(now)
+  startOfToday.setHours(0, 0, 0, 0)
+  const shopOpen = activeTab === "account" ? await shopIsOpen().catch(() => false) : false
+  const needsHistory = activeTab === "carta" || activeTab === "attivita"
+  const needsPartners = activeTab === "carta" || activeTab === "attivita" || activeTab === "compagni"
+  const [matchHistory, partnerStats, playerRecap, upcomingSessions, upcomingTournaments] = await Promise.all([
+    needsHistory ? getMatchHistory(player.id, activeTab === "attivita" ? 6 : 1) : Promise.resolve([]),
+    needsPartners ? getPartnerStats(player.id) : Promise.resolve([]),
+    activeTab === "carta" ? getPlayerRecap(player.id, 30) : Promise.resolve(null),
+    activeTab === "attivita"
+      ? db.sessionParticipant.findMany({
+          where: { playerId: player.id, session: { date: { gte: startOfToday }, status: { in: ["OPEN", "FULL"] } } },
+          select: { session: { select: { id: true, title: true, date: true, location: true } } },
+          orderBy: { session: { date: "asc" } },
+          take: 5,
+        })
+      : Promise.resolve([]),
+    activeTab === "attivita"
+      ? db.tournamentRegistration.findMany({
+          where: {
+            playerId: player.id,
+            isSpectator: false,
+            paymentStatus: { notIn: ["CANCELLED", "FAILED", "REFUNDED"] },
+            tournament: { date: { gte: startOfToday }, status: { not: "COMPLETED" } },
+          },
+          select: { tournament: { select: { id: true, name: true, date: true, location: true } } },
+          orderBy: { tournament: { date: "asc" } },
+          take: 5,
+        })
+      : Promise.resolve([]),
+  ])
+  const upcoming = [
+    ...upcomingSessions.map((s) => ({ key: `s-${s.session.id}`, href: `/sessions/${s.session.id}`, title: s.session.title, date: s.session.date, place: s.session.location, kind: "Partita" })),
+    ...upcomingTournaments.map((r) => ({ key: `t-${r.tournament.id}`, href: `/tournaments/${r.tournament.id}`, title: r.tournament.name, date: r.tournament.date, place: r.tournament.location, kind: "Torneo" })),
+  ]
+    .sort((a, b) => a.date.getTime() - b.date.getTime())
+    .slice(0, 5)
 
-  const achievements = activeTab === "profilo"
+  const achievements = activeTab === "carta"
     ? computeAchievements({
         matchesWon: fullPlayer.matchesWon,
         matchesLost: fullPlayer.matchesLost,
@@ -205,7 +315,6 @@ export default async function ProfilePage({ searchParams }: Props) {
         getReferralLeaderboard(),
       ])
     : [0, []]
-
   // Admin data (only fetched when admin views the admin tab)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let adminSessions: any[] = []
@@ -253,42 +362,26 @@ export default async function ProfilePage({ searchParams }: Props) {
     }
   }
 
-  const TABS = [
-    { id: "profilo",      label: "Profilo" },
-    { id: "partite",      label: "Partite" },
-    { id: "organizzate",  label: "Organizzate" },
-    { id: "invita",       label: "Invita" },
-    { id: "app",          label: "App" },
-    { id: "supporter",    label: "Supporter" },
-    ...(isAdmin ? [{ id: "admin", label: "Admin" }] : []),
-  ]
+  const cardData = playerToCardData(fullPlayer)
+  const topPartner = partnerStats[0]
 
   return (
-    <div className="flex flex-col min-h-dvh pb-6">
+    <div className="flex min-h-dvh flex-col pb-6">
+      <h1 className="sr-only">Il tuo profilo</h1>
+      <div className="flex flex-col gap-3 px-4 pb-3">
+        {header}
+        <Segments
+          active={section}
+          items={[
+            { id: "carta", label: "Carta", href: "/profile?tab=carta" },
+            { id: "attivita", label: "Attività", href: "/profile?tab=attivita" },
+            { id: "account", label: "Account", href: "/profile?tab=account" },
+          ]}
+        />
+        {SUBVIEWS[activeTab] && <BackRow href={`/profile?tab=${section}`} label={BACK_LABEL[SUBVIEWS[activeTab]]} />}
+      </div>
 
-      {/* ── Header ──────────────────────────────────────────── */}
-      <PageHeader
-        eyebrow={fullPlayer.firstName ?? fullPlayer.name.split(" ")[0]}
-        tone="social"
-        title="Profilo"
-        action={
-          <div className="flex items-center gap-2">
-            <Link
-              href="/onboarding/profile"
-              aria-label="Modifica profilo"
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-2)] text-white"
-            >
-              <Pencil className="h-5 w-5" aria-hidden="true" />
-            </Link>
-            <SignOutButton
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-2)] text-white"
-              iconOnly
-            />
-          </div>
-        }
-      />
-
-      {/* Back from Stripe: say what happened, so nobody pays twice. */}
+      {/* Back from the card payment: say what happened, so nobody pays twice. */}
       <Suspense fallback={null}>
         <SumUpReturn />
       </Suspense>
@@ -303,104 +396,98 @@ export default async function ProfilePage({ searchParams }: Props) {
         </p>
       )}
 
-      {/* ── Tab bar (horizontal scroll) ───────────────────── */}
-      <div className="tone-social relative pb-3">
-        <div className="rail px-4">
-          {TABS.map(({ id, label }) => (
-            <Link
-              key={id}
-              href={id === "profilo" ? "/profile" : `/profile?tab=${id}`}
-              aria-current={activeTab === id ? "page" : undefined}
-              className={
-                "flex min-h-[2.75rem] shrink-0 items-center whitespace-nowrap rounded-full px-4 text-sm font-bold transition-colors " +
-                (activeTab === id ? "sel-on" : "sel-off")
-              }
-            >
-              {label}
-            </Link>
-          ))}
-        </div>
-        {/* right-edge fade — hints the tab bar scrolls horizontally */}
-        <div
-          className="pointer-events-none absolute bottom-3 right-0 top-0 w-12"
-          style={{ background: "linear-gradient(to right, transparent, var(--background))" }}
-          aria-hidden="true"
-        />
-      </div>
+      {/* ══ Carta ═════════════════════════════════════════════ */}
+      {activeTab === "carta" && (
+        <div className="flex flex-col gap-3 px-4">
+          {/* The player's card, exactly as before: same template, same layout. */}
+          <SanderCardFut playerData={cardData} cutout />
 
-      {/* ══ Profilo tab ═══════════════════════════════════════ */}
-      {activeTab === "profilo" && (
-        <div className="px-4 space-y-3">
-          <SanderCardFut playerData={playerToCardData(fullPlayer)} cutout />
-          <WalletCard
-            credits={fullPlayer.sanderCredits}
-            playerName={fullPlayer.firstName ?? fullPlayer.name.split(" ")[0]}
-          />
-          {/* Viral share: Story-format image for Instagram/WhatsApp (primary) */}
-          <ShareStoryButton playerData={playerToCardData(fullPlayer)} variant="card" lazy />
-          {/* Square card download — kept next to the story share, one sharing block */}
-          <ShareCardButton playerData={playerToCardData(fullPlayer)} />
-          {shopOpen && <ShopProfileRow />}
+          <div className="flex gap-2">
+            <SheetButton
+              primary
+              label="Condividi"
+              title="Condividi la carta"
+              description="Storia per Instagram e WhatsApp, oppure l'immagine della carta."
+              icon={<Share2 className="h-5 w-5" aria-hidden="true" />}
+            >
+              <div className="flex flex-col gap-3">
+                <ShareStoryButton playerData={cardData} variant="card" lazy />
+                <ShareCardButton playerData={cardData} />
+                {playerRecap && playerRecap.matches > 0 && <WrappedShareButton playerName={fullPlayer.name} recap={playerRecap} />}
+                {topPartner && (
+                  <DuoShareButton
+                    playerA={fullPlayer.name}
+                    playerB={topPartner.player.name}
+                    played={topPartner.played}
+                    won={topPartner.won}
+                    winRate={topPartner.winRate}
+                  />
+                )}
+              </div>
+            </SheetButton>
+            {!isNewPlayer && (
+              <SheetButton
+                label="Parametri"
+                title="I tuoi parametri"
+                description="Scegli in cosa sei più forte: la carta si aggiorna."
+                icon={<SlidersHorizontal className="h-5 w-5" aria-hidden="true" />}
+              >
+                <div className="flex flex-col gap-3">
+                  <StatPercentageEditor
+                    glickoRating={fullPlayer.glickoRating}
+                    initial={{
+                      attPct: fullPlayer.attPct,
+                      difPct: fullPlayer.difPct,
+                      murPct: fullPlayer.murPct,
+                      alzPct: fullPlayer.alzPct,
+                      ricPct: fullPlayer.ricPct,
+                      staPct: fullPlayer.staPct,
+                    }}
+                  />
+                  <Link href="/stats-guide" className="flex min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl bg-[var(--accent-soft)] font-semibold text-[var(--accent)]">
+                    <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                    Come funzionano i parametri?
+                  </Link>
+                </div>
+              </SheetButton>
+            )}
+          </div>
+
+          {/* The stat sliders mean nothing before a first game: show where to start instead. */}
+          {isNewPlayer && (
+            <div className="tone-play space-y-3 rounded-2xl bg-[var(--surface-2)] p-5 text-center">
+              <ChartColumn className="mx-auto h-8 w-8 text-[var(--tone)]" aria-hidden="true" />
+              <p className="text-lg font-black text-white">Gioca la tua prima partita per sbloccare le statistiche</p>
+              <p className="text-base text-[var(--muted-text)]">
+                Dopo la prima partita potrai scegliere in cosa sei più forte e la tua carta si aggiornerà.
+              </p>
+              <Link href="/sessions" className="flex min-h-[3.5rem] w-full items-center justify-center rounded-full bg-[var(--accent)] text-base font-black text-black">
+                Trova una partita
+              </Link>
+            </div>
+          )}
 
           {/* SANDER Wrapped — personal 30-day recap (only when there's activity) */}
           {playerRecap && playerRecap.matches > 0 && (
-            <div className="rounded-2xl bg-[var(--surface-2)] p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
-                  Il tuo mese
-                </p>
-                <span className="text-xs text-[var(--muted-text)]">ultimi 30 giorni</span>
-              </div>
-              <div className="grid grid-cols-3 gap-2 text-center">
+            <section>
+              <Eyebrow>Il tuo mese</Eyebrow>
+              <div className="grid grid-cols-3 gap-2 rounded-2xl bg-[var(--surface-2)] p-4 text-center">
                 <div>
-                  <p className="text-2xl font-black text-white">{playerRecap.matches}</p>
+                  <p className="font-display text-2xl font-extrabold text-white">{playerRecap.matches}</p>
                   <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-text)]">Partite</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-black text-[var(--accent)]">{playerRecap.wins}</p>
+                  <p className="font-display text-2xl font-extrabold text-[var(--accent)]">{playerRecap.wins}</p>
                   <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-text)]">Vittorie</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-black text-white">
+                  <p className="font-display text-2xl font-extrabold text-white">
                     {playerRecap.ratingDelta >= 0 ? "+" : ""}{playerRecap.ratingDelta}
                   </p>
                   <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-text)]">Rating</p>
                 </div>
               </div>
-              <WrappedShareButton playerName={fullPlayer.name} recap={playerRecap} />
-            </div>
-          )}
-
-          {/* The stat sliders and their formula mean nothing before a first game:
-              show newcomers where to start instead. */}
-          {isNewPlayer ? (
-            <div className="tone-play space-y-3 rounded-2xl bg-[var(--surface-2)] p-5 text-center">
-              <ChartColumn className="mx-auto h-8 w-8 text-[var(--tone)]" aria-hidden="true" />
-              <p className="text-lg font-black text-white">
-                Gioca la tua prima partita per sbloccare le statistiche
-              </p>
-              <p className="text-base text-[var(--muted-text)]">
-                Dopo la prima partita potrai scegliere in cosa sei più forte e la tua carta si aggiornerà.
-              </p>
-              <Link
-                href="/sessions"
-                className="flex min-h-[3.5rem] w-full items-center justify-center rounded-full bg-[var(--accent)] text-base font-black text-black"
-              >
-                Trova una partita
-              </Link>
-            </div>
-          ) : (
-          <StatPercentageEditor
-            glickoRating={fullPlayer.glickoRating}
-            initial={{
-              attPct: fullPlayer.attPct,
-              difPct: fullPlayer.difPct,
-              murPct: fullPlayer.murPct,
-              alzPct: fullPlayer.alzPct,
-              ricPct: fullPlayer.ricPct,
-              staPct: fullPlayer.staPct,
-            }}
-          />
+            </section>
           )}
           {(tournamentWins.length > 0 || monthlyAwards.length > 0) && (
             <div className="rounded-2xl bg-[var(--surface-2)] p-5 flex flex-col gap-3">
@@ -451,89 +538,126 @@ export default async function ProfilePage({ searchParams }: Props) {
               </div>
             </div>
           )}
-          {/* ── Achievements ───────────────────────────────────── */}
           <Achievements achievements={achievements} />
+        </div>
+      )}
 
-          {/* ── Duo card — shareable pair chemistry (top partner) ─ */}
-          {partnerStats.length > 0 && (
-            <div className="rounded-2xl bg-[var(--surface-2)] p-4 space-y-3">
-              <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">
-                La tua coppia migliore
-              </p>
-              <div className="flex items-center justify-between">
-                <p className="font-black text-white">
-                  {fullPlayer.firstName ?? fullPlayer.name.split(" ")[0]} &amp;{" "}
-                  {partnerStats[0].player.firstName ?? partnerStats[0].player.name.split(" ")[0]}
-                </p>
-                <p className="text-lg font-black text-[var(--accent)]">{partnerStats[0].winRate}%</p>
-              </div>
-              <p className="text-xs text-[var(--muted-text)]">
-                {partnerStats[0].played} partite insieme · {partnerStats[0].won} vinte
-              </p>
-              <DuoShareButton
-                playerA={fullPlayer.name}
-                playerB={partnerStats[0].player.name}
-                played={partnerStats[0].played}
-                won={partnerStats[0].won}
-                winRate={partnerStats[0].winRate}
-              />
+      {/* ══ Attività ══════════════════════════════════════════ */}
+      {activeTab === "attivita" && (
+        <div className="flex flex-col px-4">
+          <Eyebrow className="pt-0">Prossime</Eyebrow>
+          {upcoming.length === 0 ? (
+            <div className="flex items-center justify-between gap-3 rounded-[1.25rem] bg-[var(--surface-2)] p-4">
+              <p className="text-base text-[var(--muted-text)]">Niente in programma.</p>
+              <Link href="/sessions" className="btn btn-primary min-h-[3rem] px-5 text-sm">Trova una partita</Link>
+            </div>
+          ) : (
+            <div className="divide-y divide-[var(--border)] overflow-hidden rounded-[1.25rem] bg-[var(--surface-2)]">
+              {upcoming.map((u) => (
+                <Link key={u.key} href={u.href} className="flex min-h-[3.75rem] items-center gap-3 px-4 py-2.5 active:bg-[var(--surface-3)]">
+                  <span className="w-11 shrink-0 text-center">
+                    <span className="block font-display text-xl font-extrabold leading-none text-[var(--accent)]">{u.date.getDate()}</span>
+                    <span className="block text-xs font-bold uppercase text-[var(--muted-text)]">{MONTH_SHORT[u.date.getMonth()]}</span>
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-base font-bold text-white">{u.title}</span>
+                    <span className="block truncate text-sm text-[var(--muted-text)]">{u.place}</span>
+                  </span>
+                  <span className="shrink-0 rounded-full bg-[var(--surface-3)] px-2.5 py-1 text-xs font-extrabold text-[var(--social)]">{u.kind}</span>
+                </Link>
+              ))}
             </div>
           )}
 
-          {/* ── Statistiche avanzate + cronologia (collassabile) ── */}
-          <details className="group">
-            <summary className="flex min-h-[3.25rem] cursor-pointer list-none items-center justify-between rounded-2xl bg-[var(--surface-2)] px-4 font-black text-white [&::-webkit-details-marker]:hidden">
-              <span className="text-sm">Compagni e cronologia partite</span>
-              <span className="text-lg text-[var(--accent)] transition-transform duration-200 group-open:rotate-90">
-                ›
-              </span>
-            </summary>
-            <div className="mt-2 space-y-3">
-              <PartnerStats stats={partnerStats} />
+          {matchHistory.length > 0 && (
+            <div className="pt-3">
               <MatchHistory entries={matchHistory} />
             </div>
-          </details>
+          )}
 
-          <Link
-            href="/stats-guide"
-            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl font-semibold text-[var(--accent)]"
-            style={{ background: "rgba(198,247,54,0.07)", border: "1px solid rgba(198,247,54,0.2)" }}
-          >
-            <ArrowUpRight className="h-4 w-4" />
-            Come funzionano i parametri?
-          </Link>
-          <Link
-            href="/scopri/profilo"
-            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full bg-[var(--accent)] font-extrabold text-black"
-          >
-            <HeartHandshake className="h-4 w-4" />
-            Il tuo profilo Scopri
-          </Link>
-          <Link
-            href="/profile/presenze"
-            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-semibold text-[var(--foreground)]"
-          >
-            <CalendarCheck className="h-4 w-4 text-[var(--social)]" />
-            Le tue presenze
-          </Link>
-          {/* Messages were reachable only from the Home bell, so reading a reply
-              meant going back Home from wherever you were. */}
-          <Link
-            href="/messaggi"
-            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-semibold text-[var(--foreground)]"
-          >
-            <MessageCircle className="h-4 w-4 text-[var(--accent)]" />
-            Messaggi
-          </Link>
-          <Link
-            href="/onboarding/profile"
-            className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface-2)] font-semibold text-[var(--foreground)]"
-          >
-            <Settings className="h-4 w-4 text-[var(--muted-text)]" />
-            Modifica profilo
-          </Link>
+          <Eyebrow>Il tuo gioco</Eyebrow>
+          <ListGroup>
+            <ListRow
+              href="/profile?tab=compagni"
+              icon={<Users className="h-5 w-5 text-[var(--social)]" />}
+              title="Compagni"
+              subtitle={topPartner ? `Coppia migliore: ${topPartner.player.firstName ?? topPartner.player.name.split(" ")[0]} · ${topPartner.winRate}%` : "Con chi giochi meglio"}
+            />
+            <ListRow href="/profile/presenze" icon={<CalendarCheck className="h-5 w-5 text-[var(--social)]" />} title="Presenze" subtitle="Quando hai giocato" />
+            <ListRow href="/profile?tab=partite" icon={<Calendar className="h-5 w-5 text-[var(--accent)]" />} title="Le tue partite" subtitle="Tutte quelle a cui ti sei unito" />
+            <ListRow
+              href="/profile?tab=organizzate"
+              icon={<ClipboardList className="h-5 w-5 text-[var(--compete)]" />}
+              title="Partite organizzate"
+              subtitle={fullPlayer._count.organizedSessions > 0 ? `${fullPlayer._count.organizedSessions} da te` : "Creane una e invita gli amici"}
+            />
+            <ListRow href="/messaggi" icon={<MessageCircle className="h-5 w-5 text-[var(--accent)]" />} title="Messaggi" subtitle="Chat con giocatori e gruppi" />
+          </ListGroup>
+        </div>
+      )}
 
-          <NotifyPermission />
+      {/* ══ Compagni (from Attività) ══════════════════════════ */}
+      {activeTab === "compagni" && (
+        <div className="flex flex-col gap-3 px-4">
+          {topPartner && (
+            <div className="space-y-3 rounded-2xl bg-[var(--surface-2)] p-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-text)]">La tua coppia migliore</p>
+              <div className="flex items-center justify-between">
+                <p className="font-black text-white">
+                  {firstName} &amp; {topPartner.player.firstName ?? topPartner.player.name.split(" ")[0]}
+                </p>
+                <p className="text-lg font-black text-[var(--accent)]">{topPartner.winRate}%</p>
+              </div>
+              <p className="text-sm text-[var(--muted-text)]">
+                {topPartner.played} partite insieme · {topPartner.won} vinte
+              </p>
+              <DuoShareButton playerA={fullPlayer.name} playerB={topPartner.player.name} played={topPartner.played} won={topPartner.won} winRate={topPartner.winRate} />
+            </div>
+          )}
+          {partnerStats.length === 0 ? (
+            <p className="rounded-2xl bg-[var(--surface-2)] p-4 text-base text-[var(--muted-text)]">Gioca qualche partita in coppia: qui vedrai con chi vinci di più.</p>
+          ) : (
+            <PartnerStats stats={partnerStats} />
+          )}
+        </div>
+      )}
+
+      {/* ══ Account ═══════════════════════════════════════════ */}
+      {activeTab === "account" && (
+        <div className="flex flex-col px-4">
+          <WalletCard credits={fullPlayer.sanderCredits} playerName={firstName} />
+          <div className="pt-3">
+            <ListGroup>
+              {shopOpen && <ListRow href="/shop" icon={<ShoppingBag className="h-5 w-5 text-[var(--accent)]" />} title="Shop" subtitle="Merch ufficiale · I miei ordini" />}
+              <ListRow href="/profile?tab=invita" icon={<Gift className="h-5 w-5 text-[var(--accent)]" />} title="Invita amici" subtitle="Crediti per te e per chi entra" />
+            </ListGroup>
+          </div>
+
+          <Eyebrow>Tu</Eyebrow>
+          <ListGroup>
+            <ListRow href="/onboarding/profile" icon={<Pencil className="h-5 w-5" />} title="Modifica profilo" subtitle="Foto, nome, ruolo, comune" />
+            <ListRow href="/scopri/profilo" icon={<HeartHandshake className="h-5 w-5 text-[var(--love)]" />} title="Profilo Scopri" subtitle="Foto e presentazione · 18+" />
+            <ListRow
+              href="/club"
+              icon={<Building2 className="h-5 w-5 text-[var(--compete)]" />}
+              title={switcherClubs.length > 0 ? "I tuoi club" : "Porta il tuo club"}
+              subtitle={switcherClubs.length > 0 ? "Passa al club dal tuo nome in alto" : "Società, circoli e bagni: gratis"}
+            />
+          </ListGroup>
+          <div className="pt-3">
+            <NotifyPermission />
+          </div>
+
+          <Eyebrow>SANDER</Eyebrow>
+          <ListGroup>
+            <ListRow href="/profile?tab=app" icon={<Smartphone className="h-5 w-5" />} title="App e aiuto" subtitle="Notifiche, assistenza, privacy" />
+            <ListRow href="/profile?tab=supporter" icon={<Star className="h-5 w-5 text-[var(--gold)]" />} title="Supporter" subtitle="Chi ci sostiene" />
+            {isAdmin && <ListRow href="/profile?tab=admin" icon={<ShieldCheck className="h-5 w-5 text-[var(--danger)]" />} title="Admin" subtitle="Gestione di SANDER" />}
+          </ListGroup>
+          <SignOutButton className="mt-3 flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-[1.25rem] bg-[var(--surface-2)] text-base font-bold text-[var(--danger)]">
+            <LogOut className="h-5 w-5" aria-hidden="true" /> Esci dall&apos;account
+          </SignOutButton>
+          <p className="px-1 pt-3 text-xs text-[var(--muted-text)]">Versione app {APP_VERSION_DISPLAY}</p>
         </div>
       )}
 

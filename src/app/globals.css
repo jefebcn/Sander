@@ -223,6 +223,7 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+  min-height: 100vh; /* old web views without dvh */
   min-height: 100dvh;
   /* The page never slides sideways, whatever is a pixel too wide. clip (not
      hidden) where supported: it doesn't turn body into a scroll container,
@@ -882,4 +883,19 @@ button, a, [role="button"] {
 @media print {
   main:has(.admin-shell) { max-width: none; padding-bottom: 0; }
   body:has(.admin-shell) nav[aria-label="Navigazione principale"] { display: none; }
+}
+
+/* Old Android web views (Chromium < 108) don't know dvh: a sheet's
+   max-height was dropped, a long list grew past the screen and only its
+   bottom showed, with nothing to scroll. Same sizes in vh for them.
+   Unlayered, so they beat the utilities. */
+@supports not (height: 1dvh) {
+  .max-h-\[50dvh\] { max-height: 50vh; }
+  .max-h-\[75dvh\] { max-height: 75vh; }
+  .max-h-\[80dvh\] { max-height: 80vh; }
+  .max-h-\[85dvh\] { max-height: 85vh; }
+  .max-h-\[92dvh\] { max-height: 92vh; }
+  .h-dvh { height: 100vh; }
+  .min-h-dvh { min-height: 100vh; }
+  .min-h-\[70dvh\] { min-height: 70vh; }
 }

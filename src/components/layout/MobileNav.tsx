@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useSyncExternalStore } from "react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
-import { Home, Volleyball, Trophy, User, HeartHandshake } from "lucide-react"
+import { Home, Volleyball, Trophy, User, HeartHandshake, Building2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useHaptic } from "@/lib/useHaptic"
 import { getScopriBadge } from "@/actions/scopri"
+import { PROFILE_MODE_EVENT, profileModeFromCookieString } from "@/lib/profileMode"
 
 /**
  * Four destinations around Scopri. The centre button is the thing people open
@@ -27,6 +28,17 @@ const NAV_ITEMS = [
 
 const SCOPRI_PATH = "/scopri"
 
+/** Club staff using SANDER as their club (lib/profileMode.ts): the last tab reads "Club". */
+function subscribeMode(onChange: () => void) {
+  window.addEventListener(PROFILE_MODE_EVENT, onChange)
+  window.addEventListener("focus", onChange)
+  return () => {
+    window.removeEventListener(PROFILE_MODE_EVENT, onChange)
+    window.removeEventListener("focus", onChange)
+  }
+}
+const readClubMode = () => profileModeFromCookieString(document.cookie) !== null
+
 export function MobileNav() {
   const pathname = usePathname()
   const haptic = useHaptic()
@@ -36,6 +48,7 @@ export function MobileNav() {
   const [optimistic, setOptimistic] = useState<{ to: string; from: string } | null>(null)
   const optimisticPath = optimistic && optimistic.from === pathname ? optimistic.to : null
   const setOptimisticPath = (to: string) => setOptimistic({ to, from: pathname })
+  const clubMode = useSyncExternalStore(subscribeMode, readClubMode, () => false)
   const { data: badge = 0 } = useQuery({
     queryKey: ["scopri-badge"],
     queryFn: () => getScopriBadge(),
@@ -58,7 +71,11 @@ export function MobileNav() {
     (href !== "/" && displayPath.startsWith(href)) ||
     matches.some((m) => displayPath === m || displayPath.startsWith(`${m}/`))
 
-  const renderTab = ({ href, icon: Icon, label, tone, matches }: (typeof NAV_ITEMS)[number]) => {
+  const renderTab = (item: (typeof NAV_ITEMS)[number]) => {
+    const { href, tone, matches } = item
+    const isClub = clubMode && href === "/profile"
+    const Icon = isClub ? Building2 : item.icon
+    const label = isClub ? "Club" : item.label
     const active = isActive(href, matches)
     return (
       <Link
