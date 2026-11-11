@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { CalendarDays, ClipboardCheck, ExternalLink, Eye, Image as ImageIcon, Megaphone, PlusCircle, QrCode, Settings2, Trophy, UserCog, Users } from "lucide-react"
+import { BarChart3, CalendarDays, ClipboardCheck, ExternalLink, Eye, Image as ImageIcon, Medal, Megaphone, PlusCircle, QrCode, Settings2, Trophy, UserCog, Users } from "lucide-react"
 import { db } from "@/lib/db"
 import { clubDashboard, isUpcoming } from "@/lib/clubDashboard"
 import { clubChecklist } from "@/lib/club"
@@ -7,12 +7,18 @@ import { holdsSeat } from "@/lib/tournament/capacity"
 import { euro } from "@/lib/shop"
 import { formatDate } from "@/lib/utils"
 import { StatusBadge } from "@/components/tournament/StatusBadge"
-import { Eyebrow, ListGroup, ListRow, Segments } from "./ProfileUI"
+import { clubYearStats } from "@/lib/clubRoster"
+import { loadClubRoster } from "@/lib/clubRosterQuery"
+import { cn } from "@/lib/utils"
+import { BackRow, Eyebrow, ListGroup, ListRow, Segments } from "./ProfileUI"
+import { ClubPlayersList } from "./ClubPlayersList"
 
-export type ClubTab = "plancia" | "tornei" | "gestione"
-export const CLUB_TABS: ClubTab[] = ["plancia", "tornei", "gestione"]
+export type ClubTab = "plancia" | "tornei" | "giocatori" | "gestione" | "statistiche"
+export const CLUB_TABS: ClubTab[] = ["plancia", "tornei", "giocatori", "gestione", "statistiche"]
 
 const MONTHS = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"]
+const MONTH_LETTERS = ["G", "F", "M", "A", "M", "G", "L", "A", "S", "O", "N", "D"]
+const PLACE = ["text-[var(--gold)]", "text-[var(--silver)]", "text-[var(--bronze)]"]
 
 function Kpi({ label, value, hint, tone }: { label: string; value: string; hint: string; tone?: "warn" }) {
   return (
@@ -25,7 +31,7 @@ function Kpi({ label, value, hint, tone }: { label: string; value: string; hint:
 }
 
 /** The profile in club mode: the club's dashboard instead of the staff member's card. */
-export async function ClubProfile({ clubId, tab, header }: { clubId: string; tab: ClubTab; header: React.ReactNode }) {
+export async function ClubProfile({ clubId, tab, year, header }: { clubId: string; tab: ClubTab; year?: number; header: React.ReactNode }) {
   const now = new Date()
   const [club, tournaments, followers] = await Promise.all([
     db.club.findUniqueOrThrow({ where: { id: clubId } }),
@@ -48,14 +54,46 @@ export async function ClubProfile({ clubId, tab, header }: { clubId: string; tab
   const manage = `/c/${club.slug}/gestione`
   const maxWeek = Math.max(1, ...dash.weekly)
 
+  const roster = tab === "giocatori" ? await loadClubRoster(club.id) : []
+
+  // Statistiche: one year at a time, among the years the club has tournaments in.
+  const years = [...new Set([now.getFullYear(), ...tournaments.map((t) => t.date.getFullYear())])].filter((y) => y <= now.getFullYear()).sort((a, b) => b - a).slice(0, 4)
+  const statYear = year && years.includes(year) ? year : now.getFullYear()
+  const stats =
+    tab === "statistiche"
+      ? clubYearStats(
+          await db.tournament.findMany({
+            where: { clubId, date: { gte: new Date(statYear - 1, 0, 1), lt: new Date(statYear + 1, 0, 1) } },
+            select: {
+              id: true, date: true, status: true, priceCents: true,
+              registrations: { select: { playerId: true, paymentStatus: true, isSpectator: true, checkedInAt: true } },
+              standings: { select: { playerId: true, rank: true } },
+            },
+          }),
+          statYear,
+        )
+      : null
+  const statNames = stats
+    ? new Map(
+        (
+          await db.player.findMany({
+            where: { id: { in: [...stats.topAttendees.map((a) => a.playerId), ...stats.table.slice(0, 10).map((r) => r.playerId)] } },
+            select: { id: true, name: true },
+          })
+        ).map((p) => [p.id, p.name]),
+      )
+    : new Map<string, string>()
+  const maxMonth = stats ? Math.max(1, ...stats.monthly) : 1
+
   return (
     <div className="flex flex-col gap-3 px-4 pb-6">
       {header}
       <Segments
-        active={tab}
+        active={tab === "statistiche" ? "plancia" : tab}
         items={[
           { id: "plancia", label: "Plancia", href: "/profile" },
           { id: "tornei", label: "Tornei", href: "/profile?tab=tornei" },
+          { id: "giocatori", label: "Giocatori", href: "/profile?tab=giocatori" },
           { id: "gestione", label: "Gestione", href: "/profile?tab=gestione" },
         ]}
       />
@@ -134,6 +172,122 @@ export async function ClubProfile({ clubId, tab, header }: { clubId: string; tab
               <span>questa settimana</span>
             </p>
           </div>
+          <ListGroup>
+            <ListRow href="/profile?tab=statistiche" icon={<BarChart3 className="h-5 w-5 text-[var(--accent)]" />} title="Statistiche del club" subtitle="Iscrizioni e quote dell'anno, più presenti, classifica interna" />
+          </ListGroup>
+        </>
+      )}
+
+      {tab === "giocatori" && (
+        <ClubPlayersList
+          exportHref={`/api/clubs/${club.slug}/giocatori`}
+          players={roster.map((r) => ({
+            playerId: r.playerId,
+            name: r.name,
+            avatarUrl: r.avatarUrl,
+            tournaments: r.tournaments,
+            checkins: r.checkins,
+            lastDate: r.lastDate?.toISOString() ?? null,
+            unpaidCount: r.unpaidCount,
+            unpaidCents: r.unpaidCents,
+            follower: r.follower,
+            isNew: r.isNew,
+            firstSeen: r.firstSeen.toISOString(),
+          }))}
+        />
+      )}
+
+      {tab === "statistiche" && stats && (
+        <>
+          <BackRow href="/profile" label="Plancia" />
+          {years.length > 1 && (
+            <div className="flex gap-2" role="group" aria-label="Anno">
+              {years.map((y) => (
+                <Link
+                  key={y}
+                  href={`/profile?tab=statistiche&anno=${y}`}
+                  aria-current={y === statYear ? "page" : undefined}
+                  className={cn("flex min-h-[2.75rem] items-center rounded-full px-4 text-sm font-extrabold", y === statYear ? "sel-on" : "sel-off")}
+                >
+                  {y}
+                </Link>
+              ))}
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-2">
+            <Kpi
+              label="Iscrizioni"
+              value={String(stats.signups)}
+              hint={stats.signupsDelta === null ? `nel ${statYear}` : `${stats.signupsDelta >= 0 ? "+" : ""}${stats.signupsDelta}% sul ${statYear - 1}`}
+            />
+            <Kpi label="Quote segnate" value={euro(stats.collectedCents)} hint={`${stats.tournaments} ${stats.tournaments === 1 ? "torneo" : "tornei"}`} />
+          </div>
+
+          <Eyebrow>Iscrizioni per mese</Eyebrow>
+          <div className="rounded-[1.25rem] bg-[var(--surface-2)] p-4">
+            <div className="flex h-28 items-end gap-1" role="img" aria-label={`Iscrizioni per mese nel ${statYear}: ${stats.monthly.join(", ")}`}>
+              {stats.monthly.map((n, i) => (
+                <div key={i} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
+                  {n > 0 && <span className="text-[11px] font-bold text-[var(--muted-text)]">{n}</span>}
+                  <span
+                    className={statYear === now.getFullYear() && i === now.getMonth() ? "w-full rounded-t-md bg-[var(--accent)]" : "w-full rounded-t-md bg-[var(--surface-4)]"}
+                    style={{ height: `${Math.max(3, Math.round((n / maxMonth) * 80))}%` }}
+                  />
+                </div>
+              ))}
+            </div>
+            <p className="mt-1.5 flex gap-1 text-center text-[11px] font-bold text-[var(--muted-text)]">
+              {MONTH_LETTERS.map((m, i) => (
+                <span key={i} className="flex-1">{m}</span>
+              ))}
+            </p>
+          </div>
+
+          <Eyebrow>Più presenti</Eyebrow>
+          {stats.topAttendees.length === 0 ? (
+            <p className="rounded-[1.25rem] bg-[var(--surface-2)] p-4 text-base text-[var(--muted-text)]">Ancora nessun iscritto nel {statYear}.</p>
+          ) : (
+            <ol className="divide-y divide-[var(--border)] overflow-hidden rounded-[1.25rem] bg-[var(--surface-2)]">
+              {stats.topAttendees.map((a, i) => (
+                <li key={a.playerId}>
+                  <Link href={`/players/${a.playerId}`} className="flex min-h-[3.5rem] items-center gap-3 px-4 py-2 active:bg-[var(--surface-3)]">
+                    <span className={cn("w-6 font-display text-lg font-extrabold", PLACE[i] ?? "text-[var(--muted-text)]")}>{i + 1}</span>
+                    <span className="min-w-0 flex-1 truncate text-base font-bold text-white">{statNames.get(a.playerId) ?? "Giocatore"}</span>
+                    <span className="shrink-0 text-sm text-[var(--muted-text)]">
+                      {a.checkins > 0 ? `${a.checkins} ${a.checkins === 1 ? "presenza" : "presenze"} · ` : ""}{a.tournaments} {a.tournaments === 1 ? "torneo" : "tornei"}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          )}
+
+          <Eyebrow>Classifica interna {statYear}</Eyebrow>
+          {stats.table.length === 0 ? (
+            <p className="rounded-[1.25rem] bg-[var(--surface-2)] p-4 text-base text-[var(--muted-text)]">
+              La classifica si forma con i tornei conclusi: punti in base al piazzamento, come nei circuiti.
+            </p>
+          ) : (
+            <ol className="divide-y divide-[var(--border)] overflow-hidden rounded-[1.25rem] bg-[var(--surface-2)]">
+              {stats.table.slice(0, 10).map((r) => (
+                <li key={r.playerId}>
+                  <Link href={`/players/${r.playerId}`} className="flex min-h-[3.5rem] items-center gap-3 px-4 py-2 active:bg-[var(--surface-3)]">
+                    <span className={cn("w-6 font-display text-lg font-extrabold", PLACE[r.rank - 1] ?? "text-[var(--muted-text)]")}>{r.rank}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-base font-bold text-white">{statNames.get(r.playerId) ?? "Giocatore"}</span>
+                      <span className="block text-sm text-[var(--muted-text)]">
+                        {r.stages} {r.stages === 1 ? "torneo" : "tornei"}{r.wins > 0 ? ` · ${r.wins} ${r.wins === 1 ? "vittoria" : "vittorie"}` : ""}
+                      </span>
+                    </span>
+                    <span className="shrink-0 font-display text-lg font-extrabold text-[var(--accent)]">{r.points}</span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          )}
+          <p className="flex items-center gap-1.5 px-1 text-sm text-[var(--muted-text)]">
+            <Medal className="h-4 w-4 shrink-0" aria-hidden="true" /> Punti dai tornei del club conclusi nel {statYear}, come nei circuiti.
+          </p>
         </>
       )}
 

@@ -124,7 +124,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 // ── page ─────────────────────────────────────────────────────────────
 
-interface Props { searchParams: Promise<{ tab?: string; topup?: string }> }
+interface Props { searchParams: Promise<{ tab?: string; topup?: string; anno?: string }> }
 
 /** Player sections, and the pages opened from their lists (with the section they belong to). */
 const PLAYER_TABS = ["carta", "attivita", "account"] as const
@@ -141,7 +141,7 @@ const BACK_LABEL = { attivita: "Attività", account: "Account" } as const
 const ROLE_LABEL: Record<string, string> = { BLOCKER: "Muro", DEFENDER: "Difensore" }
 
 export default async function ProfilePage({ searchParams }: Props) {
-  const { tab: rawTab, topup } = await searchParams
+  const { tab: rawTab, topup, anno } = await searchParams
   // Old links (?tab=profilo) land on the card.
   const tab = rawTab === "profilo" ? "carta" : rawTab
 
@@ -217,7 +217,7 @@ export default async function ProfilePage({ searchParams }: Props) {
     return (
       <div className="flex min-h-dvh flex-col">
         <h1 className="sr-only">{clubView.name}: gestione club</h1>
-        <ClubProfile clubId={clubView.id} tab={(tab as ClubTab | undefined) ?? "plancia"} header={header} />
+        <ClubProfile clubId={clubView.id} tab={(tab as ClubTab | undefined) ?? "plancia"} year={Number(anno) || undefined} header={header} />
       </div>
     )
   }

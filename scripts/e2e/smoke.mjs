@@ -175,7 +175,8 @@ try {
     await app.goto(`${BASE}/scopri/plus`, { waitUntil: "networkidle" })
     await app.getByText("Non disponibile nell'app.").waitFor({ timeout: 15_000 })
     assert.equal(await app.getByRole("button", { name: /Attiva SANDER\+/ }).count(), 0)
-    await app.goto(`${BASE}/profile`, { waitUntil: "networkidle" })
+    // The wallet lives in the profile's Account section.
+    await app.goto(`${BASE}/profile?tab=account`, { waitUntil: "networkidle" })
     // No top-up at all in the app: no button, no price, only the free way to earn SC.
     await app.getByText(/Guadagna SC gratis/).waitFor({ timeout: 15_000 })
     assert.equal(await app.getByRole("button", { name: /Ricarica/ }).count(), 0)
