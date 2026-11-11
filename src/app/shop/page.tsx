@@ -112,7 +112,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
                       )}
                     </div>
                     <div className="px-1 pb-1 pt-2.5">
-                      <p className="truncate text-base font-extrabold text-white">{p.name}</p>
+                      <p className="line-clamp-2 text-base font-extrabold leading-tight text-white">{p.name}</p>
                       <p className="num mt-1 text-xl text-[var(--accent)]">{euro(p.priceCents)}</p>
                     </div>
                   </Link>
