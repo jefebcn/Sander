@@ -126,7 +126,7 @@ export function useHasNativeGoogle(): boolean {
  * from the app. Returns the ID token for the "google-native" provider, or null
  * when the user closes the picker. Throws on other failures.
  */
-export async function nativeGoogleIdToken(webClientId: string, iosClientId?: string): Promise<string | null> {
+export async function nativeGoogleIdToken(webClientId: string, iosClientId?: string): Promise<{ idToken: string | null; reason?: string }> {
   const { SocialLogin } = await import("@capgo/capacitor-social-login")
   // iOSServerClientId = the Web client: the token's audience stays AUTH_GOOGLE_ID on both platforms.
   await SocialLogin.initialize({
@@ -138,9 +138,13 @@ export async function nativeGoogleIdToken(webClientId: string, iosClientId?: str
     // the ID token already carries email and name, so ask for none there.
     const options = nativePlatform() === "android" ? {} : { scopes: ["email", "profile"] }
     const res = await SocialLogin.login({ provider: "google", options })
-    return (res.result as { idToken?: string | null }).idToken ?? null
+    const idToken = (res.result as { idToken?: string | null }).idToken ?? null
+    return idToken ? { idToken } : { idToken: null, reason: `no idToken in result: ${JSON.stringify(res.result).slice(0, 300)}` }
   } catch (e) {
-    if (/cancel/i.test(e instanceof Error ? e.message : String(e))) return null
+    const message = e instanceof Error ? e.message : String(e)
+    // Android reports a missing app registration (SHA-1) as a "cancel" too:
+    // hand the text back so it reaches the server log either way.
+    if (/cancel/i.test(message)) return { idToken: null, reason: `cancel: ${message}` }
     throw e
   }
 }

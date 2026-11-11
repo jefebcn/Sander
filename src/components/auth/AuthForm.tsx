@@ -95,9 +95,10 @@ export function AuthForm({ callbackUrl: rawCallbackUrl, inviteCode: initialInvit
     setError(null)
     startTransition(async () => {
       try {
-        const idToken = await nativeGoogleIdToken(googleClientId!, platform === "ios" ? googleIosClientId : undefined)
+        const { idToken, reason } = await nativeGoogleIdToken(googleClientId!, platform === "ios" ? googleIosClientId : undefined)
         if (!idToken) {
-          void reportNativeAuthError({ provider: "google", platform, message: "no id token (cancelled or no account)" }).catch(() => {})
+          void reportNativeAuthError({ provider: "google", platform, message: (reason ?? "no id token").slice(0, 500) }).catch(() => {})
+          setError("Accesso con Google non completato. Se non l'hai annullato tu, riprova o usa email e password.")
           return
         }
         const result = await signIn("google-native", { idToken, redirect: false })
