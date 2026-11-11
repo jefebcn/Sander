@@ -4,7 +4,7 @@ import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { cookies } from "next/headers"
-import { ArrowUpRight, MapPin, Calendar, ShieldCheck, Users, Trophy, Pencil, MessageCircle, ChartColumn, Bug, ChevronRight, HeartHandshake, CalendarCheck, Eye, Share2, SlidersHorizontal, ClipboardList, ShoppingBag, Gift, Building2, Smartphone, Star, LogOut } from "lucide-react"
+import { ArrowUpRight, MapPin, Calendar, ShieldCheck, Users, Trophy, Pencil, MessageCircle, ChartColumn, Bug, ChevronRight, HeartHandshake, CalendarCheck, Share2, SlidersHorizontal, ClipboardList, ShoppingBag, Settings, Gift, Building2, Smartphone, Star, LogOut } from "lucide-react"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { SanderCardFut, playerToCardData } from "@/components/player/SanderCardFut"
@@ -124,7 +124,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 // ── page ─────────────────────────────────────────────────────────────
 
-interface Props { searchParams: Promise<{ tab?: string; topup?: string; anno?: string }> }
+interface Props { searchParams: Promise<{ tab?: string; topup?: string; anno?: string; giorno?: string }> }
 
 /** Player sections, and the pages opened from their lists (with the section they belong to). */
 const PLAYER_TABS = ["carta", "attivita", "account"] as const
@@ -141,7 +141,7 @@ const BACK_LABEL = { attivita: "Attività", account: "Account" } as const
 const ROLE_LABEL: Record<string, string> = { BLOCKER: "Muro", DEFENDER: "Difensore" }
 
 export default async function ProfilePage({ searchParams }: Props) {
-  const { tab: rawTab, topup, anno } = await searchParams
+  const { tab: rawTab, topup, anno, giorno } = await searchParams
   // Old links (?tab=profilo) land on the card.
   const tab = rawTab === "profilo" ? "carta" : rawTab
 
@@ -202,8 +202,8 @@ export default async function ProfilePage({ searchParams }: Props) {
         staleMode={!!modeSlug && !modeClub}
       />
       {clubView ? (
-        <Link href={`/c/${clubView.slug}`} aria-label="Guarda la pagina pubblica del club" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--surface-2)] text-white">
-          <Eye className="h-5 w-5" aria-hidden="true" />
+        <Link href="/profile?tab=gestione" aria-label="Gestione del club" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--surface-2)] text-white">
+          <Settings className="h-5 w-5" aria-hidden="true" />
         </Link>
       ) : (
         <Link href="/onboarding/profile" aria-label="Modifica profilo" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--surface-2)] text-white">
@@ -217,7 +217,7 @@ export default async function ProfilePage({ searchParams }: Props) {
     return (
       <div className="flex min-h-dvh flex-col">
         <h1 className="sr-only">{clubView.name}: gestione club</h1>
-        <ClubProfile clubId={clubView.id} tab={(tab as ClubTab | undefined) ?? "plancia"} year={Number(anno) || undefined} header={header} />
+        <ClubProfile clubId={clubView.id} tab={(tab as ClubTab | undefined) ?? "plancia"} year={Number(anno) || undefined} day={giorno} header={header} />
       </div>
     )
   }
