@@ -133,10 +133,9 @@ export function PaymentMethodSheet({
       {/* Sheet */}
       <div
         className={cn(
-          "relative z-10 flex flex-col rounded-t-3xl bg-[var(--surface-1)] transition-transform duration-300",
+          "relative z-10 flex max-h-[80dvh] flex-col rounded-t-3xl bg-[var(--surface-1)] transition-transform duration-300",
           open ? "translate-y-0" : "translate-y-full",
         )}
-        style={{ maxHeight: "80dvh" }}
       >
         <div className="flex items-center justify-between px-5 pb-3 pt-5">
           <h3 className="text-lg font-bold text-white">
