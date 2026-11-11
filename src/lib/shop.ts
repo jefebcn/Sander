@@ -4,7 +4,7 @@
 /* ────────────────────────────────────────────────────────────────────────── */
 
 /** Flat shipping fee in Italy, euro cents. Pickup at a tournament is free. */
-export const SHOP_SHIPPING_CENTS = 600
+export const SHOP_SHIPPING_CENTS = 200
 
 /** Most pieces of one product in a single order. */
 export const SHOP_MAX_QTY = 5

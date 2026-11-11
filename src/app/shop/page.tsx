@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = {
   title: "Shop | SANDER",
-  description: "Maglie, canotte e accessori SANDER: ritiro gratis ai tornei o spedizione a casa.",
+  description: "Il merch ufficiale SANDER: ritiro gratis ai tornei o spedizione a casa.",
 }
 
 export default async function ShopPage({ searchParams }: { searchParams: Promise<{ cat?: string }> }) {
@@ -23,14 +23,17 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
   const admin = isAdminEmail(session?.user?.email)
   const category = SHOP_CATEGORIES.some((c) => c.id === cat) ? cat : undefined
 
-  const [products, me] = await Promise.all([
+  const [products, me, cats] = await Promise.all([
     db.shopProduct.findMany({
       where: { ...(admin ? {} : { active: true }), ...(category ? { category } : {}) },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
       select: { id: true, slug: true, name: true, priceCents: true, images: true, active: true, featured: true, variants: { select: { stock: true } } },
     }),
     getCurrentPlayer(),
+    db.shopProduct.groupBy({ by: ["category"], where: admin ? {} : { active: true } }),
   ])
+  // Category tabs only once there is more than one category to pick from.
+  const tabs = SHOP_CATEGORIES.filter((c) => cats.some((x) => x.category === c.id))
   // Nothing on sale: the shop doesn't exist yet for players.
   if (!admin && products.length === 0 && !category) notFound()
 
@@ -69,18 +72,20 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
           </Link>
         )}
 
-        <nav className="flex gap-2 overflow-x-auto [scrollbar-width:none]" aria-label="Categorie">
-          {[{ id: undefined, label: "Tutto" }, ...SHOP_CATEGORIES].map((c) => (
-            <Link
-              key={c.label}
-              href={c.id ? `/shop?cat=${c.id}` : "/shop"}
-              aria-current={category === c.id ? "page" : undefined}
-              className={cn("flex min-h-[2.75rem] shrink-0 items-center rounded-full px-4 text-sm font-bold", category === c.id ? "sel-on" : "sel-off")}
-            >
-              {c.label}
-            </Link>
-          ))}
-        </nav>
+        {tabs.length > 1 && (
+          <nav className="flex gap-2 overflow-x-auto [scrollbar-width:none]" aria-label="Categorie">
+            {[{ id: undefined, label: "Tutto" }, ...tabs].map((c) => (
+              <Link
+                key={c.label}
+                href={c.id ? `/shop?cat=${c.id}` : "/shop"}
+                aria-current={category === c.id ? "page" : undefined}
+                className={cn("flex min-h-[2.75rem] shrink-0 items-center rounded-full px-4 text-sm font-bold", category === c.id ? "sel-on" : "sel-off")}
+              >
+                {c.label}
+              </Link>
+            ))}
+          </nav>
+        )}
 
         {products.length === 0 ? (
           <p className="py-10 text-center text-base text-[var(--muted-text)]">Niente in questa categoria, per ora.</p>
