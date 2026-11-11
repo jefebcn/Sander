@@ -19,6 +19,7 @@ import { parseCity } from "@/lib/cities"
 import { playerToCardData } from "@/components/player/SanderCardFut"
 import { NotificationBell } from "@/components/push/NotificationBell"
 import { MessagesBell } from "@/components/chat/MessagesBell"
+import { homeShop, ShopBell, ShopFeaturedCard } from "@/components/shop/ShopEntry"
 import { ClientOnlyHomeWidgets } from "@/components/home/ClientOnlyHomeWidgets"
 import { CrestHeading, CrestWordmark } from "@/components/home/Crest"
 import { PlayerCrest } from "@/components/home/PlayerCrest"
@@ -122,6 +123,7 @@ export default async function Home() {
   const boards = getCityLeaderboards().catch(() => [] as CityLeaderboard[])
   const scopriP = scopriSummary(player.id, player.homeCity, now).catch(() => null)
   const playAgainP = pendingPlayAgain(player.id, now).catch(() => null)
+  const shopP = homeShop().catch(() => ({ open: false, featured: null }))
   const [
     fullPlayer, recs, nextMatchRow, tournament, unreadCount, unreadMessages, invited, cityRank,
     recentTournament, unscored, recap, streak,
@@ -231,6 +233,7 @@ export default async function Home() {
   // result, or the live board of the one being played; else a practice board.
   const scopri = await scopriP
   const playAgain = await playAgainP
+  const shop = await shopP
   const score =
     unscored && unscored.entry.kind !== "wait"
       ? { href: unscored.entry.href, sub: "Il risultato" }
@@ -244,6 +247,7 @@ export default async function Home() {
       <header className="relative z-10 flex items-center gap-3">
         <CrestWordmark />
         <div className="ml-auto flex items-center gap-2">
+          {shop.open && <ShopBell />}
           <MessagesBell unreadCount={unreadMessages} />
           <NotificationBell unreadCount={unreadCount} />
         </div>
@@ -301,6 +305,11 @@ export default async function Home() {
           <QuickStart score={score} />
         )}
       </div>
+      {shop.featured && (
+        <div {...rise()}>
+          <ShopFeaturedCard p={shop.featured} />
+        </div>
+      )}
       {(() => {
         const race = (
           <YourRace

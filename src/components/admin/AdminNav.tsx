@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ArrowLeft, Banknote, Bug, ChartColumn, Coins, LayoutGrid, ShieldCheck, TrendingUp, Trophy } from "lucide-react"
+import { ArrowLeft, Banknote, Bug, ChartColumn, Coins, LayoutGrid, ShieldCheck, TrendingUp, Trophy, ShoppingBag } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const LINKS = [
@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/admin/metriche", icon: ChartColumn, label: "Metriche" },
   { href: "/admin/segnalazioni", icon: ShieldCheck, label: "Moderazione" },
   { href: "/admin/club", icon: Trophy, label: "Club" },
+  { href: "/admin/shop", icon: ShoppingBag, label: "Shop" },
   { href: "/admin/payments", icon: Banknote, label: "Pagamenti" },
   { href: "/admin/sistema", icon: Bug, label: "Sistema" },
   { href: "/profile?tab=admin", icon: Coins, label: "Crediti e contenuti" },

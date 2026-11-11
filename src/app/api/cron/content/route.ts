@@ -11,6 +11,7 @@ import { scopriMorning } from "@/lib/scopri/digest"
 import { confirmDueScores } from "@/lib/sessionScore"
 import { tournamentReminders } from "@/lib/tournamentReminders"
 import { sweepStaleSumUpSeats } from "@/actions/registration"
+import { releaseExpiredShopHolds } from "@/lib/shopOrders"
 import { plusPassReminders } from "@/lib/scopri/passReminder"
 
 export const runtime = "nodejs"
@@ -89,5 +90,12 @@ export async function GET(req: NextRequest) {
     return 0
   })
 
-  return NextResponse.json({ ok: true, created, nudged, staleCancelled, scopri, scoresConfirmed, tournamentReminded, seatsFreed, passReminded })
+  // Shop orders left unpaid on SumUp's page: their pieces go back on sale
+  // (the shop pages also do this when someone buys).
+  const shopHoldsFreed = await releaseExpiredShopHolds(50).catch((e) => {
+    console.error("[cron] shop hold release failed", e)
+    return 0
+  })
+
+  return NextResponse.json({ ok: true, created, nudged, staleCancelled, scopri, scoresConfirmed, tournamentReminded, seatsFreed, passReminded, shopHoldsFreed })
 }
