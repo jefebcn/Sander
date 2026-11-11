@@ -8,6 +8,8 @@ import { isAdminEmail } from "@/lib/isAdmin"
 import { formatDate } from "@/lib/utils"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { ClubStatusButtons } from "@/components/club/ClubStatusButtons"
+import { clubVerifyCode, SANDER_INSTAGRAM } from "@/lib/clubVerify"
+import { instagramHandle } from "@/lib/club"
 
 const LABEL = { PENDING: "Da approvare", APPROVED: "Attivo", REJECTED: "Rifiutato", SUSPENDED: "Sospeso" } as const
 
@@ -37,7 +39,16 @@ export default async function AdminClubPage() {
         <p className="text-sm text-[var(--muted-text)]">
           Referente: {c.members[0]?.player.name ?? "—"} {c.members[0]?.player.user?.email ? `(${c.members[0].player.user.email})` : ""}
         </p>
-        {c.instagram && <p className="text-sm text-[var(--muted-text)]">Instagram: @{c.instagram}</p>}
+        {c.instagram && <p className="text-sm text-[var(--muted-text)]">Instagram: @{instagramHandle(c.instagram) ?? c.instagram}</p>}
+        {c.status === "PENDING" && (
+          <p className="mt-2 rounded-xl bg-[var(--surface-3)] px-3 py-2 text-sm text-white">
+            Codice di verifica: <b className="select-all font-mono text-base text-[var(--accent)]">{clubVerifyCode(c.id)}</b>
+            <span className="block text-[var(--muted-text)]">
+              Approva quando questo codice arriva in DM a @{SANDER_INSTAGRAM}
+              {c.instagram ? ` dal profilo @${instagramHandle(c.instagram) ?? c.instagram}` : " dal profilo del club (o dall'email ufficiale, se non ha Instagram)"}.
+            </span>
+          </p>
+        )}
         <p className="text-sm text-[var(--muted-text)]">{c._count.tournaments} tornei · {c._count.followers} follower</p>
       </div>
       <ClubStatusButtons clubId={c.id} status={c.status} />
@@ -56,7 +67,7 @@ export default async function AdminClubPage() {
             <ul className="flex flex-col gap-2">{pending.map(card)}</ul>
           )}
           <p className="text-sm text-[var(--muted-text)]">
-            Prima di approvare controlla che chi chiede sia davvero della società (Instagram del club, email ufficiale).
+            Ogni richiesta ha il suo codice: la società lo vede nella pagina del club e te lo manda in DM su Instagram dal profilo del club. Approva solo se codice e profilo corrispondono.
           </p>
         </section>
         {rest.length > 0 && (
