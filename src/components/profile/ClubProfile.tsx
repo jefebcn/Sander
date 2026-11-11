@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { BarChart3, CalendarDays, ClipboardCheck, ExternalLink, Eye, Image as ImageIcon, Medal, Megaphone, PlusCircle, QrCode, Settings2, Trophy, UserCog, Users } from "lucide-react"
+import { BarChart3, CalendarDays, ChevronLeft, ChevronRight, ClipboardCheck, ExternalLink, Eye, Image as ImageIcon, Medal, Megaphone, PlusCircle, QrCode, Settings2, Trophy, UserCog, Users } from "lucide-react"
 import { db } from "@/lib/db"
 import { clubDashboard, isUpcoming } from "@/lib/clubDashboard"
 import { clubChecklist } from "@/lib/club"
@@ -10,11 +10,16 @@ import { StatusBadge } from "@/components/tournament/StatusBadge"
 import { clubYearStats } from "@/lib/clubRoster"
 import { loadClubRoster } from "@/lib/clubRosterQuery"
 import { cn } from "@/lib/utils"
+import { busyDays, courtCount, DAY_RE, layoutDay, shiftDay, weekOf } from "@/lib/clubCalendar"
+import { dayKey, formatTime, hasTimeOfDay } from "@/lib/datetime"
+import { romeWallTime } from "@/lib/romeMonth"
+import { ClubCalendar } from "./ClubCalendar"
 import { BackRow, Eyebrow, ListGroup, ListRow, Segments } from "./ProfileUI"
 import { ClubPlayersList } from "./ClubPlayersList"
 
-export type ClubTab = "plancia" | "tornei" | "giocatori" | "gestione" | "statistiche"
-export const CLUB_TABS: ClubTab[] = ["plancia", "tornei", "giocatori", "gestione", "statistiche"]
+export type ClubTab = "plancia" | "tornei" | "giocatori" | "calendario" | "gestione" | "statistiche"
+export const CLUB_TABS: ClubTab[] = ["plancia", "tornei", "giocatori", "calendario", "gestione", "statistiche"]
+const WEEKDAYS = ["LUN", "MAR", "MER", "GIO", "VEN", "SAB", "DOM"]
 
 const MONTHS = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"]
 const MONTH_LETTERS = ["G", "F", "M", "A", "M", "G", "L", "A", "S", "O", "N", "D"]
@@ -31,7 +36,7 @@ function Kpi({ label, value, hint, tone }: { label: string; value: string; hint:
 }
 
 /** The profile in club mode: the club's dashboard instead of the staff member's card. */
-export async function ClubProfile({ clubId, tab, year, header }: { clubId: string; tab: ClubTab; year?: number; header: React.ReactNode }) {
+export async function ClubProfile({ clubId, tab, year, day, header }: { clubId: string; tab: ClubTab; year?: number; day?: string; header: React.ReactNode }) {
   const now = new Date()
   const [club, tournaments, followers] = await Promise.all([
     db.club.findUniqueOrThrow({ where: { id: clubId } }),
@@ -85,6 +90,25 @@ export async function ClubProfile({ clubId, tab, year, header }: { clubId: strin
     : new Map<string, string>()
   const maxMonth = stats ? Math.max(1, ...stats.monthly) : 1
 
+  // Calendario: the week of the chosen day, the day court by court.
+  const today = dayKey(now)
+  const calDay = day && DAY_RE.test(day) ? day : today
+  const week = weekOf(calDay)
+  const courts = courtCount(club.courts)
+  const weekStart = romeWallTime(week[0], "00:00")
+  const weekEnd = romeWallTime(shiftDay(week[6], 1), "00:00")
+  const weekEvents =
+    tab === "calendario"
+      ? await db.clubEvent.findMany({
+          where: { clubId, startsAt: { lt: weekEnd }, endsAt: { gt: weekStart } },
+          orderBy: { startsAt: "asc" },
+          select: { id: true, kind: true, title: true, startsAt: true, endsAt: true, court: true, note: true },
+        })
+      : []
+  const weekTournaments = tab === "calendario" ? tournaments.filter((t) => t.date >= weekStart && t.date < weekEnd) : []
+  const busy = busyDays([...weekEvents, ...weekTournaments.map((t) => ({ startsAt: t.date }))])
+  const dayLayout = tab === "calendario" ? layoutDay(calDay, weekEvents, courts) : null
+
   return (
     <div className="flex flex-col gap-3 px-4 pb-6">
       {header}
@@ -94,7 +118,7 @@ export async function ClubProfile({ clubId, tab, year, header }: { clubId: strin
           { id: "plancia", label: "Plancia", href: "/profile" },
           { id: "tornei", label: "Tornei", href: "/profile?tab=tornei" },
           { id: "giocatori", label: "Giocatori", href: "/profile?tab=giocatori" },
-          { id: "gestione", label: "Gestione", href: "/profile?tab=gestione" },
+          { id: "calendario", label: "Calendario", href: "/profile?tab=calendario" },
         ]}
       />
 
@@ -195,6 +219,66 @@ export async function ClubProfile({ clubId, tab, year, header }: { clubId: strin
             firstSeen: r.firstSeen.toISOString(),
           }))}
         />
+      )}
+
+      {tab === "calendario" && dayLayout && (
+        <>
+          <div className="flex items-center gap-1">
+            <Link href={`/profile?tab=calendario&giorno=${shiftDay(calDay, -7)}`} aria-label="Settimana prima" className="flex h-12 w-8 shrink-0 items-center justify-center text-[var(--muted-text)]">
+              <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+            </Link>
+            <div className="grid flex-1 grid-cols-7 gap-1">
+              {week.map((d, i) => (
+                <Link
+                  key={d}
+                  href={`/profile?tab=calendario&giorno=${d}`}
+                  scroll={false}
+                  aria-current={d === calDay ? "date" : undefined}
+                  className={cn(
+                    "flex min-h-[3.5rem] flex-col items-center justify-center rounded-xl",
+                    d === calDay ? "bg-[var(--accent)] text-black" : "bg-[var(--surface-2)] text-white",
+                    d === today && d !== calDay && "ring-1 ring-[var(--accent-line)]",
+                  )}
+                >
+                  <span className={cn("text-[10px] font-bold", d === calDay ? "text-black/70" : "text-[var(--muted-text)]")}>{WEEKDAYS[i]}</span>
+                  <span className="font-display text-lg font-extrabold leading-none">{Number(d.slice(8))}</span>
+                  <span className={cn("mt-0.5 h-1.5 w-1.5 rounded-full", busy.has(d) ? (d === calDay ? "bg-black" : "bg-[var(--compete)]") : "bg-transparent")} />
+                </Link>
+              ))}
+            </div>
+            <Link href={`/profile?tab=calendario&giorno=${shiftDay(calDay, 7)}`} aria-label="Settimana dopo" className="flex h-12 w-8 shrink-0 items-center justify-center text-[var(--muted-text)]">
+              <ChevronRight className="h-5 w-5" aria-hidden="true" />
+            </Link>
+          </div>
+          {!club.courts && (
+            <Link href={`${manage}#pagina`} className="rounded-2xl bg-[var(--surface-2)] px-4 py-3 text-sm text-[var(--muted-text)]">
+              Il calendario mostra 1 campo: <span className="font-bold text-[var(--accent)]">indica quanti campi avete</span> nella pagina del club.
+            </Link>
+          )}
+          <ClubCalendar
+            clubId={club.id}
+            day={calDay}
+            courts={courts}
+            startHour={dayLayout.startHour}
+            endHour={dayLayout.endHour}
+            tournaments={weekTournaments
+              .filter((t) => dayKey(t.date) === calDay)
+              .map((t) => ({ id: t.id, name: t.name, time: hasTimeOfDay(t.date) ? formatTime(t.date) : null }))}
+            placed={dayLayout.placed.map((p) => ({
+              id: p.event.id,
+              kind: p.event.kind,
+              title: p.event.title,
+              start: formatTime(p.event.startsAt),
+              end: formatTime(p.event.endsAt),
+              court: p.event.court,
+              note: weekEvents.find((e) => e.id === p.event.id)?.note ?? null,
+              rowStart: p.rowStart,
+              rowEnd: p.rowEnd,
+              colStart: p.colStart,
+              colEnd: p.colEnd,
+            }))}
+          />
+        </>
       )}
 
       {tab === "statistiche" && stats && (
@@ -343,6 +427,7 @@ export async function ClubProfile({ clubId, tab, year, header }: { clubId: strin
 
       {tab === "gestione" && (
         <>
+          <BackRow href="/profile" label="Plancia" />
           <ListGroup>
             <ListRow href={`${manage}#pagina`} icon={<Settings2 className="h-5 w-5 text-[var(--accent)]" />} title="Pagina del club" subtitle="Logo, campi, servizi, foto, contatti" />
             <ListRow href={`${manage}#scrivi`} icon={<Megaphone className="h-5 w-5 text-[var(--accent)]" />} title="Scrivi ai giocatori" subtitle="Notifica a follower o iscritti" />

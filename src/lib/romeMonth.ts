@@ -82,3 +82,16 @@ export function romeDayStart(now: Date = new Date()): Date {
   const [y, m, d] = dayKey(now).split("-").map(Number)
   return romeMidnight(y, m, d)
 }
+
+/**
+ * The instant of a wall-clock time in Rome: "2026-11-22" at "09:30" → the UTC
+ * Date for 09:30 in Rimini that day (winter or summer time alike).
+ */
+export function romeWallTime(day: string, time: string): Date {
+  const [y, m, d] = day.split("-").map(Number)
+  const [hh, mm] = time.split(":").map(Number)
+  const guess = Date.UTC(y, m - 1, d, hh, mm)
+  let t = guess - romeOffsetMs(guess)
+  t = guess - romeOffsetMs(t)
+  return new Date(t)
+}

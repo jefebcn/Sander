@@ -340,6 +340,7 @@ model Club {
   tournaments Tournament[]
   circuits    ClubCircuit[]
   messages    ClubMessage[]
+  events      ClubEvent[]
 
   @@index([status])
   @@index([staffInviteToken])
@@ -359,6 +360,27 @@ model ClubCircuit {
 
   @@index([clubId])
   @@map("club_circuits")
+}
+
+/// The club's calendar: who has which court, when. Bookings, open games,
+/// training, events, or a court closed. court null = all courts.
+model ClubEvent {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  clubId      String
+  /// PARTITA | ALLENAMENTO | EVENTO | CHIUSO (lib/clubCalendar.ts)
+  kind        String
+  title       String
+  startsAt    DateTime
+  endsAt      DateTime
+  court       Int?
+  note        String?
+  createdById String?
+
+  club Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  @@index([clubId, startsAt])
+  @@map("club_events")
 }
 
 /// A notification the club sent to its followers or to a tournament's players.

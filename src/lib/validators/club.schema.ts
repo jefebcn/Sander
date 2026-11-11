@@ -3,6 +3,7 @@ import { CLUB_SERVICE_KEYS, MAX_BIO_LINKS, MAX_CLUB_PHOTOS } from "@/lib/club"
 import { MAX_BAGNO } from "@/lib/bagni"
 import { PAYMENT_PROVIDER_NAMES, paymentProvider } from "@/lib/paymentLink"
 import { CLUB_SLUG_RE } from "@/lib/profileMode"
+import { CLUB_EVENT_KINDS, DAY_RE, MAX_COURTS } from "@/lib/clubCalendar"
 
 const optionalText = (max: number) =>
   z.string().trim().max(max).optional().nullable().transform((v) => (v ? v : null))
@@ -83,3 +84,19 @@ export const SetTournamentPaymentLinkSchema = z.object({ tournamentId: z.string(
 export const ProfileModeSchema = z.object({
   clubSlug: z.string().trim().regex(CLUB_SLUG_RE, "Club non valido").nullable(),
 })
+
+const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/
+
+/** A calendar entry: day and Rome wall-clock times, a court or every court. */
+export const ClubEventSchema = z.object({
+  clubId: ClubIdSchema,
+  kind: z.enum(CLUB_EVENT_KINDS),
+  title: z.string().trim().min(1, "Scrivi cosa c'è").max(60, "Massimo 60 caratteri"),
+  day: z.string().regex(DAY_RE, "Data non valida"),
+  start: z.string().regex(HHMM, "Ora di inizio non valida"),
+  end: z.string().regex(HHMM, "Ora di fine non valida"),
+  court: z.number().int().min(1).max(MAX_COURTS).nullable(),
+  note: z.string().trim().max(200, "Nota troppo lunga").optional().default(""),
+})
+
+export const ClubEventIdSchema = z.object({ id: z.string().trim().min(1).max(64) })
