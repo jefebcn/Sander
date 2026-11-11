@@ -20,6 +20,7 @@ import { playerToCardData } from "@/components/player/SanderCardFut"
 import { NotificationBell } from "@/components/push/NotificationBell"
 import { MessagesBell } from "@/components/chat/MessagesBell"
 import { homeShop, ShopBell, ShopFeaturedCard } from "@/components/shop/ShopEntry"
+import { ReviewNudge } from "@/components/app/StoreReview"
 import { ClientOnlyHomeWidgets } from "@/components/home/ClientOnlyHomeWidgets"
 import { CrestHeading, CrestWordmark } from "@/components/home/Crest"
 import { PlayerCrest } from "@/components/home/PlayerCrest"
@@ -310,6 +311,8 @@ export default async function Home() {
           <ShopFeaturedCard p={shop.featured} />
         </div>
       )}
+      {/* Scored matches, or games joined when nobody kept the score. */}
+      <ReviewNudge games={Math.max(player.matchesWon + player.matchesLost, player.sessionsPlayed)} />
       {(() => {
         const race = (
           <YourRace
