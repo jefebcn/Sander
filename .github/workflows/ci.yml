@@ -64,7 +64,12 @@ jobs:
           npx next start -p 3000 > next.log 2>&1 &
           for i in $(seq 1 60); do curl -sf http://localhost:3000/ > /dev/null && exit 0; sleep 1; done
           cat next.log; exit 1
-      - run: npx playwright install --with-deps chromium
+      # The browser comes from Playwright's CDN. The system packages come from
+      # Ubuntu's apt mirror, which is sometimes unreachable from the runner;
+      # the runner image already has the libraries Chromium needs (only extra
+      # fonts are new), so a mirror outage must not stop the tests from running.
+      - run: npx playwright install chromium
+      - run: npx playwright install-deps chromium || echo "::warning::apt mirror unreachable, using the runner image's libraries"
       - run: node scripts/e2e/smoke.mjs
         env:
           BASE_URL: http://localhost:3000
