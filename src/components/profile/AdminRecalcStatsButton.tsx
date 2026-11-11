@@ -66,7 +66,7 @@ export function AdminRecalcStatsButton() {
     <button
       onClick={() => setConfirm(true)}
       className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl text-sm font-bold"
-      style={{ background: "color-mix(in srgb, var(--danger) 12%, transparent)", color: "var(--danger)", border: "1px solid color-mix(in srgb, var(--danger) 25%, transparent)" }}
+      style={{ background: "rgb(255 77 109 / 0.12)", color: "var(--danger)", border: "1px solid rgb(255 77 109 / 0.25)" }}
     >
       Ricalcola tutte le statistiche dal 0
     </button>

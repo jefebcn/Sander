@@ -77,7 +77,7 @@ export function InviteTab({ promoCode, inviteCount, leaderboard = [] }: InviteTa
         <div
           aria-hidden="true"
           className="sun-drift pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full"
-          style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--social) 26%, transparent) 0%, transparent 65%)" }}
+          style={{ background: "radial-gradient(circle, rgb(73 217 201 / 0.26) 0%, transparent 65%)" }}
         />
         <p className="eyebrow relative text-[var(--tone)]">Invita gli amici</p>
         <h2 className="font-hand relative mt-1 text-[2.3rem] leading-[0.95] text-white">

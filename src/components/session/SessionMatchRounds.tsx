@@ -112,7 +112,7 @@ export function SessionMatchRounds({ sessionId, matches, isOrganizer, sessionSta
 
         {error && (
           <p className="rounded-xl px-4 py-2.5 text-sm font-medium text-[var(--danger)]"
-            style={{ background: "color-mix(in srgb, var(--danger) 12%, transparent)" }}>
+            style={{ background: "rgb(255 77 109 / 0.12)" }}>
             {error}
           </p>
         )}
@@ -144,7 +144,7 @@ export function SessionMatchRounds({ sessionId, matches, isOrganizer, sessionSta
 
       {error && (
         <p className="rounded-xl px-4 py-2.5 text-sm font-medium text-[var(--danger)]"
-          style={{ background: "color-mix(in srgb, var(--danger) 12%, transparent)" }}>
+          style={{ background: "rgb(255 77 109 / 0.12)" }}>
           {error}
         </p>
       )}

@@ -42,7 +42,7 @@ export function CookieBanner() {
       <div
         className="flex items-center gap-3 rounded-2xl px-4 py-2.5"
         style={{
-          background: "color-mix(in srgb, var(--surface-2) 96%, transparent)",
+          background: "rgb(26 27 30 / 0.96)",
           border: "1px solid var(--border)",
           backdropFilter: "blur(12px)",
           boxShadow: "var(--shadow-card)",

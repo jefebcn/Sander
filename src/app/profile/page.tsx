@@ -782,7 +782,7 @@ export default async function ProfilePage({ searchParams }: Props) {
           {/* DB error display */}
           {adminError && (
             <div className="rounded-2xl px-4 py-3 text-xs font-mono break-all"
-              style={{ background: "color-mix(in srgb, var(--danger) 13%, transparent)", color: "var(--danger)" }}>
+              style={{ background: "rgb(255 77 109 / 0.13)", color: "var(--danger)" }}>
               {adminError}
             </div>
           )}

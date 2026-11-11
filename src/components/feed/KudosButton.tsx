@@ -45,7 +45,7 @@ export function KudosButton({ targetType, targetId, initialCount, initialReacted
       disabled={!canReact}
       className="flex min-h-[2.75rem] min-w-[2.75rem] items-center justify-center gap-1.5 rounded-full px-3 text-base font-bold transition-colors"
       style={{
-        background: reacted ? "color-mix(in srgb, var(--defender) 15%, transparent)" : "var(--surface-3)",
+        background: reacted ? "rgb(73 217 201 / 0.15)" : "var(--surface-3)",
         color: reacted ? "var(--defender)" : "var(--muted-text)",
         cursor: canReact ? "pointer" : "default",
       }}

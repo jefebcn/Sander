@@ -264,7 +264,7 @@ export default function StatsGuidePage() {
           <div className="flex items-center gap-3">
             <div
               className="flex h-10 w-10 items-center justify-center rounded-xl flex-shrink-0"
-              style={{ background: "color-mix(in srgb, var(--danger) 15%, transparent)" }}
+              style={{ background: "rgb(255 77 109 / 0.15)" }}
             >
               <TrendingUp className="h-5 w-5" style={{ color: "var(--danger)" }} />
             </div>

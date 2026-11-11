@@ -77,7 +77,7 @@ export function DuoShareButton({ playerA, playerB, played, won, winRate }: Props
         disabled={status === "loading"}
         className="flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-2xl text-sm font-black transition-opacity active:opacity-80"
         style={{
-          background: status === "error" ? "color-mix(in srgb, var(--danger) 10%, transparent)" : "rgba(198,247,54,0.08)",
+          background: status === "error" ? "rgb(255 77 109 / 0.1)" : "rgba(198,247,54,0.08)",
           border: "1px solid rgba(198,247,54,0.25)",
           color: status === "error" ? "var(--danger)" : "var(--accent)",
           opacity: status === "loading" ? 0.6 : 1,
