@@ -58,7 +58,7 @@ export function ShopProfileRow() {
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-base font-extrabold text-white">Shop SANDER</span>
-        <span className="block truncate text-sm text-[var(--muted-text)]">Maglie, canotte, accessori · I miei ordini</span>
+        <span className="block truncate text-sm text-[var(--muted-text)]">Merch ufficiale · I miei ordini</span>
       </span>
       <ChevronRight className="h-5 w-5 shrink-0 text-[var(--muted-text)]" aria-hidden="true" />
     </Link>
@@ -79,7 +79,7 @@ export async function ShopUpsell() {
         </span>
       )}
       <span className="min-w-0 flex-1">
-        <span className="block text-base font-extrabold text-white">Vuoi la maglia per il torneo?</span>
+        <span className="block text-base font-extrabold text-white">Porta SANDER al torneo</span>
         <span className="block text-sm text-[var(--muted-text)]">La ritiri gratis al campo, il giorno della gara.</span>
       </span>
       <ChevronRight className="h-5 w-5 shrink-0 text-[var(--muted-text)]" aria-hidden="true" />
