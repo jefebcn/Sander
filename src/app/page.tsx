@@ -311,7 +311,8 @@ export default async function Home() {
           <ShopFeaturedCard p={shop.featured} />
         </div>
       )}
-      <ReviewNudge games={player.matchesWon + player.matchesLost} />
+      {/* Scored matches, or games joined when nobody kept the score. */}
+      <ReviewNudge games={Math.max(player.matchesWon + player.matchesLost, player.sessionsPlayed)} />
       {(() => {
         const race = (
           <YourRace

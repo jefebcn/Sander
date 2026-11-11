@@ -1,7 +1,7 @@
 "use client"
 
 import { useSyncExternalStore } from "react"
-import { ArrowUpRight, Star } from "lucide-react"
+import { ArrowUpRight, ChevronRight, Star } from "lucide-react"
 import { useIsNativeApp, useNativePlatform } from "@/lib/native"
 import { REVIEW_STATE_KEY, shouldAskReview, snoozeUntil, storeName, storeReviewUrl } from "@/lib/storeReview"
 
@@ -42,6 +42,23 @@ export function RateAppLink({ className }: { className?: string }) {
     <a href={url} target="_blank" rel="noopener noreferrer" onClick={() => writeState("done")} className={className}>
       Valuta l&apos;app su {storeName(url)}
       <ArrowUpRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+    </a>
+  )
+}
+
+/** The same link as a row of the profile's Account list, always there. */
+export function RateAppRow() {
+  const url = useStoreUrl()
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer" onClick={() => writeState("done")} className="flex min-h-[3.75rem] items-center gap-3 px-3.5 py-2 active:bg-[var(--surface-3)]">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-3)]">
+        <Star className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-base font-bold text-white">Valuta SANDER</span>
+        <span className="block truncate text-sm text-[var(--muted-text)]">Lascia una recensione su {storeName(url)}</span>
+      </span>
+      <ChevronRight className="h-5 w-5 shrink-0 text-[var(--muted-text)]" aria-hidden="true" />
     </a>
   )
 }
