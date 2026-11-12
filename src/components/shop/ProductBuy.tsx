@@ -5,7 +5,7 @@ import Link from "next/link"
 import { CreditCard, MapPin, Minus, Plus, ShieldCheck, Truck } from "lucide-react"
 import { toast } from "sonner"
 import { startShopCheckout } from "@/actions/shop"
-import { euro, orderTotals, SHOP_MAX_QTY, SHOP_SHIPPING_CENTS, stockLabel, type ShopDelivery } from "@/lib/shop"
+import { euro, orderTotals, SHOP_MAX_QTY, SHOP_SHIPPING_CENTS, stockLabel, swatchColor, type ColorOption, type ShopDelivery } from "@/lib/shop"
 import { cn } from "@/lib/utils"
 
 export interface BuyVariant {
@@ -16,10 +16,29 @@ export interface BuyVariant {
 
 const FIELD = "min-h-[3.5rem] w-full rounded-[var(--radius-sm)] bg-[var(--surface-3)] px-4 text-base text-white placeholder:text-[var(--muted-text)] outline-none focus:ring-2 focus:ring-[var(--accent)]"
 
-/** Size, quantity, pickup or shipping, then SumUp. */
-export function ProductBuy({ priceCents, variants, signedIn, slug }: { priceCents: number; variants: BuyVariant[]; signedIn: boolean; slug: string }) {
-  const firstAvailable = variants.find((v) => v.stock > 0)
-  const [variantId, setVariantId] = useState<string | null>(variants.length === 1 ? (firstAvailable?.id ?? null) : null)
+/** Colour (when there are several), size, quantity, pickup or shipping, then SumUp. */
+export function ProductBuy({
+  priceCents,
+  variants: allVariants,
+  signedIn,
+  slug,
+  colors = null,
+  color = null,
+  onColor,
+}: {
+  priceCents: number
+  variants: BuyVariant[]
+  signedIn: boolean
+  slug: string
+  colors?: ColorOption[] | null
+  color?: string | null
+  onColor?: (color: string) => void
+}) {
+  const current = colors?.find((c) => c.name === color) ?? null
+  // With colours, the size buttons are the chosen colour's sizes.
+  const variants: BuyVariant[] = current ? current.sizes.map((z) => ({ id: z.id, label: z.size, stock: z.stock })) : allVariants
+  const firstAvailable = allVariants.find((v) => v.stock > 0)
+  const [variantId, setVariantId] = useState<string | null>(variants.length === 1 ? (variants[0].stock > 0 ? variants[0].id : null) : null)
   const [qty, setQty] = useState(1)
   const [delivery, setDelivery] = useState<ShopDelivery>("PICKUP")
   const [ship, setShip] = useState({ shipName: "", shipAddress: "", shipCity: "", shipZip: "", shipPhone: "" })
@@ -31,6 +50,17 @@ export function ProductBuy({ priceCents, variants, signedIn, slug }: { priceCent
   const totals = orderTotals(priceCents, qty, delivery)
   const soldOut = !firstAvailable
   const oneSize = variants.length === 1
+
+  function pickColor(next: ColorOption) {
+    if (!onColor) return
+    onColor(next.name)
+    // Same size in the new colour when it's there, otherwise choose again.
+    const same = next.sizes.find((z) => z.size === selected?.label && z.stock > 0)
+    const only = next.sizes.length === 1 && next.sizes[0].stock > 0 ? next.sizes[0] : null
+    const keep = same ?? only
+    setVariantId(keep?.id ?? null)
+    if (keep) setQty((q) => Math.min(q, Math.max(1, Math.min(SHOP_MAX_QTY, keep.stock))))
+  }
 
   function pay() {
     if (!selected) {
@@ -50,6 +80,33 @@ export function ProductBuy({ priceCents, variants, signedIn, slug }: { priceCent
 
   return (
     <div className="flex flex-col gap-5">
+      {colors && (
+        <div>
+          <p className="mb-2 text-base font-extrabold text-white">
+            Colore <span className="font-bold text-[var(--muted-text)]">· {color}</span>
+          </p>
+          <div className="grid grid-cols-4 gap-2">
+            {colors.map((c) => {
+              const out = c.sizes.every((z) => z.stock <= 0)
+              const on = c.name === color
+              return (
+                <button
+                  key={c.name}
+                  type="button"
+                  aria-pressed={on}
+                  aria-label={out ? `${c.name}, esaurito` : c.name}
+                  onClick={() => pickColor(c)}
+                  className={cn("flex min-h-[4.5rem] flex-col items-center justify-center gap-1.5 rounded-[var(--radius-sm)] text-sm font-extrabold", on ? "sel-on" : "sel-off", out && "opacity-40")}
+                >
+                  <span className="h-7 w-7 rounded-full ring-2 ring-[var(--muted-text)]" style={{ background: swatchColor(c.name) }} aria-hidden="true" />
+                  <span className={cn(out && "line-through")}>{c.name}</span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {!oneSize && (
         <div>
           <p className="mb-2 text-base font-extrabold text-white">Taglia</p>
@@ -76,7 +133,8 @@ export function ProductBuy({ priceCents, variants, signedIn, slug }: { priceCent
               )
             })}
           </div>
-          {selected && stockLabel(selected.stock) && <p className="mt-2 text-sm font-bold text-[var(--accent)]">{stockLabel(selected.stock)} in {selected.label}</p>}
+          {selected && stockLabel(selected.stock) && <p className="mt-2 text-sm font-bold text-[var(--accent)]">{stockLabel(selected.stock)} in {selected.label}{current ? ` ${current.name.toLowerCase()}` : ""}</p>}
+          {current && current.sizes.every((z) => z.stock <= 0) && <p className="mt-2 text-sm font-bold text-[var(--muted-text)]">Esaurito in questo colore: provane un altro.</p>}
         </div>
       )}
 

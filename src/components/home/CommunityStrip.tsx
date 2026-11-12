@@ -32,7 +32,7 @@ export function CommunityStrip() {
         ))}
       </div>
 
-      {/* Partner slot: the current sponsor, plus a way in for the next one. */}
+      {/* Partner slot: the current sponsors, plus a way in for the next one. */}
       <div className="overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-2)] ring-1 ring-[var(--crest-hair)]">
         <a
           href="https://www.pepitoseyewear.com/"
@@ -47,6 +47,24 @@ export function CommunityStrip() {
           <span className="min-w-0 flex-1">
             <span className="eyebrow block text-[var(--muted-text)]">Partner</span>
             <span className="block text-base font-extrabold text-white">Pepitos Eyewear</span>
+            <span className="block truncate text-sm text-[var(--muted-text)]">Occhiali da sole</span>
+          </span>
+          <ExternalLink className="h-5 w-5 shrink-0 text-[var(--muted-text)]" aria-hidden="true" />
+        </a>
+        <a
+          href="https://fisioterapiaganzerli.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex min-h-[4.5rem] items-center gap-4 border-t border-[var(--border)] p-4"
+        >
+          {/* A wide logo on white: shown whole on a white tile. */}
+          <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[var(--radius-sm)] bg-white">
+            <Image src="/sponsors/fisioganzerli.png" alt="" fill sizes="56px" className="object-contain p-1" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="eyebrow block text-[var(--muted-text)]">Partner</span>
+            <span className="block text-base font-extrabold text-white">Fisioganzerli</span>
+            <span className="block truncate text-sm text-[var(--muted-text)]">Fisioterapia &amp; Riabilitazione</span>
           </span>
           <ExternalLink className="h-5 w-5 shrink-0 text-[var(--muted-text)]" aria-hidden="true" />
         </a>

@@ -39,11 +39,11 @@ Vale per storie, post e caroselli, su Instagram e TikTok insieme. La stessa foto
 | `tramonto-coppia` | storia 5 nov |
 | `palla-sabbia` | storia 8 nov |
 | `tuffo-sera` | TikTok 4 nov (carosello Scopri, 1) |
-| `gruppo-sera` | TikTok 4 nov (carosello Scopri, 3) |
+| `gruppo-sera` | TikTok 4 nov (carosello Scopri, 3) · storia App Store (La partita in tasca) — **esaurita** |
 | `battuta-ombrelloni` | IG 14 nov (Ci sei davvero?) |
 | `piedi-corsa` | TikTok 14 nov (Coppie, 1) |
 | `alzata-notte` | IG 17 nov (La giornata tipo) |
-| `schiacciata-tramonto` | TikTok 19 nov (Foto verificata, 1) |
+| `schiacciata-tramonto` | TikTok 19 nov (Foto verificata, 1) · post fissato App Store (Il beach volley ha la sua app) — **esaurita** |
 | `batti-cinque` | IG 22 nov (Rigiocheresti) |
 | `bagher-notte` | IG 24 nov (Chi porta il pallone?) |
 
@@ -53,4 +53,4 @@ Già esaurite, non riusarle: le foto del pacchetto Stagione 2 (coppia con la mag
 
 Oltre alle foto, non si ripetono titoli, temi e frasi delle didascalie, tra Instagram e TikTok insieme. Prima di programmare, scarica da Buffer i contenuti già usciti e in coda e controlla l'elenco qui sotto: un tema già fatto si può riprendere solo con un'angolazione nuova e un titolo diverso. Niente alcol nemmeno nei testi e negli sticker.
 
-Temi già usati (fino al 24 nov 2026): Stagione 1 e Stagione 2 · Come funziona / In tre tocchi / Entra in 1 minuto / Gioca e sali · Trova con chi giocare / Scopri · Manca sempre il quarto / Manca sempre uno (serie) · Proponi una partita · Libero oggi · Porta un amico · Livelli · Novità di novembre · Sander Club 2v2 · Si gioca anche a novembre · Gioca fino al tramonto · La prossima palla è tua · A piedi nudi / dress code zero scarpe · Tornei SANDER · 21-19 · La giornata tipo · Classifica pulita (fair play) · Presenze verificate · Coppie 2v2 · Foto verificata · Kit del sabato · Rigiocheresti · La chat della partita.
+Temi già usati (fino al 24 nov 2026): Stagione 1 e Stagione 2 · Come funziona / In tre tocchi / Entra in 1 minuto / Gioca e sali · Trova con chi giocare / Scopri · Manca sempre il quarto / Manca sempre uno (serie) · Proponi una partita · Libero oggi · Porta un amico · Livelli · Novità di novembre · Sander Club 2v2 · Si gioca anche a novembre · Gioca fino al tramonto · La prossima palla è tua · A piedi nudi / dress code zero scarpe · Tornei SANDER · 21-19 · La giornata tipo · Classifica pulita (fair play) · Presenze verificate · Coppie 2v2 · Foto verificata · Kit del sabato · Rigiocheresti · La chat della partita · App su App Store e Google Play (storie: È ufficiale / La partita in tasca / Scaricala, è gratis; post fissato `post-app.mjs`: Il beach volley ha la sua app / Dentro l'app / Gratis, su iPhone e Android).

@@ -80,6 +80,39 @@ const STORIES = {
       <div class="hand acc" style="font-size:210px;margin-top:10px">palla<br>è tua</div>
     </div>
     <div class="foot"><div class="url">sanderbv.it</div><div class="small">Link in bio</div></div>`),
+  's6-app-ufficiale': page(`
+    <div class="bg lime"></div>
+    <div style="position:absolute;inset:0;color:#0b0b0b">
+    <div class="meta" style="opacity:.75"><span>Novità</span><span>Ufficiale</span><span>Gratis</span></div>
+    <div style="position:absolute;top:520px;left:72px;right:72px;text-align:center">
+      <div class="hand" style="font-size:130px">È ufficiale:</div>
+      <div class="hand" style="font-size:250px;margin-top:20px">SANDER</div>
+      <div style="font-size:52px;font-weight:800;line-height:1.25;margin-top:50px">ora è un'app vera,<br>su iPhone e Android</div>
+      <div style="display:flex;gap:24px;justify-content:center;margin-top:60px">
+        <span class="pill" style="border-color:#0b0b0b;font-weight:800">App Store</span>
+        <span class="pill" style="border-color:#0b0b0b;font-weight:800">Google Play</span>
+      </div>
+    </div>
+    <div class="foot"><img class="logo" src="${LOGO}"><div class="small" style="opacity:.8">Link in bio</div></div></div>`),
+  's7-app-in-tasca': page(`
+    <div class="bg" style="background-image:url(${BG("gruppo-sera")});background-position:center 70%"></div><div class="shade" style="background:linear-gradient(180deg,rgba(0,0,0,.45) 0%,rgba(0,0,0,.05) 45%,rgba(0,0,0,.1) 60%,rgba(0,0,0,.75) 100%)"></div>
+    <div class="meta"><span>App Store</span><span>Google Play</span></div>
+    <div style="position:absolute;top:380px;left:72px;right:60px;text-shadow:0 6px 30px rgba(0,0,0,.45)">
+      <div class="hand" style="font-size:180px">La partita</div>
+      <div class="hand acc" style="font-size:200px;margin-top:8px">in tasca</div>
+      <div style="margin-top:40px"><span class="pill" style="background:rgba(0,0,0,.25)">Partite · compagni · classifica</span></div>
+    </div>
+    <div class="foot"><div class="url">sanderbv.it</div><div class="small">Link in bio</div></div>`),
+  's8-scaricala': page(`
+    <div class="bg lime"></div>
+    <div style="position:absolute;inset:0;color:#0b0b0b">
+    <div class="meta" style="opacity:.75"><span>iPhone</span><span>Android</span><span>Gratis</span></div>
+    <div style="position:absolute;top:560px;left:72px;right:72px;text-align:center">
+      <div class="hand" style="font-size:200px">Scaricala,</div>
+      <div class="hand" style="font-size:170px;margin-top:10px">è gratis</div>
+      <div style="font-size:44px;font-weight:600;line-height:1.35;margin-top:70px">Cerca <b>SANDER</b> su App Store<br>o Google Play, oppure tocca<br>il link in bio.</div>
+    </div>
+    <div class="foot"><img class="logo" src="${LOGO}"><div class="url">sanderbv.it</div><div class="small">App Store · Google Play</div></div></div>`),
   's4-come-funziona': page(`
     <div class="bg dark"></div>
     <div class="meta" style="opacity:.6"><span>Come funziona</span><span>Gratis</span></div>

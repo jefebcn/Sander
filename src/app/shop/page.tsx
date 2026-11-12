@@ -7,7 +7,7 @@ import { ChevronRight, EyeOff, MapPin, Receipt, Settings } from "lucide-react"
 import { db } from "@/lib/db"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
 import { isAdminEmail } from "@/lib/isAdmin"
-import { euro, productImages, SHOP_CATEGORIES, SHOP_SHIPPING_CENTS, stockLabel } from "@/lib/shop"
+import { colorOptions, euro, productImages, SHOP_CATEGORIES, SHOP_SHIPPING_CENTS, stockLabel, swatchColor } from "@/lib/shop"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { ProductArt } from "@/components/shop/ProductArt"
 import { cn } from "@/lib/utils"
@@ -27,7 +27,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
     db.shopProduct.findMany({
       where: { ...(admin ? {} : { active: true }), ...(category ? { category } : {}) },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
-      select: { id: true, slug: true, name: true, priceCents: true, images: true, active: true, featured: true, variants: { select: { stock: true } } },
+      select: { id: true, slug: true, name: true, priceCents: true, images: true, active: true, featured: true, variants: { orderBy: { sortOrder: "asc" }, select: { id: true, label: true, stock: true } } },
     }),
     getCurrentPlayer(),
     db.shopProduct.groupBy({ by: ["category"], where: admin ? {} : { active: true } }),
@@ -94,6 +94,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
             {products.map((p) => {
               const stock = p.variants.reduce((n, v) => n + Math.max(0, v.stock), 0)
               const badge = !p.active ? null : stockLabel(stock)
+              const colors = colorOptions(p.variants)
               return (
                 <li key={p.id}>
                   <Link href={`/shop/${p.slug}`} className="pressable block rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-2.5">
@@ -113,7 +114,16 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
                     </div>
                     <div className="px-1 pb-1 pt-2.5">
                       <p className="line-clamp-2 text-base font-extrabold leading-tight text-white">{p.name}</p>
-                      <p className="num mt-1 text-xl text-[var(--accent)]">{euro(p.priceCents)}</p>
+                      <div className="mt-1 flex items-center justify-between gap-2">
+                        <p className="num text-xl text-[var(--accent)]">{euro(p.priceCents)}</p>
+                        {colors && (
+                          <span className="flex items-center gap-1" aria-label={`${colors.length} colori`}>
+                            {colors.map((c) => (
+                              <span key={c.name} className="h-3.5 w-3.5 rounded-full ring-1 ring-[var(--muted-text)]" style={{ background: swatchColor(c.name) }} aria-hidden="true" />
+                            ))}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </Link>
                 </li>

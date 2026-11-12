@@ -19,6 +19,12 @@
   --accent-dim: #a9d61e;
   --accent-fg: #0b0b0c;
 
+  /* Shop colour swatches ("Nero · M" variants): --swatch-<colour name> */
+  --swatch-nero: #111214;
+  --swatch-bianco: #f4f4f2;
+  --swatch-rosa: #f6b7d2;
+  --swatch-lime: #d4ff2e;
+
   /* Acqua — the sea */
   --sky: #49d9c9;
 

@@ -54,7 +54,8 @@ export const ShopProductSchema = z.object({
       }),
     )
     .min(1, "Serve almeno una taglia (anche «Taglia unica»)")
-    .max(12),
+    // Colours × sizes ("Nero · M"): 4 colours of 6 sizes still fit.
+    .max(40),
 })
 export type ShopProductInput = z.infer<typeof ShopProductSchema>
 
