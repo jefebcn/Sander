@@ -1537,6 +1537,8 @@ model ShopProduct {
   priceCents  Int
   /// Photo URLs, first one is the cover.
   images      Json          @default("[]")
+  /// Photos per colour when the variants are "Colore · Taglia": { "Nero": [urls] }.
+  colorImages Json?
   active      Boolean       @default(false)
   /// Shown as the "novità" card on the home.
   featured    Boolean       @default(false)

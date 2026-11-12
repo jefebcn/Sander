@@ -65,6 +65,51 @@ export function slugify(name: string): string {
   )
 }
 
+/* ── Colours ──────────────────────────────────────────────────────────────
+   A product in several colours keeps one variant per colour and size, named
+   "Nero · M": orders, stock, the admin form and the CSV need nothing else.
+   The first colour is the default one (its photos are the product's cover). */
+
+export const COLOR_SEP = " · "
+
+export interface ColorSize {
+  id: string
+  size: string
+  stock: number
+}
+export interface ColorOption {
+  name: string
+  sizes: ColorSize[]
+}
+
+/** Variants named "Colore · Taglia", grouped by colour in variant order; null when the product has one colour. */
+export function colorOptions(variants: { id: string; label: string; stock: number }[]): ColorOption[] | null {
+  if (variants.length === 0 || !variants.every((v) => v.label.includes(COLOR_SEP))) return null
+  const out: ColorOption[] = []
+  for (const v of variants) {
+    const at = v.label.indexOf(COLOR_SEP)
+    const name = v.label.slice(0, at).trim()
+    const size = v.label.slice(at + COLOR_SEP.length).trim()
+    if (!name || !size) return null
+    let c = out.find((o) => o.name === name)
+    if (!c) out.push((c = { name, sizes: [] }))
+    c.sizes.push({ id: v.id, size, stock: v.stock })
+  }
+  return out.length > 1 ? out : null
+}
+
+/** Photos of one colour (JSON column { "Nero": [...] }), or the product's own photos. */
+export function colorPhotos(raw: unknown, color: string | null, fallback: string[]): string[] {
+  if (!color || !raw || typeof raw !== "object" || Array.isArray(raw)) return fallback
+  const list = productImages((raw as Record<string, unknown>)[color])
+  return list.length ? list : fallback
+}
+
+/** CSS colour of a swatch: a --swatch-<name> variable in globals.css, grey when unknown. */
+export function swatchColor(color: string): string {
+  return `var(--swatch-${slugify(color)}, var(--surface-4))`
+}
+
 /** The images column is JSON: keep only http(s) strings, whatever is stored. */
 export function productImages(raw: unknown): string[] {
   if (!Array.isArray(raw)) return []

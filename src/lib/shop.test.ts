@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
+  colorOptions,
+  colorPhotos,
   csvCell,
   euro,
   isExpiredHold,
@@ -10,6 +12,7 @@ import {
   SHOP_SHIPPING_CENTS,
   slugify,
   stockLabel,
+  swatchColor,
 } from "./shop"
 
 describe("shop rules", () => {
@@ -57,5 +60,37 @@ describe("shop rules", () => {
     expect(csvCell("Via Roma; 3")).toBe('"Via Roma; 3"')
     expect(csvCell('Detto "ciao"')).toBe('"Detto ""ciao"""')
     expect(csvCell(null)).toBe("")
+  })
+})
+
+describe("shop colours", () => {
+  const v = (id: string, label: string, stock = 5) => ({ id, label, stock })
+
+  it("groups «Colore · Taglia» variants by colour, keeping their order", () => {
+    const c = colorOptions([v("1", "Nero · S"), v("2", "Nero · M", 0), v("3", "Bianco · S"), v("4", "Bianco · M")])
+    expect(c?.map((o) => o.name)).toEqual(["Nero", "Bianco"])
+    expect(c?.[0].sizes).toEqual([
+      { id: "1", size: "S", stock: 5 },
+      { id: "2", size: "M", stock: 0 },
+    ])
+  })
+
+  it("is null for plain sizes, a single colour or a mix", () => {
+    expect(colorOptions([v("1", "S"), v("2", "M")])).toBeNull()
+    expect(colorOptions([v("1", "Nero · S"), v("2", "Nero · M")])).toBeNull()
+    expect(colorOptions([v("1", "Nero · S"), v("2", "M")])).toBeNull()
+    expect(colorOptions([])).toBeNull()
+  })
+
+  it("picks a colour's photos, or falls back to the product's", () => {
+    const raw = { Nero: ["https://x.it/n.jpg"], Rosa: [] }
+    expect(colorPhotos(raw, "Nero", ["https://x.it/c.jpg"])).toEqual(["https://x.it/n.jpg"])
+    expect(colorPhotos(raw, "Rosa", ["https://x.it/c.jpg"])).toEqual(["https://x.it/c.jpg"])
+    expect(colorPhotos(null, "Nero", [])).toEqual([])
+    expect(colorPhotos(["x"], "Nero", ["https://x.it/c.jpg"])).toEqual(["https://x.it/c.jpg"])
+  })
+
+  it("names the swatch variable after the colour", () => {
+    expect(swatchColor("Lime")).toBe("var(--swatch-lime, var(--surface-4))")
   })
 })
