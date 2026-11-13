@@ -118,7 +118,7 @@ function page(w, h, mode, body) {
 const meta = (top, items) => `<div class="meta" style="top:${top}px">${items.map((i) => `<span>${esc(i)}</span>`).join("")}</div>`
 const title2 = ([a, b], size) =>
   `<div class="hand" style="font-size:${size}px;white-space:nowrap">${esc(a)}</div><div class="hand acc" style="font-size:${size}px;white-space:nowrap">${esc(b)}</div>`
-const closing = (align = "left") => `<div style="text-align:${align}"><img class="logo" src="${ICON}" style="${align === "center" ? "margin:0 auto 18px" : "margin-bottom:18px"}"><div class="url">sanderbv.it</div><div class="label" style="margin-top:6px">Link in bio</div></div>`
+const closing = (align = "left") => `<div style="text-align:${align}"><img class="logo" src="${ICON}" style="${align === "center" ? "margin:0 auto 18px" : "margin-bottom:18px"}"><div class="url">Scarica l'app</div><div class="label" style="margin-top:8px">App Store · Google Play</div><div class="label" style="margin-top:6px">Gratis · Link in bio</div></div>`
 
 // ─── Post slides (1080×1350) ─────────────────────────────────────────────────
 
@@ -161,7 +161,6 @@ function postCta({ line, img }) {
     <div style="position:absolute;top:260px;left:72px;width:500px">
       <div data-fit="250" style="margin-bottom:60px"><div class="hand" style="font-size:120px;white-space:nowrap">${esc(line[0])}</div><div class="hand" style="font-size:120px;white-space:nowrap">${esc(line[1])}</div></div>
       ${closing("left")}
-      <div class="label" style="margin-top:22px;opacity:.7">Gratis su iPhone e Android</div>
     </div>`)
 }
 
@@ -274,7 +273,7 @@ async function renderSlot(slot, browser) {
           postPhoneBullets({ eyebrow: f.name, heading: "Come funziona", img: screen(f.tutorial[1][0]), bullets: f.bullets }),
           postCta({ line: ["Provala", "su SANDER"], img: screen(f.tutorial[2][0]) }),
         ],
-        caption: caption([`${title.join(" ")} 🏐`, pick(f.captions, v), "Swipe per vedere come funziona. Gratis su iPhone e Android, link in bio.", HASHTAGS]),
+        caption: caption([`${title.join(" ")} 🏐`, pick(f.captions, v), "Swipe per vedere come funziona. App gratis su App Store e Google Play: link in bio.", HASHTAGS]),
       }
     }
     case "community": {
