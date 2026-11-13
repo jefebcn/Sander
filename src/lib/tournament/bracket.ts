@@ -9,8 +9,10 @@ function nextPowerOf2(n: number): number {
 }
 
 /**
- * Standard single-elimination seed order for a bracket of given size.
- * Seed 1 vs size, seed 2 vs size-1, etc. — recursively interleaved.
+ * Standard single-elimination seed order for a bracket of given size:
+ * element k is the seed placed at bracket position k (position → seed).
+ * Seed 1 vs size, seed 2 vs size-1, etc. — recursively interleaved,
+ * e.g. [1, 8, 4, 5, 2, 7, 3, 6] for 8.
  */
 function buildSeedOrder(size: number): number[] {
   if (size === 2) return [1, 2]
@@ -44,14 +46,10 @@ export function generateBracket(teams: BracketTeam[]): BracketMatch[] {
   const bracketSize = nextPowerOf2(teams.length)
   const totalRounds = Math.log2(bracketSize)
 
-  // Place teams into seeded positions; null = bye slot
+  // seedOrder[k] is the (1-based) seed at bracket position k. Seeds beyond
+  // teams.length don't exist and become byes, so byes go to the top seeds.
   const seedOrder = buildSeedOrder(bracketSize)
-  const slots: (BracketTeam | null)[] = Array(bracketSize).fill(null)
-  teams.forEach((team, i) => {
-    if (i < seedOrder.length) {
-      slots[seedOrder[i] - 1] = team // seedOrder is 1-based
-    }
-  })
+  const slots: (BracketTeam | null)[] = seedOrder.map((seed) => teams[seed - 1] ?? null)
 
   const allMatches: BracketMatch[] = []
 

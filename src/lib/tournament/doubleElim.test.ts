@@ -129,3 +129,41 @@ describe("generateDoubleElimination — 6 teams (padded to 8)", () => {
     expect(new Set(ids).size).toBe(ids.length)
   })
 })
+
+describe("generateDoubleElimination — WB first-round seeding", () => {
+  function wbR1Pairings(n: number) {
+    const teams = makeTeams(n)
+    const matches = generateDoubleElimination(teams)
+    const k = Math.max(...matches.filter((m) => m.bracketSection === "WB").map((m) => m.round))
+    const seedOf = (t: BracketTeam | null) => (t ? teams.indexOf(t) + 1 : null)
+    return matches
+      .filter((m) => m.bracketSection === "WB" && m.round === k)
+      .sort((a, b) => a.matchNumber - b.matchNumber)
+      .map((m) => [seedOf(m.teamA), seedOf(m.teamB)])
+  }
+
+  it("4 teams: 1v4, 2v3", () => {
+    expect(wbR1Pairings(4)).toEqual([
+      [1, 4],
+      [2, 3],
+    ])
+  })
+
+  it("8 teams: 1v8, 4v5, 2v7, 3v6", () => {
+    expect(wbR1Pairings(8)).toEqual([
+      [1, 8],
+      [4, 5],
+      [2, 7],
+      [3, 6],
+    ])
+  })
+
+  it("6 teams: seeds 1 and 2 get byes", () => {
+    expect(wbR1Pairings(6)).toEqual([
+      [1, null],
+      [4, 5],
+      [2, null],
+      [3, 6],
+    ])
+  })
+})
