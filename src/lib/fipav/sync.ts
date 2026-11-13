@@ -21,7 +21,7 @@ async function getJson(path: string, timeoutMs = 15_000): Promise<unknown> {
     signal: AbortSignal.timeout(timeoutMs),
     cache: "no-store",
   })
-  if (!res.ok) throw new Error(`FIPAV ${path}: HTTP ${res.status}`)
+  if (!res.ok) throw new Error(`FIPAV ${path}: HTTP ${res.status} ${res.headers.get("server") ?? ""}`.trim())
   return res.json()
 }
 
@@ -214,6 +214,8 @@ export function syncFipav(): Promise<FipavSyncReport> {
       await pool(stale, 4, (e) => refreshFipavEvent(e).catch(() => e))
       report.prefetched = stale.length
     } catch (e) { report.errors.push(`details: ${(e as Error).message}`) }
+    // Visible in the runtime logs: errors here otherwise vanish into the report.
+    console.log(`[fipav] sync ${JSON.stringify(report)}`)
     return report
   })().finally(() => { running = null })
   return running
