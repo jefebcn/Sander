@@ -47,6 +47,8 @@ Vale per storie, post e caroselli, su Instagram e TikTok insieme. La stessa foto
 | `batti-cinque` | IG 22 nov (Rigiocheresti) |
 | `bagher-notte` | IG 24 nov (Chi porta il pallone?) |
 
+**Riservate all'automazione Instagram** (`scripts/content-instagram/photos.json`, dal 16/11/2026): l'ultimo uso di `novembre-felpe`, `tramonto-coppia`, `palla-sabbia`, `tuffo-sera`, `battuta-ombrelloni`, `piedi-corsa`, `alzata-notte`, `batti-cinque`, `bagher-notte` e i due usi delle foto nuove `amici-seduti`, `quattro-in-cammino`, `battuta-sera`, `batti-cinque-rete`. Non usarle a mano: le foto nuove vanno aggiunte in `scripts/content-instagram/photos/` e in coda a `photos.json`.
+
 Già esaurite, non riusarle: le foto del pacchetto Stagione 2 (coppia con la maglia 23, ragazza in viola, corsa sfocata verde, alzata sotto la rete, gambe in corsa) e il palo della rete (2 usi: IG 30 ott, 7 nov).
 
 ## Regola: niente temi o testi ripetuti
