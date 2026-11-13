@@ -90,7 +90,7 @@ for (const s of todo) {
     mode: "customScheduled",
     dueAt: romeToUtc(s.date, s.time),
     assets: s.files.map((f) => ({ image: { url: urls[f] } })),
-    metadata: { instagram: s.type === "story" ? { type: "story", isAiGenerated: true } : { type: "post", shouldShareToFeed: true, isAiGenerated: true } },
+    metadata: { instagram: s.type === "story" ? { type: "story", shouldShareToFeed: false, isAiGenerated: true } : { type: "post", shouldShareToFeed: true, isAiGenerated: true } },
     aiAssisted: true,
   }
   if (dry) { report.created.push({ id: s.id, dueAt: input.dueAt, type: s.type, dryRun: true }); continue }

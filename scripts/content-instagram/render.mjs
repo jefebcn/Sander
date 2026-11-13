@@ -167,7 +167,7 @@ function postCta({ line, img }) {
 function postProblem({ hook }) {
   const dot = (filled) => `<div style="width:150px;height:150px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Gochi';font-size:96px;${filled ? `background:${LIME};color:#0b0b0b` : "border:5px dashed rgba(255,255,255,.75);color:#fff;background:rgba(0,0,0,.25)"}">${filled ? "✓" : "?"}</div>`
   return page(P.w, P.h, "photo", `
-    ${meta(64, ["Manca uno", "Riviera", "SANDER"])}
+    ${meta(64, ["Manca uno", "Tutta Italia", "SANDER"])}
     <div style="position:absolute;top:170px;left:72px;right:72px;text-align:center">
       <div data-fit="330">${title2(hook, 160)}</div>
     </div>
@@ -280,7 +280,7 @@ async function renderSlot(slot, browser) {
       const c = pick(COMMUNITY, Math.floor(w / 2))
       return {
         frames: [
-          postCover({ metaItems: ["Community", "Riviera", "@sanderbeachvolley"], title: c.title, img: screen(c.screen), sub: "Gioca, trova, sali." }),
+          postCover({ metaItems: ["Community", "Tutta Italia", "@sanderbeachvolley"], title: c.title, img: screen(c.screen), sub: "Gioca, trova, sali." }),
           postCta({ line: ["Ci vediamo", "in campo"], img: screen("partite") }),
         ],
         caption: caption([`${c.title.join(" ")} ☀️`, c.caption, "Link in bio.", HASHTAGS]),
