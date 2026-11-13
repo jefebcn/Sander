@@ -11,7 +11,7 @@ Kit: `scripts/content-instagram/` nel repo (stesso contenuto dello zip online us
 - Dati: `https://www.sanderbv.it/api/social/feed` (pubblico, sola lettura, niente dati personali). Codice: `src/lib/social/feed.ts`.
 - `bash run.sh A` domenica sera (lun–mer della settimana dopo), `bash run.sh B` mercoledì sera (gio–dom).
 - Guarda tutte le immagini, caricale con Higgsfield (media_upload → PUT → media_confirm), `node publish.mjs work/out/captions.json work/urls.json --dry-run`, poi senza `--dry-run`.
-- Fino al 29/11/2026: prima di programmare mostra le grafiche ad Alex e aspetta il suo ok. Dal 30/11: automatico.
+- Automatico (scelta di Alex del 13/11/2026): programma subito e manda le grafiche nel riepilogo. Attività pianificate: domenica 21:13 (run A) e mercoledì 21:13 (run B), in questa chat.
 - Buffer: canale IG `6adf67a12f1f5ed648d9cba6`, piano gratuito (max 10 in coda), chiave aggiunta dal proxy dell'ambiente: mai chiederla né stamparla.
 
 ## Stile

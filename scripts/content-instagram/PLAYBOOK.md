@@ -55,9 +55,7 @@ Mai più di un giorno senza post. Niente post «numeri della settimana». Titoli
    Se una grafica è sbagliata, correggi `render.mjs` e rilancia.
 4. **Caricamento.** Per ogni JPG: Higgsfield `media_upload` → `curl -X PUT -H "Content-Type: image/jpeg" --data-binary @file upload_url` → `media_confirm` (type image). Scrivi `work/urls.json` con `{ "nome-file.jpg": "https://…cloudfront…" }`.
 5. **Prova a vuoto.** `node publish.mjs work/out/captions.json work/urls.json --dry-run`: mostra cosa verrebbe creato e cosa viene saltato (doppioni, coda piena).
-6. **Modalità.**
-   - **Fino al 29/11/2026 compreso: controllo di Alex in chat.** Manda le immagini con SendUserFile, scrivi per ogni slot giorno/ora, tipo e didascalia, poi fermati e chiedi conferma. Programma solo dopo il suo «ok», applicando le modifiche che chiede.
-   - **Dal 30/11/2026: automatico.** Programma subito.
+6. **Modalità: automatica** (scelta di Alex del 13/11/2026). Programma subito, senza aspettare conferma; le grafiche arrivano ad Alex nel riepilogo.
 7. **Programmazione.** `node publish.mjs work/out/captions.json work/urls.json`.
    - Gli slot già occupati (stesso giorno e stesso tipo, in coda o già usciti) vengono saltati.
    - La coda resta a 10 al massimo: prima si toglie la storia facoltativa del sabato, poi gli slot più lontani.
