@@ -25,6 +25,8 @@ Kit che legge i dati veri di SANDER, disegna post e storie con le schermate dell
 - Se FIPAV dovesse rispondere con un blocco (403) anche qui, non aggirarlo: il giro va avanti con tornei SANDER e funzioni.
 - `NO_FIPAV=1 bash run.sh …` salta la lettura.
 
+**FIPAV nell'app.** `node fipav/import.mjs` legge gli stessi file pubblici (calendario, classifiche assolute, dettagli dei tornei della settimana, risultati dei profili collegati) e li carica su `/api/fipav/import`, che li salva con il codice dell'app. Chiave: `Authorization: Bearer CRON_SECRET`, aggiunta dal proxy dell'ambiente per www.sanderbv.it (mai scriverla o stamparla). Va lanciato ogni giorno. Quando l'app ha i dati, il feed li contiene e le grafiche tornano a mandare al calendario FIPAV in app.
+
 Scelte di Alex (13/11/2026): tornei FIPAV di tutta Italia; solo calendario (niente podi, niente nomi); categorie Serie Beach, Campionato Italiano, Società; finché FIPAV è vuoto, al loro posto tornei SANDER o funzioni.
 
 ## Calendario (Europe/Rome)

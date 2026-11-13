@@ -15,6 +15,9 @@ import {
 const BASE = "https://media.myvolley.net/public/json"
 const DAY = 86_400_000
 
+/** Where the FIPAV files come from: FIPAV itself, or files uploaded by the import (see api/fipav/import). */
+export type FipavGetter = (path: string, timeoutMs?: number) => Promise<unknown>
+
 async function getJson(path: string, timeoutMs = 15_000): Promise<unknown> {
   const res = await fetch(`${BASE}/${path.replace(/^\/+/, "")}`, {
     headers: { accept: "application/json", "user-agent": "SANDER beach volley app" },
@@ -47,14 +50,14 @@ const today = () => {
 
 // ─── Calendar ────────────────────────────────────────────────────────────────
 
-export async function syncFipavCalendar(): Promise<{ events: number; created: FipavEventInput[] }> {
-  const index = await getJson("index.json")
+export async function syncFipavCalendar(get: FipavGetter = getJson): Promise<{ events: number; created: FipavEventInput[] }> {
+  const index = await get("index.json")
   const seasons = seasonsToSync(index, new Date())
   const events: FipavEventInput[] = []
   for (const season of seasons) {
-    const root = await getJson(`${season}/discipline.json`)
+    const root = await get(`${season}/discipline.json`)
     const pages = calendarPages(root)
-    const files = pages.length ? await pool(pages, 4, (p) => getJson(p).catch(() => null)) : [root]
+    const files = pages.length ? await pool(pages, 4, (p) => get(p).catch(() => null)) : [root]
     for (const f of files) if (f) events.push(...parseCalendarPage(f, season))
   }
   // Recent and upcoming only: older events have nothing left to plan.
@@ -123,13 +126,13 @@ export function detailIsStale(e: EventRow, now = new Date()): boolean {
 }
 
 /** Fetches info, entry list and (once over) standings. Keeps the old copy on failure. */
-export async function refreshFipavEvent(e: EventRow, timeoutMs = 8_000): Promise<EventRow> {
+export async function refreshFipavEvent(e: EventRow, timeoutMs = 8_000, get: FipavGetter = getJson): Promise<EventRow> {
   const ended = e.endDate.getTime() <= Date.now()
   const [info, entries, standings] = await Promise.all([
-    getJson(`${e.path}/info-tappa.json`, timeoutMs).catch(() => null),
+    get(`${e.path}/info-tappa.json`, timeoutMs).catch(() => null),
     // Youth events list minors: their entry lists are not kept.
-    isYouthCategory(e.category) ? Promise.resolve(null) : getJson(`${e.path}/entry-list.json`, timeoutMs).catch(() => null),
-    ended && !isYouthCategory(e.category) ? getJson(`${e.path}/classifica.json`, timeoutMs).catch(() => null) : Promise.resolve(null),
+    isYouthCategory(e.category) ? Promise.resolve(null) : get(`${e.path}/entry-list.json`, timeoutMs).catch(() => null),
+    ended && !isYouthCategory(e.category) ? get(`${e.path}/classifica.json`, timeoutMs).catch(() => null) : Promise.resolve(null),
   ])
   if (!info && !entries && !standings) return e
   const data: Prisma.FipavEventUpdateInput = { detailAt: new Date() }
@@ -145,20 +148,20 @@ export async function refreshFipavEvent(e: EventRow, timeoutMs = 8_000): Promise
 // ─── Rankings ────────────────────────────────────────────────────────────────
 
 /** The newest season that has rankings (this year, else last year). */
-async function rankingIndex(): Promise<{ year: number; index: unknown }> {
+async function rankingIndex(get: FipavGetter): Promise<{ year: number; index: unknown }> {
   const y = new Date().getUTCFullYear()
   for (const year of [y, y - 1]) {
-    const index = await getJson(`${year}/BVL/classifiche/index.json`).catch(() => null)
+    const index = await get(`${year}/BVL/classifiche/index.json`).catch(() => null)
     if (index) return { year, index }
   }
   throw new Error("FIPAV rankings index not found")
 }
 
-export async function syncFipavRankings(): Promise<number> {
-  const { year, index } = await rankingIndex()
+export async function syncFipavRankings(get: FipavGetter = getJson): Promise<number> {
+  const { year, index } = await rankingIndex(get)
   let total = 0
   for (const { gender, path } of seniorRankingPaths(index)) {
-    const file = await getJson(`${year}/BVL/classifiche/${path}`, 60_000)
+    const file = await get(`${year}/BVL/classifiche/${path}`, 60_000)
     const { rows } = parseRanking(file)
     if (rows.length < 50) continue // a broken file must not wipe the table
     const data = rows.map((r) => ({ id: `${gender}-${r.personId}`, gender, year, ...r }))
@@ -174,12 +177,12 @@ export async function syncFipavRankings(): Promise<number> {
 }
 
 /** A linked player's results, refreshed at most twice a day. */
-export async function refreshFipavAthlete(playerId: string, personId: number, force = false): Promise<void> {
+export async function refreshFipavAthlete(playerId: string, personId: number, force = false, get: FipavGetter = getJson): Promise<void> {
   const p = await db.player.findUnique({ where: { id: playerId }, select: { fipavResultsAt: true } })
   if (!force && p?.fipavResultsAt && Date.now() - p.fipavResultsAt.getTime() < 12 * 3600_000) return
   const row = await db.fipavRanking.findFirst({ where: { personId }, select: { year: true } })
   const year = row?.year ?? new Date().getUTCFullYear()
-  const file = await getJson(`${year}/BVL/classifiche/atleti/assoluto/${personId}.json`, 8_000).catch(() => null)
+  const file = await get(fipavAthletePath(year, personId), 8_000).catch(() => null)
   if (!file) return
   await db.player.update({
     where: { id: playerId },
@@ -193,32 +196,43 @@ let running: Promise<FipavSyncReport> | null = null
 
 export interface FipavSyncReport { events: number; created: number; notified: number; rankings: number; prefetched: number; errors: string[] }
 
+export const fipavAthletePath = (year: number, personId: number) => `${year}/BVL/classifiche/atleti/assoluto/${personId}.json`
+
 /** The daily run: calendar, alerts, rankings, then details of the next week's events. */
-export function syncFipav(): Promise<FipavSyncReport> {
-  running ??= (async () => {
-    const report: FipavSyncReport = { events: 0, created: 0, notified: 0, rankings: 0, prefetched: 0, errors: [] }
-    try {
-      const cal = await syncFipavCalendar()
-      report.events = cal.events
-      report.created = cal.created.length
-      report.notified = await notifyNewFipavEvents(cal.created)
-    } catch (e) { report.errors.push(`calendar: ${(e as Error).message}`) }
-    try { report.rankings = await syncFipavRankings() } catch (e) { report.errors.push(`rankings: ${(e as Error).message}`) }
-    try {
-      const soon = await db.fipavEvent.findMany({
-        where: { startDate: { gte: today(), lte: new Date(today().getTime() + 7 * DAY) } },
-        orderBy: { startDate: "asc" },
-        take: 80,
-      })
-      const stale = soon.filter((e) => detailIsStale(e))
-      await pool(stale, 4, (e) => refreshFipavEvent(e).catch(() => e))
-      report.prefetched = stale.length
-    } catch (e) { report.errors.push(`details: ${(e as Error).message}`) }
-    // Visible in the runtime logs: errors here otherwise vanish into the report.
-    console.log(`[fipav] sync ${JSON.stringify(report)}`)
-    return report
-  })().finally(() => { running = null })
+export function syncFipav(get: FipavGetter = getJson): Promise<FipavSyncReport> {
+  // An import brings its own files: it never joins (or blocks) a run against FIPAV.
+  if (get !== getJson) return runSync(get)
+  running ??= runSync(get).finally(() => { running = null })
   return running
+}
+
+/** Events of the next 7 days whose details are old (the daily prefetch). */
+export async function fipavEventsToPrefetch(): Promise<EventRow[]> {
+  const soon = await db.fipavEvent.findMany({
+    where: { startDate: { gte: today(), lte: new Date(today().getTime() + 7 * DAY) } },
+    orderBy: { startDate: "asc" },
+    take: 80,
+  })
+  return soon.filter((e) => detailIsStale(e))
+}
+
+async function runSync(get: FipavGetter): Promise<FipavSyncReport> {
+  const report: FipavSyncReport = { events: 0, created: 0, notified: 0, rankings: 0, prefetched: 0, errors: [] }
+  try {
+    const cal = await syncFipavCalendar(get)
+    report.events = cal.events
+    report.created = cal.created.length
+    report.notified = await notifyNewFipavEvents(cal.created)
+  } catch (e) { report.errors.push(`calendar: ${(e as Error).message}`) }
+  try { report.rankings = await syncFipavRankings(get) } catch (e) { report.errors.push(`rankings: ${(e as Error).message}`) }
+  try {
+    const stale = await fipavEventsToPrefetch()
+    await pool(stale, 4, (e) => refreshFipavEvent(e, 8_000, get).catch(() => e))
+    report.prefetched = stale.length
+  } catch (e) { report.errors.push(`details: ${(e as Error).message}`) }
+  // Visible in the runtime logs: errors here otherwise vanish into the report.
+  console.log(`[fipav] sync${get === getJson ? "" : " (import)"} ${JSON.stringify(report)}`)
+  return report
 }
 
 let lastAttempt = 0
