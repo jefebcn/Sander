@@ -80,10 +80,10 @@ body.lime .pill{border-color:#0b0b0b;background:none}
 .badge{flex:none;min-width:74px;height:74px;border-radius:20px;background:rgba(198,247,54,.14);color:${LIME};display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;font-size:30px;line-height:1}
 .badge small{font-size:15px;font-weight:800;letter-spacing:.1em;opacity:.8;margin-top:4px}
 .phone{position:absolute;border-radius:64px;padding:14px;background:linear-gradient(145deg,#2b2c31,#0d0d0f);box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 0 2px rgba(255,255,255,.1)}
-.phone .scr{width:100%;height:100%;border-radius:52px;overflow:hidden;position:relative;background:#0b0b0c;padding-top:13%}
-.phone .scr img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
-.phone .bar{position:absolute;top:0;left:0;right:0;height:13%;display:flex;align-items:center;justify-content:space-between;padding:0 11% 0 12%;font-size:17px;font-weight:800;color:#fff}
-.phone .island{position:absolute;top:3.2%;left:50%;transform:translateX(-50%);width:30%;height:4.2%;border-radius:20px;background:#000;z-index:2}
+.phone .scr{width:100%;height:100%;border-radius:52px;overflow:hidden;position:relative;background:#0b0b0c;display:flex;flex-direction:column}
+.phone .scr img{width:100%;flex:none;display:block}
+.phone .bar{flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 11% 0 12%;font-size:17px;font-weight:800;color:#fff}
+.phone .island{position:absolute;left:50%;transform:translateX(-50%);width:30%;border-radius:20px;background:#000;z-index:2}
 .num{font-family:'Gochi',cursive;line-height:.8;color:${LIME};-webkit-text-stroke:3px ${LIME}}
 .logo{width:120px;height:120px;border-radius:28px;display:block}
 .url{font-family:'Gochi',cursive;font-size:64px;-webkit-text-stroke:1.5px currentColor}
@@ -97,9 +97,14 @@ function layer(mode) {
   return { cls: "photo", html: `<div class="bg" style="background-image:url(${PHOTO})"></div><div class="shade"></div>` }
 }
 
+// The app screens are 390×844 (no status bar): the screen area keeps that
+// ratio below a status bar, so the whole screen shows, top to bottom.
 function phone(src, { left, top, width, rotate = 0 }) {
-  const height = Math.round(width * 2.16)
-  return `<div class="phone" style="left:${left}px;top:${top}px;width:${width}px;height:${height}px;transform:rotate(${rotate}deg)"><div class="scr"><div class="bar"><span>9:41</span><span>●●●</span></div><div class="island"></div><img src="${src}"></div></div>`
+  const inner = width - 28
+  const bar = Math.round(inner * 0.13)
+  const img = Math.round(inner * (844 / 390))
+  const height = img + bar + 28
+  return `<div class="phone" style="left:${left}px;top:${top}px;width:${width}px;height:${height}px;transform:rotate(${rotate}deg)"><div class="scr"><div class="bar" style="height:${bar}px"><span>9:41</span><span>●●●</span></div><div class="island" style="top:${Math.round(bar * 0.24)}px;height:${Math.round(bar * 0.42)}px"></div><img src="${src}" style="height:${img}px"></div></div>`
 }
 
 // Shrinks .hand text inside [data-fit] boxes until the box fits its max height and width.
