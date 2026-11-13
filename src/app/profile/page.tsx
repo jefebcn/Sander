@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic"
 import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import Link from "next/link"
+import { FipavProfileCard } from "@/components/fipav/FipavProfileCard"
 import { cookies } from "next/headers"
 import { ArrowUpRight, MapPin, Calendar, ShieldCheck, Users, Trophy, Pencil, MessageCircle, ChartColumn, Bug, ChevronRight, HeartHandshake, CalendarCheck, Share2, SlidersHorizontal, ClipboardList, ShoppingBag, Settings, Gift, Building2, Smartphone, Star, LogOut } from "lucide-react"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
@@ -539,6 +540,7 @@ export default async function ProfilePage({ searchParams }: Props) {
               </div>
             </div>
           )}
+          <FipavProfileCard player={fullPlayer} />
           <Achievements achievements={achievements} />
         </div>
       )}

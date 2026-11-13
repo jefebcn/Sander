@@ -210,6 +210,13 @@ model Player {
   sentMessages         ChatMessage[]
   creditTopUps         CreditTopUp[]
   shopOrders           ShopOrder[]
+  fipavAlerts          FipavAlert[]
+
+  /// The player's own FIPAV athlete id (lib/fipav), set from /fipav/collega.
+  fipavPersonId        Int?
+  /// Their FIPAV results (lib/fipav/parse FipavResult[]), cached.
+  fipavResults         Json?
+  fipavResultsAt       DateTime?
 
   // Scopri: profile for finding teammates, swipes, matches, duos.
   discoverPhotos       PlayerPhoto[]
@@ -1611,4 +1618,69 @@ model ShopOrderItem {
   @@index([orderId])
   @@index([variantId])
   @@map("shop_order_items")
+}
+
+/// Beach volley tournaments from FIPAV's public calendar (lib/fipav). A
+/// read-only copy refreshed every day; the details load when someone opens one.
+model FipavEvent {
+  /// FIPAV code, "BVLM12476" (BVL + gender + girone).
+  code      String   @id
+  season    Int
+  gender    String
+  girone    String
+  category  String
+  menu      String?
+  city      String
+  province  String?
+  region    String
+  clubName  String?
+  /// Days without a time (00:00 UTC), like the rest of the app.
+  startDate DateTime
+  endDate   DateTime
+  prizeEuro Int      @default(0)
+  /// Folder of the event's files on FIPAV's server, "2026/BVL/M/12476".
+  path      String
+  /// lib/fipav/parse: FipavDetail, FipavEntry[], FipavStanding[].
+  detail    Json?
+  entryList Json?
+  standings Json?
+  detailAt  DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([startDate])
+  @@index([region, startDate])
+  @@map("fipav_events")
+}
+
+/// FIPAV senior ranking (Assoluto M/F), replaced on every sync. Youth
+/// rankings are not stored: they list minors.
+model FipavRanking {
+  /// "M-26534"
+  id          String   @id
+  personId    Int
+  gender      String
+  year        Int
+  position    Int
+  name        String
+  totalPoints Float
+  entryPoints Float
+  updatedAt   DateTime @updatedAt
+
+  @@index([gender, position])
+  @@index([personId])
+  @@map("fipav_rankings")
+}
+
+/// "Avvisami quando esce un torneo in <regione>": a push for new FIPAV events.
+model FipavAlert {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  playerId  String
+  region    String
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, region])
+  @@index([region])
+  @@map("fipav_alerts")
 }

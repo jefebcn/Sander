@@ -72,6 +72,17 @@ describe("deadlines", () => {
     expect(tournamentDeadlines({ ...base, status: "COMPLETED" }, now)).toEqual([])
   })
 
+  it("extra deadlines and a custom second step", () => {
+    const t = {
+      ...base,
+      listLabel: "Lista d'ingresso",
+      extraDeadlines: [{ key: "cambio", label: "Cambio compagno", at: new Date("2026-11-17T12:00:00Z") }],
+    }
+    expect(tournamentProgress(t, now)[1].label).toBe("Lista d'ingresso")
+    expect(tournamentDeadlines(t, now).map((d) => d.key)).toEqual(["iscrizioni", "cambio", "inizio"])
+    expect(tournamentDeadlines({ ...t, status: "LIVE" }, now).map((d) => d.key)).toEqual(["inizio"])
+  })
+
   it("a start earlier today is still today, not passed", () => {
     const d = tournamentDeadlines({ ...base, registrationDeadline: null, date: new Date("2026-11-13T08:00:00Z") }, now)
     expect(d[0]).toMatchObject({ relative: "oggi", past: false })

@@ -18,9 +18,11 @@ export function SectionTabs({
   tone?: Tone
   className?: string
 }) {
+  // Five tabs (Classifiche) must still fit a phone row without scrolling.
+  const dense = items.length > 4
   return (
     <nav aria-label="Sezioni" className={cn("px-4", toneOf(tone), className)}>
-      <div className="rail rounded-full bg-[var(--surface-2)] p-1 ring-1 ring-white/10">
+      <div className="rail rounded-full bg-[var(--surface-2)] p-1 ring-1 ring-white/10" style={dense ? { gap: 0 } : undefined}>
         {items.map((it) => {
           const on = it.id === active
           return (
@@ -29,7 +31,9 @@ export function SectionTabs({
               href={it.href}
               aria-current={on ? "page" : undefined}
               className={cn(
-                "flex min-h-[2.75rem] flex-1 items-center justify-center whitespace-nowrap rounded-full px-3 text-sm font-extrabold transition-colors duration-200",
+                "flex min-h-[2.75rem] items-center justify-center whitespace-nowrap rounded-full font-extrabold transition-colors duration-200",
+                // Dense: each tab as wide as its word, spread evenly.
+                dense ? "grow px-1.5 text-[0.8125rem]" : "flex-1 px-3 text-sm",
                 on ? "sel-on" : "text-white/75 active:text-white",
               )}
             >
@@ -53,4 +57,5 @@ export const RANK_TABS = [
   { id: "settimana", href: "/settimana", label: "Settimana" },
   { id: "stagione", href: "/stagione", label: "Stagione" },
   { id: "bagni", href: "/bagni", label: "Bagni" },
+  { id: "fipav", href: "/fipav", label: "FIPAV" },
 ]

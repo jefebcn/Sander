@@ -28,6 +28,10 @@ export interface ProgressInput {
   isOpenForRegistration: boolean
   registrationDeadline: Date | string | null
   date: Date | string
+  /** Second step's name: "Squadre e tabellone" here, "Lista d'ingresso" for FIPAV. */
+  listLabel?: string
+  /** More dates to list under Scadenze (FIPAV: entry list, partner change). */
+  extraDeadlines?: { key: string; label: string; at: Date | string }[]
 }
 
 /** True while people can still sign up. */
@@ -54,7 +58,7 @@ export function tournamentProgress(t: ProgressInput, now: Date = new Date()): Pr
     },
     {
       key: "tabellone",
-      label: "Squadre e tabellone",
+      label: t.listLabel ?? "Squadre e tabellone",
       detail: started ? "pubblicati" : "all'avvio",
       state: started ? "done" : !open && !notOpenedYet ? "current" : "todo",
     },
@@ -76,7 +80,7 @@ export function tournamentProgress(t: ProgressInput, now: Date = new Date()): Pr
 // ─── Deadlines ───────────────────────────────────────────────────────────────
 
 export interface Deadline {
-  key: "iscrizioni" | "inizio"
+  key: string
   label: string
   at: Date
   past: boolean
@@ -110,6 +114,12 @@ export function tournamentDeadlines(t: ProgressInput, now: Date = new Date()): D
   if (t.status === "DRAFT" && t.registrationDeadline) {
     const at = new Date(t.registrationDeadline)
     out.push({ key: "iscrizioni", label: "Chiusura iscrizioni", at, past: at < now, relative: relativeDay(at, now) })
+  }
+  if (t.status === "DRAFT") {
+    for (const x of t.extraDeadlines ?? []) {
+      const at = new Date(x.at)
+      out.push({ key: x.key, label: x.label, at, past: at < now, relative: relativeDay(at, now) })
+    }
   }
   const start = new Date(t.date)
   out.push({
