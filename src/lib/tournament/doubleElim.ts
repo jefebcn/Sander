@@ -91,11 +91,9 @@ export function generateDoubleElimination(teams: BracketTeam[]): DEBracketMatch[
   }
 
   // ── Seed teams into slots ────────────────────────────────────────────────────
+  // seedOrder[k] is the (1-based) seed at bracket position k; missing seeds → byes.
   const seedOrder = buildSeedOrder(bracketSize)
-  const slots: (BracketTeam | null)[] = Array(bracketSize).fill(null)
-  teams.forEach((team, i) => {
-    if (i < seedOrder.length) slots[seedOrder[i] - 1] = team
-  })
+  const slots: (BracketTeam | null)[] = seedOrder.map((seed) => teams[seed - 1] ?? null)
 
   const allMatches: DEBracketMatch[] = []
 
