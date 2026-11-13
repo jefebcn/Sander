@@ -3,11 +3,12 @@ import Link from "next/link"
 import { after } from "next/server"
 import { ChevronLeft, ChevronRight, Link2, Search } from "lucide-react"
 import { PageHeader } from "@/components/layout/PageHeader"
-import { SectionTabs, RANK_TABS } from "@/components/layout/SectionTabs"
+import { SectionTabs, rankTabs } from "@/components/layout/SectionTabs"
+import { fipavAvailable } from "@/lib/fipav/queries"
 import { FipavChips } from "@/components/fipav/FipavChips"
 import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { fipavRanking, RANKING_PAGE } from "@/lib/fipav/queries"
-import { fipavIsStale, syncFipav } from "@/lib/fipav/sync"
+import { syncFipavIfStale } from "@/lib/fipav/sync"
 import { db } from "@/lib/db"
 import { daysFromNow, formatDayShort } from "@/lib/datetime"
 
@@ -32,7 +33,7 @@ export default async function FipavRankingPage({ searchParams }: { searchParams:
     fipavRanking(gender, page, q || undefined),
     db.fipavRanking.findFirst({ where: { gender }, orderBy: { updatedAt: "desc" }, select: { updatedAt: true, year: true } }),
   ])
-  if (await fipavIsStale()) after(() => syncFipav().then(() => undefined, (e) => console.error("[fipav] sync", e)))
+  after(() => syncFipavIfStale().catch((e) => console.error("[fipav] sync", e)))
 
   const pages = Math.max(1, Math.ceil(total / RANKING_PAGE))
   const link = (patch: Partial<Search>) => {
@@ -49,7 +50,7 @@ export default async function FipavRankingPage({ searchParams }: { searchParams:
         title="FIPAV"
         subtitle={`Assoluto ${gender === "F" ? "femminile" : "maschile"} · ${total.toLocaleString("it-IT")} atleti`}
       />
-      <SectionTabs items={RANK_TABS} active="fipav" tone="compete" className="pb-4" />
+      <SectionTabs items={rankTabs(await fipavAvailable())} active="fipav" tone="compete" className="pb-4" />
 
       <div className="tone-compete space-y-3 pb-3">
         <FipavChips

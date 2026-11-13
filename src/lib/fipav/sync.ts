@@ -221,6 +221,19 @@ export function syncFipav(): Promise<FipavSyncReport> {
   return running
 }
 
+let lastAttempt = 0
+
+/**
+ * Page-triggered refresh: only when the copy is old, and at most once every
+ * 30 minutes per server instance, so failures never turn visits into a stream
+ * of requests to FIPAV.
+ */
+export async function syncFipavIfStale(): Promise<void> {
+  if (Date.now() - lastAttempt < 30 * 60_000) return
+  lastAttempt = Date.now()
+  if (await fipavIsStale()) await syncFipav()
+}
+
 /** True when the copy is missing or more than 30 hours old (cron missed). */
 export async function fipavIsStale(): Promise<boolean> {
   const last = await db.fipavEvent.findFirst({ orderBy: { updatedAt: "desc" }, select: { updatedAt: true } })

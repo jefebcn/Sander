@@ -57,5 +57,9 @@ export const RANK_TABS = [
   { id: "settimana", href: "/settimana", label: "Settimana" },
   { id: "stagione", href: "/stagione", label: "Stagione" },
   { id: "bagni", href: "/bagni", label: "Bagni" },
-  { id: "fipav", href: "/fipav", label: "FIPAV" },
 ]
+
+/** Classifiche tabs, with FIPAV once its ranking is loaded (lib/fipav). */
+export function rankTabs(withFipav: boolean) {
+  return withFipav ? [...RANK_TABS, { id: "fipav", href: "/fipav", label: "FIPAV" }] : RANK_TABS
+}

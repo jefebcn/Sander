@@ -1,3 +1,4 @@
+import { cache } from "react"
 import { db } from "@/lib/db"
 import type { Prisma } from "@/generated/prisma/client"
 import { categoryGroup, isYouthCategory, type CategoryGroup } from "./parse"
@@ -92,3 +93,9 @@ export function fipavEventStatus(e: { startDate: Date; endDate: Date }, now = Da
   if (e.endDate.getTime() + DAY <= now) return "COMPLETED"
   return e.startDate.getTime() <= now ? "LIVE" : "DRAFT"
 }
+
+/** FIPAV entry points (tab, switch, profile row) show only once there is data. */
+export const fipavAvailable = cache(async (): Promise<boolean> => {
+  const row = await db.fipavEvent.findFirst({ select: { code: true } }).catch(() => null)
+  return row != null
+})

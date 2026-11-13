@@ -11,7 +11,7 @@ import { getCurrentPlayer } from "@/lib/getCurrentPlayer"
 import { db } from "@/lib/db"
 import { fipavRegions, fipavLastUpdate, listFipavEvents } from "@/lib/fipav/queries"
 import { shortCategory, type CategoryGroup } from "@/lib/fipav/parse"
-import { fipavIsStale, syncFipav } from "@/lib/fipav/sync"
+import { syncFipavIfStale } from "@/lib/fipav/sync"
 import { toggleFipavAlert } from "@/actions/fipav"
 import { dayKey, daysFromNow, formatDayShort, relativeDay } from "@/lib/datetime"
 
@@ -43,7 +43,7 @@ export default async function FipavCalendarPage({ searchParams }: { searchParams
   const [me, regions, updated] = await Promise.all([getCurrentPlayer(), fipavRegions(), fipavLastUpdate()])
 
   // Missed cron or first visit after deploy: refresh in the background.
-  if (await fipavIsStale()) after(() => syncFipav().then(() => undefined, (e) => console.error("[fipav] sync", e)))
+  after(() => syncFipavIfStale().catch((e) => console.error("[fipav] sync", e)))
 
   const alerts = me ? await db.fipavAlert.findMany({ where: { playerId: me.id }, select: { region: true } }) : []
   const alertRegions = new Set(alerts.map((a) => a.region))

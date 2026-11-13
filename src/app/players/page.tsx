@@ -10,7 +10,8 @@ import type { PodiumPlayer } from "@/components/home/PodiumSection"
 import { playerToCardData } from "@/components/player/SanderCardFut"
 import type { PrismaPlayerLike } from "@/components/player/SanderCardFut"
 import { PageHeader } from "@/components/layout/PageHeader"
-import { SectionTabs, RANK_TABS } from "@/components/layout/SectionTabs"
+import { SectionTabs, rankTabs } from "@/components/layout/SectionTabs"
+import { fipavAvailable } from "@/lib/fipav/queries"
 
 export const metadata: Metadata = {
   title: "Giocatori di beach volley vicino a te | SANDER",
@@ -58,7 +59,7 @@ export default async function PlayersPage({ searchParams }: Props) {
           ) : undefined
         }
       />
-      <SectionTabs items={RANK_TABS} active="giocatori" tone="compete" className="pb-1" />
+      <SectionTabs items={rankTabs(await fipavAvailable())} active="giocatori" tone="compete" className="pb-1" />
 
       {/* ── View filter: chips, lighter than the section tabs above ── */}
       <div className="tone-compete flex gap-2 px-4 pt-3 pb-4" role="group" aria-label="Vista">

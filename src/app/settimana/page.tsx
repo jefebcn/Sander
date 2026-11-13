@@ -7,7 +7,8 @@ import { getWeeklyRecap, type RecapPlayer } from "@/actions/recap"
 import { ProvisionalBadge, ProvisionalSectionHeading } from "@/components/player/ProvisionalBadge"
 import { ShareButton } from "@/components/ui/ShareButton"
 import { PageHeader } from "@/components/layout/PageHeader"
-import { SectionTabs, RANK_TABS } from "@/components/layout/SectionTabs"
+import { SectionTabs, rankTabs } from "@/components/layout/SectionTabs"
+import { fipavAvailable } from "@/lib/fipav/queries"
 import { Gabbo } from "@/components/ui/Gabbo"
 
 export const metadata: Metadata = {
@@ -80,7 +81,7 @@ export default async function WeeklyPage() {
         title="La settimana"
         subtitle={`${recap.totalEvents} ${recap.totalEvents === 1 ? "partita" : "partite"} · ${recap.activePlayers} ${recap.activePlayers === 1 ? "giocatore attivo" : "giocatori attivi"}`}
       />
-      <SectionTabs items={RANK_TABS} active="settimana" tone="compete" className="pb-4" />
+      <SectionTabs items={rankTabs(await fipavAvailable())} active="settimana" tone="compete" className="pb-4" />
 
       {recap.activePlayers === 0 ? (
         <div className="mx-4 rounded-2xl bg-[var(--surface-2)] p-8 text-center">

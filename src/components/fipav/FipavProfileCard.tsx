@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { after } from "next/server"
 import { ChevronRight, Link2, Medal } from "lucide-react"
-import { fipavRowsFor } from "@/lib/fipav/queries"
+import { fipavAvailable, fipavRowsFor } from "@/lib/fipav/queries"
 import { refreshFipavAthlete } from "@/lib/fipav/sync"
 import type { FipavResult } from "@/lib/fipav/parse"
 
@@ -19,6 +19,7 @@ export async function FipavProfileCard({
   player: { id: string; fipavPersonId: number | null; fipavResults: unknown; fipavResultsAt: Date | null }
 }) {
   if (!player.fipavPersonId) {
+    if (!(await fipavAvailable())) return null
     return (
       <Link
         href="/fipav/collega"

@@ -11,6 +11,7 @@ import { TournamentCard } from "@/components/tournament/TournamentCard"
 import { SectionTabs, PLAY_TABS } from "@/components/layout/SectionTabs"
 import { Gabbo } from "@/components/ui/Gabbo"
 import { FipavSourceToggle } from "@/components/fipav/FipavSourceToggle"
+import { fipavAvailable } from "@/lib/fipav/queries"
 
 export const metadata: Metadata = {
   title: "Tornei di beach volley | SANDER",
@@ -52,7 +53,7 @@ export default async function TournamentsPage() {
         }
       />
       <SectionTabs items={PLAY_TABS} active="tornei" className="pb-4" />
-      <FipavSourceToggle active="sander" />
+      {(await fipavAvailable()) && <FipavSourceToggle active="sander" />}
 
       {tournaments.length === 0 ? (
         <div className="flex flex-col items-center gap-4 px-6 py-20 text-center">
