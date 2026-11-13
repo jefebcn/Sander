@@ -15,9 +15,11 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs"
 import { join, dirname } from "path"
 import { fileURLToPath } from "url"
-import { chromium } from "playwright"
+import { createRequire } from "module"
 import { FEATURES, COMMUNITY, MISSING_ONE, TONIGHT, HASHTAGS, pick } from "./content.mjs"
 
+// require() also finds the machine-wide Playwright when the kit runs outside the repo.
+const { chromium } = createRequire(import.meta.url)("playwright")
 const KIT = dirname(fileURLToPath(import.meta.url))
 const SITE = process.env.SITE || "https://www.sanderbv.it"
 const b64 = (p, type) => `data:${type};base64,${readFileSync(p).toString("base64")}`
