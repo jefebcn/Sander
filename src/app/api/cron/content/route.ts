@@ -13,8 +13,11 @@ import { tournamentReminders } from "@/lib/tournamentReminders"
 import { sweepStaleSumUpSeats } from "@/actions/registration"
 import { releaseExpiredShopHolds } from "@/lib/shopOrders"
 import { plusPassReminders } from "@/lib/scopri/passReminder"
+import { syncFipav } from "@/lib/fipav/sync"
 
 export const runtime = "nodejs"
+// The FIPAV copy (calendar, rankings, next week's details) adds up to a minute or two.
+export const maxDuration = 300
 
 /**
  * Daily content cron (scheduled via vercel.json). Generates ready-to-post
@@ -97,5 +100,12 @@ export async function GET(req: NextRequest) {
     return 0
   })
 
-  return NextResponse.json({ ok: true, created, nudged, staleCancelled, scopri, scoresConfirmed, tournamentReminded, seatsFreed, passReminded, shopHoldsFreed })
+  // FIPAV beach calendar and rankings (lib/fipav): after FIPAV regenerates its
+  // files (about 05:00 UTC). Same cron, so the Vercel cron count stays the same.
+  const fipav = await syncFipav().catch((e) => {
+    console.error("[cron] FIPAV sync failed", e)
+    return null
+  })
+
+  return NextResponse.json({ ok: true, created, nudged, staleCancelled, scopri, scoresConfirmed, tournamentReminded, seatsFreed, passReminded, shopHoldsFreed, fipav })
 }

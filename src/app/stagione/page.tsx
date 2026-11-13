@@ -12,7 +12,8 @@ import { DIVISIONS, getNextDivision, pointsToNext, divisionProgress } from "@/li
 import { DivisionBadge } from "@/components/season/DivisionBadge"
 import { DivisionShareButton } from "@/components/season/DivisionShareButton"
 import { PageHeader } from "@/components/layout/PageHeader"
-import { SectionTabs, RANK_TABS } from "@/components/layout/SectionTabs"
+import { SectionTabs, rankTabs } from "@/components/layout/SectionTabs"
+import { fipavAvailable } from "@/lib/fipav/queries"
 import { resizedPhoto } from "@/lib/photo"
 
 export const metadata: Metadata = {
@@ -80,7 +81,7 @@ export default async function SeasonPage() {
     return (
       <div className="pb-10">
         <PageHeader eyebrow="Classifiche" tone="compete" title="Stagione" />
-        <SectionTabs items={RANK_TABS} active="stagione" tone="compete" className="pb-4" />
+        <SectionTabs items={rankTabs(await fipavAvailable())} active="stagione" tone="compete" className="pb-4" />
         <div className="mx-4 rounded-3xl bg-[var(--surface-2)] p-8 text-center">
           <div className="mx-auto mb-4 w-fit">
             <DivisionBadge division={DIVISIONS[2]} size={96} />
@@ -126,7 +127,7 @@ export default async function SeasonPage() {
           </div>
         }
       />
-      <SectionTabs items={RANK_TABS} active="stagione" tone="compete" className="pb-4" />
+      <SectionTabs items={rankTabs(await fipavAvailable())} active="stagione" tone="compete" className="pb-4" />
 
       {/* ── Your division hero ─────────────────────────────────────────── */}
       {me && (

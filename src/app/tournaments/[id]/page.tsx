@@ -5,7 +5,7 @@ import { ClubRegisterBox } from "@/components/club/ClubRegisterBox"
 import { waitlistState } from "@/lib/waitlist"
 import { paymentLinkFor, paymentProvider } from "@/lib/paymentLink"
 import { TournamentPaymentLinkForm } from "@/components/club/TournamentPaymentLinkForm"
-import { playingRegistrations, startProblem } from "@/lib/tournament/pairing"
+import { isPairFormat, playingRegistrations, startProblem } from "@/lib/tournament/pairing"
 import Link from "next/link"
 import { BadgeCheck, ChevronRight, ClipboardCheck, Play, Trophy, Shuffle, Trash2 } from "lucide-react"
 import { getTournamentDashboard } from "@/actions/standings"
@@ -24,6 +24,8 @@ import { AdminChiceceCompletedActions } from "@/components/tournament/AdminChice
 import { AdminTournamentSettingsForm } from "@/components/tournament/AdminTournamentSettingsForm"
 import { ShareButton } from "@/components/ui/ShareButton"
 import { TournamentInfoCard } from "@/components/tournament/TournamentInfoCard"
+import { TournamentProgress } from "@/components/tournament/TournamentProgress"
+import { TournamentSimulation } from "@/components/tournament/TournamentSimulation"
 import { LeaveRegistrationButton } from "@/components/tournament/LeaveRegistrationButton"
 import { TournamentPaymentsList } from "@/components/tournament/TournamentPaymentsList"
 import { PaymentCtaButton } from "@/components/tournament/PaymentCtaButton"
@@ -165,6 +167,8 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
           </p>
           {clubChip}
         </div>
+
+        {tournament.status !== "COMPLETED" && <TournamentProgress tournament={tournament} />}
 
         {/* Before the start the details are what people come for; once live
             the dashboard comes first and the details move to the bottom. */}
@@ -510,6 +514,8 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
         {clubChip}
       </div>
 
+      {tournament.status !== "COMPLETED" && <TournamentProgress tournament={tournament} />}
+
       {/* Before the start the details are what people come for; once live
           the dashboard comes first and the details move to the bottom. */}
       {tournament.status === "DRAFT" && (
@@ -657,6 +663,22 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
           />
         </div>
       )}
+      {/* What-if with the people signed up now; the real bracket is made at the start. */}
+      {tournament.status === "DRAFT" && (
+        <TournamentSimulation
+          type={tournament.type}
+          registrations={playingRegistrations(tournament.registrations).map((r) => ({
+            seedPosition: r.seedPosition,
+            createdAt: r.createdAt,
+            player: {
+              id: r.player.id,
+              name: isPairFormat(tournament.type) ? (r.player.lastName || r.player.name) : r.player.name,
+              rating: r.player.glickoRating,
+            },
+          }))}
+        />
+      )}
+
       {isAdmin && tournament.status !== "COMPLETED" && (
         <Link href={`/tournaments/${id}/checkin`} className="btn btn-secondary mx-4 mb-4 gap-2">
           <ClipboardCheck className="h-5 w-5" aria-hidden="true" /> Check-in e quote al campo

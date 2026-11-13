@@ -15,6 +15,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/segna",
     "/players",
     "/tournaments",
+    "/tournaments/fipav",
+    "/fipav",
     "/sessions",
     "/privacy",
   ].map((path) => ({

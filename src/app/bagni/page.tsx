@@ -6,7 +6,8 @@ import { getLocationLeaderboards, getCityLeaderboards } from "@/actions/territor
 import { BagniView } from "@/components/territories/BagniView"
 import { CityBoards } from "@/components/territories/CityBoards"
 import { PageHeader } from "@/components/layout/PageHeader"
-import { SectionTabs, RANK_TABS } from "@/components/layout/SectionTabs"
+import { SectionTabs, rankTabs } from "@/components/layout/SectionTabs"
+import { fipavAvailable } from "@/lib/fipav/queries"
 
 export const metadata: Metadata = {
   title: "Re dei Bagni — SANDER Beach Volley",
@@ -32,7 +33,7 @@ export default async function TerritoriesPage() {
         title="Re dei Bagni"
         subtitle="Chi vince di più su un bagno lo conquista"
       />
-      <SectionTabs items={RANK_TABS} active="bagni" tone="compete" className="pb-4" />
+      <SectionTabs items={rankTabs(await fipavAvailable())} active="bagni" tone="compete" className="pb-4" />
 
       <CityBoards boards={cityBoards} />
 

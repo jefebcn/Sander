@@ -1,4 +1,4 @@
-import { Calendar, MapPin, Clock, Trophy, Users, Info, Ticket, Beer, Gauge } from "lucide-react"
+import { Calendar, MapPin, Trophy, Users, Info, Ticket, Beer, Gauge } from "lucide-react"
 import { formatPrice } from "@/lib/utils"
 import { seatLimit } from "@/lib/tournament/capacity"
 import { TournamentPriceBadge } from "./TournamentPriceBadge"
@@ -48,7 +48,7 @@ function Row({ icon, label, children }: { icon: React.ReactNode; label: string; 
 
 /**
  * Everything the list card shows (and more) for the detail page: date & time,
- * place, fee, prizes, deadline, level, seats and rules.
+ * place, fee, prizes, level, seats and rules.
  */
 export function TournamentInfoCard({
   tournament: t,
@@ -58,8 +58,6 @@ export function TournamentInfoCard({
   /** Non-spectator registrations currently on the list. */
   playerCount: number
 }) {
-  const deadline = t.registrationDeadline ? new Date(t.registrationDeadline) : null
-  const deadlinePassed = deadline ? deadline.getTime() < Date.now() : false
   const seats = seatLimit(t.type, t.maxTeams)
   const level = [t.skillLevel, t.gender].filter(Boolean).join(" · ")
   const hasPrizes = Boolean(t.prizePool || t.prize2nd || t.prize3rd)
@@ -87,15 +85,7 @@ export function TournamentInfoCard({
           </Row>
         )}
 
-        {t.status === "DRAFT" && deadline && (
-          <Row icon={<Clock className="h-5 w-5" />} label="Iscrizioni entro">
-            <span className={deadlinePassed ? "text-[var(--danger)]" : undefined}>
-              <span className="capitalize">{formatDateTime(deadline)}</span>
-              {deadlinePassed && " · chiuse"}
-            </span>
-          </Row>
-        )}
-
+        {/* The sign-up deadline lives in TournamentProgress ("Scadenze"), with a countdown. */}
         {hasPrizes && (
           <Row icon={<Trophy className="h-5 w-5" />} label="Premi">
             <ul className="flex flex-col gap-0.5">
