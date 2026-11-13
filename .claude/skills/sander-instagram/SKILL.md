@@ -21,4 +21,4 @@ UI scura, accento ambra/arancio tramonto, sfondi generati (niente foto: nessun l
 Le schermate in `screens/` vengono dall'app in locale con dati di prova (nomi inventati): avvia DB e `next dev`, poi cattura a 390×844 @2x con Playwright (vedi la storia del kit nel PLAYBOOK). Non usare mai schermate con persone reali.
 
 ## Regole da non dimenticare
-Didascalie in italiano senza chiedere commenti; CTA solo Link in bio / Salvalo / Swipe; storie senza testo; niente numeri della settimana; FIPAV solo calendario con «Fonte: FIPAV», mai nomi né tornei giovanili; non ripetere titoli già usati (`scripts/content-storie/README.md`).
+Didascalie in italiano senza chiedere commenti; CTA solo Link in bio / Salvalo / Swipe; storie senza testo; niente numeri della settimana; FIPAV solo calendario con «Fonte: FIPAV», mai nomi né tornei giovanili (se l'app non ha dati FIPAV, `run.sh` li legge con `fipav/feed.mjs`; un 403 non va aggirato); non ripetere titoli già usati (`scripts/content-storie/README.md`).

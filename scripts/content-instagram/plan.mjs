@@ -64,8 +64,10 @@ export function plan(data, run, monday) {
   const sanderSoon = (from, to) => (data.tournaments ?? []).filter((t) => romeDay(t.date) >= from && romeDay(t.date) <= to)
   const sanderWeekend = sanderSoon(d(5), d(6))
   const openWeekend = (data.openMatches ?? []).filter((m) => [d(4), d(5), d(6)].includes(romeDay(m.date)))
+  // FIPAV read by the kit (fipav/feed.mjs) is not in the app yet: graphics must not send people there.
+  const fipavInApp = !data.fipavSource
   const slot = (n, day, time, type, kind, payload = {}, optional = false) =>
-    ({ id: `${monday}-${day}-${type}`, day, date: d(n), time, type, kind, week, optional, photo: photoFor(monday, day, type), ...payload })
+    ({ id: `${monday}-${day}-${type}`, day, date: d(n), time, type, kind, week, optional, photo: photoFor(monday, day, type), ...(kind.includes("fipav") ? { fipavInApp } : {}), ...payload })
 
   const slots = []
   if (run === "A") {

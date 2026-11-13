@@ -213,10 +213,10 @@ function storyList({ metaItems, title, rows, img, note }) {
     ${storyPill()}`)
 }
 
-function storyCountdown({ days, name, sub, img }) {
+function storyCountdown({ days, name, sub, img, source = "SANDER" }) {
   const big = days <= 0 ? "Oggi" : days === 1 ? "Domani" : `-${days}`
   return page(S.w, S.h, "photo", `
-    ${meta(270, ["Prossimo torneo", "SANDER"])}
+    ${meta(270, ["Prossimo torneo", source])}
     <div style="position:absolute;top:330px;left:72px;right:72px;text-align:center">
       <div class="hand acc" style="font-size:${days > 1 ? 300 : 220}px">${esc(big)}</div>
       ${days > 1 ? `<div class="label" style="margin-top:-6px">giorni</div>` : ""}
@@ -288,14 +288,17 @@ async function renderSlot(slot, browser) {
     }
     case "fipav-weekend": {
       const top = slot.events[0]
-      const fipavImg = await liveShot(browser, "/tournaments/fipav", "fipav")
+      const inApp = slot.fipavInApp !== false
+      const fipavImg = inApp ? await liveShot(browser, "/tournaments/fipav", "fipav") : screen("scopri")
       return {
         frames: [
           postCover({ metaItems: ["Tornei FIPAV", `${dayLabel(slot.weekend[0], false).split(" ")[0]}–${dayLabel(slot.weekend[1], false)}`, "Tutta Italia"], title: [top.category, top.city], img: fipavImg, sub: `${dayLabel(top.startDate.slice(0, 10))} · ${top.region}${top.prizeEuro ? ` · ${top.prizeEuro.toLocaleString("it-IT")} € di montepremi` : ""}` }),
           postList({ eyebrow: "Questo weekend", heading: `${slot.total} tornei FIPAV`, rows: slot.events.slice(0, 6).map(fipavRow), note: slot.total > 6 ? `E altri ${slot.total - 6} in tutta Italia. Fonte: FIPAV.` : "Fonte: FIPAV." }),
-          postCta({ line: ["Tutti i tornei", "FIPAV su SANDER"], img: fipavImg }),
+          inApp ? postCta({ line: ["Tutti i tornei", "FIPAV su SANDER"], img: fipavImg }) : postCta({ line: ["Il compagno", "per il torneo"], img: screen("scopri") }),
         ],
-        caption: caption([`Tornei FIPAV del weekend 🏐`, `${slot.total} tornei in Italia ${dayLabel(slot.weekend[0]).split(" ").slice(0, 2).join(" ")} e ${dayLabel(slot.weekend[1])}. Date, località, categorie e scadenze li trovi tutti su SANDER, in Gioca → Tornei → Calendario FIPAV.`, "Trovi tutti i tornei FIPAV su SANDER. Link in bio.", "Fonte: calendari ufficiali FIPAV.", HASHTAGS]),
+        caption: inApp
+          ? caption([`Tornei FIPAV del weekend 🏐`, `${slot.total} tornei in Italia ${dayLabel(slot.weekend[0]).split(" ").slice(0, 2).join(" ")} e ${dayLabel(slot.weekend[1])}. Date, località, categorie e scadenze li trovi tutti su SANDER, in Gioca → Tornei → Calendario FIPAV.`, "Trovi tutti i tornei FIPAV su SANDER. Link in bio.", "Fonte: calendari ufficiali FIPAV.", HASHTAGS])
+          : caption([`Tornei FIPAV del weekend 🏐`, `${slot.total} tornei in Italia ${dayLabel(slot.weekend[0]).split(" ").slice(0, 2).join(" ")} e ${dayLabel(slot.weekend[1])}: swipe per i principali, con data, località e categoria.`, "Cerchi il compagno per il prossimo torneo? Su SANDER trovi chi gioca al tuo livello. Salvalo. Link in bio.", "Fonte: calendari ufficiali FIPAV.", HASHTAGS]),
       }
     }
     case "sander-tournament": {
@@ -324,8 +327,9 @@ async function renderSlot(slot, browser) {
     case "tonight":
       return { frames: [storyPhone({ metaItems: ["Venerdì sera", "Crea partita"], title: pick(TONIGHT, w), img: screen("crea") })], caption: "" }
     case "weekend-fipav": {
-      const img = await liveShot(browser, "/tournaments/fipav", "fipav")
-      return { frames: [storyList({ metaItems: ["Calendario FIPAV", "Weekend"], title: ["Questo weekend", "si gioca"], rows: slot.events.map(fipavRow), img, note: `${slot.total} tornei in Italia · tutti su SANDER` })], caption: "" }
+      const inApp = slot.fipavInApp !== false
+      const img = inApp ? await liveShot(browser, "/tournaments/fipav", "fipav") : screen("scopri")
+      return { frames: [storyList({ metaItems: ["Calendario FIPAV", "Weekend"], title: ["Questo weekend", "si gioca"], rows: slot.events.slice(0, 4).map(fipavRow), img, note: inApp ? `${slot.total} tornei in Italia · tutti su SANDER` : `${slot.total} tornei in Italia · Fonte: FIPAV` })], caption: "" }
     }
     case "weekend-sander":
       return { frames: [storyList({ metaItems: ["Tornei SANDER", "Weekend"], title: ["Questo weekend", "si gioca"], rows: slot.tournaments.map(tourRow), img: await liveShot(browser, `/tournaments/${slot.tournaments[0].id}`, "torneo") })], caption: "" }
@@ -337,7 +341,8 @@ async function renderSlot(slot, browser) {
     }
     case "countdown-fipav": {
       const e = slot.event
-      return { frames: [storyCountdown({ days: daysBetween(slot.from, e.startDate), name: `${e.category} · ${e.city}`, sub: `${dayLabel(e.startDate.slice(0, 10))} · Calendario FIPAV su SANDER`, img: await liveShot(browser, "/tournaments/fipav", "fipav") })], caption: "" }
+      const inApp = slot.fipavInApp !== false
+      return { frames: [storyCountdown({ days: daysBetween(slot.from, e.startDate), name: `${e.category} · ${e.city}`, sub: `${dayLabel(e.startDate.slice(0, 10))} · ${inApp ? "Calendario FIPAV su SANDER" : "Fonte: FIPAV"}`, source: "FIPAV", img: inApp ? await liveShot(browser, "/tournaments/fipav", "fipav") : screen("scopri") })], caption: "" }
     }
     default:
       throw new Error(`unknown kind ${slot.kind}`)

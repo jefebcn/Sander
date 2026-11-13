@@ -15,6 +15,8 @@ else MONDAY=$(TZ=Europe/Rome date -d "$( [ "$(TZ=Europe/Rome date +%u)" = 1 ] &&
 mkdir -p work && rm -rf work/out
 if [ -n "${DATA:-}" ]; then cp "$DATA" work/data.json
 else curl -fsS --max-time 60 "$SITE/api/social/feed" -o work/data.json; fi
+# FIPAV calendar read here when the app has none yet (never fatal).
+[ "${NO_FIPAV:-}" = 1 ] || node fipav/feed.mjs work/data.json "$MONDAY" || true
 node plan.mjs work/data.json "$RUN" "$MONDAY" > work/plan.json
 SITE="$SITE" node render.mjs work/plan.json work/out
 echo "ok: $RUN $MONDAY → work/out ($(ls work/out/*.jpg | wc -l) immagini)"

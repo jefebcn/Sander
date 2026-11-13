@@ -50,7 +50,7 @@ export const FEATURES = {
     name: "Tornei",
     screen: "tornei",
     tutorial: [
-      ["tornei", "Trova il torneo", "Tornei SANDER e calendario FIPAV, tutto in Gioca."],
+      ["tornei", "Trova il torneo", "Tutti i tornei SANDER, in Gioca."],
       ["torneo", "Scadenze e avanzamento", "Quando chiudono le iscrizioni e a che punto è."],
       ["classifica", "Gioca e sali", "Ogni risultato conta in classifica."],
     ],

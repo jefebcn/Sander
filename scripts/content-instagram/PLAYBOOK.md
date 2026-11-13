@@ -10,6 +10,7 @@ Kit che legge i dati veri di SANDER, disegna post e storie con le schermate dell
 | `render.mjs` | template post 1080×1350 e storie 1080×1920 |
 | `content.mjs` | funzioni dell'app, titoli e didascalie a rotazione |
 | `publish.mjs` | Buffer: doppioni, coda max 10, controllo storie |
+| `fipav/` | lettore del calendario FIPAV (`fipav.mjs`, `cli.mjs`) e `feed.mjs`, che lo aggiunge ai dati del giro |
 | `screens/` | schermate vere dell'app (dati di prova, nessuna persona reale) |
 | `fonts/`, `assets/` | Gochi Hand, Inter, icona dell'app |
 
@@ -17,7 +18,12 @@ Kit che legge i dati veri di SANDER, disegna post e storie con le schermate dell
 `https://www.sanderbv.it/api/social/feed`: pubblico, in sola lettura, niente dati personali.
 - `tournaments`: tornei SANDER delle prossime 4 settimane.
 - `openMatches`: partite aperte dei prossimi 4 giorni.
-- `fipav`: calendario FIPAV senza nomi di atleti, senza tornei giovanili. Oggi è vuoto: FIPAV blocca i server di Vercel finché non autorizza SANDER. Quando arriveranno i dati, gli slot FIPAV si riempiranno da soli.
+- `fipav`: calendario FIPAV senza nomi di atleti, senza tornei giovanili. Nel feed dell'app oggi è vuoto: FIPAV blocca i server di Vercel finché non autorizza SANDER.
+
+**FIPAV letto dal giro.** Se il feed non ha tornei FIPAV, `run.sh` lancia `node fipav/feed.mjs`: legge i JSON pubblici del calendario (media.myvolley.net, gli stessi del sito federvolley.it) dall'ambiente del giro, con cache di 6 ore e una richiesta alla volta, e li scrive in `work/data.json` con `fipavSource`. Tiene solo Serie Beach, Campionato Italiano e Società, niente giovanili, niente nomi né podi. Se FIPAV non risponde, il giro continua senza.
+- Finché i dati arrivano dal kit, il calendario FIPAV in app resta nascosto: le grafiche FIPAV non mandano in «Gioca → Tornei → Calendario FIPAV», mostrano Scopri («il compagno per il torneo») e scrivono «Fonte: FIPAV».
+- Se FIPAV dovesse rispondere con un blocco (403) anche qui, non aggirarlo: il giro va avanti con tornei SANDER e funzioni.
+- `NO_FIPAV=1 bash run.sh …` salta la lettura.
 
 Scelte di Alex (13/11/2026): tornei FIPAV di tutta Italia; solo calendario (niente podi, niente nomi); categorie Serie Beach, Campionato Italiano, Società; finché FIPAV è vuoto, al loro posto tornei SANDER o funzioni.
 
