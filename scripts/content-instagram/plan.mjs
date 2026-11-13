@@ -19,7 +19,20 @@
  * Posts on Mon/Wed/Fri/Sun: never more than one day without a post.
  */
 import { readFileSync } from "fs"
+import { dirname, join } from "path"
+import { fileURLToPath } from "url"
 import { FEATURE_ORDER } from "./content.mjs"
+
+const PHOTOS = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "photos.json"), "utf8"))
+/** Order of the photo slots in a week (see photos.json). */
+const PHOTO_SLOT = { "lun-post": 0, "mar-story": 1, "mer-post": 2, "gio-story": 3, "ven-post": 4, "ven-story": 5, "sab-story": 6, "dom-post": 7, "dom-story": 8 }
+
+/** Background photo for a slot, or null once the stock is used up (the card is used then). */
+export function photoFor(monday, day, type) {
+  const weeks = Math.round((Date.parse(`${monday}T12:00:00Z`) - Date.parse(`${PHOTOS.start}T12:00:00Z`)) / (7 * DAY))
+  const i = weeks * PHOTOS.perWeek + (PHOTO_SLOT[`${day}-${type}`] ?? 99)
+  return weeks >= 0 && i < PHOTOS.order.length ? PHOTOS.order[i] : null
+}
 
 const DAY = 86_400_000
 const romeDay = (d) => new Date(d).toLocaleDateString("en-CA", { timeZone: "Europe/Rome" })
@@ -52,7 +65,7 @@ export function plan(data, run, monday) {
   const sanderWeekend = sanderSoon(d(5), d(6))
   const openWeekend = (data.openMatches ?? []).filter((m) => [d(4), d(5), d(6)].includes(romeDay(m.date)))
   const slot = (n, day, time, type, kind, payload = {}, optional = false) =>
-    ({ id: `${monday}-${day}-${type}`, day, date: d(n), time, type, kind, week, optional, ...payload })
+    ({ id: `${monday}-${day}-${type}`, day, date: d(n), time, type, kind, week, optional, photo: photoFor(monday, day, type), ...payload })
 
   const slots = []
   if (run === "A") {
