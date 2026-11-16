@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/layout/PageHeader"
 import { SectionTabs, rankTabs } from "@/components/layout/SectionTabs"
 import { fipavAvailable } from "@/lib/fipav/queries"
 import { Gabbo } from "@/components/ui/Gabbo"
+import { FipavUpcoming } from "@/components/fipav/FipavUpcoming"
 
 export const metadata: Metadata = {
   title: "La settimana su SANDER — Classifica Beach Volley",
@@ -84,11 +85,12 @@ export default async function WeeklyPage() {
       <SectionTabs items={rankTabs(await fipavAvailable())} active="settimana" tone="compete" className="pb-4" />
 
       {recap.activePlayers === 0 ? (
-        <div className="mx-4 rounded-2xl bg-[var(--surface-2)] p-8 text-center">
+        <div className="space-y-6 px-4">
+        <div className="rounded-2xl bg-[var(--surface-2)] p-8 text-center">
           <Gabbo pose="attesa" size={112} className="mx-auto mb-3" />
           <p className="font-bold text-white">Nessuna partita questa settimana</p>
           <p className="mt-1 text-sm text-[var(--muted-text)]">
-            Organizza una partita e comincia a scalare la classifica.
+            La classifica della settimana riparte con la prossima partita. Creala tu e scala la classifica.
           </p>
           <Link
             href="/sessions/new"
@@ -97,6 +99,14 @@ export default async function WeeklyPage() {
           >
             Crea una partita
           </Link>
+        </div>
+          <Link
+            href="/players"
+            className="flex min-h-[3.5rem] items-center justify-center rounded-2xl bg-[var(--surface-2)] text-base font-bold text-white"
+          >
+            Vedi la classifica generale
+          </Link>
+          {(await fipavAvailable()) && <FipavUpcoming title="Tornei FIPAV in arrivo" />}
         </div>
       ) : (
         <div className="space-y-5 px-4">

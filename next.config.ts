@@ -46,11 +46,12 @@ const nextConfig: NextConfig = {
   },
   // Addresses people type by habit: both land on the sign-up form.
   async redirects() {
-    return ["/auth/signup", "/auth/register", "/registrati"].map((source) => ({
-      source,
-      destination: "/auth/signin?mode=register",
-      permanent: false,
-    }))
+    const to = (destination: string) => (source: string) => ({ source, destination, permanent: false })
+    return [
+      ...["/auth/signup", "/auth/register", "/registrati"].map(to("/auth/signin?mode=register")),
+      ...["/auth/login", "/login", "/signin", "/accedi"].map(to("/auth/signin")),
+      to("/onboarding/profile")("/onboarding"),
+    ]
   },
   async headers() {
     return [

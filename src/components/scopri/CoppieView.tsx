@@ -60,7 +60,7 @@ function Leaderboard({ rows, mine }: { rows: DuoRankRow[]; mine?: string }) {
           <span className="min-w-0 flex-1">
             <span className="block truncate text-base font-extrabold text-white">{r.name}</span>
             <span className="block text-sm text-[var(--muted-text)]">
-              {r.wins + r.losses === 0 ? "Ancora da giocare" : `${r.wins}V · ${r.losses}S`}
+              {r.wins + r.losses === 0 ? "Ancora da giocare" : `${r.wins} ${r.wins === 1 ? "vinta" : "vinte"} · ${r.losses} ${r.losses === 1 ? "persa" : "perse"}`}
             </span>
           </span>
           <span className="num text-xl text-[var(--social)]">{r.rating}</span>

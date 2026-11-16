@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils"
 /** "Su SANDER | Calendario FIPAV" on the Tornei page. Real links: back/forward keep working. */
 export function FipavSourceToggle({ active }: { active: "sander" | "fipav" }) {
   const items = [
-    { id: "sander", href: "/tournaments", label: "Su SANDER" },
+    { id: "sander", href: "/tournaments?fonte=sander", label: "Su SANDER" },
     { id: "fipav", href: "/tournaments/fipav", label: "Calendario FIPAV" },
   ] as const
   return (

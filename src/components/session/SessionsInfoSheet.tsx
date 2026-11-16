@@ -20,7 +20,7 @@ const ITEMS = [
     icon: <BarChart2 className="h-4 w-4" />,
     label: "Come vengono salvati i dati?",
     description:
-      "Ogni partita completata aggiorna automaticamente le tue statistiche: vittorie, sconfitte, winrate e il tuo rating GLK (Glicko). Non devi fare nulla — tutto avviene in automatico.",
+      "Ogni partita completata aggiorna automaticamente le tue statistiche: vittorie, sconfitte, percentuale di vittorie e i tuoi punti. Non devi fare nulla — tutto avviene in automatico.",
   },
   {
     icon: <Filter className="h-4 w-4" />,

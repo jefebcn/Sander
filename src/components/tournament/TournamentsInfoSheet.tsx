@@ -33,7 +33,7 @@ const ITEMS = [
     icon: <Crown className="h-4 w-4" />,
     label: "Classifica e statistiche",
     description:
-      "Al termine del torneo viene generata una classifica ufficiale. Vittorie, sconfitte e il rating GLK vengono aggiornati automaticamente per ogni partecipante.",
+      "Al termine del torneo viene generata una classifica ufficiale. Vittorie, sconfitte e punti vengono aggiornati automaticamente per ogni partecipante.",
   },
   {
     icon: <Trophy className="h-4 w-4" />,

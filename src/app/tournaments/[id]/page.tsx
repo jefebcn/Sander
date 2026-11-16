@@ -151,7 +151,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
           {/* This is the page people land on from a shared link, and it had no
               way back into the app. */}
           <div className="flex items-center justify-between">
-            <BackButton href="/tournaments" />
+            <BackButton href="/tournaments?fonte=sander" />
             <ShareButton path={`/tournaments/${id}`} title={tournament.name} text={`Unisciti al torneo "${tournament.name}" su SANDER 🏐`} />
           </div>
           <div className="mt-2 flex items-center gap-2">
@@ -492,7 +492,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
         {/* This is the page people land on from a shared link, and it had no
             way back into the app. */}
         <div className="flex items-center justify-between">
-          <BackButton href="/tournaments" />
+          <BackButton href="/tournaments?fonte=sander" />
           <ShareButton path={`/tournaments/${id}`} title={tournament.name} text={`Unisciti al torneo "${tournament.name}" su SANDER 🏐`} />
         </div>
         <div className="mt-2 flex items-center gap-2">

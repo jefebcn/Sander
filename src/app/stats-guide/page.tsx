@@ -43,26 +43,26 @@ export default function StatsGuidePage() {
         >
           <p className="text-sm text-white leading-relaxed">
             La tua card si basa su <strong className="text-[var(--accent)]">due elementi</strong>:
-            il rating <strong className="text-[var(--accent)]">Glicko-2</strong> (oggettivo, calcolato automaticamente)
+            i tuoi <strong className="text-[var(--accent)]">punti</strong> (oggettivi, calcolati in automatico dai risultati)
             e la <strong className="text-[var(--accent)]">distribuzione percentuale</strong> che scegli tu per le 6 statistiche.
           </p>
         </div>
 
         {/* Section: Glicko-2 overall */}
-        <SectionTitle>Overall — Glicko-2</SectionTitle>
+        <SectionTitle>Overall — i tuoi punti</SectionTitle>
 
         <div
           className="rounded-2xl p-4 space-y-3"
           style={{ background: "var(--surface-2)", border: "1px solid rgba(255,255,255,0.06)" }}
         >
           <div className="flex items-center justify-between">
-            <p className="font-black text-white text-base">GLICKO-2</p>
+            <p className="font-black text-white text-base">PUNTI</p>
             <span className="text-2xl font-black" style={{ color: "var(--accent)" }}>OVR</span>
           </div>
           <p className="text-sm text-[var(--muted-text)] leading-relaxed">
-            Il numero grande in alto a sinistra della tua card è il tuo <strong className="text-white">rating Glicko-2</strong>.
-            È l&apos;unico valore completamente oggettivo — non lo puoi impostare, viene calcolato automaticamente
-            in base alle tue vittorie e sconfitte nei tornei.
+            Il numero grande in alto a sinistra della tua card indica i tuoi <strong className="text-white">punti</strong>.
+            È l&apos;unico valore completamente oggettivo: non lo puoi impostare, si calcola da solo
+            in base alle tue vittorie e sconfitte, in partita e nei tornei.
           </p>
           <div className="space-y-2">
             {[
@@ -82,7 +82,7 @@ export default function StatsGuidePage() {
             className="rounded-xl p-3 text-xs leading-relaxed"
             style={{ background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.55)" }}
           >
-            <span className="text-white font-semibold">Come cresce:</span> Batti avversari con Glicko-2 più alto del tuo
+            <span className="text-white font-semibold">Come cresce:</span> Batti avversari con più punti di te
             per guadagnare più punti. Perdere contro giocatori più deboli ti penalizza di più.
           </div>
         </div>
@@ -101,11 +101,11 @@ export default function StatsGuidePage() {
           >
             <p className="text-xs text-[var(--muted-text)] mb-1 uppercase tracking-wider">Formula</p>
             <p className="text-lg font-black text-white">
-              Glicko-2 ÷ 40 + %
+              Punti ÷ 40 + %
             </p>
           </div>
           <p className="text-sm text-[var(--muted-text)] leading-relaxed">
-            Ogni statistica dipende dal tuo Glicko-2 (base fissa) più la percentuale che hai assegnato a quella stat.
+            Ogni statistica dipende dai tuoi punti (base fissa) più la percentuale che hai assegnato a quella stat.
             Le 6 percentuali devono sempre sommare a <strong className="text-white">100</strong>.
           </p>
 
@@ -138,7 +138,7 @@ export default function StatsGuidePage() {
                 </div>
               ))}
             </div>
-            <p className="text-xs text-[var(--muted-text)]">Glicko · % assegnata · Valore · Nota</p>
+            <p className="text-xs text-[var(--muted-text)]">Punti · % assegnata · Valore · Nota</p>
           </div>
         </div>
 

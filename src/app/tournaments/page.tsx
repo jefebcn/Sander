@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import { Plus } from "lucide-react"
 import { listTournaments } from "@/actions/tournaments"
 import { getCurrentPlayer, getCurrentSession } from "@/lib/getCurrentPlayer"
@@ -12,6 +13,7 @@ import { SectionTabs, PLAY_TABS } from "@/components/layout/SectionTabs"
 import { Gabbo } from "@/components/ui/Gabbo"
 import { FipavSourceToggle } from "@/components/fipav/FipavSourceToggle"
 import { fipavAvailable } from "@/lib/fipav/queries"
+import { FipavUpcoming } from "@/components/fipav/FipavUpcoming"
 
 export const metadata: Metadata = {
   title: "Tornei di beach volley | SANDER",
@@ -21,7 +23,8 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic"
 
-export default async function TournamentsPage() {
+export default async function TournamentsPage({ searchParams }: { searchParams: Promise<{ fonte?: string }> }) {
+  const { fonte } = await searchParams
   const [tournaments, currentPlayer, session] = await Promise.all([
     listTournaments(),
     getCurrentPlayer(),
@@ -29,6 +32,11 @@ export default async function TournamentsPage() {
   ])
   // "+ Nuovo" only for those who can create: admins and club staff.
   const canCreate = isAdminEmail(session?.user?.email) || (!!currentPlayer && (await myManagedClubs(currentPlayer.id)).length > 0)
+  const upcoming = tournaments.some((t) => t.status !== "COMPLETED")
+  const hasFipav = await fipavAvailable()
+  // Nothing coming up on SANDER: open on the FIPAV calendar, which is where
+  // the tournaments are. "Su SANDER" (?fonte=sander) still shows the archive.
+  if (!upcoming && hasFipav && !canCreate && fonte !== "sander") redirect("/tournaments/fipav")
 
   return (
     <div>
@@ -53,7 +61,13 @@ export default async function TournamentsPage() {
         }
       />
       <SectionTabs items={PLAY_TABS} active="tornei" className="pb-4" />
-      {(await fipavAvailable()) && <FipavSourceToggle active="sander" />}
+      {hasFipav && <FipavSourceToggle active="sander" />}
+      {!upcoming && tournaments.length > 0 && (
+        <div className="px-4 pb-5">
+          <p className="mb-4 text-base text-[var(--muted-text)]">Nessun torneo SANDER in programma. Qui sotto quelli già giocati.</p>
+          {hasFipav && <FipavUpcoming />}
+        </div>
+      )}
 
       {tournaments.length === 0 ? (
         <div className="flex flex-col items-center gap-4 px-6 py-20 text-center">

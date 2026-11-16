@@ -53,7 +53,8 @@ export async function getSeasonStandings(): Promise<{
   const start = new Date(season.startsAt)
 
   const active = await db.ratingHistory.findMany({
-    where: { createdAt: { gte: start } },
+    // Up to the end date: a season left active after it ended keeps its final standings.
+    where: { createdAt: { gte: start, lte: new Date(season.endsAt) } },
     orderBy: { createdAt: "asc" },
     include: {
       player: { select: { id: true, name: true, avatarUrl: true, glickoRating: true } },

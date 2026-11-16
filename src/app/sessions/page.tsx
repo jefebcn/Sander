@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/layout/PageHeader"
 import { QuickActionsButton } from "@/components/layout/QuickActionsButton"
 import { SectionTabs, PLAY_TABS } from "@/components/layout/SectionTabs"
 import { db } from "@/lib/db"
+import { FipavUpcoming } from "@/components/fipav/FipavUpcoming"
 
 export const metadata: Metadata = {
   title: "Partite di beach volley vicino a te | SANDER",
@@ -24,7 +25,7 @@ export default async function SessionsPage() {
     getSessions(currentPlayer?.id),
     // Shown only when nothing is open: proof that people play here.
     db.session.findMany({
-      where: { status: "COMPLETED", date: { gte: new Date(Date.now() - 60 * 86_400_000) } },
+      where: { status: "COMPLETED" },
       orderBy: { date: "desc" },
       take: 5,
       select: { id: true, title: true, location: true, city: true, date: true, _count: { select: { participants: true } } },
@@ -82,6 +83,7 @@ export default async function SessionsPage() {
         sessions={sessions.map((s) => ({ ...s, status: s.status as "OPEN" | "FULL" | "COMPLETED" | "CANCELLED" }))}
         isLoggedIn={!!currentPlayer}
         recentPlayed={recentPlayed}
+        emptyExtra={<FipavUpcoming />}
       />
     </div>
   )

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import Link from "next/link"
 import { Calendar, Plus } from "lucide-react"
 import { SessionCard } from "@/components/session/SessionCard"
@@ -28,11 +28,13 @@ interface FilterableSessionListProps {
   sessions: Session[]
   isLoggedIn?: boolean
   recentPlayed?: RecentPlayed[]
+  /** Shown under the cold-start CTA (server-rendered, e.g. upcoming FIPAV tournaments). */
+  emptyExtra?: ReactNode
 }
 
 const playedDay = new Intl.DateTimeFormat("it-IT", { timeZone: "Europe/Rome", weekday: "short", day: "numeric", month: "short" })
 
-export function FilterableSessionList({ sessions, isLoggedIn = false, recentPlayed = [] }: FilterableSessionListProps) {
+export function FilterableSessionList({ sessions, isLoggedIn = false, recentPlayed = [], emptyExtra }: FilterableSessionListProps) {
   const [format, setFormat] = useState("")
 
   const filterFn = (s: Session) => !format || s.format === format
@@ -123,9 +125,9 @@ export function FilterableSessionList({ sessions, isLoggedIn = false, recentPlay
               /* Cold-start: guide the newcomer instead of dead-ending */
               <>
                 <div>
-                  <p className="font-bold text-white">Ancora nessuna partita</p>
+                  <p className="font-bold text-white">Nessuna partita aperta adesso</p>
                   <p className="mt-1 text-sm text-[var(--muted-text)]">
-                    Sii il primo a organizzare una partita nella tua zona 🏐
+                    Crea tu la prossima: scegli giorno e campo, i posti liberi li vedono tutti.
                   </p>
                 </div>
                 <Link
@@ -134,12 +136,13 @@ export function FilterableSessionList({ sessions, isLoggedIn = false, recentPlay
                   style={{ background: "var(--accent)" }}
                 >
                   <Plus className="h-5 w-5" />
-                  {isLoggedIn ? "Crea la prima partita" : "Accedi e crea la prima partita"}
+                  {isLoggedIn ? "Crea una partita" : "Accedi e crea una partita"}
                 </Link>
+                {emptyExtra && <div className="mt-8 w-full">{emptyExtra}</div>}
                 {recentPlayed.length > 0 && (
                   <section className="mt-8 w-full text-left" aria-labelledby="recent-played">
                     <p id="recent-played" className="mb-2 text-sm font-bold uppercase tracking-wider text-[var(--muted-text)]">
-                      Giocate di recente
+                      Ultime partite giocate
                     </p>
                     <ul className="flex flex-col gap-2">
                       {recentPlayed.map((r) => (

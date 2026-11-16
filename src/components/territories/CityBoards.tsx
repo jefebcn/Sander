@@ -43,7 +43,7 @@ export function CityBoards({ boards }: { boards: CityLeaderboard[] }) {
                   />
                 )}
                 <span className="ml-auto shrink-0 text-xs text-[var(--muted-text)]">
-                  {b.king.wins} vittorie · {b.king.winRate}%
+                  {b.king.wins} {b.king.wins === 1 ? "vittoria" : "vittorie"} · {b.king.winRate}%
                 </span>
               </Link>
             )}
