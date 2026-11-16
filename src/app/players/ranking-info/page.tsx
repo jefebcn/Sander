@@ -19,7 +19,7 @@ export default function RankingInfoPage() {
         </Link>
         <div>
           <h1 className="font-hand text-[1.9rem] text-white">Come funziona il Ranking</h1>
-          <p className="text-sm text-[var(--muted-text)]">Sistema di valutazione Glicko-2</p>
+          <p className="text-sm text-[var(--muted-text)]">Come salgono e scendono i tuoi punti</p>
         </div>
       </header>
 
@@ -33,7 +33,7 @@ export default function RankingInfoPage() {
           <div className="flex items-start gap-3">
             <TrendingUp className="h-5 w-5 shrink-0 text-[var(--accent)] mt-0.5" />
             <div>
-              <p className="font-bold text-white mb-1">Glicko-2 — il sistema usato dagli scacchi</p>
+              <p className="font-bold text-white mb-1">Lo stesso sistema degli scacchi (Glicko-2)</p>
               <p className="text-sm text-white/70 leading-relaxed">
                 Si parte da <strong className="text-[var(--accent)]">{startRatings} punti</strong>, secondo il livello scelto all&apos;iscrizione ({START_LEVELS.map((l) => l.label.toLowerCase()).join(", ")}). I punti salgono quando vinci e scendono quando perdi, tenendo conto della forza degli avversari.
               </p>

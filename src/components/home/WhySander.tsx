@@ -39,21 +39,26 @@ function answers(variant: "guest" | "player", hasOpenMatches: boolean) {
 }
 
 export function WhySander({ variant, hasOpenMatches = false }: { variant: "guest" | "player"; hasOpenMatches?: boolean }) {
+  // A visitor reads the headlines, not four paragraphs: three short answers.
+  const guest = variant === "guest"
+  const items = guest
+    ? answers(variant, hasOpenMatches).filter((x) => x.q !== "Perché riaprirla dopo ogni partita?")
+    : answers(variant, hasOpenMatches)
   return (
     <section className="flex flex-col gap-3" aria-labelledby="why-title">
       <CrestHeading id="why-title" eyebrow="Le domande di tutti" title="Perché SANDER" />
       <ol className="flex flex-col gap-2">
-        {answers(variant, hasOpenMatches).map((x, i) => (
+        {items.map((x, i) => (
           <li
             key={x.q}
-            className="rise-in flex items-start gap-4 rounded-[var(--radius-lg)] bg-[var(--surface-2)] p-4 ring-1 ring-[var(--crest-hair)]"
+            className={`rise-in flex items-start gap-4 rounded-[var(--radius-lg)] bg-[var(--surface-2)] ring-1 ring-[var(--crest-hair)] ${guest ? "px-4 py-3" : "p-4"}`}
             style={{ "--i": i } as React.CSSProperties}
           >
             <CrestBadge tone="white" className="mt-0.5 h-11 w-10 text-lg">{i + 1}</CrestBadge>
             <span className="min-w-0">
               <span className="eyebrow block text-[var(--accent)]">{x.q}</span>
               <span className="mt-0.5 block text-lg font-extrabold leading-snug text-white">{x.a}</span>
-              <span className="mt-1 block text-base leading-snug text-[var(--muted-text)]">{x.more}</span>
+              {!guest && <span className="mt-1 block text-base leading-snug text-[var(--muted-text)]">{x.more}</span>}
             </span>
           </li>
         ))}

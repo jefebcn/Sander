@@ -53,12 +53,20 @@ export function GuestLanding({
 
       <WhySander variant="guest" />
 
+      {/* Second way in, right after the answers: no long scroll to find it. */}
+      <Link
+        href="/auth/signin?mode=register"
+        className="pressable btn btn-primary min-h-[3.75rem] gap-2 text-lg"
+      >
+        <Sparkles className="h-5 w-5" aria-hidden="true" /> Inizia gratis
+      </Link>
+
       {/* Scopri: the new way in — find someone to play with by swiping. */}
       <section className="flex flex-col gap-3" aria-labelledby="scopri-title">
         <CrestHeading id="scopri-title" eyebrow="Novità" title="Trova con chi giocare" />
         <Link
           href="/scopri"
-          className="pressable relative flex min-h-[26rem] flex-col justify-end overflow-hidden rounded-[var(--radius-lg)] p-5 shadow-[var(--shadow-card)]"
+          className="pressable relative flex min-h-[20rem] flex-col justify-end overflow-hidden rounded-[var(--radius-lg)] p-5 shadow-[var(--shadow-card)]"
           style={{
             background:
               "linear-gradient(180deg, rgb(0 0 0 / 0) 10%, rgb(0 0 0 / 0.55) 45%, rgb(0 0 0 / 0.9) 100%), url(/demo/players/sara-1.webp) center 25% / cover",

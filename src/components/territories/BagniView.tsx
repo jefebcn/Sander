@@ -61,7 +61,7 @@ function TerritoryRow({ t, bagno, muted }: { t?: Territory; bagno?: number; mute
         <div className="shrink-0 text-right">
           <p className="text-lg font-black text-[var(--gold)]">{t.king.wins}</p>
           <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-text)]">
-            vittorie
+            {t.king.wins === 1 ? "vittoria" : "vittorie"}
           </p>
         </div>
       )}

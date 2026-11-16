@@ -163,7 +163,7 @@ function RankRow({ player, pos }: { player: Player; pos: number | null }) {
           <ProvisionalBadge games={games} />
         ) : (
           <p className="text-xs text-[var(--muted-text)]">
-            Liv. {player.level} · {player.matchesWon}V {player.matchesLost}S
+            Liv. {player.level} · {player.matchesWon} {player.matchesWon === 1 ? "vinta" : "vinte"} · {player.matchesLost} {player.matchesLost === 1 ? "persa" : "perse"}
           </p>
         )}
       </div>

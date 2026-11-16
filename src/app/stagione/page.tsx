@@ -12,7 +12,8 @@ import { DIVISIONS, getNextDivision, pointsToNext, divisionProgress } from "@/li
 import { DivisionBadge } from "@/components/season/DivisionBadge"
 import { DivisionShareButton } from "@/components/season/DivisionShareButton"
 import { PageHeader } from "@/components/layout/PageHeader"
-import { SectionTabs, RANK_TABS } from "@/components/layout/SectionTabs"
+import { SectionTabs, rankTabs } from "@/components/layout/SectionTabs"
+import { fipavAvailable } from "@/lib/fipav/queries"
 import { resizedPhoto } from "@/lib/photo"
 
 export const metadata: Metadata = {
@@ -80,7 +81,7 @@ export default async function SeasonPage() {
     return (
       <div className="pb-10">
         <PageHeader eyebrow="Classifiche" tone="compete" title="Stagione" />
-        <SectionTabs items={RANK_TABS} active="stagione" tone="compete" className="pb-4" />
+        <SectionTabs items={rankTabs(await fipavAvailable())} active="stagione" tone="compete" className="pb-4" />
         <div className="mx-4 rounded-3xl bg-[var(--surface-2)] p-8 text-center">
           <div className="mx-auto mb-4 w-fit">
             <DivisionBadge division={DIVISIONS[2]} size={96} />
@@ -107,6 +108,9 @@ export default async function SeasonPage() {
   }
 
   const remaining = daysLeft(season.endsAt)
+  // The admin may leave a season "active" after its end date: show it as
+  // finished with its final standings, not as "0 giorni" left.
+  const ended = remaining === 0
   const next = me ? getNextDivision(me.rating) : null
   const toNext = me ? pointsToNext(me.rating) : null
   const progress = me ? divisionProgress(me.rating) : 0
@@ -114,19 +118,24 @@ export default async function SeasonPage() {
   return (
     <div className="pb-10">
       <PageHeader
-        eyebrow="Stagione"
+        eyebrow={ended ? "Stagione conclusa" : "Stagione"}
         tone="compete"
         title={season.name}
         action={
           <div className="flex items-center gap-1.5 rounded-full bg-[var(--surface-2)] px-3 py-1.5">
             <Clock className="h-4 w-4 text-[var(--compete)]" aria-hidden="true" />
             <span className="text-sm font-bold text-white">
-              {remaining} {remaining === 1 ? "giorno" : "giorni"}
+              {ended ? "Finita" : `${remaining} ${remaining === 1 ? "giorno" : "giorni"}`}
             </span>
           </div>
         }
       />
-      <SectionTabs items={RANK_TABS} active="stagione" tone="compete" className="pb-4" />
+      <SectionTabs items={rankTabs(await fipavAvailable())} active="stagione" tone="compete" className="pb-4" />
+      {ended && (
+        <p className="mx-4 mb-4 rounded-2xl bg-[var(--surface-2)] px-4 py-3 text-base text-[var(--muted-text)]">
+          La stagione è finita il {new Date(season.endsAt).toLocaleDateString("it-IT", { timeZone: "Europe/Rome", day: "numeric", month: "long" })}: questa è la classifica finale. Le partite di adesso muovono comunque i tuoi punti.
+        </p>
+      )}
 
       {/* ── Your division hero ─────────────────────────────────────────── */}
       {me && (

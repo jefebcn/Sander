@@ -19,7 +19,7 @@ per farne una nuova copia la più simile e cambia testo e sfondo.
   - card scura con numeri lime (liste, "come funziona"): **solo dentro un carosello, mai come prima immagine o come storia/post singolo**. Da sola o in copertina non rispetta i colori del progetto: lì si usa la card lime o una foto.
 - **Titoli**: Gochi Hand, grandi, bianco + una parola o una riga in lime. Sulle foto vanno nel cielo o nel vuoto, mai sopra i volti.
 - **Etichette**: Inter maiuscolo spaziato in alto (es. STAGIONE 2 · RIVIERA · GRATIS), pillola con bordo per la frase breve.
-- **Chiusura**: icona dell'app (`public/icon-512.png`) + `sanderbv.it` in Gochi Hand + "LINK IN BIO".
+- **Chiusura**: icona dell'app (`public/icon-512.png`) + "Scarica l'app" in Gochi Hand + "APP STORE · GOOGLE PLAY" + "LINK IN BIO". Non si scrive più `sanderbv.it` (novembre 2026: ora si spinge l'app negli store).
 
 ## Sfondi
 
@@ -46,6 +46,8 @@ Vale per storie, post e caroselli, su Instagram e TikTok insieme. La stessa foto
 | `schiacciata-tramonto` | TikTok 19 nov (Foto verificata, 1) · post fissato App Store (Il beach volley ha la sua app) — **esaurita** |
 | `batti-cinque` | IG 22 nov (Rigiocheresti) |
 | `bagher-notte` | IG 24 nov (Chi porta il pallone?) |
+
+**Riservate all'automazione Instagram** (`scripts/content-instagram/photos.json`, dal 16/11/2026): l'ultimo uso di `novembre-felpe`, `tramonto-coppia`, `palla-sabbia`, `tuffo-sera`, `battuta-ombrelloni`, `piedi-corsa`, `alzata-notte`, `batti-cinque`, `bagher-notte` e i due usi delle foto nuove `amici-seduti`, `quattro-in-cammino`, `battuta-sera`, `batti-cinque-rete`. Non usarle a mano: le foto nuove vanno aggiunte in `scripts/content-instagram/photos/` e in coda a `photos.json`.
 
 Già esaurite, non riusarle: le foto del pacchetto Stagione 2 (coppia con la maglia 23, ragazza in viola, corsa sfocata verde, alzata sotto la rete, gambe in corsa) e il palo della rete (2 usi: IG 30 ott, 7 nov).
 

@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 const FEATURES = [
   { icon: Zap, title: "La tua carta giocatore", desc: "Stile FUT, sale di livello a ogni partita." },
   { icon: Trophy, title: "Partite e tornei", desc: "Organizza, iscriviti, gioca. In due tap." },
-  { icon: Users, title: "Classifica e rating", desc: "Rating Glicko: scopri quanto vali davvero." },
+  { icon: Users, title: "Classifica e rating", desc: "Punti che salgono a ogni vittoria: scopri quanto vali davvero." },
   { icon: Crown, title: "Re dei Bagni", desc: "Conquista i campi e difendi il tuo trono." },
 ]
 
