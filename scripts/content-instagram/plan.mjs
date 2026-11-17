@@ -11,17 +11,22 @@
  *   Tue  STORY tutorial of a feature, 3 frames
  *   Wed  POST  feature of the week (never the same two weeks in a row)
  *   Thu  STORY this weekend: FIPAV → SANDER tournaments → open matches → feature
- *   Fri  POST  "Manca sempre uno?" problem → solution (+ open matches)
+ *   Thu  POST  «Frasi da rete», the weekly appointment (numbered, see content.mjs)
+ *   Fri  POST  "Manca uno": hook on a photo or the group chat → solution (+ open matches)
  *   Fri  STORY "Chi gioca stasera?" with the create-match screen
  *   Sat  STORY optional: tournament this weekend, else a feature tip
- *   Sun  POST  second feature (even weeks) or community (odd weeks)
+ *   Sun  POST  second feature (even weeks) or a fun format (odd weeks: citazione,
+ *              gioco, notifiche, carta, flag — never Wednesday's)
  *   Sun  STORY countdown to the next tournament (SANDER, else FIPAV) → else feature
- * Posts on Mon/Wed/Fri/Sun: never more than one day without a post.
+ * Posts on Mon/Wed/Thu/Fri/Sun: never more than one day without a post.
  */
 import { readFileSync } from "fs"
 import { dirname, join } from "path"
 import { fileURLToPath } from "url"
 import { FEATURE_ORDER } from "./content.mjs"
+
+/** Wednesday's cover format by feature (render.mjs uses the same map). */
+export const FEATURE_COVER = { scopri: "flag", crea: "chat", tornei: "notifiche", chat: "chat", classifiche: "carta", storico: "notifiche" }
 
 const PHOTOS = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "photos.json"), "utf8"))
 /** Order of the photo slots in a week (see photos.json). */
@@ -72,7 +77,7 @@ export function plan(data, run, monday) {
   const slots = []
   if (run === "A") {
     // Monday: FIPAV of the coming weekend, else the next SANDER tournament, else a feature.
-    if (fipavWeekend.length) slots.push(slot(0, "lun", "18:30", "post", "fipav-weekend", { events: fipavWeekend.slice(0, 6), total: fipavWeekend.length, weekend }))
+    if (fipavWeekend.length) slots.push(slot(0, "lun", "18:30", "post", "fipav-weekend", { events: fipavWeekend.slice(0, 40), total: fipavWeekend.length, allCities: fipavWeekend.map((e) => e.city), weekend }))
     else {
       const next = sanderSoon(d(0), d(13))[0]
       if (next) slots.push(slot(0, "lun", "18:30", "post", "sander-tournament", { tournament: next }))
@@ -87,6 +92,9 @@ export function plan(data, run, monday) {
     else if (openWeekend.length >= 2) slots.push(slot(3, "gio", "19:00", "story", "weekend-matches", { matches: openWeekend.slice(0, 5) }))
     else slots.push(slot(3, "gio", "19:00", "story", "feature-story", { feature: F(1) }))
 
+    // Thursday post: «Frasi da rete», every week.
+    slots.push({ ...slot(3, "gio", "18:30", "post", "frase"), photo: null })
+
     slots.push(slot(4, "ven", "13:00", "post", "missing-one", { matches: openWeekend.slice(0, 4) }))
     slots.push(slot(4, "ven", "18:30", "story", "tonight"))
 
@@ -95,7 +103,7 @@ export function plan(data, run, monday) {
 
     slots.push(week % 2 === 0
       ? slot(6, "dom", "11:00", "post", "feature", { feature: F(3) })
-      : slot(6, "dom", "11:00", "post", "community"))
+      : slot(6, "dom", "11:00", "post", "community", { avoid: FEATURE_COVER[F(0)] }))
 
     // Sunday story: countdown to the next tournament after this Sunday.
     const nextSander = (data.tournaments ?? []).find((t) => romeDay(t.date) > d(6))
