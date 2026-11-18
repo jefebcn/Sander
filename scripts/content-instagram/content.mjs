@@ -135,3 +135,88 @@ export const CTA = ["Link in bio", "Salvalo", "Swipe"]
 export function pick(list, week, salt = 0) {
   return list[((week + salt) % list.length + list.length) % list.length]
 }
+
+// ─── New formats (17/11/2026) ────────────────────────────────────────────────
+// Every cover says it is beach volley (2v2, sabbia, rete, bagno, diagonale)
+// and lands on the app only after the joke. Display lines are uppercase in
+// Bricolage, `hand` lines in Gochi Hand lime. Captions: same rules as above.
+
+/** «Frasi da rete»: weekly (Thursday), numbered from week 1 = 19/11/2026. Sport first, flirt as a nuance. */
+export const FRASI_START = "2026-11-16"
+export const FRASI = [
+  { d: ["Non cerco", "l'anima", "gemella."], h: ["Cerco chi copre", "la diagonale."], cap: "Le priorità, sulla sabbia, sono chiare." },
+  { d: ["Mi hai fatto", "un ace."], h: ["E non ho", "nemmeno visto la palla."], cap: "Succede. Soprattutto al terzo set." },
+  { d: ["Io bagher,", "tu alzata."], h: ["Il resto", "lo decide la rete."], cap: "Ogni coppia di 2v2 parte così." },
+  { d: ["Non dico", "«mia»"], h: ["a chiunque.", "Solo a te."], cap: "In campo una parola sola basta." },
+  { d: ["Sabbia nei", "capelli,"], h: ["punti", "in classifica."], cap: "La giornata giusta ha tutte e due le cose." },
+  { d: ["Ti ho visto", "difendere."], h: ["Da lì", "ho capito tutto."], cap: "Un tuffo in difesa dice più di mille parole." },
+  { d: ["Il primo", "appuntamento"], h: ["è un 2v2.", "Il secondo, la rivincita."], cap: "Sul campo ci si conosce in fretta." },
+  { d: ["Cambio campo", "ogni 7 punti."], h: ["Compagno,", "mai."], cap: "Alcune cose non si cambiano." },
+  { d: ["Non serve", "che parli."], h: ["Basta", "che copri la linea."], cap: "Il miglior compagno di beach parla con i piedi." },
+  { d: ["Tu chiami", "il punto,"], h: ["io chiamo", "la rivincita."], cap: "Una partita tira l'altra." },
+  { d: ["Palla corta", "al primo punto."], h: ["Ok,", "mi hai convinto."], cap: "Certe giocate non si dimenticano." },
+  { d: ["Ho perso", "il set."], h: ["Ma ho trovato", "un compagno."], cap: "Le sconfitte migliori finiscono così." },
+  { d: ["Il vento era", "contro di noi."], h: ["Il compagno", "no."], cap: "Le scuse finiscono, i compagni giusti restano." },
+  { d: ["Ricezione", "perfetta."], h: ["Come la prima", "volta che hai scritto."], cap: "Precisi in campo, rapidi in chat." },
+  { d: ["Più di un", "match:"], h: ["un 2v2", "ogni sabato."], cap: "Le abitudini migliori nascono sulla sabbia." },
+  { d: ["Mi copri", "la diagonale?"], h: ["Io ti porto", "l'acqua al cambio campo."], cap: "Il patto di ogni coppia che funziona." },
+  { d: ["Il mio tipo?"], h: ["Uno che arriva", "puntuale al campo."], cap: "Raro, ma esiste." },
+  { d: ["Tu muro,", "io difesa."], h: ["Insieme,", "un problema per tutti."], cap: "Le coppie migliori si dividono il campo." },
+  { d: ["Ultima", "e andiamo."], h: ["Disse nessuno,", "mai."], cap: "L'ultima non è mai l'ultima." },
+  { d: ["Non ti ho", "scelto"], h: ["per il bagher.", "Anche."], cap: "Il bagher conta. Ma non solo." },
+  { d: ["Ace,", "match,"], h: ["e il tramonto", "dietro la rete."], cap: "La sequenza perfetta di un sabato." },
+  { d: ["Sei la mia", "alzata"], h: ["preferita.", "Ora tocca a me."], cap: "Un'alzata così non si spreca." },
+  { d: ["Per te", "batto anche"], h: ["controvento.", "Quasi."], cap: "Ci sono limiti anche all'amore per il beach." },
+  { d: ["Ho cercato", "il quarto."], h: ["Ho trovato", "molto di più."], cap: "Il compagno giusto arriva quando meno te lo aspetti." },
+  { d: ["Due su", "sabbia:"], h: ["si parte", "dalla rete."], cap: "Ogni bella storia di beach inizia con un 2v2." },
+  { d: ["Fuori?"], h: ["Per te", "era dentro."], cap: "In campo si è sempre un po' di parte." },
+]
+
+/** Hook on a photo (Friday, «manca uno»). */
+export const GANCI = [
+  { eyebrow: "Beach volley · sabato 17:58", d: ["Siete in tre", "in campo."], h: ["Il quarto ha", "scritto «arrivo»."], sticker: "✓✓ 2 ore fa", sub: "Non è arrivato. Su SANDER entra chi c'è davvero.", cap: "Siete in tre sulla sabbia, la rete è montata e il quarto è sparito dai radar. Su SANDER le partite di beach le vede chi è libero adesso, vicino a te: entra e si gioca." },
+  { eyebrow: "Beach volley · domenica 10:30", d: ["Rete montata,", "palla gonfia."], h: ["Manca", "solo uno."], sticker: "🏐 3/4", sub: "Su SANDER il quarto lo trovi prima di scendere in spiaggia.", cap: "Rete montata, palla gonfia, manca uno. Pubblica la partita su SANDER e chi è libero in zona la vede subito." },
+  { eyebrow: "2v2 · Bagno 26 · 18:30", d: ["«Ci sono»", "alle 14."], h: ["«Non ce la faccio»", "alle 18:20."], sticker: "Visualizzato ✓✓", sub: "Su SANDER, se qualcuno salta, entra il primo in lista.", cap: "Il classico forfait dell'ultimo minuto. Su SANDER se uno salta, il primo in lista d'attesa riceve la notifica ed entra al suo posto." },
+  { eyebrow: "Beach volley · tutta Italia", d: ["Campo libero,", "sole pieno."], h: ["E voi", "siete in tre."], sticker: "🏐 manca 1", sub: "Su SANDER lo trovi al tuo livello, vicino al campo.", cap: "Campo libero e sole pieno, ma siete in tre. Su SANDER trovi chi gioca al vostro livello, vicino al vostro bagno." },
+]
+
+/** Group chat vs SANDER (Friday, alternate weeks; Wednesday for Crea/Chat). */
+export const CHATS = [
+  { group: "Beach volley sabato 🏐", sub: "Luca, Marta, Ste, Giulia e altri 10", msgs: [["", "Chi c'è per il 2v2 di sabato? 🏐", 1], ["Marta", "forse"], ["Ste", "dipende dal vento"], ["Giulia", "io solo se c'è il sole ☀️"], ["Marco", "ma a che ora? quale campo?"], ["", "quindi chi viene?", 1]], seen: "Visualizzato da 13", sticker: "47 messaggi · 0 partite", d: ["Piena in", "10 minuti."], card: ["2V2 · OGGI 18:30", "Bagno 26"], cap: "Quarantasette messaggi, zero partite: il gruppo del beach lo conosciamo tutti. Su SANDER crei la partita, scegli bagno e orario, e si riempie da sola." },
+  { group: "Beach dopo lavoro 🏐", sub: "Fede, Ale, Sara, Nico e altri 7", msgs: [["", "Stasera beach? Serve il quarto", 1], ["Fede", "io ci sono 🙋"], ["Ale", "porto la palla"], ["Sara", "chi prenota il campo?"], ["Nico", "io tardi, verso le 20?"], ["", "...ok facciamo domani", 1]], seen: "Visualizzato da 10", sticker: "Rimandata. Di nuovo.", d: ["Campo, ora,", "squadra."], card: ["2V2 · STASERA 19:00", "Campo 2"], cap: "«Facciamo domani» è la frase più giocata del beach volley. Su SANDER la partita ha campo, orario e posti: chi c'è entra, e stasera si gioca davvero." },
+  { group: "Torneo sabato 🏆", sub: "Giorgia, Teo, Lalla e altri 5", msgs: [["", "Chi fa coppia con me per il torneo?", 1], ["Giorgia", "io ho già il compagno 😅"], ["Teo", "io solo misto"], ["Lalla", "quand'è la scadenza?"], ["Teo", "boh, chiedi all'organizzatore"], ["", "ok cerco altrove", 1]], seen: "Visualizzato da 7", sticker: "Scadenza: ieri", d: ["Compagno", "trovato."], card: ["TORNEO · SABATO", "Iscrizione in coppia"], cap: "Trovare il compagno per il torneo nel gruppo è un'impresa. Su SANDER vedi chi gioca al tuo livello, le scadenze con il conto alla rovescia e ti iscrivi in coppia dall'app." },
+]
+
+/** Quote from the bench (Sunday rotation). */
+export const CITAZIONI = [
+  { who: "Il tuo compagno di beach, dopo il terzo ace subito", d: ["Il sole era"], mk: "esattamente", d2: "lì.", h: "giuro.", cap: "Ogni coppia di beach ha la sua scusa preferita. La nostra è il sole. Su SANDER almeno il punteggio lo confermate in due." },
+  { who: "Tu, al terzo set sotto 12-14", d: ["Questa la"], mk: "giriamo", d2: "noi.", h: "fidati.", cap: "Il terzo set è un altro sport. Su SANDER ogni partita sposta i punti: anche quelle girate all'ultimo." },
+  { who: "Il tuo compagno, dopo un «mia» mancato", d: ["L'avevo"], mk: "chiamata", d2: "io.", h: "forse.", cap: "Il «mia» più famoso del beach volley. Trova un compagno che chiama le palle giuste su SANDER." },
+  { who: "Chiunque, alle 21:30, al buio", d: ["Ultima e"], mk: "andiamo.", d2: "", h: "(sono le 22:40)", cap: "L'ultima non è mai l'ultima. Su SANDER la prossima partita la fissi prima di uscire dal campo." },
+]
+
+/** «Che compagno sei?»: 9 beach types. */
+export const GIOCHI = [
+  { title: ["Che compagno", "di beach sei?"], foot: "numero 3", types: [["«MIA!»", "e poi la guarda"], ["«Ultima e andiamo»", "ne fa altre sei"], ["Il tattico", "«tu stai lì»"], ["Arriva", "al terzo set"], ["«Era fuori»", "sempre"], ["Muro umano", "zero parole"], ["Occhiali da 200 €", "ricezione da 2"], ["Gioca solo", "al tramonto"], ["Conta i punti", "a modo suo"]], cap: "Nove compagni di beach volley, nove modi di stare sulla sabbia. Su Scopri trovi quello che gioca come te.", line: "Nove compagni di beach, uno è il tuo" },
+  { title: ["Che giocatore", "da spiaggia sei?"], foot: "numero 7", types: [["Ricezione", "in tuffo, sempre"], ["Batte forte", "e prega"], ["Chiama tutto", "non prende niente"], ["Allena", "il compagno"], ["Sabbia", "ovunque"], ["Smorzata", "a ogni punto"], ["Fa coppia", "solo col migliore"], ["Si scalda", "per 40 minuti"], ["Arriva", "con 3 palloni"]], cap: "Sulla sabbia ognuno ha il suo stile. Su SANDER trovi chi gioca come te, vicino a te.", line: "Nove stili da spiaggia, uno è il tuo" },
+]
+export const GIOCO_FACES = ["marco-1", "giorgia-1", "luca-1", "chiara-1", "davide-1", "marta-1", "filippo-1", "elena-1", "andrea-1"]
+
+/** Lock screen with SANDER notifications. */
+export const NOTIFICHE = [
+  { date: "sabato 14 giugno", time: "17:42", n: [["🏐", "Si è liberato un posto: 2v2 al Bagno 26 alle 18:30. Entri?", "ora"], ["👀", "Sara ha messo like alla tua risposta: «la mia arma segreta? la palla corta»", "3 min fa"], ["🔥", "+12 punti. Hai superato Marco nel tuo comune.", "ieri"]], d: "Telefono pieno.", h: "Sabato in campo.", cap: "Le notifiche giuste: un posto libero nel 2v2, un like su Scopri, i punti dopo la partita. Su SANDER il beach volley ti scrive al momento giusto." },
+  { date: "domenica 3 agosto", time: "09:15", n: [["🏆", "Iscrizioni aperte: torneo 2v2 di sabato. Mancano 4 coppie.", "ora"], ["🤝", "Luca vuole fare coppia con te per il torneo.", "12 min fa"], ["⏳", "Le iscrizioni chiudono tra 2 giorni.", "1 h fa"]], d: "Il torneo", h: "ti cerca lui.", cap: "Tornei di beach volley con le iscrizioni in coppia e il conto alla rovescia: su SANDER le scadenze te le ricorda l'app." },
+  { date: "venerdì 18 luglio", time: "19:03", n: [["✅", "Risultato confermato: 21-17, 21-19. Bella partita!", "ora"], ["📈", "Sei salito di livello: ora sei Argento.", "ora"], ["🔁", "Rivincita? Marco e Giulia vi sfidano sabato.", "5 min fa"]], d: "Partita finita.", h: "Rivincita sabato.", cap: "Risultato confermato da entrambe le coppie, punti aggiornati e la rivincita già pronta. Il dopo-partita del beach volley, su SANDER." },
+]
+
+/** Green flag / red flag of the 2v2 partner. */
+export const FLAGS = [
+  { title: ["Il compagno", "di 2v2"], h: "giusto", green: ["Ti copre la diagonale senza che lo chiedi", "Ti passa l'acqua al cambio campo", "Perso? «La prossima è nostra»"], red: ["«Mia!»… e la guarda cadere", "Le 18:30 per lui sono le 19", "Perso? «C'era vento»"], cap: "Green flag e red flag del compagno di beach volley. Quello giusto, su Scopri, lo trovi al tuo livello e vicino a te." },
+  { title: ["La coppia", "di beach"], h: "perfetta", green: ["Si dividono il campo senza parlare", "Festeggiano anche il punto dell'altro", "Rivincita fissata prima di uscire"], red: ["Due che chiamano la stessa palla", "Uno batte, l'altro guarda il telefono", "Litigano sul punteggio"], cap: "Una coppia di 2v2 si vede da come si divide il campo. Su SANDER trovi chi gioca come te e fissate la partita in chat." },
+]
+
+/** Card: bronze → gold. */
+export const CARTE = [
+  { eyebrow: "La tua carta da beach volley", d: "Oggi bronzo.", h: "Sabato oro?", sub: "Vinci a beach, i punti salgono, la carta cambia cornice.", cap: "Su SANDER ogni partita di beach volley sposta i tuoi punti. Salendo la carta passa da bronzo ad argento e oro." },
+  { eyebrow: "Beach volley · la tua carta", d: "Quanto vali", h: "sulla sabbia?", sub: "I punti li decidono i risultati, confermati da tutte e due le coppie.", cap: "Il livello vero, sulla sabbia: su SANDER i punti si muovono con i risultati, confermati da entrambe le coppie." },
+]

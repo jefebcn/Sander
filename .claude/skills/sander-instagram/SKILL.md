@@ -15,7 +15,10 @@ Kit: `scripts/content-instagram/` nel repo (stesso contenuto dello zip online us
 - Buffer: canale IG `6adf67a12f1f5ed648d9cba6`, piano gratuito (max 10 in coda), chiave aggiunta dal proxy dell'ambiente: mai chiederla né stamparla.
 
 ## Stile
-UI scura, accento ambra/arancio tramonto, sfondi generati (niente foto: nessun limite di riuso), titoli Gochi Hand, etichette Inter, schermate vere dell'app in un telefono. Post 1080×1350, storie 1080×1920 (niente di importante nei 270 px in alto e nei 380 px in basso).
+- **Post (dal 17/11/2026, `formats.mjs`):** prima una battuta o una scena di beach volley che tutti hanno vissuto, poi l'app. Ogni copertina deve far capire subito che si parla di beach volley. Font di SANDER: Bricolage Grotesque maiuscolo per i titoli, Gochi Hand lime per la parola chiave, Figtree per i testi; scuro + lime, grana da pellicola, adesivi ed evidenziatore.
+- **Frasi da rete:** appuntamento fisso del giovedì, numerato (`FRASI` in `content.mjs`). Flirt solo come sfumatura, sport prima di tutto.
+- **Storie:** foto 35mm, titoli Gochi Hand, etichette Inter, schermate vere dell'app in un telefono.
+- Post 1080×1350, storie 1080×1920 (niente di importante nei 270 px in alto e nei 380 px in basso).
 
 ## Aggiornare le schermate
 Le schermate in `screens/` vengono dall'app in locale con dati di prova (nomi inventati): avvia DB e `next dev`, poi cattura a 390×844 @2x con Playwright (vedi la storia del kit nel PLAYBOOK). Non usare mai schermate con persone reali.

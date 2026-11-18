@@ -7,12 +7,13 @@ Kit che legge i dati veri di SANDER, disegna post e storie con le schermate dell
 |---|---|
 | `run.sh A\|B [lunedì]` | dati → piano → grafiche in `work/` |
 | `plan.mjs` | calendario settimanale e rotazioni (per settimana ISO) |
-| `render.mjs` | template post 1080×1350 e storie 1080×1920 |
+| `render.mjs` | sceglie il formato di ogni slot e scrive le didascalie; storie 1080×1920 |
+| `formats.mjs` | i formati dei post del 17/11/2026 (1080×1350): gancio, chat, gioco, notifiche, flag, carta, citazione, Frase da rete, FIPAV numero, più le slide app, lista e chiusura |
 | `content.mjs` | funzioni dell'app, titoli e didascalie a rotazione |
 | `publish.mjs` | Buffer: doppioni, coda max 10, controllo storie |
 | `fipav/` | lettore del calendario FIPAV (`fipav.mjs`, `cli.mjs`) e `feed.mjs`, che lo aggiunge ai dati del giro |
 | `screens/` | schermate vere dell'app (dati di prova, nessuna persona reale) |
-| `fonts/`, `assets/` | Gochi Hand, Inter, icona dell'app |
+| `fonts/`, `assets/` | font di SANDER (Bricolage Grotesque, Figtree, Gochi Hand; Inter per le storie), icona dell'app, `assets/faces/` (facce di prova dell'app, mai persone vere) |
 
 ## Fonte dati
 `https://www.sanderbv.it/api/social/feed`: pubblico, in sola lettura, niente dati personali.
@@ -32,14 +33,15 @@ Scelte di Alex (13/11/2026): tornei FIPAV di tutta Italia; solo calendario (nien
 ## Calendario (Europe/Rome)
 | Giorno | Tipo | Contenuto |
 |---|---|---|
-| Lun 18:30 | post | Tornei FIPAV del weekend → altrimenti prossimo torneo SANDER → altrimenti funzione |
+| Lun 18:30 | post | «Numerone» FIPAV del weekend (quanti tornei, città, «E tu sei ancora senza compagno?») → altrimenti prossimo torneo SANDER → altrimenti funzione |
 | Mar 19:00 | storia ×3 | tutorial di una funzione |
-| Mer 18:30 | post | funzione della settimana (mai la stessa due settimane di fila) |
+| Mer 18:30 | post | funzione della settimana: copertina con la battuta (Scopri → green/red flag, Crea e Chat → chat del gruppo, Tornei e Storico → notifiche, Classifiche → carta), poi «Come funziona» e chiusura |
+| Gio 18:30 | post | **Frasi da rete**, appuntamento fisso: una frase numerata (n. 01 = 19/11/2026) da `FRASI` in `content.mjs`, poi chiusura su Scopri |
 | Gio 19:00 | storia | questo weekend si gioca (FIPAV → SANDER → partite aperte → funzione) |
-| Ven 13:00 | post | «Manca sempre uno?», problema → soluzione (+ partite aperte del weekend) |
+| Ven 13:00 | post | «Manca uno»: gancio su foto (settimane pari) o chat del gruppo (dispari) → soluzione (+ partite aperte del weekend) |
 | Ven 18:30 | storia | «Chi gioca stasera?» con la schermata di crea partita |
 | Sab 10:30 | storia | facoltativa: torneo del weekend o una funzione |
-| Dom 11:00 | post | seconda funzione (settimane pari) o community (dispari) |
+| Dom 11:00 | post | seconda funzione (settimane pari) o un formato divertente a rotazione (dispari): citazione, «Che compagno di beach sei?», notifiche, carta, flag — mai lo stesso del mercoledì |
 | Dom 18:30 | storia | countdown al prossimo torneo (SANDER, se no FIPAV con la schermata SANDER) |
 
 Mai più di un giorno senza post. Niente post «numeri della settimana». Titoli e didascalie ruotano di settimana in settimana.
@@ -72,6 +74,8 @@ Mai più di un giorno senza post. Niente post «numeri della settimana». Titoli
    La notifica push ed email arriva dall'attività pianificata.
 
 ## Regole
+- **Formati del 17/11/2026 (scelta di Alex):** ogni post deve far capire subito che si parla di beach volley (sabbia, rete, 2v2, bagno, diagonale, «SANDER · beach volley» in basso). Prima la battuta o la scena che tutti hanno vissuto, poi l'app. Titoli in Bricolage maiuscolo, la parola chiave a mano in lime (Gochi Hand), testo in Figtree. Il flirt è solo una sfumatura (Frasi da rete, flag, Scopri). Le varianti ruotano per settimana in `content.mjs` (`FRASI`, `GANCI`, `CHATS`, `CITAZIONI`, `GIOCHI`, `NOTIFICHE`, `FLAGS`, `CARTE`): quando finiscono, scrivine di nuove nello stesso tono.
+- **Frasi da rete:** ogni giovedì, mai saltata. Se le frasi in `FRASI` stanno per finire (26 settimane), aggiungine di nuove in fondo, senza riprendere battute già uscite.
 - **Didascalie:** in italiano, tono SANDER, mai chiedere di commentare. CTA solo «Link in bio», «Salvalo», «Swipe». Le storie non hanno testo.
 - **Contenuti:** sport prima di tutto, niente promesse di appuntamenti o amore, niente alcol. Persone a piedi nudi e senza loghi (vale anche per eventuali foto future).
 - **FIPAV:** sempre «Fonte: FIPAV», mai nomi di atleti, mai tornei giovanili.
