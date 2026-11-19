@@ -2,12 +2,8 @@
 
 # Sander — Project Conventions
 
-## Ripartenza
-- At the start of a chat (RIPRENDI) read only `docs/STATO.md` and `git log --oneline -15`; for a known task grep `docs/RICETTE.md`.
-- At SESSIONE FINITA rewrite `docs/STATO.md` (max ~40 lines) and add repeatable work to `docs/RICETTE.md`.
-
 ## Stack
-- **Framework**: Next.js 15 (App Router) + TypeScript
+- **Framework**: Next.js 16 (App Router; leggere AGENTS.md) + TypeScript
 - **Styling**: Tailwind CSS v4 + custom CSS variables in `globals.css`
 - **Components**: Radix UI primitives + custom components (no shadcn CLI; use raw Radix)
 - **DB**: PostgreSQL + Prisma 7 (generated client at `src/generated/prisma`)
@@ -87,3 +83,25 @@ const mutation = useMutation({
 - Generated photos: barefoot players, no logos or text on clothes, no alcohol
 - Positioning: sport first, with a romantic side as a nuance only ("match in campo e fuori", "il primo appuntamento è un 2v2"); never promise dates or love. Ads stay sport-framed (no dating claims). Scopri is 18+ only.
 - Reels from other people's videos: only with the author's permission. Foreign videos get English text and captions. Recipe in `docs/RICETTE.md`.
+
+## Ripartenza: sapere a che punto siamo (pochi token)
+
+All'inizio di ogni sessione (o quando Alex scrive «RIPRENDI <progetto>»), prima di qualsiasi altro file:
+1. Questo CLAUDE.md è già caricato: non rileggerlo.
+2. Leggi `docs/STATO.md` (corto: dove siamo, cosa è aperto, prossimo passo, decisioni recenti di Alex).
+3. Controlla cosa è successo dopo la data di STATO.md, che è la fonte più precisa: `git log --oneline -15` e `git status -s` (altre chat, PR unite, automazioni). Se git e STATO non coincidono, vale git, e lo dici in una riga.
+4. Se Alex ha già detto il lavoro di oggi, grep della parola chiave in `docs/RICETTE.md`, poi apri solo i documenti di quell'area. Se non l'ha detto, riassumi in 3 righe dove siamo e chiedi soltanto cosa fare oggi e se è cambiato qualcosa fuori dal repo (pannelli, store, social).
+5. Non esplorare il repo e non aprire documenti grandi prima di sapere il lavoro.
+
+## Fine lavoro: salvare il punto e imparare senza appesantire
+
+Quando Alex scrive «SESSIONE FINITA» (o un lavoro si chiude), prima della risposta finale:
+1. **Riscrivi `docs/STATO.md`** (al massimo ~40 righe, si sostituisce, non si accoda), con le sezioni: data e tema della sessione; Dove siamo (3-6 righe); Aperto / in corso (con file o PR); Prossimo passo consigliato; Decisioni recenti di Alex ancora valide; Attenzione (trappole attive). Le cose chiuse escono dallo STATO: restano in git.
+2. Ripensa alla sessione senza rileggere file: cosa è costato più tentativi o letture, cosa ha funzionato al primo colpo, cosa si ripeterà.
+3. Salva solo ciò che fa risparmiare la volta dopo, nel posto giusto:
+   - regola valida per tutto il progetto (comando, trappola, scelta di Alex) → una riga in questo CLAUDE.md;
+   - dettaglio di un'area (come funziona un modulo, un servizio, un deploy) → il documento di quell'area già indicato sopra;
+   - lavoro che si ripete (pubblicare, importare, rigenerare, rilasciare) → una riga in `docs/RICETTE.md` (crealo se manca): `COSA | comando o script | trappole | la prossima volta: …`.
+4. Limiti di peso, perché questo file si carica in ogni sessione: CLAUDE.md al massimo ~8 KB; righe corte; se una riga nuova sostituisce una vecchia, togli la vecchia; niente diario («fatto il …»), niente elenchi di commit, niente stato del giorno qui (va in STATO.md).
+5. Commit di STATO, RICETTE e CLAUDE.md insieme al lavoro (stesso ramo o stessa PR).
+6. Nella risposta finale, una riga: cosa hai salvato e dove.

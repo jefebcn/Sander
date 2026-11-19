@@ -5,6 +5,7 @@
 - Instagram: nuovi formati in `scripts/content-instagram/formats.mjs` (PR #97). Sono online e collegati ai giri automatici.
 - Primi reel fatti con video di altri, con il permesso dell'autore: POV uscito il 17/11, «Technique: zero» in coda per sabato 21 alle 18:30.
 - Coda Buffer: 9 post su 10 fino a domenica 22.
+- Già online prima di questa sessione: app su App Store e Google Play, dati FIPAV collegati e shop SumUp.
 - Il ramo `claude/sander-tournament-app-ay3CY` è allineato a main.
 
 ## Aperto / in corso
@@ -38,4 +39,7 @@ Controllare il giro A di domenica 22/11. Poi decidere con Alex quale delle propo
 - Mai force push.
 - `prisma db push` solo per aggiunte.
 - Se FIPAV risponde 403, fermarsi e non aggirare le protezioni.
+- Sul PC di Alex le copie del repo sono vecchie:
+  - `Documents\Sander` non ha git;
+  - `Documents\GitHub\Sander` è indietro rispetto a GitHub e ha modifiche Android non salvate.
 - Mai scrivere o stampare la chiave di Buffer o il CRON_SECRET.
