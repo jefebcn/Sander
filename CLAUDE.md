@@ -82,3 +82,16 @@ const mutation = useMutation({
 - Instagram stories: start from `scripts/content-storie/` (approved style, generator, backgrounds, rules in its README)
 - Generated photos: barefoot players, no logos or text on clothes, no alcohol
 - Positioning: sport first, with a romantic side as a nuance only ("match in campo e fuori", "il primo appuntamento è un 2v2"); never promise dates or love. Ads stay sport-framed (no dating claims). Scopri is 18+ only.
+
+## Fine lavoro: imparare senza appesantire
+
+Quando Alex scrive «SESSIONE FINITA» (o un lavoro si chiude), prima della risposta finale:
+1. Ripensa alla sessione senza rileggere file: cosa è costato più tentativi o letture, cosa ha funzionato al primo colpo, cosa si ripeterà.
+2. Salva solo ciò che fa risparmiare la volta dopo, nel posto giusto:
+   - regola valida per tutto il progetto (comando, trappola, scelta di Alex) → una riga in questo CLAUDE.md;
+   - dettaglio di un'area (come funziona un modulo, un servizio, un deploy) → il documento di quell'area già indicato sopra;
+   - lavoro che si ripete (pubblicare, importare, rigenerare, rilasciare) → una riga in `docs/RICETTE.md` (crealo se manca): `COSA | comando o script | trappole | la prossima volta: …`.
+3. Limiti di peso, perché questo file si carica in ogni sessione: CLAUDE.md al massimo ~8 KB; righe corte; se una riga nuova sostituisce una vecchia, togli la vecchia; niente diario («fatto il …»), niente elenchi di commit, niente stato temporaneo: quelli stanno in git.
+4. Nella risposta finale, una riga: cosa hai salvato e dove.
+
+A inizio lavoro: se il lavoro somiglia a uno già fatto, cerca con grep in `docs/RICETTE.md` prima di ripartire da zero.
