@@ -3,7 +3,7 @@
 # Sander — Project Conventions
 
 ## Stack
-- **Framework**: Next.js 15 (App Router) + TypeScript
+- **Framework**: Next.js 16 (App Router; leggere AGENTS.md) + TypeScript
 - **Styling**: Tailwind CSS v4 + custom CSS variables in `globals.css`
 - **Components**: Radix UI primitives + custom components (no shadcn CLI; use raw Radix)
 - **DB**: PostgreSQL + Prisma 7 (generated client at `src/generated/prisma`)
