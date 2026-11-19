@@ -2,6 +2,10 @@
 
 # Sander — Project Conventions
 
+## Ripartenza
+- At the start of a chat (RIPRENDI) read only `docs/STATO.md` and `git log --oneline -15`; for a known task grep `docs/RICETTE.md`.
+- At SESSIONE FINITA rewrite `docs/STATO.md` (max ~40 lines) and add repeatable work to `docs/RICETTE.md`.
+
 ## Stack
 - **Framework**: Next.js 15 (App Router) + TypeScript
 - **Styling**: Tailwind CSS v4 + custom CSS variables in `globals.css`
@@ -82,3 +86,4 @@ const mutation = useMutation({
 - Instagram stories: start from `scripts/content-storie/` (approved style, generator, backgrounds, rules in its README)
 - Generated photos: barefoot players, no logos or text on clothes, no alcohol
 - Positioning: sport first, with a romantic side as a nuance only ("match in campo e fuori", "il primo appuntamento è un 2v2"); never promise dates or love. Ads stay sport-framed (no dating claims). Scopri is 18+ only.
+- Reels from other people's videos: only with the author's permission. Foreign videos get English text and captions. Recipe in `docs/RICETTE.md`.
