@@ -19,3 +19,8 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Readable stack traces in Play Console crash reports (the mapping file
+# travels inside the .aab, so Play de-obfuscates them on its own).
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
