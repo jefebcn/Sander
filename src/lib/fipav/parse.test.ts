@@ -8,7 +8,7 @@ import {
   titleCase, cleanClub, shortCategory, isYouthCategory, categoryGroup,
   romeToUtc, parseDay, parseItalianDate, seasonsToSync, calendarPages,
   parseCalendarPage, parseInfo, parseEntryList, parseStandings, parseRanking,
-  seniorRankingPaths, parseAthlete,
+  seniorRankingPaths, parseAthlete, removedFipavEvents,
 } from "./parse"
 
 describe("text", () => {
@@ -137,5 +137,24 @@ describe("rankings", () => {
       { position: 1, points: 300, date: "2026-08-27", event: "FIVB - Pro Tour Future - Modena" },
       { position: 2, points: 282.5, date: "2026-08-07", event: "Campionato Italiano Assoluto - Tappa - Cordenons" },
     ])
+  })
+})
+
+describe("removedFipavEvents", () => {
+  const today = new Date("2026-11-20T00:00:00Z")
+  const ev = (code: string, day: string, season = 2026) => ({ code, season, startDate: new Date(`${day}T00:00:00Z`) })
+  const stored = Array.from({ length: 40 }, (_, i) => ev(`BVLM${100 + i}`, "2026-11-22"))
+
+  it("drops upcoming events FIPAV no longer lists", () => {
+    const listed = new Set(stored.slice(2).map((e) => e.code))
+    expect(removedFipavEvents(stored, listed, [2026], today)).toEqual(["BVLM100", "BVLM101"])
+  })
+  it("keeps past events and seasons that were not read", () => {
+    const rows = [ev("BVLF1", "2026-11-10"), ev("BVLF2", "2026-12-01", 2027)]
+    expect(removedFipavEvents(rows, new Set(), [2026], today)).toEqual([])
+  })
+  it("removes nothing when the calendar suddenly lists far less", () => {
+    const listed = new Set(stored.slice(20).map((e) => e.code))
+    expect(removedFipavEvents(stored, listed, [2026], today)).toEqual([])
   })
 })
