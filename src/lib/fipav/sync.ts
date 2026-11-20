@@ -3,7 +3,7 @@ import { notifyPlayers } from "@/lib/push"
 import type { Prisma } from "@/generated/prisma/client"
 import {
   calendarPages, isYouthCategory, parseAthlete, parseCalendarPage, parseEntryList, parseInfo,
-  parseRanking, parseStandings, seasonsToSync, seniorRankingPaths, type FipavEventInput,
+  parseRanking, parseStandings, removedFipavEvents, seasonsToSync, seniorRankingPaths, type FipavEventInput,
 } from "./parse"
 
 /* ────────────────────────────────────────────────────────────────────────── */
@@ -54,10 +54,12 @@ export async function syncFipavCalendar(get: FipavGetter = getJson): Promise<{ e
   const index = await get("index.json")
   const seasons = seasonsToSync(index, new Date())
   const events: FipavEventInput[] = []
+  let complete = true
   for (const season of seasons) {
     const root = await get(`${season}/discipline.json`)
     const pages = calendarPages(root)
     const files = pages.length ? await pool(pages, 4, (p) => get(p).catch(() => null)) : [root]
+    if (files.some((f) => !f)) complete = false
     for (const f of files) if (f) events.push(...parseCalendarPage(f, season))
   }
   // Recent and upcoming only: older events have nothing left to plan.
@@ -75,6 +77,16 @@ export async function syncFipavCalendar(get: FipavGetter = getJson): Promise<{ e
     await db.$transaction(
       changed.slice(i, i + 50).map(({ code, ...data }) => db.fipavEvent.update({ where: { code }, data })),
     )
+  }
+  // Cancelled or withdrawn by FIPAV: their files are gone too, so drop them,
+  // but only after a full read (a missing page would look like cancellations).
+  if (complete && seasons.length) {
+    const stored = await db.fipavEvent.findMany({
+      where: { season: { in: seasons }, startDate: { gte: today() } },
+      select: { code: true, season: true, startDate: true },
+    })
+    const gone = removedFipavEvents(stored, new Set(events.map((e) => e.code)), seasons, today())
+    if (gone.length) await db.fipavEvent.deleteMany({ where: { code: { in: gone } } })
   }
   // A year old: gone from the app.
   await db.fipavEvent.deleteMany({ where: { endDate: { lt: new Date(today().getTime() - 400 * DAY) } } })

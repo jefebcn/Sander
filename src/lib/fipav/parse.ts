@@ -135,6 +135,22 @@ export interface FipavEventInput {
   path: string
 }
 
+/**
+ * Upcoming stored events that FIPAV no longer lists (cancelled or withdrawn).
+ * Only for seasons read in full, and never more than a quarter of what is
+ * stored: a calendar that suddenly lists far less is a bad read, not news.
+ */
+export function removedFipavEvents(
+  stored: { code: string; season: number; startDate: Date }[],
+  listed: Set<string>,
+  seasons: number[],
+  today: Date,
+): string[] {
+  const upcoming = stored.filter((e) => seasons.includes(e.season) && e.startDate >= today)
+  const gone = upcoming.filter((e) => !listed.has(e.code)).map((e) => e.code)
+  return gone.length > Math.max(10, upcoming.length / 4) ? [] : gone
+}
+
 /** Beach events of one calendar page (pages also carry indoor and sitting volley). */
 export function parseCalendarPage(page: Json, season: number): FipavEventInput[] {
   const out: FipavEventInput[] = []
