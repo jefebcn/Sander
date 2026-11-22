@@ -20,6 +20,7 @@ import { createRequire } from "module"
 import { FEATURES, TONIGHT, HASHTAGS, pick, FRASI, FRASI_START, GANCI, CHATS, CITAZIONI, GIOCHI, GIOCO_FACES, NOTIFICHE, FLAGS, CARTE } from "./content.mjs"
 import * as N from "./formats.mjs"
 import { FEATURE_COVER } from "./plan.mjs"
+import { fresh, used, NEEDS, NothingNew } from "./fresh.mjs"
 
 // require() also finds the machine-wide Playwright when the kit runs outside the repo.
 const { chromium } = createRequire(import.meta.url)("playwright")
@@ -218,16 +219,30 @@ function caption(lines) {
 }
 
 
-/** A fun cover (+ the app slide that follows it), variant by week. */
+// Text that identifies each variant in a caption (or a story's "🏐 …" text): see fresh.mjs.
+const FP = {
+  CITAZIONI: (c) => [...c.d, c.mk, c.d2].filter(Boolean).join(" "),
+  GIOCHI: (g) => g.line,
+  NOTIFICHE: (n) => `${n.d} ${n.h}`,
+  FLAGS: (f) => `${f.title.join(" ")} ${f.h}`,
+  CARTE: (c) => `${c.d} ${c.h}`,
+  CHATS: (c) => c.d.join(" "),
+  GANCI: (g) => [...g.d, ...g.h].join(" "),
+  FRASI: (f) => [...f.d, ...f.h].join(" "),
+  line: (t) => (Array.isArray(t) ? t.join(" ") : t),
+}
+let KEY = "" // what a story showed: saved as its Buffer text, so it is never repeated
+
+/** A fun cover (+ the app slide that follows it), the first variant not used yet. */
 function coverFrames(kind, w) {
   const i = Math.floor(w / 6)
   switch (kind) {
-    case "citazione": { const c = pick(CITAZIONI, w); return { frame: N.citazione({ img: PHOTO, ...c }), cap: `«${[...c.d, c.mk, c.d2].filter(Boolean).join(" ")}» ${c.h} 🏐\n\n${c.cap}` } }
-    case "gioco": { const g = pick(GIOCHI, i); return { frame: N.gioco({ ...g, faceList: GIOCO_FACES }), cap: `${g.line} 🏐\n\n${g.cap}`, app: { eyebrow: "Su SANDER · Scopri", d: "Il tuo numero", h: "è qui", img: screen("scopri"), bullets: FEATURES.scopri.bullets } } }
-    case "notifiche": { const n = pick(NOTIFICHE, i); return { frame: N.notifiche({ img: PHOTO, ...n }), cap: `${n.d} ${n.h} 🏐\n\n${n.cap}`, app: { eyebrow: "Su SANDER", d: "Partite e tornei", h: "in tasca", img: screen("partite"), bullets: ["Posti liberi vicino a te, in tempo reale", "Tornei con iscrizione in coppia", "Punti e livello dopo ogni partita"] } } }
-    case "flag": { const f = pick(FLAGS, i); return { frame: N.flag(f), cap: `${f.title.join(" ")} ${f.h} 🏐\n\n${f.cap}`, app: { eyebrow: "Su SANDER · Scopri", d: "Quello giusto", h: "esiste", img: screen("scopri"), bullets: FEATURES.scopri.bullets } } }
-    case "carta": { const c = pick(CARTE, i); return { frame: N.carta({ img: PHOTO, ...c }), cap: `${c.d} ${c.h} 🏐\n\n${c.cap}`, app: { eyebrow: "Su SANDER · Classifiche", d: "Gioca", h: "e sali", img: screen("classifica"), bullets: FEATURES.classifiche.bullets } } }
-    case "chat": default: { const c = pick(CHATS, i + 1); return { frame: N.chat(c), cap: `${c.d.join(" ")} 🏐\n\n${c.cap}` } }
+    case "citazione": { const c = fresh("CITAZIONI", CITAZIONI, w, FP.CITAZIONI); return { frame: N.citazione({ img: PHOTO, ...c }), cap: `«${[...c.d, c.mk, c.d2].filter(Boolean).join(" ")}» ${c.h} 🏐\n\n${c.cap}` } }
+    case "gioco": { const g = fresh("GIOCHI", GIOCHI, i, FP.GIOCHI); return { frame: N.gioco({ ...g, faceList: GIOCO_FACES }), cap: `${g.line} 🏐\n\n${g.cap}`, app: { eyebrow: "Su SANDER · Scopri", d: "Il tuo numero", h: "è qui", img: screen("scopri"), bullets: FEATURES.scopri.bullets } } }
+    case "notifiche": { const n = fresh("NOTIFICHE", NOTIFICHE, i, FP.NOTIFICHE); return { frame: N.notifiche({ img: PHOTO, ...n }), cap: `${n.d} ${n.h} 🏐\n\n${n.cap}`, app: { eyebrow: "Su SANDER", d: "Partite e tornei", h: "in tasca", img: screen("partite"), bullets: ["Posti liberi vicino a te, in tempo reale", "Tornei con iscrizione in coppia", "Punti e livello dopo ogni partita"] } } }
+    case "flag": { const f = fresh("FLAGS", FLAGS, i, FP.FLAGS); return { frame: N.flag(f), cap: `${f.title.join(" ")} ${f.h} 🏐\n\n${f.cap}`, app: { eyebrow: "Su SANDER · Scopri", d: "Quello giusto", h: "esiste", img: screen("scopri"), bullets: FEATURES.scopri.bullets } } }
+    case "carta": { const c = fresh("CARTE", CARTE, i, FP.CARTE); return { frame: N.carta({ img: PHOTO, ...c }), cap: `${c.d} ${c.h} 🏐\n\n${c.cap}`, app: { eyebrow: "Su SANDER · Classifiche", d: "Gioca", h: "e sali", img: screen("classifica"), bullets: FEATURES.classifiche.bullets } } }
+    case "chat": default: { const c = fresh("CHATS", CHATS, i + 1, FP.CHATS); return { frame: N.chat(c), cap: `${c.d.join(" ")} 🏐\n\n${c.cap}` } }
   }
 }
 
@@ -244,7 +259,7 @@ async function renderSlot(slot, browser) {
       const c = coverFrames(cover, w)
       return {
         frames: [c.frame, N.appSlide({ eyebrow: `Su SANDER · ${f.name}`, d: "Come", h: "funziona", img: screen(f.tutorial[1][0]), bullets: f.bullets }), N.ctaSlide({ d: ["Provala"], h: ["su SANDER"], img: screen(f.tutorial[2][0]) })],
-        caption: caption([c.cap, pick(f.captions, v), "Swipe per vedere come funziona. App gratis su App Store e Google Play: link in bio.", HASHTAGS]),
+        caption: caption([c.cap, fresh(`captions.${slot.feature}`, f.captions, v, FP.line), "Swipe per vedere come funziona. App gratis su App Store e Google Play: link in bio.", HASHTAGS]),
       }
     }
     case "community": {
@@ -260,7 +275,7 @@ async function renderSlot(slot, browser) {
     }
     case "frase": {
       const n = Math.max(1, Math.floor((Date.parse(`${slot.date}T12:00:00Z`) - Date.parse(`${FRASI_START}T12:00:00Z`)) / (7 * 86_400_000)) + 1)
-      const fr = FRASI[(n - 1) % FRASI.length]
+      const fr = fresh("FRASI", FRASI, n - 1, FP.FRASI)
       return {
         frames: [N.frase({ n, d: fr.d, h: fr.h }), N.ctaSlide({ d: ["Il compagno"], h: ["giusto è qui."], img: screen("scopri") })],
         caption: caption([`Frasi da rete n. ${n} 🏐`, `«${[...fr.d, ...fr.h].join(" ")}»`, `${fr.cap} Ogni giovedì una nuova frase: salvala.`, "Il compagno di beach giusto lo trovi su SANDER. Link in bio.", HASHTAGS]),
@@ -298,7 +313,7 @@ async function renderSlot(slot, browser) {
       // Friday: hook on a photo (even weeks) or the group chat (odd weeks).
       const useChat = slot.format ? slot.format === "chat" : w % 2 === 1
       const vi = slot.variant ?? Math.floor(w / 2)
-      const g = useChat ? pick(CHATS, vi) : pick(GANCI, vi)
+      const g = useChat ? fresh("CHATS", CHATS, vi, FP.CHATS) : fresh("GANCI", GANCI, vi, FP.GANCI)
       const frames = [useChat ? N.chat(g) : N.gancio({ img: PHOTO, ...g })]
       frames.push(N.appSlide({ eyebrow: "La soluzione", d: "Il quarto", h: "c'è", img: screen("partite"), bullets: ["Guarda le partite aperte vicino a te", "Oppure crea la tua: chi è libero la vede", "Se uno salta, entra il primo in lista"] }))
       if (slot.matches?.length >= 2) frames.push(N.listSlide({ eyebrow: "Partite aperte", d: "Questo weekend", rows: slot.matches.map(matchRow), note: "Entra con un tap su SANDER." }))
@@ -306,12 +321,22 @@ async function renderSlot(slot, browser) {
       const title = useChat ? `${g.d.join(" ")} 🏐` : `${[...g.d, ...g.h].join(" ")} 🏐`
       return { frames, caption: caption([title, g.cap, "Salvalo per la prossima volta che manca qualcuno. Link in bio.", HASHTAGS]) }
     }
-    case "tutorial":
+    case "tutorial": {
+      // The three steps of a feature go out once; after that, a fresh title for it.
+      KEY = `Tutorial ${f.name}: ${f.tutorial[0][1]}`
+      if (used(KEY)) return renderSlot({ ...slot, kind: "feature-story" }, browser)
       return { frames: f.tutorial.map(([img, heading, text], i) => storyStep({ n: i + 1, total: 3, heading, text, img: screen(img), featureName: f.name })), caption: "" }
-    case "feature-story":
-      return { frames: [storyPhone({ metaItems: [f.name, "SANDER", "Gratis"], title: pick(f.titles, v + 1), img: screen(f.screen) })], caption: "" }
-    case "tonight":
-      return { frames: [storyPhone({ metaItems: ["Venerdì sera", "Crea partita"], title: pick(TONIGHT, w), img: screen("crea") })], caption: "" }
+    }
+    case "feature-story": {
+      const title = fresh(`titles.${slot.feature}`, f.titles, v + 1, FP.line)
+      KEY = `${f.name}: ${FP.line(title)}`
+      return { frames: [storyPhone({ metaItems: [f.name, "SANDER", "Gratis"], title, img: screen(f.screen) })], caption: "" }
+    }
+    case "tonight": {
+      const title = fresh("TONIGHT", TONIGHT, w, FP.line)
+      KEY = `Venerdì sera: ${FP.line(title)}`
+      return { frames: [storyPhone({ metaItems: ["Venerdì sera", "Crea partita"], title, img: screen("crea") })], caption: "" }
+    }
     case "weekend-fipav": {
       const inApp = slot.fipavInApp !== false
       const img = inApp ? await liveShot(browser, "/tournaments/fipav", "fipav") : screen("scopri")
@@ -343,8 +368,17 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const browser = await chromium.launch({ executablePath: process.env.CHROME || exe })
   const shot = await browser.newPage()
   const captions = {}
+  const skipped = []
   for (const slot of plan.slots) {
-    const { frames, caption: text } = await renderSlot(slot, browser)
+    KEY = ""
+    let out
+    try { out = await renderSlot(slot, browser) } catch (e) {
+      if (!(e instanceof NothingNew)) throw e
+      skipped.push({ id: slot.id, list: e.message })
+      console.error(`[render] ${slot.id} ${slot.kind}: niente di nuovo in ${e.message}, saltato`)
+      continue
+    }
+    const { frames, caption: text } = out
     const size = slot.type === "story" ? S : P
     await shot.setViewportSize({ width: size.w, height: size.h })
     const files = []
@@ -356,9 +390,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       await shot.screenshot({ path: join(outDir, file), type: "jpeg", quality: 90 })
       files.push(file)
     }
-    captions[slot.id] = { type: slot.type, date: slot.date, time: slot.time, kind: slot.kind, optional: slot.optional, files, text }
+    captions[slot.id] = { type: slot.type, date: slot.date, time: slot.time, kind: slot.kind, optional: slot.optional, files, text, key: KEY }
     console.error(`[render] ${slot.id} ${slot.kind}: ${files.length} file`)
   }
   writeFileSync(join(outDir, "captions.json"), JSON.stringify(captions, null, 2))
+  // Lists with nothing new left: the routine writes new variants in work/extra-content.json and renders again.
+  writeFileSync(join(outDir, "needs.json"), JSON.stringify({ lists: [...new Set(NEEDS)], skipped }, null, 2))
   await browser.close()
 }

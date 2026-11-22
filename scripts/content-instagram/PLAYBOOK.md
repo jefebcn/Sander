@@ -10,7 +10,10 @@ Kit che legge i dati veri di SANDER, disegna post e storie con le schermate dell
 | `render.mjs` | sceglie il formato di ogni slot e scrive le didascalie; storie 1080×1920 |
 | `formats.mjs` | i formati dei post del 17/11/2026 (1080×1350): gancio, chat, gioco, notifiche, flag, carta, citazione, Frase da rete, FIPAV numero, più le slide app, lista e chiusura |
 | `content.mjs` | funzioni dell'app, titoli e didascalie a rotazione |
-| `publish.mjs` | Buffer: doppioni, coda max 10, controllo storie |
+| `publish.mjs` | Buffer: doppioni, orari passati, coda max 10, controllo storie |
+| `refill.sh` | controllo giornaliero: se Buffer ha almeno 4 posti liberi, dice quali finestre (A/B) riempire |
+| `history.mjs` | tutto quello che è già su Buffer (uscito o in coda), in `work/history.json` |
+| `fresh.mjs` | mai niente di uguale: sceglie solo varianti non ancora usate |
 | `fipav/` | lettore del calendario FIPAV (`fipav.mjs`, `cli.mjs`) e `feed.mjs`, che lo aggiunge ai dati del giro |
 | `screens/` | schermate vere dell'app (dati di prova, nessuna persona reale) |
 | `fonts/`, `assets/` | font di SANDER (Bricolage Grotesque, Figtree, Gochi Hand; Inter per le storie), icona dell'app, `assets/faces/` (facce di prova dell'app, mai persone vere) |
@@ -46,12 +49,15 @@ Scelte di Alex (13/11/2026): tornei FIPAV di tutta Italia; solo calendario (nien
 
 Mai più di un giorno senza post. Niente post «numeri della settimana». Titoli e didascalie ruotano di settimana in settimana.
 
-## Giro (due volte a settimana)
-- **Domenica sera** → `bash run.sh A` (lunedì–mercoledì della settimana dopo).
-- **Mercoledì sera** → `bash run.sh B` (giovedì–domenica di questa settimana).
+## Giro (ricarica automatica, ogni sera)
+Dal 22/11/2026 (scelta di Alex) il giro non ha più giorni fissi: ogni sera alle 21:13 `bash refill.sh` legge la coda Buffer.
+- Meno di 4 posti liberi → niente da fare, nessun messaggio.
+- Almeno 4 liberi → stampa le finestre da riempire (`A 2026-11-23` = lun–mer, `B 2026-11-23` = gio–dom, solo giorni entro 8 giorni). Per ognuna, in ordine, fai i passi 2–8 con `bash run.sh A|B <lunedì>`.
+
+**Mai niente di uguale.** `run.sh` legge prima lo storico Buffer (`history.mjs`); `render.mjs` usa solo varianti che non compaiono in nessuna didascalia uscita o in coda (le storie si riconoscono dal testo «🏐 …» che `publish.mjs` salva su Buffer). Se una lista non ha più niente di nuovo, lo slot non viene disegnato e `work/out/needs.json` dice quale lista. Allora scrivi varianti nuove in `work/extra-content.json` (stessa forma di `content.mjs`, per esempio `{ "GANCI": [ … ] }`, rispettando le Regole), rilancia `run.sh` e riporta le varianti nuove nel riepilogo, così Alex può aggiungerle a `content.mjs`. Mai riusare una variante.
 
 1. **Kit.** Scarica lo zip in una cartella vuota, poi `cd content-instagram`.
-2. **Dati.** `bash run.sh A` (o `B`). Se il feed non risponde, riprova una volta dopo 2 minuti. Se fallisce ancora, scrivilo nel riepilogo e fermati.
+2. **Dati.** `bash run.sh A|B <lunedì>`. Se il feed non risponde, riprova una volta dopo 2 minuti. Se fallisce ancora, scrivilo nel riepilogo e fermati.
 3. **Controllo grafiche.** Guarda TUTTE le immagini in `work/out` con Read:
    - testi non tagliati;
    - niente sovrapposizioni tra testo, telefono e pulsante;
