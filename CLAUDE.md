@@ -82,6 +82,7 @@ const mutation = useMutation({
 - Instagram stories: start from `scripts/content-storie/` (approved style, generator, backgrounds, rules in its README)
 - Generated photos: barefoot players, no logos or text on clothes, no alcohol
 - Positioning: sport first, with a romantic side as a nuance only ("match in campo e fuori", "il primo appuntamento è un 2v2"); never promise dates or love. Ads stay sport-framed (no dating claims). Scopri is 18+ only.
+- Never repeat a post, a story text or a background photo (Alex, 23/11/2026): every background photo is used once, ever, across Instagram and TikTok. The IG kit checks Buffer history (`scripts/content-instagram/fresh.mjs`) and `photos.json`; with no new photo a slot uses a photo-free design.
 - Reels from other people's videos: only with the author's permission. Foreign videos get English text and captions. Recipe in `docs/RICETTE.md`.
 
 ## Ripartenza: sapere a che punto siamo (pochi token)

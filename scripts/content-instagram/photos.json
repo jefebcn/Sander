@@ -1,9 +1,16 @@
 {
-  "_note": "Foto di sfondo dell'automazione, in ordine d'uso dal lunedì 16/11/2026: 9 slot a settimana (lun, mar, mer, gio, ven post, ven storia, sab, dom post, dom storia). Ogni foto compare al massimo due volte in tutto, contando anche gli usi già fatti a mano (registro in scripts/content-storie/README.md). Finite le voci, le grafiche usano la card lime senza foto: per continuare aggiungi foto nuove in photos/ e in coda a questo elenco.",
+  "_note": "Foto di sfondo dell'automazione, in ordine d'uso dal lunedì 16/11/2026: 9 slot a settimana (lun, mar, mer, gio, ven post, ven storia, sab, dom post, dom storia). Regola di Alex del 23/11/2026: OGNI FOTO UNA SOLA VOLTA, mai lo stesso sfondo due volte (contano anche gli usi a mano e su TikTok, registro in scripts/content-storie/README.md). Le 13 foto di photos/ sono tutte già usate. Foto nuove: o in coda a questo elenco (file in photos/, nome mai usato) o, nel giro, in work/photos-new/<id-slot>.jpg (render.mjs le usa per quello slot). Senza foto nuova lo slot usa una grafica senza foto.",
   "start": "2026-11-16",
   "perWeek": 9,
   "order": [
-    "amici-seduti", "alzata-notte", "quattro-in-cammino", "tramonto-coppia", "battuta-sera", "palla-sabbia", "batti-cinque-rete", "bagher-notte", "tuffo-sera",
-    "amici-seduti", "piedi-corsa", "quattro-in-cammino", "novembre-felpe", "batti-cinque-rete", "battuta-ombrelloni", "batti-cinque", "battuta-sera"
+    "amici-seduti",
+    "alzata-notte",
+    "quattro-in-cammino",
+    "tramonto-coppia",
+    "battuta-sera",
+    "palla-sabbia",
+    "batti-cinque-rete",
+    "bagher-notte",
+    "tuffo-sera"
   ]
 }

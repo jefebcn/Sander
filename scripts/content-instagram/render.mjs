@@ -54,6 +54,7 @@ void MONTHS; void DAYS
 
 const LIME = "#c6f736"
 let PHOTO = null // data URL of the slot's background photo, set per slot
+const NO_PHOTO = [] // slots drawn without a photo: a new one in work/photos-new/ would be better
 const photoUrl = (name) => b64(join(KIT, "photos", `${name}.jpg`), "image/jpeg")
 
 function css(w, h) {
@@ -248,7 +249,10 @@ function coverFrames(kind, w) {
 
 async function renderSlot(slot, browser) {
   const w = slot.week
-  PHOTO = slot.photo ? photoUrl(slot.photo) : null
+  // A photo appears once, ever (Alex, 23/11/2026): a new one in work/photos-new/<slot id>.jpg wins.
+  const newPhoto = join(KIT, "work", "photos-new", `${slot.id}.jpg`)
+  PHOTO = existsSync(newPhoto) ? b64(newPhoto, "image/jpeg") : slot.photo ? photoUrl(slot.photo) : null
+  if (!PHOTO) NO_PHOTO.push(slot.id)
   const f = slot.feature ? FEATURES[slot.feature] : null
   const v = Math.floor(w / 6) // variant index: changes each time a feature comes back
 
@@ -395,6 +399,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   }
   writeFileSync(join(outDir, "captions.json"), JSON.stringify(captions, null, 2))
   // Lists with nothing new left: the routine writes new variants in work/extra-content.json and renders again.
-  writeFileSync(join(outDir, "needs.json"), JSON.stringify({ lists: [...new Set(NEEDS)], skipped }, null, 2))
+  writeFileSync(join(outDir, "needs.json"), JSON.stringify({ lists: [...new Set(NEEDS)], skipped, noPhoto: [...new Set(NO_PHOTO)] }, null, 2))
   await browser.close()
 }

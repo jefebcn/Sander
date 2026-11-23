@@ -54,6 +54,8 @@ Dal 22/11/2026 (scelta di Alex) il giro non ha più giorni fissi: ogni sera alle
 - Meno di 4 posti liberi → niente da fare, nessun messaggio.
 - Almeno 4 liberi → stampa le finestre da riempire (`A 2026-11-23` = lun–mer, `B 2026-11-23` = gio–dom, solo giorni entro 8 giorni). Per ognuna, in ordine, fai i passi 2–8 con `bash run.sh A|B <lunedì>`.
 
+**Mai lo stesso sfondo** (Alex, 23/11/2026): ogni foto esce una volta sola, su Instagram e TikTok. `photos.json` elenca solo foto mai usate; se uno slot non ne ha, `needs.json` lo mette in `noPhoto`: genera una foto nuova (Higgsfield `soul_2`, prompt in `scripts/content-storie/README.md`), salvala in `work/photos-new/<id-slot>.jpg` e rilancia `run.sh`. Senza crediti la grafica esce senza foto.
+
 **Mai niente di uguale.** `run.sh` legge prima lo storico Buffer (`history.mjs`); `render.mjs` usa solo varianti che non compaiono in nessuna didascalia uscita o in coda (le storie si riconoscono dal testo «🏐 …» che `publish.mjs` salva su Buffer). Se una lista non ha più niente di nuovo, lo slot non viene disegnato e `work/out/needs.json` dice quale lista. Allora scrivi varianti nuove in `work/extra-content.json` (stessa forma di `content.mjs`, per esempio `{ "GANCI": [ … ] }`, rispettando le Regole), rilancia `run.sh` e riporta le varianti nuove nel riepilogo, così Alex può aggiungerle a `content.mjs`. Mai riusare una variante.
 
 1. **Kit.** Scarica lo zip in una cartella vuota, poi `cd content-instagram`.
