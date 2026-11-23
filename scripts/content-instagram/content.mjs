@@ -220,3 +220,15 @@ export const CARTE = [
   { eyebrow: "La tua carta da beach volley", d: "Oggi bronzo.", h: "Sabato oro?", sub: "Vinci a beach, i punti salgono, la carta cambia cornice.", cap: "Su SANDER ogni partita di beach volley sposta i tuoi punti. Salendo la carta passa da bronzo ad argento e oro." },
   { eyebrow: "Beach volley · la tua carta", d: "Quanto vali", h: "sulla sabbia?", sub: "I punti li decidono i risultati, confermati da tutte e due le coppie.", cap: "Il livello vero, sulla sabbia: su SANDER i punti si muovono con i risultati, confermati da entrambe le coppie." },
 ]
+
+/** «Glossario da spiaggia» (Alex, 23/11/2026): one beach-volley word per post, numbered in this order. */
+export const GLOSSARIO = [
+  { word: "Pokey", sound: "/ˈpəʊ.ki/ · sostantivo", def: "Colpo con le nocche chiuse, quando la palla è troppo vicina alla rete per un attacco vero.", use: "Muro altissimo? Pokey corto dietro e punto." },
+  { word: "Cobra", sound: "/ˈkɔ.bra/ · sostantivo", def: "Attacco con la punta delle dita tese e unite: la palla parte dritta e rigida, dove il difensore non arriva.", use: "Ha fatto il cobra sulla riga, nessuno si è mosso." },
+  { word: "Skyball", sound: "/ˈskaɪ.bɔːl/ · sostantivo", def: "Battuta dal basso altissima, che scende quasi in verticale. Col sole in faccia e il vento è un incubo.", use: "Sabbia, sole alle spalle: skyball e vediamo." },
+  { word: "Cut shot", sound: "/kʌt ʃɒt/ · sostantivo", def: "Attacco in diagonale strettissima, quasi parallelo alla rete, che cade appena dietro il muro.", use: "Il muro chiude la linea? Cut shot e chiudi tu." },
+  { word: "Tomahawk", sound: "/ˈtɒm.ə.hɔːk/ · sostantivo", def: "Difesa a mani giunte sopra la testa, per le palle alte e veloci che non riesci a prendere in bagher.", use: "Non ci arrivavo in bagher: tomahawk e palla su." },
+  { word: "Joust", sound: "/dʒaʊst/ · sostantivo", def: "Palla contesa sopra la rete, spinta da due giocatori nello stesso momento. Vince chi ha più forza e tempo.", use: "Joust a rete, 30 secondi di tensione." },
+  { word: "Line", sound: "/laɪn/ · sostantivo", def: "Attacco lungo la linea laterale, quando il muro copre la diagonale. Si chiama anche dal compagno: «line!».", use: "Il muro è in diagonale: line, line, line!" },
+  { word: "Side-out", sound: "/saɪd aʊt/ · sostantivo", def: "Il punto fatto da chi riceve: si conquista la battuta. Nel beach vince chi tiene il side-out sotto pressione.", use: "Tutto bene finché teniamo il side-out." },
+]

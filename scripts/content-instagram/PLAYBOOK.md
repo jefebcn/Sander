@@ -43,7 +43,7 @@ Orari fissi (Alex, 23/11/2026): **tutti i post alle 12:00, tutte le storie alle 
 | Mer 12:00 | post | funzione della settimana: copertina con la battuta (Scopri → green/red flag, Crea e Chat → chat del gruppo, Tornei e Storico → notifiche, Classifiche → carta), poi «Come funziona» e chiusura |
 | Gio 12:00 | post | **Frasi da rete**, appuntamento fisso: una frase numerata (n. 01 = 19/11/2026) da `FRASI` in `content.mjs`, poi chiusura su Scopri |
 | Gio 12:30 | storia | questo weekend si gioca (FIPAV → SANDER → partite aperte → funzione) |
-| Ven 12:00 | post | «Manca uno»: gancio su foto (settimane pari) o chat del gruppo (dispari) → soluzione (+ partite aperte del weekend) |
+| Ven 12:00 | post | «Manca uno»: poster lime (settimane pari) o chat del gruppo (dispari) → soluzione (+ partite aperte del weekend) |
 | Ven 12:30 | storia | «Chi gioca stasera?» con la schermata di crea partita |
 | Sab 12:30 | storia | facoltativa: torneo del weekend o una funzione |
 | Dom 12:00 | post | seconda funzione (settimane pari) o un formato divertente a rotazione (dispari): citazione, «Che compagno di beach sei?», notifiche, carta, flag — mai lo stesso del mercoledì |
@@ -56,7 +56,7 @@ Dal 22/11/2026 (scelta di Alex) il giro non ha più giorni fissi: ogni sera alle
 - Meno di 4 posti liberi → niente da fare, nessun messaggio.
 - Almeno 4 liberi → stampa le finestre da riempire (`A 2026-11-23` = lun–mer, `B 2026-11-23` = gio–dom, solo giorni entro 8 giorni). Per ognuna, in ordine, fai i passi 2–8 con `bash run.sh A|B <lunedì>`.
 
-**Mai lo stesso sfondo** (Alex, 23/11/2026): ogni foto esce una volta sola, su Instagram e TikTok. `photos.json` elenca solo foto mai usate; se uno slot non ne ha, `needs.json` lo mette in `noPhoto`: genera una foto nuova (Higgsfield `soul_2`, prompt in `scripts/content-storie/README.md`), salvala in `work/photos-new/<id-slot>.jpg` e rilancia `run.sh`. Senza crediti la grafica esce senza foto.
+**Glow-up (Alex, 23/11/2026), niente foto:** `glow.mjs` ridisegna copertine, slide interne e storie con tre stili, ognuno con il suo compito: **Tabellone** (griglia scura, numero gigante lime: FIPAV, liste, conto alla rovescia, notifiche), **Poster lime** (parole nere giganti: «Manca uno», citazioni), **Telefono in campo** (sabbia al tramonto, telefono inclinato, note a mano: app, tutorial, storie), più la rubrica **Glossario da spiaggia** (`GLOSSARIO` in `content.mjs`, nella rotazione della domenica). Così nessuno sfondo è una foto ripetuta. **Mai lo stesso sfondo**: se un giorno torneranno le foto (nuovo account Higgsfield), ogni foto esce una volta sola, su Instagram e TikTok (`work/photos-new/<id-slot>.jpg`).
 
 **Mai niente di uguale.** `run.sh` legge prima lo storico Buffer (`history.mjs`); `render.mjs` usa solo varianti che non compaiono in nessuna didascalia uscita o in coda (le storie si riconoscono dal testo «🏐 …» che `publish.mjs` salva su Buffer). Se una lista non ha più niente di nuovo, lo slot non viene disegnato e `work/out/needs.json` dice quale lista. Allora scrivi varianti nuove in `work/extra-content.json` (stessa forma di `content.mjs`, per esempio `{ "GANCI": [ … ] }`, rispettando le Regole), rilancia `run.sh` e riporta le varianti nuove nel riepilogo, così Alex può aggiungerle a `content.mjs`. Mai riusare una variante.
 
