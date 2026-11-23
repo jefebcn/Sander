@@ -340,7 +340,7 @@ async function renderSlot(slot, browser) {
     case "weekend-fipav": {
       const inApp = slot.fipavInApp !== false
       const img = inApp ? await liveShot(browser, "/tournaments/fipav", "fipav") : screen("scopri")
-      return { frames: [storyList({ metaItems: ["Calendario FIPAV", "Weekend"], title: ["Questo weekend", "si gioca"], rows: slot.events.slice(0, 4).map(fipavRow), img, note: inApp ? `${slot.total} tornei in Italia · tutti su SANDER` : `${slot.total} tornei in Italia · Fonte: FIPAV` })], caption: "" }
+      return { frames: [storyList({ metaItems: ["Calendario FIPAV", "Weekend"], title: ["Questo weekend", "si gioca"], rows: varied(slot.events, 4).map(fipavRow), img, note: inApp ? `${slot.total} tornei in Italia · tutti su SANDER` : `${slot.total} tornei in Italia · Fonte: FIPAV` })], caption: "" }
     }
     case "weekend-sander":
       return { frames: [storyList({ metaItems: ["Tornei SANDER", "Weekend"], title: ["Questo weekend", "si gioca"], rows: slot.tournaments.map(tourRow), img: await liveShot(browser, `/tournaments/${slot.tournaments[0].id}`, "torneo") })], caption: "" }
