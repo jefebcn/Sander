@@ -34,18 +34,20 @@ Kit che legge i dati veri di SANDER, disegna post e storie con le schermate dell
 Scelte di Alex (13/11/2026): tornei FIPAV di tutta Italia; solo calendario (niente podi, niente nomi); categorie Serie Beach, Campionato Italiano, Società; finché FIPAV è vuoto, al loro posto tornei SANDER o funzioni.
 
 ## Calendario (Europe/Rome)
+Orari fissi (Alex, 23/11/2026): **tutti i post alle 12:00, tutte le storie alle 12:30**.
+
 | Giorno | Tipo | Contenuto |
 |---|---|---|
-| Lun 18:30 | post | «Numerone» FIPAV del weekend (quanti tornei, città, «E tu sei ancora senza compagno?») → altrimenti prossimo torneo SANDER → altrimenti funzione |
-| Mar 19:00 | storia ×3 | tutorial di una funzione |
-| Mer 18:30 | post | funzione della settimana: copertina con la battuta (Scopri → green/red flag, Crea e Chat → chat del gruppo, Tornei e Storico → notifiche, Classifiche → carta), poi «Come funziona» e chiusura |
-| Gio 18:30 | post | **Frasi da rete**, appuntamento fisso: una frase numerata (n. 01 = 19/11/2026) da `FRASI` in `content.mjs`, poi chiusura su Scopri |
-| Gio 19:00 | storia | questo weekend si gioca (FIPAV → SANDER → partite aperte → funzione) |
-| Ven 13:00 | post | «Manca uno»: gancio su foto (settimane pari) o chat del gruppo (dispari) → soluzione (+ partite aperte del weekend) |
-| Ven 18:30 | storia | «Chi gioca stasera?» con la schermata di crea partita |
-| Sab 10:30 | storia | facoltativa: torneo del weekend o una funzione |
-| Dom 11:00 | post | seconda funzione (settimane pari) o un formato divertente a rotazione (dispari): citazione, «Che compagno di beach sei?», notifiche, carta, flag — mai lo stesso del mercoledì |
-| Dom 18:30 | storia | countdown al prossimo torneo (SANDER, se no FIPAV con la schermata SANDER) |
+| Lun 12:00 | post | «Numerone» FIPAV del weekend (quanti tornei, città, «E tu sei ancora senza compagno?») → altrimenti prossimo torneo SANDER → altrimenti funzione |
+| Mar 12:30 | storia ×3 | tutorial di una funzione |
+| Mer 12:00 | post | funzione della settimana: copertina con la battuta (Scopri → green/red flag, Crea e Chat → chat del gruppo, Tornei e Storico → notifiche, Classifiche → carta), poi «Come funziona» e chiusura |
+| Gio 12:00 | post | **Frasi da rete**, appuntamento fisso: una frase numerata (n. 01 = 19/11/2026) da `FRASI` in `content.mjs`, poi chiusura su Scopri |
+| Gio 12:30 | storia | questo weekend si gioca (FIPAV → SANDER → partite aperte → funzione) |
+| Ven 12:00 | post | «Manca uno»: gancio su foto (settimane pari) o chat del gruppo (dispari) → soluzione (+ partite aperte del weekend) |
+| Ven 12:30 | storia | «Chi gioca stasera?» con la schermata di crea partita |
+| Sab 12:30 | storia | facoltativa: torneo del weekend o una funzione |
+| Dom 12:00 | post | seconda funzione (settimane pari) o un formato divertente a rotazione (dispari): citazione, «Che compagno di beach sei?», notifiche, carta, flag — mai lo stesso del mercoledì |
+| Dom 12:30 | storia | countdown al prossimo torneo (SANDER, se no FIPAV con la schermata SANDER) |
 
 Mai più di un giorno senza post. Niente post «numeri della settimana». Titoli e didascalie ruotano di settimana in settimana.
 

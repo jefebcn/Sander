@@ -71,8 +71,9 @@ export function plan(data, run, monday) {
   const openWeekend = (data.openMatches ?? []).filter((m) => [d(4), d(5), d(6)].includes(romeDay(m.date)))
   // FIPAV read by the kit (fipav/feed.mjs) is not in the app yet: graphics must not send people there.
   const fipavInApp = !data.fipavSource
-  const slot = (n, day, time, type, kind, payload = {}, optional = false) =>
-    ({ id: `${monday}-${day}-${type}`, day, date: d(n), time, type, kind, week, optional, photo: photoFor(monday, day, type), ...(kind.includes("fipav") ? { fipavInApp } : {}), ...payload })
+  // Fixed times (Alex, 23/11/2026): every post at 12:00, every story at 12:30.
+  const slot = (n, day, _time, type, kind, payload = {}, optional = false) =>
+    ({ id: `${monday}-${day}-${type}`, day, date: d(n), time: type === "post" ? "12:00" : "12:30", type, kind, week, optional, photo: photoFor(monday, day, type), ...(kind.includes("fipav") ? { fipavInApp } : {}), ...payload })
 
   const slots = []
   if (run === "A") {
