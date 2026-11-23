@@ -1,45 +1,34 @@
-# Stato SANDER — 19/11/2026 (app per i nuovi utenti, formati Instagram, primi reel)
+# Stato SANDER — 23/11/2026 (FIPAV, R8 Android, ricarica Buffer automatica, niente ripetizioni)
 
 ## Dove siamo
-- App: le correzioni per il primo accesso dei nuovi utenti sono online (PR #96). Le pagine vuote mostrano i tornei FIPAV e le ultime partite; la stagione finita mostra «Finita»; Tornei apre il calendario FIPAV quando su SANDER non c'è niente; i link vecchi del login reindirizzano; la home per chi non è registrato è più corta.
-- Instagram: nuovi formati in `scripts/content-instagram/formats.mjs` (PR #97). Sono online e collegati ai giri automatici.
-- Primi reel fatti con video di altri, con il permesso dell'autore: POV uscito il 17/11, «Technique: zero» in coda per sabato 21 alle 18:30.
-- Coda Buffer: 9 post su 10 fino a domenica 22.
-- Già online prima di questa sessione: app su App Store e Google Play, dati FIPAV collegati e shop SumUp.
-- Il ramo `claude/sander-tournament-app-ay3CY` è allineato a main.
+- App: i tornei FIPAV annullati spariscono dall'app (PR #99, unita). Android con R8 attivo: versionCode 5 / 1.3 caricato da Alex nel test interno di Play.
+- Instagram: la coda Buffer si ricarica da sola ogni sera alle 21:13 quando ha almeno 4 posti liberi; `fresh.mjs` controlla lo storico Buffer e non ripete mai testi né varianti.
+- Ogni foto di sfondo una sola volta: le foto di `photos.json` sono finite (scorta 0); senza foto nuove lo slot esce con la grafica senza foto.
+- Orari fissi: post alle 12:00, storie alle 12:30 (anche la coda attuale, 10/10 fino al 29/11).
+- 5 post a settimana e 5 storie.
 
 ## Aperto / in corso
-- Giri automatici:
-  - import FIPAV ogni giorno alle 06:37;
-  - Instagram giro A la domenica alle 21:13 (post da lunedì a mercoledì) e giro B il mercoledì alle 21:13 (da giovedì a domenica).
-- Martedì 25 è libero per un eventuale reel in più.
-- Proposte fatte ad Alex, non ancora chieste:
-  - sfondi nuovi da Gemini (i prompt sono già pronti);
-  - altri reel con permesso;
-  - messaggio di collaborazione a Tenerife Beach Volley;
-  - punto 3 dell'analisi: bottone Scopri centrale;
-  - punto 4 dell'analisi: slogan dello shop pubblico.
+- PR #100 (ricarica, niente ripetizioni, orari): CI verde, aspetta «merge».
+- Alex darà un nuovo account Higgsfield per generare foto nuove (quello attuale ha 0,07 crediti, `soul_2` costa 0,12 a foto). Poi rimettere foto nei contenuti.
+- Glow-up grafiche dal 30/11: Alex deve scegliere le direzioni (A Tabellone, D Poster lime, E Telefono in campo, B Pellicola 35mm) e le rubriche nuove (Glossario da spiaggia, Il Fondamentale, Mito o verità). Prototipi nello scratchpad `glow/` (perdibili).
+- Play: lista tester del test interno da completare (Alex).
+- Automazioni: import FIPAV ogni giorno 06:37 (trig_01UEkWwoifzQw32yqTcy8FdS); ricarica Instagram 21:13 (trig_017VM89jHtYpjJLMN1ho7KDg), usa il repo, lo zip è solo di riserva e non ha gli orari nuovi.
 
 ## Prossimo passo consigliato
-Controllare il giro A di domenica 22/11. Poi decidere con Alex quale delle proposte aperte fare.
+Con il nuovo account Higgsfield generare la scorta di foto nuove (una per slot, mai riusate), poi fare il glow-up con le direzioni scelte da Alex in `formats.mjs`.
 
 ## Decisioni di Alex ancora valide
-- Font solo quelli di SANDER: Bricolage Grotesque, Figtree, Gochi Hand.
-- Ogni grafica deve far capire subito che si parla di beach volley.
-- «Frase da rete» esce ogni giovedì alle 18:30.
-- Video di altri solo con il permesso dell'autore.
-- Reel da video stranieri: testi e didascalie in inglese, copertina nello stile del profilo e finale breve con l'app.
-- Solo Instagram, niente TikTok.
-- Nelle grafiche niente sanderbv.it: si scrive App Store, Google Play o «link in bio».
-- Le didascalie non chiedono mai di commentare.
+- Mai post ripetitivi né lo stesso sfondo: ogni foto esce una volta sola (23/11).
+- La coda attuale va bene così com'è, anche con le immagini già generate (23/11): non rifarla.
+- Post alle 12:00, storie alle 12:30.
+- Font solo Bricolage Grotesque, Figtree, Gochi Hand; beach volley chiaro da subito.
+- «Frase da rete» ogni giovedì. Solo Instagram, niente TikTok.
+- Video di altri solo con permesso; video stranieri con testi in inglese.
+- Niente sanderbv.it nelle grafiche (App Store, Google Play, «link in bio»); didascalie senza richieste di commento.
 
 ## Attenzione
-- Fare il merge solo quando Alex scrive «merge».
-- Prima di fare push chiedere ad Alex: il push va in produzione.
-- Mai force push.
-- `prisma db push` solo per aggiunte.
-- Se FIPAV risponde 403, fermarsi e non aggirare le protezioni.
-- Sul PC di Alex le copie del repo sono vecchie:
-  - `Documents\Sander` non ha git;
-  - `Documents\GitHub\Sander` è indietro rispetto a GitHub e ha modifiche Android non salvate.
-- Mai scrivere o stampare la chiave di Buffer o il CRON_SECRET.
+- Merge solo con «merge»; chiedere prima del push (va in produzione); mai force push.
+- Un riavvio del container può cancellare commit non pushati.
+- `prisma db push` solo aggiunte; FIPAV 403 → fermarsi.
+- Sul PC di Alex: `Documents\GitHub\Sander` può perdere il versionCode con Pull/Discard; chiedere conferma prima di ogni operazione sul PC.
+- Mai scrivere o stampare la chiave Buffer o il CRON_SECRET.
