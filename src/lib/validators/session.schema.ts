@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { isKnownPlace } from "@/lib/comuni"
+import { MAX_QUOTA_CENTS, MAX_SC } from "@/lib/sessionLimits"
 
 export const CreateSessionSchema = z.object({
   title: z.string().max(80).optional(),
@@ -16,13 +17,21 @@ export const CreateSessionSchema = z.object({
   courtCost: z.number().int().min(0).optional(),
   notes: z.string().max(200).optional(),
   paymentType: z.enum(["FREE", "QUOTA", "LOSER_PAYS", "SC"]).default("FREE"),
-  quotaAmount: z.number().int().min(0).max(1000).optional(),
+  // QUOTA is in euro cents, SC in credits: each has its own ceiling below.
+  quotaAmount: z.number().int().min(0).optional(),
   loserPays: z.string().max(60).optional(),
   matchMode: z.boolean().optional().default(false),
 }).refine(
   // A credits match with no price would let everyone in for free.
   (d) => d.paymentType !== "SC" || (d.quotaAmount ?? 0) >= 1,
   { message: "Indica quanti SanderCredits costa la partita", path: ["quotaAmount"] },
+).refine(
+  // 15 € = 1500 cents: a single 1000 ceiling for both units rejected any quota above 10 €.
+  (d) => d.paymentType !== "QUOTA" || (d.quotaAmount ?? 0) <= MAX_QUOTA_CENTS,
+  { message: "La quota a persona può essere al massimo 100 €", path: ["quotaAmount"] },
+).refine(
+  (d) => d.paymentType !== "SC" || (d.quotaAmount ?? 0) <= MAX_SC,
+  { message: "Il costo massimo è 1000 SanderCredits", path: ["quotaAmount"] },
 )
 
 export const EditSessionSchema = z.object({

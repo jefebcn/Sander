@@ -7,6 +7,7 @@ import { createSession } from "@/actions/sessions"
 import { POPULAR_BAGNI, bagnoLabel } from "@/lib/bagni"
 import { parseCity } from "@/lib/cities"
 import { cn } from "@/lib/utils"
+import { MAX_QUOTA_CENTS, MAX_SC } from "@/lib/sessionLimits"
 import { CityPicker } from "@/components/ui/CityPicker"
 
 const FORMATS = [
@@ -311,6 +312,7 @@ export function CreateSessionForm({ presets, defaultCity }: { presets?: Presets;
           <input
             type="number"
             min="0"
+            max={MAX_QUOTA_CENTS / 100}
             step="0.50"
             value={quotaAmount}
             onChange={(e) => setQuotaAmount(e.target.value)}
@@ -343,6 +345,7 @@ export function CreateSessionForm({ presets, defaultCity }: { presets?: Presets;
           <input
             type="number"
             min="1"
+            max={MAX_SC}
             step="1"
             value={quotaAmount}
             onChange={(e) => setQuotaAmount(e.target.value)}
