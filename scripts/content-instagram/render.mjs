@@ -20,10 +20,12 @@ import { createRequire } from "module"
 import { FEATURES, TONIGHT, HASHTAGS, pick, FRASI, FRASI_START, GANCI, CHATS, CITAZIONI, GIOCHI, GIOCO_FACES, NOTIFICHE, FLAGS, CARTE, GLOSSARIO } from "./content.mjs"
 import * as N0 from "./formats.mjs"
 import * as G from "./glow.mjs"
+import { aiPhoto } from "./bgai.mjs"
 import { FEATURE_COVER } from "./plan.mjs"
 import { fresh, used, NEEDS, NothingNew } from "./fresh.mjs"
 
-// Glow-up (Alex, 23/11/2026): glow.mjs redraws covers, inner slides and stories without photos.
+// Glow-up (Alex, 23/11/2026): glow.mjs redraws covers, inner slides and stories; since 26/11 the
+// Friday hook, the Sunday quote and the photo stories get a fresh AI background (bgai.mjs).
 const N = { ...N0, ...G }
 
 // require() also finds the machine-wide Playwright when the kit runs outside the repo.
@@ -232,6 +234,7 @@ async function renderSlot(slot, browser) {
       const order = ["glossario", "citazione", "gioco", "notifiche", "carta", "flag"]
       let k = slot.format ?? order[Math.floor(w / 2) % order.length]
       if (!slot.format && k === slot.avoid) k = order[(order.indexOf(k) + 1) % order.length]
+      if (k === "citazione") PHOTO ??= await aiPhoto(slot.id, "post")
       const c = coverFrames(k, w + 1)
       const frames = [c.frame]
       if (c.app) frames.push(N.appSlide(c.app))
@@ -276,9 +279,12 @@ async function renderSlot(slot, browser) {
     }
     case "missing-one": {
       // Friday: hook on a photo (even weeks) or the group chat (odd weeks).
-      const useChat = slot.format ? slot.format === "chat" : w % 2 === 1
+      let useChat = slot.format ? slot.format === "chat" : w % 2 === 1
       const vi = slot.variant ?? Math.floor(w / 2)
-      const g = useChat ? fresh("CHATS", CHATS, vi, FP.CHATS) : fresh("GANCI", GANCI, vi, FP.GANCI)
+      let g
+      if (useChat) try { g = fresh("CHATS", CHATS, vi, FP.CHATS) } catch (e) { if (!(e instanceof NothingNew)) throw e; useChat = false } // chats used up: the hook instead
+      if (!useChat) g = fresh("GANCI", GANCI, vi, FP.GANCI)
+      if (!useChat) PHOTO ??= await aiPhoto(slot.id, "post")
       const frames = [useChat ? N.chat(g) : N.gancio({ img: PHOTO, ...g })]
       frames.push(N.appSlide({ eyebrow: "La soluzione", d: "Il quarto", h: "c'è", img: screen("partite"), bullets: ["Guarda le partite aperte vicino a te", "Oppure crea la tua: chi è libero la vede", "Se uno salta, entra il primo in lista"] }))
       if (slot.matches?.length >= 2) frames.push(N.listSlide({ eyebrow: "Partite aperte", d: "Questo weekend", rows: slot.matches.map(matchRow), note: "Entra con un tap su SANDER." }))
@@ -295,12 +301,12 @@ async function renderSlot(slot, browser) {
     case "feature-story": {
       const title = fresh(`titles.${slot.feature}`, f.titles, v + 1, FP.line)
       KEY = `${f.name}: ${FP.line(title)}`
-      return { frames: [G.storyPhone({ metaItems: [f.name, "SANDER", "Gratis"], title, img: screen(f.screen) })], caption: "" }
+      return { frames: [G.storyPhone({ metaItems: [f.name, "SANDER", "Gratis"], title, img: screen(f.screen), photo: PHOTO ?? (await aiPhoto(slot.id, "story")) })], caption: "" }
     }
     case "tonight": {
       const title = fresh("TONIGHT", TONIGHT, w, FP.line)
       KEY = `Venerdì sera: ${FP.line(title)}`
-      return { frames: [G.storyPhone({ metaItems: ["Venerdì sera", "Crea partita"], title, img: screen("crea") })], caption: "" }
+      return { frames: [G.storyPhone({ metaItems: ["Venerdì sera", "Crea partita"], title, img: screen("crea"), photo: PHOTO ?? (await aiPhoto(slot.id, "story")) })], caption: "" }
     }
     case "weekend-fipav": {
       const inApp = slot.fipavInApp !== false

@@ -8,7 +8,8 @@
  * plus the rubric «Glossario da spiaggia» (dark, giant lime word, definition).
  *
  * Same signatures as formats.mjs (render.mjs overrides those functions with these);
- * `img` is ignored: every background is drawn, never a photo.
+ * Backgrounds are drawn; gancio, citazione and storyPhone take an AI photo when
+ * given one (`img` / `photo`, from bgai.mjs) and fall back to the drawn look.
  * Posts are 1080×1350; story* functions are 1080×1920 with nothing important above
  * 270 px or below 380 px.
  */
@@ -51,6 +52,9 @@ body{width:${w}px;height:${h}px;overflow:hidden;position:relative;background:${b
 .phone div{width:100%;height:100%;border-radius:54px;background-size:cover;background-position:top}
 .pill{display:inline-block;background:${L};color:${INK};font-weight:900;font-size:28px;letter-spacing:.1em;text-transform:uppercase;padding:18px 36px;border-radius:999px}
 .ink .pill{background:${INK};color:${L}}
+.photo{position:absolute;inset:0;background-size:cover;background-position:center}
+.fade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,11,11,.82) 0%,rgba(11,11,11,.55) 30%,rgba(11,11,11,0) 58%,rgba(11,11,11,0) 80%,rgba(11,11,11,.6) 100%)}
+.lift{text-shadow:0 2px 18px rgba(0,0,0,.75)}
 .row{display:flex;align-items:center;gap:24px;padding:22px 0;border-bottom:2px solid rgba(255,255,255,.12)}
 .row:last-child{border-bottom:0}
 .badge{flex:none;width:92px;text-align:center}
@@ -63,6 +67,8 @@ const story = (body, bg = INK, ink = false) => doc(1080, 1920, bg, body, ink)
 const tag = (pos = "left:60px;bottom:48px", ink = false) => `<div class="tag" style="${pos};color:${ink ? INK : "#fff"}"><img src="${ICON}">SANDER<span style="opacity:.6;font-weight:700">BEACH VOLLEY</span></div>`
 const header = (left, right, top = 60, ink = false) => `<div class="meta" style="position:absolute;left:60px;right:60px;top:${top}px;display:flex;justify-content:space-between;gap:30px;white-space:nowrap;color:${ink ? INK : L}"><span style="overflow:hidden;text-overflow:ellipsis">${esc(left)}</span><span>${esc(right ?? "")}</span></div><div class="rule" style="left:60px;right:60px;top:${top + 44}px"></div>`
 const phone = (src, { left, top, width, rotate = 8 }) => `<div class="phone" style="left:${left}px;top:${top}px;width:${width}px;height:${Math.round(width * 2.1)}px;transform:rotate(${rotate}deg)"><div style="background-image:url(${src})"></div></div>`
+/** AI photo (bgai.mjs) under a dark fade: text on top, scene below. */
+const photoBg = (src) => `<div class="photo" style="background-image:url(${src})"></div><div class="fade"></div>`
 const lines = (a, cls, size, extra = "") => arr(a).map((t) => `<div class="${cls}" style="font-size:${size}px;${extra}">${esc(t)}</div>`).join("")
 const rows = (list, size = 34) => list.map((r) => `<div class="row"><div class="badge"><div class="D" style="font-size:64px;color:${L}">${esc(r.badge)}</div><div class="meta" style="font-size:18px;opacity:.7;margin-top:4px">${esc(r.badgeSub ?? "")}</div></div><div style="flex:1;min-width:0"><div style="font-size:${size}px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.title)}</div><div style="font-size:${Math.round(size * 0.76)}px;opacity:.7;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.sub)}</div></div></div>`).join("")
 
@@ -98,7 +104,12 @@ ${tag()}`)
 }
 
 /** D — the hook as a lime poster. */
-export function gancio({ eyebrow, d, h, sticker, sub }) {
+export function gancio({ eyebrow, d, h, sticker, sub, img }) {
+  if (img) return post(`${photoBg(img)}
+${header(eyebrow, "Beach volley")}
+<div data-fit="400" style="position:absolute;left:52px;right:52px;top:150px" class="lift">${lines(d, "D", 200)}</div>
+<div data-fit="150" style="position:absolute;left:60px;right:60px;top:590px" class="lift">${lines(h, "H", 92, "transform:rotate(-3deg);transform-origin:left")}</div>
+${tag()}<div class="meta" style="position:absolute;right:60px;bottom:58px">Swipe →</div>`)
   return post(`<div class="meta" style="position:absolute;left:60px;right:60px;top:64px;color:${INK}">${esc(eyebrow)}</div>
 <div data-fit="700" style="position:absolute;left:52px;right:52px;top:220px">${lines(d, "D", 230, `color:${INK}`)}</div>
 <div data-fit="200" style="position:absolute;left:60px;right:60px;top:960px">${lines(h, "H", 92, "transform:rotate(-3deg);transform-origin:left")}</div>
@@ -108,7 +119,15 @@ ${tag(undefined, true)}<div class="meta" style="position:absolute;right:60px;bot
 }
 
 /** D (dark) — the quote. */
-export function citazione({ who, d, mk, d2, h }) {
+export function citazione({ who, d, mk, d2, h, img }) {
+  if (img) return post(`${photoBg(img)}
+${header(`《 ${who} 》`, "Beach volley")}
+<div data-fit="520" style="position:absolute;left:60px;right:60px;top:150px" class="lift">
+  ${lines(d, "D", 130)}
+  <div class="D" style="font-size:130px;margin-top:26px"><span style="background:${L};color:${INK};padding:0 .1em;text-shadow:none">${esc(mk)}</span>${d2 ? ` ${esc(d2)}` : ""}</div>
+  <div class="H" style="font-size:84px;margin-top:18px;transform:rotate(-3deg);transform-origin:left">${esc(h)}</div>
+</div>
+${tag()}`)
   return post(`${header(`《 ${who} 》`, "Beach volley")}
 <div class="W" style="position:absolute;left:44px;top:120px;font-size:420px;color:${L};opacity:.9">“</div>
 <div data-fit="560" style="position:absolute;left:60px;right:60px;top:470px">
@@ -168,14 +187,14 @@ ${tag()}`)
 const storyPill = (t = "Link in bio") => `<div style="position:absolute;left:0;right:0;bottom:400px;text-align:center"><span class="pill">${esc(t)}</span></div>`
 
 /** E — a feature or «stasera» in the hand. */
-export function storyPhone({ metaItems, title, img }) {
+export function storyPhone({ metaItems, title, img, photo }) {
   const [n1, n2] = pickBy(STORY_NOTES, title.join(" "))
-  return story(`<div class="sand"></div>
+  return story(`${photo ? photoBg(photo) : `<div class="sand"></div>`}
 ${header(metaItems[0], metaItems.slice(1).join(" · "), 270)}
 <div data-fit="330" style="position:absolute;left:60px;right:60px;top:360px">${lines([title[0]], "D", 190)}${lines([title[1]], "H", 150, "transform:rotate(-3deg);transform-origin:left")}</div>
 ${phone(img, { left: 590, top: 700, width: 340, rotate: 7 })}
-<div class="H" style="position:absolute;left:70px;top:900px;font-size:58px;line-height:1.05;transform:rotate(-4deg)">${n1}</div>
-<div class="H" style="position:absolute;left:90px;top:1110px;font-size:58px;line-height:1.05;transform:rotate(3deg)">${n2}</div>
+<div class="H lift" style="position:absolute;left:70px;top:900px;font-size:58px;line-height:1.05;transform:rotate(-4deg)">${n1}</div>
+<div class="H lift" style="position:absolute;left:90px;top:1110px;font-size:58px;line-height:1.05;transform:rotate(3deg)">${n2}</div>
 ${storyPill()}`)
 }
 
