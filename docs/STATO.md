@@ -1,35 +1,33 @@
-# Stato SANDER — 23/11/2026 (glow-up grafiche, ricarica Buffer automatica, niente ripetizioni)
+# Stato SANDER — 26/11/2026 (sfondi nuovi con AI Gateway, coda Buffer piena)
 
 ## Dove siamo
-- App: i tornei FIPAV annullati spariscono dall'app (PR #99, unita). Android con R8 attivo: versionCode 5 / 1.3 caricato da Alex nel test interno di Play.
-- Instagram: la coda Buffer si ricarica da sola ogni sera alle 21:13 quando ha almeno 4 posti liberi; `fresh.mjs` controlla lo storico Buffer e non ripete mai testi né varianti.
-- Ogni foto di sfondo una sola volta: le foto di `photos.json` sono finite (scorta 0); senza foto nuove lo slot esce con la grafica senza foto.
-- Glow-up attivo da oggi: `glow.mjs` (Tabellone, Poster lime, Telefono in campo, Glossario da spiaggia), senza foto. La coda Buffer 23–29/11 è stata rifatta tutta con il nuovo stile (10/10).
-- Orari fissi: post alle 12:00, storie alle 12:30.
-- 5 post a settimana e 5 storie.
+- Instagram: coda Buffer piena (10/10) fino a gio 03/12. Le grafiche B 30/11 da ven 04/12 a dom 06/12 sono pronte ma senza posto: le mette la ricarica delle 21:13.
+- Glow-up attivo (`glow.mjs`, senza foto). I titoli FIPAV e le note delle storie ora ruotano con `pickBy` (e085be0), così un testo già uscito non torna.
+- Sfondi: Alex vuole sfondi foto unici, belli e «beach volley style». Higgsfield no (0 crediti), Canva ha finito la quota mensile dopo 4 immagini, foto d'archivio e disegno a codice scartati (non unici o non all'altezza).
+- Nuova strada: Vercel AI Gateway. Chiave salvata da Alex come network secret su `ai-gateway.vercel.sh` (il proxy la aggiunge da solo); `GET /v1/credits` → balance 5 $, usati 0.
+- Esempio approvato come direzione: testo glow sopra una foto (post tramonto «Manca il quarto?», storia sabbia «Stasera si gioca.»). Lo script di prova era nello scratchpad, fuori dal kit.
 
 ## Aperto / in corso
-- PR #100 (ricarica, niente ripetizioni, orari): CI verde, aspetta «merge».
-- Alex darà un nuovo account Higgsfield per generare foto nuove (quello attuale ha 0,07 crediti, `soul_2` costa 0,12 a foto). Poi rimettere foto nei contenuti.
-- Glow-up: restano da fare B Pellicola 35mm (serve foto), le rubriche «Il Fondamentale» e «Mito o verità», e i formati vecchi ancora usati (chat, flag, gioco, carta, frase) da ridisegnare. Il Glossario esce nella rotazione della domenica (settimane dispari).
-- Play: lista tester del test interno da completare (Alex).
-- Automazioni: import FIPAV ogni giorno 06:37 (trig_01UEkWwoifzQw32yqTcy8FdS); ricarica Instagram 21:13 (trig_017VM89jHtYpjJLMN1ho7KDg), usa il repo, lo zip è solo di riserva e non ha gli orari nuovi.
+- Prova dei 3 modelli con la stessa scena (carriola di ghiaccio con birre e anguria al tramonto, giocatori a piedi nudi dietro): `bfl/flux-3-image` (~0,05 $), `bytedance/seedream-5.5` (0,02–0,035 $), `openai/gpt-image-2`. Poi Alex sceglie.
+- Dopo la scelta: nel kit uno slot foto per format, ogni sfondo una volta sola (segnato in `photos.json`), alternato alle grafiche senza foto.
+- PR #100 aspetta «merge».
+- Rubriche «Il Fondamentale» e «Mito o verità», e i formati vecchi (chat, flag, gioco, carta, frase) da ridisegnare in glow.
+- Automazioni: import FIPAV ogni giorno 06:37 (trig_01UEkWwoifzQw32yqTcy8FdS); ricarica Instagram 21:13 (trig_017VM89jHtYpjJLMN1ho7KDg).
 
 ## Prossimo passo consigliato
-Sentire Alex sulle prime uscite del nuovo stile; poi ridisegnare in `glow.mjs` i formati ancora vecchi e aggiungere le rubriche nuove. Con il nuovo account Higgsfield valutare la Pellicola 35mm (ogni foto una volta sola).
+Generare la scena carriola con i 3 modelli, metterla nel layout glow (post 1080×1350, storia 1080×1920) e far scegliere ad Alex; poi aggiungere gli sfondi AI al kit.
 
 ## Decisioni di Alex ancora valide
+- Birra ammessa nelle foto, ogni tanto anche protagonista, ma non in ogni post (26/11). Persone a piedi nudi, senza loghi né scritte.
+- Dettagli scherzosi benvenuti (carriola col ghiaccio, ciabatte, cane che ruba il pallone…).
 - Mai post ripetitivi né lo stesso sfondo: ogni foto esce una volta sola (23/11).
-- Nuovo stile da subito, al posto dei contenuti vecchi (23/11).
-- Post alle 12:00, storie alle 12:30.
-- Font solo Bricolage Grotesque, Figtree, Gochi Hand; beach volley chiaro da subito.
-- «Frase da rete» ogni giovedì. Solo Instagram, niente TikTok.
-- Video di altri solo con permesso; video stranieri con testi in inglese.
-- Niente sanderbv.it nelle grafiche (App Store, Google Play, «link in bio»); didascalie senza richieste di commento.
+- Post alle 12:00, storie alle 12:30. «Frase da rete» ogni giovedì. Solo Instagram.
+- Font solo Bricolage Grotesque, Figtree, Gochi Hand.
+- Niente sanderbv.it nelle grafiche; didascalie senza richieste di commento.
 
 ## Attenzione
 - Merge solo con «merge»; chiedere prima del push (va in produzione); mai force push.
-- Un riavvio del container può cancellare commit non pushati.
+- Le chiavi non si chiedono in chat: in una sessione molto lunga il modulo chiavi non si apre, Alex le mette in Edit ambiente → Network secrets.
+- Canva: il generatore AI ha una quota mensile piccola (4 immagini e stop).
+- Mai scrivere o stampare chiavi (Buffer, AI Gateway, CRON_SECRET).
 - `prisma db push` solo aggiunte; FIPAV 403 → fermarsi.
-- Sul PC di Alex: `Documents\GitHub\Sander` può perdere il versionCode con Pull/Discard; chiedere conferma prima di ogni operazione sul PC.
-- Mai scrivere o stampare la chiave Buffer o il CRON_SECRET.
