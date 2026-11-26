@@ -24,8 +24,8 @@ import { aiPhoto } from "./bgai.mjs"
 import { FEATURE_COVER } from "./plan.mjs"
 import { fresh, used, NEEDS, NothingNew } from "./fresh.mjs"
 
-// Glow-up (Alex, 23/11/2026): glow.mjs redraws covers, inner slides and stories; since 26/11 the
-// Friday hook, the Sunday quote and the photo stories get a fresh AI background (bgai.mjs).
+// Glow-up (Alex, 23/11/2026): glow.mjs redraws covers, inner slides and stories; since 26/11 every
+// post cover and every story has a fresh AI photo background (bgai.mjs). Inner slides stay drawn.
 const N = { ...N0, ...G }
 
 // require() also finds the machine-wide Playwright when the kit runs outside the repo.
@@ -205,9 +205,9 @@ function coverFrames(kind, w) {
     case "glossario": {
       const g = fresh("GLOSSARIO", GLOSSARIO, 0, FP.GLOSSARIO)
       const n = g.n ?? GLOSSARIO.indexOf(g) + 1
-      return { frame: N.glossario({ ...g, n }), cap: `${FP.GLOSSARIO(g)} 🏐\n\n${g.def}\n\nSi usa così: «${g.use}»\n\nSalvalo per la prossima partita.`, app: { eyebrow: "Su SANDER", d: "Dalla teoria", h: "alla sabbia", img: screen("partite"), bullets: ["Partite aperte vicino a te", "Compagni al tuo livello", "Punti dopo ogni partita"] } }
+      return { frame: N.glossario({ img: PHOTO, ...g, n }), cap: `${FP.GLOSSARIO(g)} 🏐\n\n${g.def}\n\nSi usa così: «${g.use}»\n\nSalvalo per la prossima partita.`, app: { eyebrow: "Su SANDER", d: "Dalla teoria", h: "alla sabbia", img: screen("partite"), bullets: ["Partite aperte vicino a te", "Compagni al tuo livello", "Punti dopo ogni partita"] } }
     }
-    case "chat": default: { const c = fresh("CHATS", CHATS, i + 1, FP.CHATS); return { frame: N.chat(c), cap: `${c.d.join(" ")} 🏐\n\n${c.cap}` } }
+    case "chat": default: { const c = fresh("CHATS", CHATS, i + 1, FP.CHATS); return { frame: N.chat({ img: PHOTO, ...c }), cap: `${c.d.join(" ")} 🏐\n\n${c.cap}` } }
   }
 }
 
@@ -215,7 +215,10 @@ async function renderSlot(slot, browser) {
   const w = slot.week
   // A photo appears once, ever (Alex, 23/11/2026): a new one in work/photos-new/<slot id>.jpg wins.
   const newPhoto = join(KIT, "work", "photos-new", `${slot.id}.jpg`)
-  PHOTO = existsSync(newPhoto) ? b64(newPhoto, "image/jpeg") : slot.photo ? photoUrl(slot.photo) : null
+  // Since 26/11 every cover and every story gets a fresh AI photo (bgai.mjs, cached there).
+  // Slots already past are not published (publish.mjs skips them): no paid photo for them.
+  const past = slot.date && slot.time && Date.parse(`${slot.date}T${slot.time}:00+01:00`) < Date.now()
+  PHOTO = existsSync(newPhoto) ? b64(newPhoto, "image/jpeg") : (past ? null : await aiPhoto(slot.id, slot.type === "story" ? "story" : "post")) ?? (slot.photo ? photoUrl(slot.photo) : null)
   const f = slot.feature ? FEATURES[slot.feature] : null
   const v = Math.floor(w / 6) // variant index: changes each time a feature comes back
 
@@ -234,7 +237,6 @@ async function renderSlot(slot, browser) {
       const order = ["glossario", "citazione", "gioco", "notifiche", "carta", "flag"]
       let k = slot.format ?? order[Math.floor(w / 2) % order.length]
       if (!slot.format && k === slot.avoid) k = order[(order.indexOf(k) + 1) % order.length]
-      if (k === "citazione") PHOTO ??= await aiPhoto(slot.id, "post")
       const c = coverFrames(k, w + 1)
       const frames = [c.frame]
       if (c.app) frames.push(N.appSlide(c.app))
@@ -245,7 +247,7 @@ async function renderSlot(slot, browser) {
       const n = Math.max(1, Math.floor((Date.parse(`${slot.date}T12:00:00Z`) - Date.parse(`${FRASI_START}T12:00:00Z`)) / (7 * 86_400_000)) + 1)
       const fr = fresh("FRASI", FRASI, n - 1, FP.FRASI)
       return {
-        frames: [N.frase({ n, d: fr.d, h: fr.h }), N.ctaSlide({ d: ["Il compagno"], h: ["giusto è qui."], img: screen("scopri") })],
+        frames: [N.frase({ img: PHOTO, n, d: fr.d, h: fr.h }), N.ctaSlide({ d: ["Il compagno"], h: ["giusto è qui."], img: screen("scopri") })],
         caption: caption([`Frasi da rete n. ${n} 🏐`, `«${[...fr.d, ...fr.h].join(" ")}»`, `${fr.cap} Ogni giovedì una nuova frase: salvala.`, "Il compagno di beach giusto lo trovi su SANDER. Link in bio.", HASHTAGS]),
       }
     }
@@ -270,7 +272,7 @@ async function renderSlot(slot, browser) {
       const img = await liveShot(browser, `/tournaments/${t.id}`, "torneo")
       return {
         frames: [
-          N.listSlide({ eyebrow: `Torneo di beach volley · ${dayLabel(t.date, false)}`, d: t.name, h: t.registrationOpen ? "iscrizioni aperte" : "su SANDER", rows: [tourRow(t)], note: t.location ?? "" }),
+          N.listSlide({ img: PHOTO, eyebrow: `Torneo di beach volley · ${dayLabel(t.date, false)}`, d: t.name, h: t.registrationOpen ? "iscrizioni aperte" : "su SANDER", rows: [tourRow(t)], note: t.location ?? "" }),
           N.appSlide({ eyebrow: t.name, d: "Tutto", h: "in app", img, bullets: ["Iscrizione in coppia dalla scheda del torneo", "Scadenze con il conto alla rovescia", "Tabellone e risultati in diretta"] }),
           N.ctaSlide({ d: ["Iscriviti"], h: ["su SANDER"], img: screen("tornei") }),
         ],
@@ -284,8 +286,7 @@ async function renderSlot(slot, browser) {
       let g
       if (useChat) try { g = fresh("CHATS", CHATS, vi, FP.CHATS) } catch (e) { if (!(e instanceof NothingNew)) throw e; useChat = false } // chats used up: the hook instead
       if (!useChat) g = fresh("GANCI", GANCI, vi, FP.GANCI)
-      if (!useChat) PHOTO ??= await aiPhoto(slot.id, "post")
-      const frames = [useChat ? N.chat(g) : N.gancio({ img: PHOTO, ...g })]
+      const frames = [useChat ? N.chat({ img: PHOTO, ...g }) : N.gancio({ img: PHOTO, ...g })]
       frames.push(N.appSlide({ eyebrow: "La soluzione", d: "Il quarto", h: "c'è", img: screen("partite"), bullets: ["Guarda le partite aperte vicino a te", "Oppure crea la tua: chi è libero la vede", "Se uno salta, entra il primo in lista"] }))
       if (slot.matches?.length >= 2) frames.push(N.listSlide({ eyebrow: "Partite aperte", d: "Questo weekend", rows: slot.matches.map(matchRow), note: "Entra con un tap su SANDER." }))
       frames.push(N.ctaSlide({ d: ["Il quarto"], h: ["c'è."], img: screen("crea") }))
@@ -296,35 +297,35 @@ async function renderSlot(slot, browser) {
       // The three steps of a feature go out once; after that, a fresh title for it.
       KEY = `Tutorial ${f.name}: ${f.tutorial[0][1]}`
       if (used(KEY)) return renderSlot({ ...slot, kind: "feature-story" }, browser)
-      return { frames: f.tutorial.map(([img, heading, text], i) => G.storyStep({ n: i + 1, total: 3, heading, text, img: screen(img), featureName: f.name })), caption: "" }
+      return { frames: f.tutorial.map(([img, heading, text], i) => G.storyStep({ n: i + 1, total: 3, heading, text, img: screen(img), featureName: f.name, photo: PHOTO })), caption: "" }
     }
     case "feature-story": {
       const title = fresh(`titles.${slot.feature}`, f.titles, v + 1, FP.line)
       KEY = `${f.name}: ${FP.line(title)}`
-      return { frames: [G.storyPhone({ metaItems: [f.name, "SANDER", "Gratis"], title, img: screen(f.screen), photo: PHOTO ?? (await aiPhoto(slot.id, "story")) })], caption: "" }
+      return { frames: [G.storyPhone({ metaItems: [f.name, "SANDER", "Gratis"], title, img: screen(f.screen), photo: PHOTO })], caption: "" }
     }
     case "tonight": {
       const title = fresh("TONIGHT", TONIGHT, w, FP.line)
       KEY = `Venerdì sera: ${FP.line(title)}`
-      return { frames: [G.storyPhone({ metaItems: ["Venerdì sera", "Crea partita"], title, img: screen("crea"), photo: PHOTO ?? (await aiPhoto(slot.id, "story")) })], caption: "" }
+      return { frames: [G.storyPhone({ metaItems: ["Venerdì sera", "Crea partita"], title, img: screen("crea"), photo: PHOTO })], caption: "" }
     }
     case "weekend-fipav": {
       const inApp = slot.fipavInApp !== false
       const img = inApp ? await liveShot(browser, "/tournaments/fipav", "fipav") : screen("scopri")
-      return { frames: [G.storyList({ metaItems: ["Calendario FIPAV", "Weekend"], title: ["Questo weekend", "si gioca"], rows: varied(slot.events, 4).map(fipavRow), img, note: inApp ? `${slot.total} tornei in Italia · tutti su SANDER` : `${slot.total} tornei in Italia · Fonte: FIPAV` })], caption: "" }
+      return { frames: [G.storyList({ photo: PHOTO, metaItems: ["Calendario FIPAV", "Weekend"], title: ["Questo weekend", "si gioca"], rows: varied(slot.events, 4).map(fipavRow), img, note: inApp ? `${slot.total} tornei in Italia · tutti su SANDER` : `${slot.total} tornei in Italia · Fonte: FIPAV` })], caption: "" }
     }
     case "weekend-sander":
-      return { frames: [G.storyList({ metaItems: ["Tornei SANDER", "Weekend"], title: ["Questo weekend", "si gioca"], rows: slot.tournaments.map(tourRow), img: await liveShot(browser, `/tournaments/${slot.tournaments[0].id}`, "torneo") })], caption: "" }
+      return { frames: [G.storyList({ photo: PHOTO, metaItems: ["Tornei SANDER", "Weekend"], title: ["Questo weekend", "si gioca"], rows: slot.tournaments.map(tourRow), img: await liveShot(browser, `/tournaments/${slot.tournaments[0].id}`, "torneo") })], caption: "" }
     case "weekend-matches":
-      return { frames: [G.storyList({ metaItems: ["Partite aperte", "Weekend"], title: ["Questo weekend", "si gioca"], rows: slot.matches.map(matchRow), img: screen("partite"), note: "Entra con un tap su SANDER" })], caption: "" }
+      return { frames: [G.storyList({ photo: PHOTO, metaItems: ["Partite aperte", "Weekend"], title: ["Questo weekend", "si gioca"], rows: slot.matches.map(matchRow), img: screen("partite"), note: "Entra con un tap su SANDER" })], caption: "" }
     case "countdown": {
       const t = slot.tournament
-      return { frames: [G.storyCountdown({ days: daysBetween(slot.from, t.date), name: t.name, sub: `${dayLabel(t.date)}${t.location ? ` · ${t.location}` : ""}`, img: await liveShot(browser, `/tournaments/${t.id}`, "torneo") })], caption: "" }
+      return { frames: [G.storyCountdown({ photo: PHOTO, days: daysBetween(slot.from, t.date), name: t.name, sub: `${dayLabel(t.date)}${t.location ? ` · ${t.location}` : ""}`, img: await liveShot(browser, `/tournaments/${t.id}`, "torneo") })], caption: "" }
     }
     case "countdown-fipav": {
       const e = slot.event
       const inApp = slot.fipavInApp !== false
-      return { frames: [G.storyCountdown({ days: daysBetween(slot.from, e.startDate), name: `${e.category} · ${e.city}`, sub: `${dayLabel(e.startDate.slice(0, 10))} · ${inApp ? "Calendario FIPAV su SANDER" : "Fonte: FIPAV"}`, source: "FIPAV", img: inApp ? await liveShot(browser, "/tournaments/fipav", "fipav") : screen("scopri") })], caption: "" }
+      return { frames: [G.storyCountdown({ photo: PHOTO, days: daysBetween(slot.from, e.startDate), name: `${e.category} · ${e.city}`, sub: `${dayLabel(e.startDate.slice(0, 10))} · ${inApp ? "Calendario FIPAV su SANDER" : "Fonte: FIPAV"}`, source: "FIPAV", img: inApp ? await liveShot(browser, "/tournaments/fipav", "fipav") : screen("scopri") })], caption: "" }
     }
     default:
       throw new Error(`unknown kind ${slot.kind}`)

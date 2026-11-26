@@ -27,7 +27,7 @@ const FRAME = {
   post: "Vertical 4:5 composition, low camera angle: the top 45% of the frame is only clean sky, nothing else, empty space for text; the scene sits in the lower half.",
   story: "Vertical 9:16 composition: the top half of the frame is clean and empty (sky or plain sand) for text; the scene sits in the lower half.",
 }
-// [scene, beer?, only this shape] — about one in four has beer.
+// [scene, beer?, only this shape] — about one in five has beer.
 const SCENES = [
   ["Beach volleyball at golden hour: a player jumps for a spike at the net, sand flying, the sun low on the sea horizon, silhouettes against an orange and violet sky.", false],
   ["At the edge of a beach volleyball court at sunset: an old rusty wheelbarrow full of ice, cold beer bottles with blank labels and watermelon slices, colorful flip-flops; four players mid-rally behind, slightly out of focus.", true],
@@ -41,12 +41,37 @@ const SCENES = [
   ["Sideline of a summer beach tournament: a bucket of ice with beer bottles with blank labels and lemons, flip-flops, a hand-drawn scoreboard on cardboard, players in action behind.", true],
   ["A bucket of colorful ice lollies melting in the sun next to the net post, players warming up behind, bright summer afternoon.", false],
   ["Four players walking off the court at sunset with their arms around each other's shoulders, long shadows on the sand, the net behind them.", false],
+  ["Early morning on an empty beach volleyball court: a player raking the sand smooth, the net still wet with dew, soft pink sky over a calm sea.", false],
+  ["A block at the net seen from behind the blocker: two pairs of hands up, the ball hitting the fingers, the opponent's face behind the net, sand in the air, afternoon sun.", false],
+  ["Two players lying exhausted on their backs in the sand after a long rally, laughing, the ball between them, the net above, blue sky.", false],
+  ["A pair of players giving each other secret hand signals behind their backs before a serve, close-up, the court and sea blurred behind, warm light.", false],
+  ["A jump serve at sunset: the server tossing the ball high, body arched, the sun right behind the ball, lens flare, silhouettes of the other players.", false],
+  ["Beach volleyball under floodlights at night: players mid-rally, the lights glowing in a warm haze, moths around the lamps, the dark sea behind.", false],
+  ["Players taking a break in the shade of a straw beach umbrella, water bottles, a slice of watermelon, the ball resting on a towel, the court in bright sun behind.", false],
+  ["A seagull standing on top of the beach volleyball net post, staring at a player who is waiting to serve, funny moment, sunny afternoon.", false],
+  ["A friendly toast with beer bottles with blank labels at the net after a match, four players, the sun setting behind them, sand on their legs.", true],
+  ["A ball rolling into the shallow waves after a missed dig, a player running after it into the sea, splashes, golden hour.", false],
+  ["Spectators sitting on the sand at the edge of the court, cheering, a kid with a foam finger with no writing, players in action in front, summer afternoon.", false],
+  ["Close-up of a hand drawing the court boundary line in the sand with a finger, a volleyball next to it, players' feet in the background, soft morning light.", false, "story"],
 ]
 const hash = (s) => [...String(s)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7)
+const LOG = join(KIT, "work", "scenes-used.json")
+const readLog = () => { try { return JSON.parse(readFileSync(LOG, "utf8")) } catch { return [] } }
+
+/** The scene for a slot: never one of the last 12 used (work/scenes-used.json), so a week never repeats a scene. */
+function sceneFor(slotId, shape) {
+  const list = SCENES.map((s, i) => [s, i]).filter(([[, , only]]) => !only || only === shape)
+  const recent = readLog().slice(-12)
+  const start = hash(`${slotId}:${shape}`) % list.length
+  for (let k = 0; k < list.length; k++) {
+    const [s, i] = list[(start + k) % list.length]
+    if (!recent.includes(i)) return [s, i]
+  }
+  return list[start]
+}
 
 export function scenePrompt(slotId, shape) {
-  const list = SCENES.filter(([, , only]) => !only || only === shape)
-  const [scene] = list[hash(`${slotId}:${shape}`) % list.length]
+  const [[scene]] = sceneFor(slotId, shape)
   return `${scene} ${FRAME[shape]} ${STYLE}`
 }
 
@@ -55,7 +80,8 @@ export async function aiPhoto(slotId, shape = "post") {
   const file = join(dir, `${slotId}.jpg`)
   if (existsSync(file)) return `data:image/jpeg;base64,${readFileSync(file).toString("base64")}`
   if (process.env.NO_AI === "1") return null
-  const prompt = scenePrompt(slotId, shape)
+  const [[scene], index] = sceneFor(slotId, shape)
+  const prompt = `${scene} ${FRAME[shape]} ${STYLE}`
   for (const [model, size] of MODELS[shape]) {
     try {
       const body = JSON.stringify({ model, prompt, n: 1, size, response_format: "b64_json" })
@@ -65,6 +91,7 @@ export async function aiPhoto(slotId, shape = "post") {
       if (!b) throw new Error(String(j?.error?.message ?? out).slice(0, 160))
       mkdirSync(dir, { recursive: true })
       writeFileSync(file, Buffer.from(b, "base64"))
+      writeFileSync(LOG, JSON.stringify([...readLog(), index].slice(-50)))
       console.error(`[bgai] ${slotId} ${shape}: nuova foto (${model})`)
       return `data:image/jpeg;base64,${b}`
     } catch (e) {

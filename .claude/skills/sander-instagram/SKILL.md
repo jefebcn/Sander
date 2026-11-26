@@ -19,7 +19,7 @@ Kit: `scripts/content-instagram/` nel repo (stesso contenuto dello zip online us
 - **Post (dal 17/11/2026, `formats.mjs`):** prima una battuta o una scena di beach volley che tutti hanno vissuto, poi l'app. Ogni copertina deve far capire subito che si parla di beach volley. Font di SANDER: Bricolage Grotesque maiuscolo per i titoli, Gochi Hand lime per la parola chiave, Figtree per i testi; scuro + lime, grana da pellicola, adesivi ed evidenziatore.
 - **Frasi da rete:** appuntamento fisso del giovedì, numerato (`FRASI` in `content.mjs`). Flirt solo come sfumatura, sport prima di tutto.
 - **Stile (dal 23/11/2026):** `glow.mjs`: Tabellone (dati), Poster lime (ganci), Telefono in campo (app e storie), Glossario da spiaggia. Schermate vere dell'app in un telefono.
-- **Sfondi AI (dal 26/11/2026):** `bgai.mjs` genera una foto nuova (Vercel AI Gateway) per gancio del venerdì, citazione della domenica e storie col telefono; rifarla = cancellare `work/photos-new/<slot>.jpg` e rilanciare. Niente Higgsfield né Canva.
+- **Sfondi AI (dal 26/11/2026):** `bgai.mjs` genera una foto nuova (Vercel AI Gateway) per ogni copertina di post e ogni storia (slide interne disegnate); scena mai tra le ultime 12 (`work/scenes-used.json`); niente foto per slot già passati; rifarla = cancellare `work/photos-new/<slot>.jpg` e rilanciare. Niente Higgsfield né Canva.
 - Post 1080×1350, storie 1080×1920 (niente di importante nei 270 px in alto e nei 380 px in basso).
 
 ## Aggiornare le schermate

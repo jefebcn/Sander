@@ -16,6 +16,7 @@
 import { readFileSync } from "fs"
 import { join, dirname } from "path"
 import { fileURLToPath } from "url"
+import { frase as frase0, chat as chat0 } from "./formats.mjs"
 
 const KIT = dirname(fileURLToPath(import.meta.url))
 const b64 = (p, t) => `data:${t};base64,${readFileSync(p).toString("base64")}`
@@ -54,7 +55,9 @@ body{width:${w}px;height:${h}px;overflow:hidden;position:relative;background:${b
 .ink .pill{background:${INK};color:${L}}
 .photo{position:absolute;inset:0;background-size:cover;background-position:center}
 .fade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,11,11,.82) 0%,rgba(11,11,11,.55) 30%,rgba(11,11,11,0) 58%,rgba(11,11,11,0) 80%,rgba(11,11,11,.6) 100%)}
-.lift{text-shadow:0 2px 18px rgba(0,0,0,.75)}
+.fade.deep{background:linear-gradient(180deg,rgba(11,11,11,.8) 0%,rgba(11,11,11,.5) 40%,rgba(11,11,11,.55) 70%,rgba(11,11,11,.85) 100%)}
+.lift,.deep~* .D,.deep~* .H,.deep~.D,.deep~.H{text-shadow:0 2px 18px rgba(0,0,0,.75)}
+.panel{background:rgba(11,11,11,.62);border:1px solid rgba(255,255,255,.12);border-radius:32px;padding:6px 28px;backdrop-filter:blur(8px)}
 .row{display:flex;align-items:center;gap:24px;padding:22px 0;border-bottom:2px solid rgba(255,255,255,.12)}
 .row:last-child{border-bottom:0}
 .badge{flex:none;width:92px;text-align:center}
@@ -68,7 +71,9 @@ const tag = (pos = "left:60px;bottom:48px", ink = false) => `<div class="tag" st
 const header = (left, right, top = 60, ink = false) => `<div class="meta" style="position:absolute;left:60px;right:60px;top:${top}px;display:flex;justify-content:space-between;gap:30px;white-space:nowrap;color:${ink ? INK : L}"><span style="overflow:hidden;text-overflow:ellipsis">${esc(left)}</span><span>${esc(right ?? "")}</span></div><div class="rule" style="left:60px;right:60px;top:${top + 44}px"></div>`
 const phone = (src, { left, top, width, rotate = 8 }) => `<div class="phone" style="left:${left}px;top:${top}px;width:${width}px;height:${Math.round(width * 2.1)}px;transform:rotate(${rotate}deg)"><div style="background-image:url(${src})"></div></div>`
 /** AI photo (bgai.mjs) under a dark fade: text on top, scene below. */
-const photoBg = (src) => `<div class="photo" style="background-image:url(${src})"></div><div class="fade"></div>`
+/** deep: darker all over, for formats with text from top to bottom. */
+const photoBg = (src, deep = false) => `<div class="photo" style="background-image:url(${src})"></div><div class="fade${deep ? " deep" : ""}"></div>`
+const bgOr = (src, drawn) => (src ? photoBg(src, true) : drawn)
 const lines = (a, cls, size, extra = "") => arr(a).map((t) => `<div class="${cls}" style="font-size:${size}px;${extra}">${esc(t)}</div>`).join("")
 const rows = (list, size = 34) => list.map((r) => `<div class="row"><div class="badge"><div class="D" style="font-size:64px;color:${L}">${esc(r.badge)}</div><div class="meta" style="font-size:18px;opacity:.7;margin-top:4px">${esc(r.badgeSub ?? "")}</div></div><div style="flex:1;min-width:0"><div style="font-size:${size}px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.title)}</div><div style="font-size:${Math.round(size * 0.76)}px;opacity:.7;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.sub)}</div></div></div>`).join("")
 
@@ -90,10 +95,10 @@ const STORY_NOTES = [["gratis →", "entri con<br>un tap →"], ["zero gruppi<br
 // ─── Posts (1080×1350) ───────────────────────────────────────────────────────
 
 /** A — FIPAV weekend: the number is the story. */
-export function fipavNumero({ label, count, days, cities, more, source = "Fonte: FIPAV" }) {
+export function fipavNumero({ label, count, days, cities, more, source = "Fonte: FIPAV", img }) {
   const big = String(count).length > 2 ? 420 : 560
   const [head, hand] = pickBy(FIPAV_LINES, label)
-  return post(`<div class="grid"></div>
+  return post(`${bgOr(img, `<div class="grid"></div>`)}
 ${header(label.replace(/ · Tutta Italia$/i, ""), "Calendario FIPAV")}
 <div class="D" style="position:absolute;right:-24px;top:150px;font-size:${big}px;color:${L}">${esc(count)}</div>
 <div class="meta" style="position:absolute;left:60px;top:200px;width:380px;line-height:1.75;color:rgba(255,255,255,.75)">Tornei · ${esc(days)}<br>${cities.slice(0, 4).map(esc).join("<br>")}${more > 0 || cities.length > 4 ? `<br><span style="color:${L}">+${more + Math.max(0, cities.length - 4)} città</span>` : ""}</div>
@@ -139,11 +144,11 @@ ${tag()}`)
 }
 
 /** A — lock screen of notifications on the scoreboard. */
-export function notifiche({ date, time, n, d, h }) {
-  const card = ([emoji, body, when]) => `<div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:30px;padding:22px 24px;display:flex;gap:20px;align-items:center">
+export function notifiche({ date, time, n, d, h, img }) {
+  const card = ([emoji, body, when]) => `<div style="background:rgba(30,30,30,.72);border:1px solid rgba(255,255,255,.14);border-radius:30px;padding:22px 24px;display:flex;gap:20px;align-items:center">
   <img src="${ICON}" style="width:66px;height:66px;border-radius:16px;flex:none">
   <div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;font-size:23px"><b>SANDER</b><span style="opacity:.6">${esc(when)}</span></div><div style="font-size:29px;line-height:1.28;margin-top:4px">${emoji} ${esc(body)}</div></div></div>`
-  return post(`<div class="grid"></div>
+  return post(`${bgOr(img, `<div class="grid"></div>`)}
 ${header(date, "Notifiche")}
 <div class="D" style="position:absolute;left:56px;top:130px;font-size:250px;color:${L}">${esc(time)}</div>
 <div style="position:absolute;left:60px;right:60px;top:400px;display:flex;flex-direction:column;gap:14px">${n.map(card).join("")}</div>
@@ -162,24 +167,76 @@ ${tag()}`)
 }
 
 /** A — rows on the scoreboard. */
-export function listSlide({ eyebrow, d, h, rows: list, note }) {
-  return post(`<div class="grid"></div>
+export function listSlide({ eyebrow, d, h, rows: list, note, img }) {
+  return post(`${bgOr(img, `<div class="grid"></div>`)}
 ${header(eyebrow, "")}
 <div data-fit="220" style="position:absolute;left:60px;right:60px;top:140px">${lines([d], "D", 130)}${h ? lines([h], "H", 90) : ""}</div>
-<div style="position:absolute;left:60px;right:60px;top:${h ? 400 : 300}px">${rows(list)}</div>
+<div class="${img ? "panel" : ""}" style="position:absolute;left:60px;right:60px;top:${h ? 400 : 300}px">${rows(list)}</div>
 ${note ? `<div class="meta" style="position:absolute;left:60px;right:60px;bottom:120px;color:rgba(255,255,255,.6);letter-spacing:.08em;text-transform:none;font-size:26px">${esc(note)}</div>` : ""}
 ${tag()}`)
 }
 
 /** Glossario da spiaggia — a beach-volley word, its meaning, how to use it. */
-export function glossario({ n, word, sound, def, use }) {
-  return post(`${header(`Glossario da spiaggia · n. ${String(n).padStart(2, "0")}`, "Beach volley")}
+export function glossario({ n, word, sound, def, use, img }) {
+  return post(`${bgOr(img, "")}${header(`Glossario da spiaggia · n. ${String(n).padStart(2, "0")}`, "Beach volley")}
 <div data-fit="260" style="position:absolute;left:56px;right:56px;top:220px">${lines([word], "W", 250, `color:${L}`)}</div>
 <div style="position:absolute;left:62px;top:500px;font-size:36px;color:rgba(255,255,255,.6);font-style:italic">${esc(sound)} · beach volley</div>
 <div style="position:absolute;left:60px;right:90px;top:600px;font-size:52px;font-weight:700;line-height:1.25">${esc(def)}</div>
 <div style="position:absolute;left:60px;right:90px;top:930px;font-size:36px;line-height:1.4;color:rgba(255,255,255,.75)"><b style="color:#fff">Si usa così:</b> «${esc(use)}»</div>
 <div class="H" style="position:absolute;right:70px;top:1110px;font-size:64px;transform:rotate(-4deg)">salvalo →</div>
 ${tag()}`)
+}
+
+/** Frase da rete on a photo: white lines, the second half in lime hand. Without a photo: the lime card (formats.mjs). */
+export function frase({ n, d, h, img }) {
+  if (!img) return frase0({ n, d, h })
+  return post(`${photoBg(img)}
+${header(`Frasi da rete · n. ${String(n).padStart(2, "0")}`, "Beach volley")}
+<div data-fit="560" style="position:absolute;left:56px;right:56px;top:150px" class="lift">
+  ${lines(d, "D", 150)}
+  <div style="margin-top:24px;transform:rotate(-2deg);transform-origin:left">${lines(h, "H", 110)}</div>
+</div>
+${tag()}<div class="meta" style="position:absolute;right:60px;bottom:58px">Salvalo ↓</div>`)
+}
+
+/**
+ * Chat cover, «bacheca» look (Alex, 26/11/2026: the WhatsApp screen is out): warm paper, the AI photo
+ * as a taped polaroid, the group messages as paper notes, the last one crossed out in red, a red
+ * stamp, then the headline and the SANDER match card stapled on. Without a photo: the old chat.
+ */
+export function chat({ group, msgs, sticker, d, card, img, faceList = ["marco-1", "sara-1", "luca-1", "giorgia-1"] }) {
+  if (!img) return chat0({ group, msgs, sticker, d, card, faceList, sub: "", seen: "" })
+  const RED = "#ff4d5e"
+  const first = msgs.find((m) => m[2])?.[1] ?? ""
+  const last = [...msgs].reverse().find((m) => m[2])?.[1] ?? ""
+  const others = msgs.filter((m) => !m[2]).slice(0, 4)
+  const face = (n) => b64(join(KIT, "assets", "faces", `${n}.webp`), "image/webp")
+  const note = ([who, txt], i) => `<div style="background:${i % 2 ? L : "#fffdf7"};color:${INK};padding:16px 22px 18px;border-radius:6px;box-shadow:0 10px 24px rgba(60,40,10,.22);transform:rotate(${[2.5, -2, 3, -3][i]}deg);margin:0 ${i % 2 ? 0 : 26}px 22px ${i % 2 ? 26 : 0}px">
+  <div style="font-weight:900;font-size:19px;letter-spacing:.16em;text-transform:uppercase;opacity:.6">${esc(who)}</div>
+  <div style="font-weight:700;font-size:31px;line-height:1.2;margin-top:4px">${esc(txt)}</div></div>`
+  return post(`<div style="position:absolute;inset:0;background:radial-gradient(120% 90% at 30% 20%,#f4ecda 0%,#e9dec5 60%,#ddd0b2 100%)"></div>
+<div class="meta" style="position:absolute;left:60px;right:60px;top:56px;display:flex;justify-content:space-between;color:${INK};opacity:.75"><span>${esc(group)}</span><span>Ieri · 18:47</span></div>
+<div style="position:absolute;left:52px;top:112px;width:600px;background:#fbfaf6;padding:22px 22px 118px;box-shadow:0 26px 50px rgba(60,40,10,.35);transform:rotate(-4deg)">
+  <div style="height:540px;background:url(${img}) center/cover"></div>
+  <div class="H" style="position:absolute;left:28px;right:24px;bottom:16px;font-size:40px;color:${INK};white-space:normal;line-height:1.02">«${esc(first)}»</div>
+  <div style="position:absolute;left:44px;top:470px;transform:rotate(-7deg);border:5px solid ${RED};color:${RED};font-weight:900;font-size:28px;letter-spacing:.08em;text-transform:uppercase;padding:8px 16px;border-radius:10px;background:rgba(255,255,255,.55);white-space:nowrap">${esc(sticker)}</div>
+  <div style="position:absolute;left:-30px;top:-18px;width:170px;height:46px;background:rgba(198,247,54,.82);transform:rotate(-28deg)"></div>
+  <div style="position:absolute;right:-34px;top:-14px;width:170px;height:46px;background:rgba(198,247,54,.82);transform:rotate(24deg)"></div>
+</div>
+<div style="position:absolute;left:680px;right:44px;top:128px">${others.map(note).join("")}
+<div style="position:relative;margin-top:14px;transform:rotate(-3deg)">
+  <div class="H" style="font-size:48px;color:${INK};white-space:normal;line-height:1.12;text-decoration:line-through;text-decoration-color:${RED};text-decoration-thickness:5px">${esc(last)}</div>
+</div></div>
+<div class="H" style="position:absolute;left:62px;top:868px;font-size:52px;color:${INK};transform:rotate(-3deg)">intanto su Sander →</div>
+<div data-fit="262" style="position:absolute;left:56px;width:580px;top:935px">${lines(d.slice(0, -1), "D", 150, `color:${INK}`)}<div class="D" style="font-size:150px;color:${INK};margin-top:14px"><span style="background:${L};padding:0 .08em">${esc(d[d.length - 1])}</span></div></div>
+<div style="position:absolute;right:52px;top:905px;width:350px;background:${INK};color:#fff;border-radius:26px;padding:26px;transform:rotate(5deg);box-shadow:0 22px 40px rgba(0,0,0,.35)">
+  <div style="position:absolute;left:50%;top:-12px;width:70px;height:12px;margin-left:-35px;border:4px solid #9a9a9a;border-bottom:0;border-radius:4px 4px 0 0"></div>
+  <div style="font-size:21px;font-weight:900;letter-spacing:.14em;color:${L}">${esc(card[0])}</div>
+  <div style="font-size:34px;font-weight:900;margin-top:6px">${esc(card[1])}</div>
+  <div style="display:flex;gap:8px;margin:16px 0 14px">${faceList.map((f) => `<div style="width:58px;height:58px;border-radius:50%;background:url(${face(f)}) center/cover;border:3px solid ${L}"></div>`).join("")}</div>
+  <span style="display:inline-block;background:${L};color:${INK};font-weight:900;font-size:22px;border-radius:999px;padding:8px 16px">4/4 · COMPLETA ✓</span>
+</div>
+${tag(undefined, true)}<div class="meta" style="position:absolute;right:60px;bottom:58px;color:${INK}">Swipe →</div>`, "#e9dec5", true)
 }
 
 // ─── Stories (1080×1920) ─────────────────────────────────────────────────────
@@ -199,8 +256,8 @@ ${storyPill()}`)
 }
 
 /** E — tutorial step with the giant lime number. */
-export function storyStep({ n, total, heading, text, img, featureName }) {
-  return story(`<div class="sand"></div>
+export function storyStep({ n, total, heading, text, img, featureName, photo }) {
+  return story(`${bgOr(photo, `<div class="sand"></div>`)}
 ${header(`Tutorial · ${featureName}`, `${n}/${total}`, 270)}
 <div class="D" style="position:absolute;left:40px;top:330px;font-size:440px;color:${L}">${n}</div>
 <div data-fit="420" style="position:absolute;left:340px;right:60px;top:380px">${lines([heading], "H", 110)}<div style="font-size:38px;font-weight:700;line-height:1.3;margin-top:18px">${esc(text)}</div></div>
@@ -209,19 +266,19 @@ ${storyPill(n === total ? "Link in bio" : "Avanti →")}`)
 }
 
 /** A — this weekend, as a scoreboard. */
-export function storyList({ metaItems, title, rows: list, note }) {
-  return story(`<div class="grid"></div>
+export function storyList({ metaItems, title, rows: list, note, photo }) {
+  return story(`${bgOr(photo, `<div class="grid"></div>`)}
 ${header(metaItems[0], metaItems.slice(1).join(" · "), 270)}
 <div data-fit="330" style="position:absolute;left:60px;right:60px;top:360px">${lines([title[0]], "D", 170)}${lines([title[1]], "H", 130)}</div>
-<div style="position:absolute;left:60px;right:60px;top:720px">${rows(list, 38)}</div>
+<div class="${photo ? "panel" : ""}" style="position:absolute;left:60px;right:60px;top:720px">${rows(list, 38)}</div>
 ${note ? `<div class="meta" style="position:absolute;left:60px;right:60px;bottom:500px;color:rgba(255,255,255,.65);text-transform:none;letter-spacing:.06em;font-size:28px">${esc(note)}</div>` : ""}
 ${storyPill()}`)
 }
 
 /** A — countdown: the number of days, huge. */
-export function storyCountdown({ days, name, sub, source = "SANDER" }) {
+export function storyCountdown({ days, name, sub, source = "SANDER", photo }) {
   const big = days <= 0 ? "Oggi" : days === 1 ? "Domani" : String(days)
-  return story(`<div class="grid"></div>
+  return story(`${bgOr(photo, `<div class="grid"></div>`)}
 ${header("Prossimo torneo", source, 270)}
 <div data-fit="760" style="position:absolute;left:40px;right:40px;top:330px">${lines([big], "D", days > 1 ? 700 : 300, `color:${L}`)}</div>
 ${days > 1 ? `<div class="H" style="position:absolute;left:70px;top:1000px;font-size:96px;transform:rotate(-3deg)">giorni al via →</div>` : ""}

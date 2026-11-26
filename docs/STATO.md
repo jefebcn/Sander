@@ -4,12 +4,12 @@
 - Instagram: coda Buffer piena (10/10) fino a gio 03/12. Le grafiche B 30/11 da ven 04/12 a dom 06/12 sono pronte ma senza posto: le mette la ricarica delle 21:13.
 - Glow-up attivo (`glow.mjs`). I titoli FIPAV e le note delle storie ora ruotano con `pickBy` (e085be0), così un testo già uscito non torna.
 - Higgsfield (0 crediti) e Canva (quota finita dopo 4 immagini) non si usano per gli sfondi; foto d'archivio e disegno a codice scartati da Alex (non unici o non all'altezza).
-- Sfondi AI nel kit (`bgai.mjs`, Vercel AI Gateway): FLUX 3 per i post, GPT Image 2 per le storie, FLUX.2 Klein di riserva. Foto su gancio del venerdì, citazione della domenica e storie col telefono; gli altri format restano disegnati. Il venerdì, finite le chat, esce il gancio con foto.
+- Sfondi AI nel kit (`bgai.mjs`, Vercel AI Gateway): FLUX 3 per i post, GPT Image 2 per le storie, FLUX.2 Klein di riserva. Foto AI su ogni copertina di post e ogni storia (slide interne disegnate). Coda Buffer rifatta il 26/11 sera: 10/10, tutte con foto. Credito Gateway 14,03 $.
 - Chiave: network secret su `ai-gateway.vercel.sh` (il proxy la mette nelle chiamate curl). Alex ha comprato 10 $ di credito; il 26/11 restavano circa 14 $ (circa 3–5 centesimi a foto).
 - La ricarica serale (trig_017VM89jHtYpjJLMN1ho7KDg) ha il prompt aggiornato: sfondi AI, controllo delle foto, credito nel riepilogo.
 
 ## Aperto / in corso
-- Prime uscite con foto AI: ven 04/12 (gancio), ven e sab storie; sentire Alex.
+- Prime uscite con foto AI da ven 27/11; sentire Alex. Senza foto restano gioco, flag, carta (formats.mjs).
 - PR #100 aspetta «merge».
 - Rubriche «Il Fondamentale» e «Mito o verità», e i formati vecchi (chat, flag, gioco, carta, frase) da ridisegnare in glow.
 - Automazioni: import FIPAV ogni giorno 06:37 (trig_01UEkWwoifzQw32yqTcy8FdS); ricarica Instagram 21:13 (trig_017VM89jHtYpjJLMN1ho7KDg).
@@ -18,6 +18,7 @@
 Vedere con Alex le prime uscite con foto AI; se piacciono, estendere la foto ad altri format (copertina del mercoledì, Pellicola 35mm) e aggiungere scene in `SCENES`.
 
 ## Decisioni di Alex ancora valide
+- Copertina chat in stile «bacheca» (polaroid col nastro, foglietti, ultimo messaggio barrato, timbro rosso): lo schermo WhatsApp non piace (26/11).
 - Birra ammessa nelle foto, ogni tanto anche protagonista, ma non in ogni post (26/11). Persone a piedi nudi, senza loghi né scritte.
 - Dettagli scherzosi benvenuti (carriola col ghiaccio, ciabatte, cane che ruba il pallone…).
 - Mai post ripetitivi né lo stesso sfondo: ogni foto esce una volta sola (23/11).
