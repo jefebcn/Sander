@@ -87,7 +87,7 @@ Dal 22/11/2026 (scelta di Alex) il giro non ha più giorni fissi: ogni sera alle
 - **Formati del 17/11/2026 (scelta di Alex):** ogni post deve far capire subito che si parla di beach volley (sabbia, rete, 2v2, bagno, diagonale, «SANDER · beach volley» in basso). Prima la battuta o la scena che tutti hanno vissuto, poi l'app. Titoli in Bricolage maiuscolo, la parola chiave a mano in lime (Gochi Hand), testo in Figtree. Il flirt è solo una sfumatura (Frasi da rete, flag, Scopri). Le varianti ruotano per settimana in `content.mjs` (`FRASI`, `GANCI`, `CHATS`, `CITAZIONI`, `GIOCHI`, `NOTIFICHE`, `FLAGS`, `CARTE`): quando finiscono, scrivine di nuove nello stesso tono.
 - **Frasi da rete:** ogni giovedì, mai saltata. Se le frasi in `FRASI` stanno per finire (26 settimane), aggiungine di nuove in fondo, senza riprendere battute già uscite.
 - **Didascalie:** in italiano, tono SANDER, mai chiedere di commentare. CTA solo «Link in bio», «Salvalo», «Swipe». Le storie non hanno testo.
-- **Contenuti:** sport prima di tutto, niente promesse di appuntamenti o amore, niente alcol. Persone a piedi nudi e senza loghi (vale anche per eventuali foto future).
+- **Contenuti:** sport prima di tutto, niente promesse di appuntamenti o amore; birra ok, ogni tanto anche protagonista ma non in ogni post (Alex, 26/11). Persone a piedi nudi e senza loghi (vale anche per eventuali foto future).
 - **FIPAV:** sempre «Fonte: FIPAV», mai nomi di atleti, mai tornei giovanili.
 - **Ripetizioni:** non ripetere titoli già usati sull'account (elenco in `scripts/content-storie/README.md`). Se aggiungi varianti, controlla lì.
 - **Chiave Buffer:** la aggiunge il proxy dell'ambiente. Non chiederla, non scriverla, non stamparla.
