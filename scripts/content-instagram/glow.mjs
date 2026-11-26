@@ -66,17 +66,33 @@ const phone = (src, { left, top, width, rotate = 8 }) => `<div class="phone" sty
 const lines = (a, cls, size, extra = "") => arr(a).map((t) => `<div class="${cls}" style="font-size:${size}px;${extra}">${esc(t)}</div>`).join("")
 const rows = (list, size = 34) => list.map((r) => `<div class="row"><div class="badge"><div class="D" style="font-size:64px;color:${L}">${esc(r.badge)}</div><div class="meta" style="font-size:18px;opacity:.7;margin-top:4px">${esc(r.badgeSub ?? "")}</div></div><div style="flex:1;min-width:0"><div style="font-size:${size}px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.title)}</div><div style="font-size:${Math.round(size * 0.76)}px;opacity:.7;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.sub)}</div></div></div>`).join("")
 
+/** Stable pick from a list by a text (dates, titles): the same slot always gets the same line, the next week another. */
+const pickBy = (list, key) => list[[...String(key)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) % list.length]
+
+/** Headline + hand line of the FIPAV weekend cover: rotates so two weeks never look the same. */
+// «Il weekend è già pieno» went out on 23/11/2026: out of the rotation.
+const FIPAV_LINES = [
+  [["Sabbia piena", "ovunque."], "manca solo la tua coppia →"],
+  [["Due giorni,", "mille set."], "il compagno ce l'hai? →"],
+  [["Si gioca", "in tutta Italia."], "trova con chi entrare →"],
+  [["Weekend", "da torneo."], "scegli il tuo e vai →"],
+  [["Tabellone", "aperto."], "il tuo nome dov'è? →"],
+]
+/** Hand notes beside the phone in E stories: two per story, never the same pair every time. */
+const STORY_NOTES = [["gratis →", "entri con<br>un tap →"], ["zero gruppi<br>whatsapp →", "tutto in<br>un'app →"], ["al tuo<br>livello →", "vicino<br>a te →"], ["provala<br>stasera →", "ci metti<br>un minuto →"]]
+
 // ─── Posts (1080×1350) ───────────────────────────────────────────────────────
 
 /** A — FIPAV weekend: the number is the story. */
 export function fipavNumero({ label, count, days, cities, more, source = "Fonte: FIPAV" }) {
   const big = String(count).length > 2 ? 420 : 560
+  const [head, hand] = pickBy(FIPAV_LINES, label)
   return post(`<div class="grid"></div>
 ${header(label.replace(/ · Tutta Italia$/i, ""), "Calendario FIPAV")}
 <div class="D" style="position:absolute;right:-24px;top:150px;font-size:${big}px;color:${L}">${esc(count)}</div>
 <div class="meta" style="position:absolute;left:60px;top:200px;width:380px;line-height:1.75;color:rgba(255,255,255,.75)">Tornei · ${esc(days)}<br>${cities.slice(0, 4).map(esc).join("<br>")}${more > 0 || cities.length > 4 ? `<br><span style="color:${L}">+${more + Math.max(0, cities.length - 4)} città</span>` : ""}</div>
-<div data-fit="330" style="position:absolute;left:60px;right:60px;top:740px">${lines(["Il weekend", "è già pieno."], "D", 150)}</div>
-<div class="H" style="position:absolute;left:66px;top:1040px;font-size:80px;transform:rotate(-3deg)">tu con chi giochi? →</div>
+<div data-fit="330" style="position:absolute;left:60px;right:60px;top:740px">${lines(head, "D", 150)}</div>
+<div class="H" style="position:absolute;left:66px;top:1040px;font-size:80px;transform:rotate(-3deg)">${esc(hand)}</div>
 <div class="meta" style="position:absolute;right:60px;bottom:56px;color:rgba(255,255,255,.6)">${esc(source)} · Swipe</div>
 ${tag()}`)
 }
@@ -153,12 +169,13 @@ const storyPill = (t = "Link in bio") => `<div style="position:absolute;left:0;r
 
 /** E — a feature or «stasera» in the hand. */
 export function storyPhone({ metaItems, title, img }) {
+  const [n1, n2] = pickBy(STORY_NOTES, title.join(" "))
   return story(`<div class="sand"></div>
 ${header(metaItems[0], metaItems.slice(1).join(" · "), 270)}
 <div data-fit="330" style="position:absolute;left:60px;right:60px;top:360px">${lines([title[0]], "D", 190)}${lines([title[1]], "H", 150, "transform:rotate(-3deg);transform-origin:left")}</div>
 ${phone(img, { left: 590, top: 700, width: 340, rotate: 7 })}
-<div class="H" style="position:absolute;left:70px;top:900px;font-size:58px;transform:rotate(-4deg)">gratis →</div>
-<div class="H" style="position:absolute;left:90px;top:1110px;font-size:58px;line-height:1.05;transform:rotate(3deg)">entri con<br>un tap →</div>
+<div class="H" style="position:absolute;left:70px;top:900px;font-size:58px;line-height:1.05;transform:rotate(-4deg)">${n1}</div>
+<div class="H" style="position:absolute;left:90px;top:1110px;font-size:58px;line-height:1.05;transform:rotate(3deg)">${n2}</div>
 ${storyPill()}`)
 }
 
