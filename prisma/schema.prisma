@@ -1140,6 +1140,8 @@ model PlayerPhoto {
   hiddenAt  DateTime?
   /// Reported by someone (shown first in the admin review).
   reportedAt DateTime?
+  /// Checked by an admin ("Va bene"): out of the review list until reported again.
+  reviewedAt DateTime?
 
   player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 

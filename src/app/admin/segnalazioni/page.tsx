@@ -59,7 +59,7 @@ export default async function AdminReportsPage() {
       },
     }),
     db.playerPhoto.findMany({
-      where: { hiddenAt: null, OR: [{ reportedAt: { not: null } }, { createdAt: { gte: weekAgo } }] },
+      where: { hiddenAt: null, OR: [{ reportedAt: { not: null } }, { createdAt: { gte: weekAgo }, reviewedAt: null }] },
       orderBy: [{ reportedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
       take: 60,
       select: { id: true, url: true, reportedAt: true, createdAt: true, player: { select: { name: true } } },
@@ -197,7 +197,7 @@ export default async function AdminReportsPage() {
         )}
 
         <H2 count={photos.length}>Foto da controllare</H2>
-        <p className="mb-2 text-sm text-[var(--muted-text)]">Prima quelle segnalate, poi le nuove degli ultimi 7 giorni.</p>
+        <p className="mb-2 text-sm text-[var(--muted-text)]">Prima quelle segnalate, poi le nuove degli ultimi 7 giorni. «Va bene» la toglie dalla lista.</p>
         {photos.length === 0 ? (
           <p className="rounded-[var(--radius-md)] bg-[var(--surface-2)] p-4 text-base text-[var(--muted-text)]">Niente da controllare.</p>
         ) : (
@@ -212,7 +212,7 @@ export default async function AdminReportsPage() {
                   </p>
                   <div className="mt-2 flex flex-col gap-1">
                     <ModerationButton action={{ kind: "hidePhoto", photoId: p.id }} />
-                    {p.reportedAt && <ModerationButton action={{ kind: "keepPhoto", photoId: p.id }} />}
+                    <ModerationButton action={{ kind: "keepPhoto", photoId: p.id }} />
                   </div>
                 </div>
               </li>

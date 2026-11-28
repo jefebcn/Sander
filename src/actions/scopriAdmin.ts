@@ -45,7 +45,7 @@ export async function adminHidePhoto(input: unknown) {
 export async function adminKeepPhoto(input: unknown) {
   await requireAdmin()
   const { photoId } = AdminPhotoSchema.parse(input)
-  await db.playerPhoto.update({ where: { id: photoId }, data: { reportedAt: null } })
+  await db.playerPhoto.update({ where: { id: photoId }, data: { reportedAt: null, reviewedAt: new Date() } })
   refresh()
   return { ok: true as const }
 }
