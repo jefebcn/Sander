@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- user photos from Blob, any size */
 import { useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Plus, Trash2, ChevronLeft, Loader2, Eye, Pause, Play, UserRound, Pencil, Crown, Sparkles } from "lucide-react"
+import { Plus, Trash2, ChevronLeft, Loader2, Eye, Pause, Play, UserRound, Pencil, Crown, Sparkles, MapPin, Check } from "lucide-react"
 import { toast } from "sonner"
 import { Sheet } from "@/components/ui/Sheet"
 import { CITY_NAMES } from "@/lib/cities"
@@ -429,7 +429,23 @@ export function ScopriProfileEditor({ data }: { data: EditorData }) {
       <Section id="preferenze" title="Non negoziabili" hint="Vale per tutti e due: vi vedete solo se ognuno rientra nelle scelte dell'altro.">
         <div className="flex flex-col gap-4">
           <div>
-            <p className="mb-2 text-sm font-bold text-[var(--muted-text)]">Comuni {prefCities.length === 0 && "· tutti"}</p>
+            <p className="mb-2 text-sm font-bold text-[var(--muted-text)]">Comuni</p>
+            {/* «Tutti» first and bigger (Alex, 28/11/2026): more people see each other. Empty list = all towns. */}
+            <button
+              type="button"
+              aria-pressed={prefCities.length === 0}
+              onClick={() => setPrefCities([])}
+              className={cn(
+                "mb-2 flex min-h-[3.5rem] w-full items-center justify-center gap-2 rounded-full px-5 text-base font-extrabold transition-colors",
+                prefCities.length === 0
+                  ? "bg-[var(--accent)] text-black shadow-[0_0_24px_rgb(198_247_54/0.35)]"
+                  : "text-[var(--accent)] ring-2 ring-[var(--accent)]",
+              )}
+            >
+              {prefCities.length === 0 ? <Check size={20} aria-hidden /> : <MapPin size={20} aria-hidden />}
+              Tutti i comuni
+              <span className="text-sm font-bold opacity-75">· più giocatori</span>
+            </button>
             <div className="flex flex-wrap gap-2">
               {/* The Riviera towns, plus your own comune and any already chosen elsewhere. */}
               {[...new Set([...CITY_NAMES, homeCity, ...prefCities].filter(Boolean))].map((c) => (
