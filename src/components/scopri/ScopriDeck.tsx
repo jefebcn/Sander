@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react"
 import Link from "next/link"
-import { X, Heart, Crown, Users, MapPin, ChevronRight, RefreshCw } from "lucide-react"
+import { X, Heart, Crown, Users, MapPin, ChevronRight, RefreshCw, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 import { getDeck, skipPlayer } from "@/actions/scopri"
 import { formatWhen } from "@/lib/datetime"
@@ -44,6 +44,7 @@ export function ScopriDeck({
   myPhoto,
   myFree,
   me,
+  pickId,
 }: {
   initialCards: ScopriCard[]
   initialAllowance: Allowance
@@ -52,6 +53,8 @@ export function ScopriDeck({
   myFree: FreeSlot | null
   /** Your role and side: each card says what you'd be together on a 2v2 court. */
   me?: PairSide
+  /** «Il più compatibile di oggi»: first in the deck, with its label on top. */
+  pickId?: string
 }) {
   const [items, setItems] = useState<Item[]>(() => weave(initialCards, games))
   const [allowance, setAllowance] = useState(initialAllowance)
@@ -174,6 +177,12 @@ export function ScopriDeck({
       ) : current.kind === "game" ? (
         <GameCard game={current.game} onSkip={() => next("left")} />
       ) : (
+        <>
+        {current.card.id === pickId && (
+          <p className="eyebrow mb-2 flex items-center gap-1 text-[var(--ace)]">
+            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> Il più compatibile di oggi
+          </p>
+        )}
         <div
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -198,6 +207,7 @@ export function ScopriDeck({
             onReport={() => setReport(true)}
           />
         </div>
+        </>
       )}
 
       {/* Floating pass / like */}
