@@ -127,7 +127,8 @@ export default async function ScopriPage() {
         Beach volley si gioca in due: qui trovi il <strong className="text-white">compagno per il 2v2</strong>, o gli avversari.
       </p>
       <PlayNearbyStrip nearby={nearby} />
-      {pick && (
+      {/* Not swiped yet: the pick opens the deck, to swipe like the others (Alex, 28/11/2026). */}
+      {pick?.seen && (
         <div className="mb-5">
           <DailyPickCard
             card={pick.card}
@@ -139,7 +140,8 @@ export default async function ScopriPage() {
         </div>
       )}
       <ScopriDeck
-        initialCards={deck.filter((c) => c.id !== pick?.card.id)}
+        initialCards={pick && !pick.seen ? [pick.card, ...deck.filter((c) => c.id !== pick.card.id)] : deck.filter((c) => c.id !== pick?.card.id)}
+        pickId={pick && !pick.seen ? pick.card.id : undefined}
         initialAllowance={left}
         games={games}
         myPhoto={myPhoto}
