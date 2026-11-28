@@ -71,8 +71,9 @@ export function plan(data, run, monday) {
   const openWeekend = (data.openMatches ?? []).filter((m) => [d(4), d(5), d(6)].includes(romeDay(m.date)))
   // FIPAV read by the kit (fipav/feed.mjs) is not in the app yet: graphics must not send people there.
   const fipavInApp = !data.fipavSource
-  const slot = (n, day, time, type, kind, payload = {}, optional = false) =>
-    ({ id: `${monday}-${day}-${type}`, day, date: d(n), time, type, kind, week, optional, photo: photoFor(monday, day, type), ...(kind.includes("fipav") ? { fipavInApp } : {}), ...payload })
+  // Fixed times (Alex, 23/11/2026): every post at 12:00, every story at 12:30.
+  const slot = (n, day, _time, type, kind, payload = {}, optional = false) =>
+    ({ id: `${monday}-${day}-${type}`, day, date: d(n), time: type === "post" ? "12:00" : "12:30", type, kind, week, optional, photo: photoFor(monday, day, type), ...(kind.includes("fipav") ? { fipavInApp } : {}), ...payload })
 
   const slots = []
   if (run === "A") {
@@ -87,7 +88,7 @@ export function plan(data, run, monday) {
     slots.push(slot(2, "mer", "18:30", "post", "feature", { feature: F(0) }))
   } else if (run === "B") {
     // Thursday: this weekend.
-    if (fipavWeekend.length) slots.push(slot(3, "gio", "19:00", "story", "weekend-fipav", { events: fipavWeekend.slice(0, 5), total: fipavWeekend.length, weekend }))
+    if (fipavWeekend.length) slots.push(slot(3, "gio", "19:00", "story", "weekend-fipav", { events: fipavWeekend.slice(0, 40), total: fipavWeekend.length, weekend }))
     else if (sanderWeekend.length) slots.push(slot(3, "gio", "19:00", "story", "weekend-sander", { tournaments: sanderWeekend.slice(0, 4) }))
     else if (openWeekend.length >= 2) slots.push(slot(3, "gio", "19:00", "story", "weekend-matches", { matches: openWeekend.slice(0, 5) }))
     else slots.push(slot(3, "gio", "19:00", "story", "feature-story", { feature: F(1) }))

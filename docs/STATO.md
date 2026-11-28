@@ -1,45 +1,34 @@
-# Stato SANDER — 19/11/2026 (app per i nuovi utenti, formati Instagram, primi reel)
+# Stato SANDER — 26/11/2026 (sfondi AI nel kit, coda Buffer piena)
 
 ## Dove siamo
-- App: le correzioni per il primo accesso dei nuovi utenti sono online (PR #96). Le pagine vuote mostrano i tornei FIPAV e le ultime partite; la stagione finita mostra «Finita»; Tornei apre il calendario FIPAV quando su SANDER non c'è niente; i link vecchi del login reindirizzano; la home per chi non è registrato è più corta.
-- Instagram: nuovi formati in `scripts/content-instagram/formats.mjs` (PR #97). Sono online e collegati ai giri automatici.
-- Primi reel fatti con video di altri, con il permesso dell'autore: POV uscito il 17/11, «Technique: zero» in coda per sabato 21 alle 18:30.
-- Coda Buffer: 9 post su 10 fino a domenica 22.
-- Già online prima di questa sessione: app su App Store e Google Play, dati FIPAV collegati e shop SumUp.
-- Il ramo `claude/sander-tournament-app-ay3CY` è allineato a main.
+- Instagram: coda Buffer piena (10/10) fino a gio 03/12. Le grafiche B 30/11 da ven 04/12 a dom 06/12 sono pronte ma senza posto: le mette la ricarica delle 21:13.
+- Glow-up attivo (`glow.mjs`). I titoli FIPAV e le note delle storie ora ruotano con `pickBy` (e085be0), così un testo già uscito non torna.
+- Higgsfield (0 crediti) e Canva (quota finita dopo 4 immagini) non si usano per gli sfondi; foto d'archivio e disegno a codice scartati da Alex (non unici o non all'altezza).
+- Sfondi AI nel kit (`bgai.mjs`, Vercel AI Gateway): FLUX 3 per i post, GPT Image 2 per le storie, FLUX.2 Klein di riserva. Foto AI su ogni copertina di post e ogni storia (slide interne disegnate). Coda Buffer rifatta il 26/11 sera: 10/10, tutte con foto. Credito Gateway 14,03 $.
+- Chiave: network secret su `ai-gateway.vercel.sh` (il proxy la mette nelle chiamate curl). Alex ha comprato 10 $ di credito; il 26/11 restavano circa 14 $ (circa 3–5 centesimi a foto).
+- La ricarica serale (trig_017VM89jHtYpjJLMN1ho7KDg) ha il prompt aggiornato: sfondi AI, controllo delle foto, credito nel riepilogo.
 
 ## Aperto / in corso
-- Giri automatici:
-  - import FIPAV ogni giorno alle 06:37;
-  - Instagram giro A la domenica alle 21:13 (post da lunedì a mercoledì) e giro B il mercoledì alle 21:13 (da giovedì a domenica).
-- Martedì 25 è libero per un eventuale reel in più.
-- Proposte fatte ad Alex, non ancora chieste:
-  - sfondi nuovi da Gemini (i prompt sono già pronti);
-  - altri reel con permesso;
-  - messaggio di collaborazione a Tenerife Beach Volley;
-  - punto 3 dell'analisi: bottone Scopri centrale;
-  - punto 4 dell'analisi: slogan dello shop pubblico.
+- Prime uscite con foto AI da ven 27/11; sentire Alex. Senza foto restano gioco, flag, carta (formats.mjs).
+- PR #100 aspetta «merge».
+- Rubriche «Il Fondamentale» e «Mito o verità», e i formati vecchi (chat, flag, gioco, carta, frase) da ridisegnare in glow.
+- Automazioni: import FIPAV ogni giorno 06:37 (trig_01UEkWwoifzQw32yqTcy8FdS); ricarica Instagram 21:13 (trig_017VM89jHtYpjJLMN1ho7KDg).
 
 ## Prossimo passo consigliato
-Controllare il giro A di domenica 22/11. Poi decidere con Alex quale delle proposte aperte fare.
+Vedere con Alex le prime uscite con foto AI; se piacciono, estendere la foto ad altri format (copertina del mercoledì, Pellicola 35mm) e aggiungere scene in `SCENES`.
 
 ## Decisioni di Alex ancora valide
-- Font solo quelli di SANDER: Bricolage Grotesque, Figtree, Gochi Hand.
-- Ogni grafica deve far capire subito che si parla di beach volley.
-- «Frase da rete» esce ogni giovedì alle 18:30.
-- Video di altri solo con il permesso dell'autore.
-- Reel da video stranieri: testi e didascalie in inglese, copertina nello stile del profilo e finale breve con l'app.
-- Solo Instagram, niente TikTok.
-- Nelle grafiche niente sanderbv.it: si scrive App Store, Google Play o «link in bio».
-- Le didascalie non chiedono mai di commentare.
+- Copertina chat in stile «bacheca» (polaroid col nastro, foglietti, ultimo messaggio barrato, timbro rosso): lo schermo WhatsApp non piace (26/11).
+- Birra ammessa nelle foto, ogni tanto anche protagonista, ma non in ogni post (26/11). Persone a piedi nudi, senza loghi né scritte.
+- Dettagli scherzosi benvenuti (carriola col ghiaccio, ciabatte, cane che ruba il pallone…).
+- Mai post ripetitivi né lo stesso sfondo: ogni foto esce una volta sola (23/11).
+- Post alle 12:00, storie alle 12:30. «Frase da rete» ogni giovedì. Solo Instagram.
+- Font solo Bricolage Grotesque, Figtree, Gochi Hand.
+- Niente sanderbv.it nelle grafiche; didascalie senza richieste di commento.
 
 ## Attenzione
-- Fare il merge solo quando Alex scrive «merge».
-- Prima di fare push chiedere ad Alex: il push va in produzione.
-- Mai force push.
-- `prisma db push` solo per aggiunte.
-- Se FIPAV risponde 403, fermarsi e non aggirare le protezioni.
-- Sul PC di Alex le copie del repo sono vecchie:
-  - `Documents\Sander` non ha git;
-  - `Documents\GitHub\Sander` è indietro rispetto a GitHub e ha modifiche Android non salvate.
-- Mai scrivere o stampare la chiave di Buffer o il CRON_SECRET.
+- Merge solo con «merge»; chiedere prima del push (va in produzione); mai force push.
+- Le chiavi non si chiedono in chat: in una sessione molto lunga il modulo chiavi non si apre, Alex le mette in Edit ambiente → Network secrets.
+- Canva: il generatore AI ha una quota mensile piccola (4 immagini e stop). Seedream mette la filigrana «AI generated»: non usarlo.
+- Mai scrivere o stampare chiavi (Buffer, AI Gateway, CRON_SECRET).
+- `prisma db push` solo aggiunte; FIPAV 403 → fermarsi.

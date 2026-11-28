@@ -93,7 +93,7 @@ ${brand()}`)
 }
 
 const COLORS = ["#ff9bd0", "#ffd27a", "#8fd3ff", "#b6f2a0", "#ffb38a"]
-export function chat({ group, sub, msgs, seen, sticker, d, card, faceList = ["marco-1", "sara-1", "luca-1", "giorgia-1"] }) {
+export function chat({ group, sub, msgs, seen, sticker, d, card, img, faceList = ["marco-1", "sara-1", "luca-1", "giorgia-1"] }) {
   let ci = 0
   const names = {}
   const bubble = ([who, txt, me]) => {
@@ -101,7 +101,7 @@ export function chat({ group, sub, msgs, seen, sticker, d, card, faceList = ["ma
     return `<div style="display:flex;${me ? "justify-content:flex-end" : ""};margin-bottom:12px"><div style="max-width:78%;background:${me ? "#1f5c3a" : "#202c33"};border-radius:22px;padding:12px 20px 14px">${me ? "" : `<div style="font-size:25px;font-weight:800;color:${names[who]}">${esc(who)}</div>`}<div style="font-size:36px;line-height:1.25">${esc(txt)}</div></div></div>`
   }
   return page(`
-<div style="position:absolute;inset:0;background:#0b141a"></div>
+${img ? `<div style="position:absolute;left:0;right:0;top:0;height:850px;background:url(${img}) center 70%/cover"></div><div style="position:absolute;left:0;right:0;top:0;height:850px;background:rgba(11,20,26,.55)"></div>` : `<div style="position:absolute;inset:0;background:#0b141a"></div>`}
 <div style="position:absolute;left:0;right:0;top:0;height:120px;background:#1f2c34;display:flex;align-items:center;gap:20px;padding:0 40px">
   <div style="width:72px;height:72px;border-radius:50%;background:#6b7c85;display:flex;align-items:center;justify-content:center;font-size:40px">🏐</div>
   <div><div style="font-size:32px;font-weight:800">${esc(group)}</div><div style="font-size:23px;opacity:.6">${esc(sub)}</div></div>

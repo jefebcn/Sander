@@ -3,7 +3,7 @@
  *
  *   SITE=https://www.sanderbv.it node render.mjs plan.json out/
  *
- * Posts (1080×1350): the formats of 17/11/2026 in formats.mjs — a beach-volley
+ * Look: glow.mjs (23/11/2026, no photos) over formats.mjs (17/11/2026) — a beach-volley
  * joke or hook on the cover (gancio, chat, gioco, notifiche, flag, carta,
  * citazione, Frase da rete, FIPAV numero), then the app, then the lime closing.
  * Stories (1080×1920): 35mm film photo (photos/, max two uses each, order in
@@ -17,9 +17,16 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs"
 import { join, dirname } from "path"
 import { fileURLToPath } from "url"
 import { createRequire } from "module"
-import { FEATURES, TONIGHT, HASHTAGS, pick, FRASI, FRASI_START, GANCI, CHATS, CITAZIONI, GIOCHI, GIOCO_FACES, NOTIFICHE, FLAGS, CARTE } from "./content.mjs"
-import * as N from "./formats.mjs"
+import { FEATURES, TONIGHT, HASHTAGS, pick, FRASI, FRASI_START, GANCI, CHATS, CITAZIONI, GIOCHI, GIOCO_FACES, NOTIFICHE, FLAGS, CARTE, GLOSSARIO } from "./content.mjs"
+import * as N0 from "./formats.mjs"
+import * as G from "./glow.mjs"
+import { aiPhoto } from "./bgai.mjs"
 import { FEATURE_COVER } from "./plan.mjs"
+import { fresh, used, NEEDS, NothingNew } from "./fresh.mjs"
+
+// Glow-up (Alex, 23/11/2026): glow.mjs redraws covers, inner slides and stories; since 26/11 every
+// post cover and every story has a fresh AI photo background (bgai.mjs). Inner slides stay drawn.
+const N = { ...N0, ...G }
 
 // require() also finds the machine-wide Playwright when the kit runs outside the repo.
 const { chromium } = createRequire(import.meta.url)("playwright")
@@ -53,6 +60,7 @@ void MONTHS; void DAYS
 
 const LIME = "#c6f736"
 let PHOTO = null // data URL of the slot's background photo, set per slot
+const NO_PHOTO = [] // slots drawn without a photo: a new one in work/photos-new/ would be better
 const photoUrl = (name) => b64(join(KIT, "photos", `${name}.jpg`), "image/jpeg")
 
 function css(w, h) {
@@ -129,54 +137,6 @@ const P = { w: 1080, h: 1350 }
 // Safe zone: nothing important above 270 px or below 380 px.
 
 const S = { w: 1080, h: 1920 }
-const storyPill = (text = "Link in bio") => `<div style="position:absolute;left:0;right:0;bottom:395px;text-align:center"><span class="pill solid">${esc(text)}</span></div>`
-
-function storyPhone({ metaItems, title, img }) {
-  return page(S.w, S.h, "photo", `
-    ${meta(270, metaItems)}
-    <div style="position:absolute;top:350px;left:72px;right:72px;text-align:center">
-      <div data-fit="300">${title2(title, 160)}</div>
-    </div>
-    ${phone(img, { left: 375, top: 690, width: 330, rotate: -3 })}
-    ${storyPill()}`)
-}
-
-function storyStep({ n, total, heading, text, img, featureName }) {
-  return page(S.w, S.h, "photo", `
-    ${meta(270, ["Tutorial", featureName, `${n}/${total}`])}
-    <div style="position:absolute;top:340px;left:72px;right:72px">
-      <div style="display:flex;gap:30px;align-items:flex-end"><div class="num" style="font-size:200px;flex:none">${n}</div><div data-fit="230" style="flex:1;min-width:0"><div class="hand" style="font-size:100px;white-space:nowrap">${esc(heading)}</div><div style="font-size:34px;font-weight:600;margin-top:14px;line-height:1.3;text-shadow:0 2px 14px rgba(0,0,0,.5)">${esc(text)}</div></div></div>
-    </div>
-    ${phone(img, { left: 375, top: 680, width: 330 })}
-    ${n === total ? storyPill() : storyPill("Avanti →").replace("pill solid", "pill")}`)
-}
-
-function storyList({ metaItems, title, rows, img, note }) {
-  return page(S.w, S.h, "photo", `
-    ${meta(270, metaItems)}
-    <div style="position:absolute;top:340px;left:72px;right:72px">
-      <div data-fit="250">${title2(title, 130)}</div>
-      <div class="card" style="margin-top:40px">${rows.map((r) => `<div class="row"><div class="badge">${esc(r.badge)}<small>${esc(r.badgeSub ?? "")}</small></div><div style="flex:1;min-width:0"><div style="font-size:34px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.title)}</div><div style="font-size:26px;opacity:.75;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.sub)}</div></div></div>`).join("")}</div>
-      ${note ? `<div style="font-size:28px;font-weight:600;margin-top:24px;text-shadow:0 2px 14px rgba(0,0,0,.5)">${esc(note)}</div>` : ""}
-    </div>
-    ${img ? phone(img, { left: 760, top: 1130, width: 250, rotate: 6 }) : ""}
-    ${storyPill()}`)
-}
-
-function storyCountdown({ days, name, sub, img, source = "SANDER" }) {
-  const big = days <= 0 ? "Oggi" : days === 1 ? "Domani" : `-${days}`
-  return page(S.w, S.h, "photo", `
-    ${meta(270, ["Prossimo torneo", source])}
-    <div style="position:absolute;top:330px;left:72px;right:72px;text-align:center">
-      <div class="hand acc" style="font-size:${days > 1 ? 300 : 220}px">${esc(big)}</div>
-      ${days > 1 ? `<div class="label" style="margin-top:-6px">giorni</div>` : ""}
-      <div data-fit="200" style="margin-top:24px"><div class="hand" style="font-size:90px;white-space:nowrap">${esc(name)}</div></div>
-      <div style="font-size:34px;font-weight:600;margin-top:12px;text-shadow:0 2px 14px rgba(0,0,0,.5)">${esc(sub)}</div>
-    </div>
-    ${phone(img, { left: 740, top: 1090, width: 250, rotate: 6 })}
-    ${storyPill()}`)
-}
-
 // ─── Live screenshots of public pages ────────────────────────────────────────
 
 async function liveShot(browser, path, fallback) {
@@ -218,22 +178,47 @@ function caption(lines) {
 }
 
 
-/** A fun cover (+ the app slide that follows it), variant by week. */
+// Text that identifies each variant in a caption (or a story's "🏐 …" text): see fresh.mjs.
+const FP = {
+  CITAZIONI: (c) => [...c.d, c.mk, c.d2].filter(Boolean).join(" "),
+  GIOCHI: (g) => g.line,
+  NOTIFICHE: (n) => `${n.d} ${n.h}`,
+  FLAGS: (f) => `${f.title.join(" ")} ${f.h}`,
+  CARTE: (c) => `${c.d} ${c.h}`,
+  CHATS: (c) => c.d.join(" "),
+  GANCI: (g) => [...g.d, ...g.h].join(" "),
+  FRASI: (f) => [...f.d, ...f.h].join(" "),
+  line: (t) => (Array.isArray(t) ? t.join(" ") : t),
+  GLOSSARIO: (g) => `Glossario da spiaggia: ${g.word}`,
+}
+let KEY = "" // what a story showed: saved as its Buffer text, so it is never repeated
+
+/** A fun cover (+ the app slide that follows it), the first variant not used yet. */
 function coverFrames(kind, w) {
   const i = Math.floor(w / 6)
   switch (kind) {
-    case "citazione": { const c = pick(CITAZIONI, w); return { frame: N.citazione({ img: PHOTO, ...c }), cap: `«${[...c.d, c.mk, c.d2].filter(Boolean).join(" ")}» ${c.h} 🏐\n\n${c.cap}` } }
-    case "gioco": { const g = pick(GIOCHI, i); return { frame: N.gioco({ ...g, faceList: GIOCO_FACES }), cap: `${g.line} 🏐\n\n${g.cap}`, app: { eyebrow: "Su SANDER · Scopri", d: "Il tuo numero", h: "è qui", img: screen("scopri"), bullets: FEATURES.scopri.bullets } } }
-    case "notifiche": { const n = pick(NOTIFICHE, i); return { frame: N.notifiche({ img: PHOTO, ...n }), cap: `${n.d} ${n.h} 🏐\n\n${n.cap}`, app: { eyebrow: "Su SANDER", d: "Partite e tornei", h: "in tasca", img: screen("partite"), bullets: ["Posti liberi vicino a te, in tempo reale", "Tornei con iscrizione in coppia", "Punti e livello dopo ogni partita"] } } }
-    case "flag": { const f = pick(FLAGS, i); return { frame: N.flag(f), cap: `${f.title.join(" ")} ${f.h} 🏐\n\n${f.cap}`, app: { eyebrow: "Su SANDER · Scopri", d: "Quello giusto", h: "esiste", img: screen("scopri"), bullets: FEATURES.scopri.bullets } } }
-    case "carta": { const c = pick(CARTE, i); return { frame: N.carta({ img: PHOTO, ...c }), cap: `${c.d} ${c.h} 🏐\n\n${c.cap}`, app: { eyebrow: "Su SANDER · Classifiche", d: "Gioca", h: "e sali", img: screen("classifica"), bullets: FEATURES.classifiche.bullets } } }
-    case "chat": default: { const c = pick(CHATS, i + 1); return { frame: N.chat(c), cap: `${c.d.join(" ")} 🏐\n\n${c.cap}` } }
+    case "citazione": { const c = fresh("CITAZIONI", CITAZIONI, w, FP.CITAZIONI); return { frame: N.citazione({ img: PHOTO, ...c }), cap: `«${[...c.d, c.mk, c.d2].filter(Boolean).join(" ")}» ${c.h} 🏐\n\n${c.cap}` } }
+    case "gioco": { const g = fresh("GIOCHI", GIOCHI, i, FP.GIOCHI); return { frame: N.gioco({ ...g, faceList: GIOCO_FACES }), cap: `${g.line} 🏐\n\n${g.cap}`, app: { eyebrow: "Su SANDER · Scopri", d: "Il tuo numero", h: "è qui", img: screen("scopri"), bullets: FEATURES.scopri.bullets } } }
+    case "notifiche": { const n = fresh("NOTIFICHE", NOTIFICHE, i, FP.NOTIFICHE); return { frame: N.notifiche({ img: PHOTO, ...n }), cap: `${n.d} ${n.h} 🏐\n\n${n.cap}`, app: { eyebrow: "Su SANDER", d: "Partite e tornei", h: "in tasca", img: screen("partite"), bullets: ["Posti liberi vicino a te, in tempo reale", "Tornei con iscrizione in coppia", "Punti e livello dopo ogni partita"] } } }
+    case "flag": { const f = fresh("FLAGS", FLAGS, i, FP.FLAGS); return { frame: N.flag(f), cap: `${f.title.join(" ")} ${f.h} 🏐\n\n${f.cap}`, app: { eyebrow: "Su SANDER · Scopri", d: "Quello giusto", h: "esiste", img: screen("scopri"), bullets: FEATURES.scopri.bullets } } }
+    case "carta": { const c = fresh("CARTE", CARTE, i, FP.CARTE); return { frame: N.carta({ img: PHOTO, ...c }), cap: `${c.d} ${c.h} 🏐\n\n${c.cap}`, app: { eyebrow: "Su SANDER · Classifiche", d: "Gioca", h: "e sali", img: screen("classifica"), bullets: FEATURES.classifiche.bullets } } }
+    case "glossario": {
+      const g = fresh("GLOSSARIO", GLOSSARIO, 0, FP.GLOSSARIO)
+      const n = g.n ?? GLOSSARIO.indexOf(g) + 1
+      return { frame: N.glossario({ img: PHOTO, ...g, n }), cap: `${FP.GLOSSARIO(g)} 🏐\n\n${g.def}\n\nSi usa così: «${g.use}»\n\nSalvalo per la prossima partita.`, app: { eyebrow: "Su SANDER", d: "Dalla teoria", h: "alla sabbia", img: screen("partite"), bullets: ["Partite aperte vicino a te", "Compagni al tuo livello", "Punti dopo ogni partita"] } }
+    }
+    case "chat": default: { const c = fresh("CHATS", CHATS, i + 1, FP.CHATS); return { frame: N.chat({ img: PHOTO, ...c }), cap: `${c.d.join(" ")} 🏐\n\n${c.cap}` } }
   }
 }
 
 async function renderSlot(slot, browser) {
   const w = slot.week
-  PHOTO = slot.photo ? photoUrl(slot.photo) : null
+  // A photo appears once, ever (Alex, 23/11/2026): a new one in work/photos-new/<slot id>.jpg wins.
+  const newPhoto = join(KIT, "work", "photos-new", `${slot.id}.jpg`)
+  // Since 26/11 every cover and every story gets a fresh AI photo (bgai.mjs, cached there).
+  // Slots already past are not published (publish.mjs skips them): no paid photo for them.
+  const past = slot.date && slot.time && Date.parse(`${slot.date}T${slot.time}:00+01:00`) < Date.now()
+  PHOTO = existsSync(newPhoto) ? b64(newPhoto, "image/jpeg") : (past ? null : await aiPhoto(slot.id, slot.type === "story" ? "story" : "post")) ?? (slot.photo ? photoUrl(slot.photo) : null)
   const f = slot.feature ? FEATURES[slot.feature] : null
   const v = Math.floor(w / 6) // variant index: changes each time a feature comes back
 
@@ -244,12 +229,12 @@ async function renderSlot(slot, browser) {
       const c = coverFrames(cover, w)
       return {
         frames: [c.frame, N.appSlide({ eyebrow: `Su SANDER · ${f.name}`, d: "Come", h: "funziona", img: screen(f.tutorial[1][0]), bullets: f.bullets }), N.ctaSlide({ d: ["Provala"], h: ["su SANDER"], img: screen(f.tutorial[2][0]) })],
-        caption: caption([c.cap, pick(f.captions, v), "Swipe per vedere come funziona. App gratis su App Store e Google Play: link in bio.", HASHTAGS]),
+        caption: caption([c.cap, fresh(`captions.${slot.feature}`, f.captions, v, FP.line), "Swipe per vedere come funziona. App gratis su App Store e Google Play: link in bio.", HASHTAGS]),
       }
     }
     case "community": {
       // Sunday (odd weeks): rotation of the fun formats, never the one used on Wednesday.
-      const order = ["citazione", "gioco", "notifiche", "carta", "flag"]
+      const order = ["glossario", "citazione", "gioco", "notifiche", "carta", "flag"]
       let k = slot.format ?? order[Math.floor(w / 2) % order.length]
       if (!slot.format && k === slot.avoid) k = order[(order.indexOf(k) + 1) % order.length]
       const c = coverFrames(k, w + 1)
@@ -260,9 +245,9 @@ async function renderSlot(slot, browser) {
     }
     case "frase": {
       const n = Math.max(1, Math.floor((Date.parse(`${slot.date}T12:00:00Z`) - Date.parse(`${FRASI_START}T12:00:00Z`)) / (7 * 86_400_000)) + 1)
-      const fr = FRASI[(n - 1) % FRASI.length]
+      const fr = fresh("FRASI", FRASI, n - 1, FP.FRASI)
       return {
-        frames: [N.frase({ n, d: fr.d, h: fr.h }), N.ctaSlide({ d: ["Il compagno"], h: ["giusto è qui."], img: screen("scopri") })],
+        frames: [N.frase({ img: PHOTO, n, d: fr.d, h: fr.h }), N.ctaSlide({ d: ["Il compagno"], h: ["giusto è qui."], img: screen("scopri") })],
         caption: caption([`Frasi da rete n. ${n} 🏐`, `«${[...fr.d, ...fr.h].join(" ")}»`, `${fr.cap} Ogni giovedì una nuova frase: salvala.`, "Il compagno di beach giusto lo trovi su SANDER. Link in bio.", HASHTAGS]),
       }
     }
@@ -287,7 +272,7 @@ async function renderSlot(slot, browser) {
       const img = await liveShot(browser, `/tournaments/${t.id}`, "torneo")
       return {
         frames: [
-          N.listSlide({ eyebrow: `Torneo di beach volley · ${dayLabel(t.date, false)}`, d: t.name, h: t.registrationOpen ? "iscrizioni aperte" : "su SANDER", rows: [tourRow(t)], note: t.location ?? "" }),
+          N.listSlide({ img: PHOTO, eyebrow: `Torneo di beach volley · ${dayLabel(t.date, false)}`, d: t.name, h: t.registrationOpen ? "iscrizioni aperte" : "su SANDER", rows: [tourRow(t)], note: t.location ?? "" }),
           N.appSlide({ eyebrow: t.name, d: "Tutto", h: "in app", img, bullets: ["Iscrizione in coppia dalla scheda del torneo", "Scadenze con il conto alla rovescia", "Tabellone e risultati in diretta"] }),
           N.ctaSlide({ d: ["Iscriviti"], h: ["su SANDER"], img: screen("tornei") }),
         ],
@@ -296,39 +281,51 @@ async function renderSlot(slot, browser) {
     }
     case "missing-one": {
       // Friday: hook on a photo (even weeks) or the group chat (odd weeks).
-      const useChat = slot.format ? slot.format === "chat" : w % 2 === 1
+      let useChat = slot.format ? slot.format === "chat" : w % 2 === 1
       const vi = slot.variant ?? Math.floor(w / 2)
-      const g = useChat ? pick(CHATS, vi) : pick(GANCI, vi)
-      const frames = [useChat ? N.chat(g) : N.gancio({ img: PHOTO, ...g })]
+      let g
+      if (useChat) try { g = fresh("CHATS", CHATS, vi, FP.CHATS) } catch (e) { if (!(e instanceof NothingNew)) throw e; useChat = false } // chats used up: the hook instead
+      if (!useChat) g = fresh("GANCI", GANCI, vi, FP.GANCI)
+      const frames = [useChat ? N.chat({ img: PHOTO, ...g }) : N.gancio({ img: PHOTO, ...g })]
       frames.push(N.appSlide({ eyebrow: "La soluzione", d: "Il quarto", h: "c'è", img: screen("partite"), bullets: ["Guarda le partite aperte vicino a te", "Oppure crea la tua: chi è libero la vede", "Se uno salta, entra il primo in lista"] }))
       if (slot.matches?.length >= 2) frames.push(N.listSlide({ eyebrow: "Partite aperte", d: "Questo weekend", rows: slot.matches.map(matchRow), note: "Entra con un tap su SANDER." }))
       frames.push(N.ctaSlide({ d: ["Il quarto"], h: ["c'è."], img: screen("crea") }))
       const title = useChat ? `${g.d.join(" ")} 🏐` : `${[...g.d, ...g.h].join(" ")} 🏐`
       return { frames, caption: caption([title, g.cap, "Salvalo per la prossima volta che manca qualcuno. Link in bio.", HASHTAGS]) }
     }
-    case "tutorial":
-      return { frames: f.tutorial.map(([img, heading, text], i) => storyStep({ n: i + 1, total: 3, heading, text, img: screen(img), featureName: f.name })), caption: "" }
-    case "feature-story":
-      return { frames: [storyPhone({ metaItems: [f.name, "SANDER", "Gratis"], title: pick(f.titles, v + 1), img: screen(f.screen) })], caption: "" }
-    case "tonight":
-      return { frames: [storyPhone({ metaItems: ["Venerdì sera", "Crea partita"], title: pick(TONIGHT, w), img: screen("crea") })], caption: "" }
+    case "tutorial": {
+      // The three steps of a feature go out once; after that, a fresh title for it.
+      KEY = `Tutorial ${f.name}: ${f.tutorial[0][1]}`
+      if (used(KEY)) return renderSlot({ ...slot, kind: "feature-story" }, browser)
+      return { frames: f.tutorial.map(([img, heading, text], i) => G.storyStep({ n: i + 1, total: 3, heading, text, img: screen(img), featureName: f.name, photo: PHOTO })), caption: "" }
+    }
+    case "feature-story": {
+      const title = fresh(`titles.${slot.feature}`, f.titles, v + 1, FP.line)
+      KEY = `${f.name}: ${FP.line(title)}`
+      return { frames: [G.storyPhone({ metaItems: [f.name, "SANDER", "Gratis"], title, img: screen(f.screen), photo: PHOTO })], caption: "" }
+    }
+    case "tonight": {
+      const title = fresh("TONIGHT", TONIGHT, w, FP.line)
+      KEY = `Venerdì sera: ${FP.line(title)}`
+      return { frames: [G.storyPhone({ metaItems: ["Venerdì sera", "Crea partita"], title, img: screen("crea"), photo: PHOTO })], caption: "" }
+    }
     case "weekend-fipav": {
       const inApp = slot.fipavInApp !== false
       const img = inApp ? await liveShot(browser, "/tournaments/fipav", "fipav") : screen("scopri")
-      return { frames: [storyList({ metaItems: ["Calendario FIPAV", "Weekend"], title: ["Questo weekend", "si gioca"], rows: slot.events.slice(0, 4).map(fipavRow), img, note: inApp ? `${slot.total} tornei in Italia · tutti su SANDER` : `${slot.total} tornei in Italia · Fonte: FIPAV` })], caption: "" }
+      return { frames: [G.storyList({ photo: PHOTO, metaItems: ["Calendario FIPAV", "Weekend"], title: ["Questo weekend", "si gioca"], rows: varied(slot.events, 4).map(fipavRow), img, note: inApp ? `${slot.total} tornei in Italia · tutti su SANDER` : `${slot.total} tornei in Italia · Fonte: FIPAV` })], caption: "" }
     }
     case "weekend-sander":
-      return { frames: [storyList({ metaItems: ["Tornei SANDER", "Weekend"], title: ["Questo weekend", "si gioca"], rows: slot.tournaments.map(tourRow), img: await liveShot(browser, `/tournaments/${slot.tournaments[0].id}`, "torneo") })], caption: "" }
+      return { frames: [G.storyList({ photo: PHOTO, metaItems: ["Tornei SANDER", "Weekend"], title: ["Questo weekend", "si gioca"], rows: slot.tournaments.map(tourRow), img: await liveShot(browser, `/tournaments/${slot.tournaments[0].id}`, "torneo") })], caption: "" }
     case "weekend-matches":
-      return { frames: [storyList({ metaItems: ["Partite aperte", "Weekend"], title: ["Questo weekend", "si gioca"], rows: slot.matches.map(matchRow), img: screen("partite"), note: "Entra con un tap su SANDER" })], caption: "" }
+      return { frames: [G.storyList({ photo: PHOTO, metaItems: ["Partite aperte", "Weekend"], title: ["Questo weekend", "si gioca"], rows: slot.matches.map(matchRow), img: screen("partite"), note: "Entra con un tap su SANDER" })], caption: "" }
     case "countdown": {
       const t = slot.tournament
-      return { frames: [storyCountdown({ days: daysBetween(slot.from, t.date), name: t.name, sub: `${dayLabel(t.date)}${t.location ? ` · ${t.location}` : ""}`, img: await liveShot(browser, `/tournaments/${t.id}`, "torneo") })], caption: "" }
+      return { frames: [G.storyCountdown({ photo: PHOTO, days: daysBetween(slot.from, t.date), name: t.name, sub: `${dayLabel(t.date)}${t.location ? ` · ${t.location}` : ""}`, img: await liveShot(browser, `/tournaments/${t.id}`, "torneo") })], caption: "" }
     }
     case "countdown-fipav": {
       const e = slot.event
       const inApp = slot.fipavInApp !== false
-      return { frames: [storyCountdown({ days: daysBetween(slot.from, e.startDate), name: `${e.category} · ${e.city}`, sub: `${dayLabel(e.startDate.slice(0, 10))} · ${inApp ? "Calendario FIPAV su SANDER" : "Fonte: FIPAV"}`, source: "FIPAV", img: inApp ? await liveShot(browser, "/tournaments/fipav", "fipav") : screen("scopri") })], caption: "" }
+      return { frames: [G.storyCountdown({ photo: PHOTO, days: daysBetween(slot.from, e.startDate), name: `${e.category} · ${e.city}`, sub: `${dayLabel(e.startDate.slice(0, 10))} · ${inApp ? "Calendario FIPAV su SANDER" : "Fonte: FIPAV"}`, source: "FIPAV", img: inApp ? await liveShot(browser, "/tournaments/fipav", "fipav") : screen("scopri") })], caption: "" }
     }
     default:
       throw new Error(`unknown kind ${slot.kind}`)
@@ -343,8 +340,17 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const browser = await chromium.launch({ executablePath: process.env.CHROME || exe })
   const shot = await browser.newPage()
   const captions = {}
+  const skipped = []
   for (const slot of plan.slots) {
-    const { frames, caption: text } = await renderSlot(slot, browser)
+    KEY = ""
+    let out
+    try { out = await renderSlot(slot, browser) } catch (e) {
+      if (!(e instanceof NothingNew)) throw e
+      skipped.push({ id: slot.id, list: e.message })
+      console.error(`[render] ${slot.id} ${slot.kind}: niente di nuovo in ${e.message}, saltato`)
+      continue
+    }
+    const { frames, caption: text } = out
     const size = slot.type === "story" ? S : P
     await shot.setViewportSize({ width: size.w, height: size.h })
     const files = []
@@ -356,9 +362,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       await shot.screenshot({ path: join(outDir, file), type: "jpeg", quality: 90 })
       files.push(file)
     }
-    captions[slot.id] = { type: slot.type, date: slot.date, time: slot.time, kind: slot.kind, optional: slot.optional, files, text }
+    captions[slot.id] = { type: slot.type, date: slot.date, time: slot.time, kind: slot.kind, optional: slot.optional, files, text, key: KEY }
     console.error(`[render] ${slot.id} ${slot.kind}: ${files.length} file`)
   }
   writeFileSync(join(outDir, "captions.json"), JSON.stringify(captions, null, 2))
+  // Lists with nothing new left: the routine writes new variants in work/extra-content.json and renders again.
+  writeFileSync(join(outDir, "needs.json"), JSON.stringify({ lists: [...new Set(NEEDS)], skipped, noPhoto: [...new Set(NO_PHOTO)] }, null, 2))
   await browser.close()
 }

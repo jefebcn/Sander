@@ -10,7 +10,10 @@ Kit che legge i dati veri di SANDER, disegna post e storie con le schermate dell
 | `render.mjs` | sceglie il formato di ogni slot e scrive le didascalie; storie 1080×1920 |
 | `formats.mjs` | i formati dei post del 17/11/2026 (1080×1350): gancio, chat, gioco, notifiche, flag, carta, citazione, Frase da rete, FIPAV numero, più le slide app, lista e chiusura |
 | `content.mjs` | funzioni dell'app, titoli e didascalie a rotazione |
-| `publish.mjs` | Buffer: doppioni, coda max 10, controllo storie |
+| `publish.mjs` | Buffer: doppioni, orari passati, coda max 10, controllo storie |
+| `refill.sh` | controllo giornaliero: se Buffer ha almeno 4 posti liberi, dice quali finestre (A/B) riempire |
+| `history.mjs` | tutto quello che è già su Buffer (uscito o in coda), in `work/history.json` |
+| `fresh.mjs` | mai niente di uguale: sceglie solo varianti non ancora usate |
 | `fipav/` | lettore del calendario FIPAV (`fipav.mjs`, `cli.mjs`) e `feed.mjs`, che lo aggiunge ai dati del giro |
 | `screens/` | schermate vere dell'app (dati di prova, nessuna persona reale) |
 | `fonts/`, `assets/` | font di SANDER (Bricolage Grotesque, Figtree, Gochi Hand; Inter per le storie), icona dell'app, `assets/faces/` (facce di prova dell'app, mai persone vere) |
@@ -31,27 +34,34 @@ Kit che legge i dati veri di SANDER, disegna post e storie con le schermate dell
 Scelte di Alex (13/11/2026): tornei FIPAV di tutta Italia; solo calendario (niente podi, niente nomi); categorie Serie Beach, Campionato Italiano, Società; finché FIPAV è vuoto, al loro posto tornei SANDER o funzioni.
 
 ## Calendario (Europe/Rome)
+Orari fissi (Alex, 23/11/2026): **tutti i post alle 12:00, tutte le storie alle 12:30**.
+
 | Giorno | Tipo | Contenuto |
 |---|---|---|
-| Lun 18:30 | post | «Numerone» FIPAV del weekend (quanti tornei, città, «E tu sei ancora senza compagno?») → altrimenti prossimo torneo SANDER → altrimenti funzione |
-| Mar 19:00 | storia ×3 | tutorial di una funzione |
-| Mer 18:30 | post | funzione della settimana: copertina con la battuta (Scopri → green/red flag, Crea e Chat → chat del gruppo, Tornei e Storico → notifiche, Classifiche → carta), poi «Come funziona» e chiusura |
-| Gio 18:30 | post | **Frasi da rete**, appuntamento fisso: una frase numerata (n. 01 = 19/11/2026) da `FRASI` in `content.mjs`, poi chiusura su Scopri |
-| Gio 19:00 | storia | questo weekend si gioca (FIPAV → SANDER → partite aperte → funzione) |
-| Ven 13:00 | post | «Manca uno»: gancio su foto (settimane pari) o chat del gruppo (dispari) → soluzione (+ partite aperte del weekend) |
-| Ven 18:30 | storia | «Chi gioca stasera?» con la schermata di crea partita |
-| Sab 10:30 | storia | facoltativa: torneo del weekend o una funzione |
-| Dom 11:00 | post | seconda funzione (settimane pari) o un formato divertente a rotazione (dispari): citazione, «Che compagno di beach sei?», notifiche, carta, flag — mai lo stesso del mercoledì |
-| Dom 18:30 | storia | countdown al prossimo torneo (SANDER, se no FIPAV con la schermata SANDER) |
+| Lun 12:00 | post | «Numerone» FIPAV del weekend (quanti tornei, città, «E tu sei ancora senza compagno?») → altrimenti prossimo torneo SANDER → altrimenti funzione |
+| Mar 12:30 | storia ×3 | tutorial di una funzione |
+| Mer 12:00 | post | funzione della settimana: copertina con la battuta (Scopri → green/red flag, Crea e Chat → chat del gruppo, Tornei e Storico → notifiche, Classifiche → carta), poi «Come funziona» e chiusura |
+| Gio 12:00 | post | **Frasi da rete**, appuntamento fisso: una frase numerata (n. 01 = 19/11/2026) da `FRASI` in `content.mjs`, poi chiusura su Scopri |
+| Gio 12:30 | storia | questo weekend si gioca (FIPAV → SANDER → partite aperte → funzione) |
+| Ven 12:00 | post | «Manca uno»: poster lime (settimane pari) o chat del gruppo (dispari) → soluzione (+ partite aperte del weekend) |
+| Ven 12:30 | storia | «Chi gioca stasera?» con la schermata di crea partita |
+| Sab 12:30 | storia | facoltativa: torneo del weekend o una funzione |
+| Dom 12:00 | post | seconda funzione (settimane pari) o un formato divertente a rotazione (dispari): citazione, «Che compagno di beach sei?», notifiche, carta, flag — mai lo stesso del mercoledì |
+| Dom 12:30 | storia | countdown al prossimo torneo (SANDER, se no FIPAV con la schermata SANDER) |
 
 Mai più di un giorno senza post. Niente post «numeri della settimana». Titoli e didascalie ruotano di settimana in settimana.
 
-## Giro (due volte a settimana)
-- **Domenica sera** → `bash run.sh A` (lunedì–mercoledì della settimana dopo).
-- **Mercoledì sera** → `bash run.sh B` (giovedì–domenica di questa settimana).
+## Giro (ricarica automatica, ogni sera)
+Dal 22/11/2026 (scelta di Alex) il giro non ha più giorni fissi: ogni sera alle 21:13 `bash refill.sh` legge la coda Buffer.
+- Meno di 4 posti liberi → niente da fare, nessun messaggio.
+- Almeno 4 liberi → stampa le finestre da riempire (`A 2026-11-23` = lun–mer, `B 2026-11-23` = gio–dom, solo giorni entro 8 giorni). Per ognuna, in ordine, fai i passi 2–8 con `bash run.sh A|B <lunedì>`.
+
+**Glow-up (Alex, 23/11/2026):** `glow.mjs` ridisegna copertine, slide interne e storie con tre stili, ognuno con il suo compito: **Tabellone** (griglia scura, numero gigante lime: FIPAV, liste, conto alla rovescia, notifiche), **Poster lime** (parole nere giganti: «Manca uno», citazioni), **Telefono in campo** (sabbia al tramonto, telefono inclinato, note a mano: app, tutorial, storie), più la rubrica **Glossario da spiaggia** (`GLOSSARIO` in `content.mjs`, nella rotazione della domenica). **Sfondi AI (Alex, 26/11/2026):** ogni copertina di post e ogni storia (dal 26/11 sera: anche FIPAV, chat, Frase da rete, conto alla rovescia, tutorial, liste, glossario, notifiche) ha una foto nuova generata da `bgai.mjs` con Vercel AI Gateway (FLUX 3 per i post, GPT Image 2 per le storie, FLUX.2 Klein di riserva; circa 3–5 centesimi a foto, credito Gateway di Alex). Testo glow sopra una sfumatura scura in alto, scena in basso. Le scene sono in `SCENES` (una su quattro con la birra). La chiave è un network secret su `ai-gateway.vercel.sh` aggiunto dal proxy alle chiamate curl; se la generazione fallisce, lo slot esce con la grafica disegnata. Copertina chat = «bacheca» (Alex, 26/11/2026: niente schermo WhatsApp): foto come polaroid col nastro lime, messaggi su foglietti, l'ultimo barrato in rosso, timbro rosso, card della partita pinzata. Restano disegnate le slide interne e i format vecchi gioco, flag e carta. Scene in `SCENES` (24), una scena non torna prima di 12 foto (`work/scenes-used.json`). **Mai lo stesso sfondo**: ogni foto è generata nuova e salvata in `work/photos-new/<id-slot>.jpg`; per rifarne una basta cancellare quel file e rilanciare.
+
+**Mai niente di uguale.** `run.sh` legge prima lo storico Buffer (`history.mjs`); `render.mjs` usa solo varianti che non compaiono in nessuna didascalia uscita o in coda (le storie si riconoscono dal testo «🏐 …» che `publish.mjs` salva su Buffer). Se una lista non ha più niente di nuovo, lo slot non viene disegnato e `work/out/needs.json` dice quale lista. Allora scrivi varianti nuove in `work/extra-content.json` (stessa forma di `content.mjs`, per esempio `{ "GANCI": [ … ] }`, rispettando le Regole), rilancia `run.sh` e riporta le varianti nuove nel riepilogo, così Alex può aggiungerle a `content.mjs`. Mai riusare una variante.
 
 1. **Kit.** Scarica lo zip in una cartella vuota, poi `cd content-instagram`.
-2. **Dati.** `bash run.sh A` (o `B`). Se il feed non risponde, riprova una volta dopo 2 minuti. Se fallisce ancora, scrivilo nel riepilogo e fermati.
+2. **Dati.** `bash run.sh A|B <lunedì>`. Se il feed non risponde, riprova una volta dopo 2 minuti. Se fallisce ancora, scrivilo nel riepilogo e fermati.
 3. **Controllo grafiche.** Guarda TUTTE le immagini in `work/out` con Read:
    - testi non tagliati;
    - niente sovrapposizioni tra testo, telefono e pulsante;
@@ -77,7 +87,7 @@ Mai più di un giorno senza post. Niente post «numeri della settimana». Titoli
 - **Formati del 17/11/2026 (scelta di Alex):** ogni post deve far capire subito che si parla di beach volley (sabbia, rete, 2v2, bagno, diagonale, «SANDER · beach volley» in basso). Prima la battuta o la scena che tutti hanno vissuto, poi l'app. Titoli in Bricolage maiuscolo, la parola chiave a mano in lime (Gochi Hand), testo in Figtree. Il flirt è solo una sfumatura (Frasi da rete, flag, Scopri). Le varianti ruotano per settimana in `content.mjs` (`FRASI`, `GANCI`, `CHATS`, `CITAZIONI`, `GIOCHI`, `NOTIFICHE`, `FLAGS`, `CARTE`): quando finiscono, scrivine di nuove nello stesso tono.
 - **Frasi da rete:** ogni giovedì, mai saltata. Se le frasi in `FRASI` stanno per finire (26 settimane), aggiungine di nuove in fondo, senza riprendere battute già uscite.
 - **Didascalie:** in italiano, tono SANDER, mai chiedere di commentare. CTA solo «Link in bio», «Salvalo», «Swipe». Le storie non hanno testo.
-- **Contenuti:** sport prima di tutto, niente promesse di appuntamenti o amore, niente alcol. Persone a piedi nudi e senza loghi (vale anche per eventuali foto future).
+- **Contenuti:** sport prima di tutto, niente promesse di appuntamenti o amore; birra ok, ogni tanto anche protagonista ma non in ogni post (Alex, 26/11). Persone a piedi nudi e senza loghi (vale anche per eventuali foto future).
 - **FIPAV:** sempre «Fonte: FIPAV», mai nomi di atleti, mai tornei giovanili.
 - **Ripetizioni:** non ripetere titoli già usati sull'account (elenco in `scripts/content-storie/README.md`). Se aggiungi varianti, controlla lì.
 - **Chiave Buffer:** la aggiunge il proxy dell'ambiente. Non chiederla, non scriverla, non stamparla.

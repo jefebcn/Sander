@@ -17,6 +17,8 @@ if [ -n "${DATA:-}" ]; then cp "$DATA" work/data.json
 else curl -fsS --max-time 60 "$SITE/api/social/feed" -o work/data.json; fi
 # FIPAV calendar read here when the app has none yet (never fatal).
 [ "${NO_FIPAV:-}" = 1 ] || node fipav/feed.mjs work/data.json "$MONDAY" || true
+# What already went out on Buffer: render never repeats a variant (fresh.mjs). Fatal: without it, it could.
+[ "${NO_HISTORY:-}" = 1 ] || node history.mjs > work/history.json
 node plan.mjs work/data.json "$RUN" "$MONDAY" > work/plan.json
 SITE="$SITE" node render.mjs work/plan.json work/out
 echo "ok: $RUN $MONDAY → work/out ($(ls work/out/*.jpg | wc -l) immagini)"

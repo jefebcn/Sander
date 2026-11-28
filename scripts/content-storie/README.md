@@ -29,9 +29,9 @@ In `bg/`, generati con Higgsfield `soul_2`, 9:16, qualità 1.5k. Modello di prom
 
 Scarta e rigenera se ci sono scarpe o calzini, loghi o scritte sui vestiti, alcol, torso nudo o pose da modella, o se la persona è diversa tra due foto della stessa serie.
 
-## Regola: massimo due usi per foto
+## Regola: ogni foto una sola volta
 
-Vale per storie, post e caroselli, su Instagram e TikTok insieme. La stessa foto di sfondo si usa al massimo due volte, anche se il testo sopra cambia. Al terzo uso genera un nuovo stock (stesso stile) e rifai la grafica con la foto nuova. Prima di programmare su Buffer, controlla qui e aggiorna il registro.
+Dal 23/11/2026 (scelta di Alex): vale per storie, post e caroselli, su Instagram e TikTok insieme. Una foto di sfondo già uscita non si riusa mai, anche se il testo sopra cambia: serve una foto nuova (stesso stile) o una grafica senza foto. Tutte le foto qui sotto sono già usate. Prima di programmare su Buffer, controlla qui e aggiorna il registro.
 
 | Foto | Usi |
 |------|-----|

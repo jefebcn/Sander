@@ -69,6 +69,7 @@ const report = { created: [], skipped: [], manualStories: [], storiesAutoPublish
 let room = QUEUE_MAX - scheduled.length
 const todo = []
 for (const s of slots) {
+  if (Date.parse(romeToUtc(s.date, s.time)) < Date.now() + 30 * 60_000) { report.skipped.push({ id: s.id, reason: "orario già passato" }); continue }
   if (taken.has(`${s.date}|${s.type}`)) { report.skipped.push({ id: s.id, reason: `c'è già un ${s.type === "story" ? "storia" : "post"} quel giorno` }); continue }
   if (s.type === "story" && !storiesOk) { report.manualStories.push({ id: s.id, date: s.date, time: s.time, files: s.files.map((f) => urls[f]) }); continue }
   todo.push(s)
@@ -85,7 +86,8 @@ for (const s of todo) {
   if (missing.length) { report.skipped.push({ id: s.id, reason: `manca l'URL di ${missing.join(", ")}` }); continue }
   const input = {
     channelId: IG,
-    text: s.type === "story" ? "" : s.text,
+    // Stories: Instagram shows no text; Buffer keeps it, and history.mjs reads it back so a title never returns.
+    text: s.type === "story" ? (s.key ? `🏐 ${s.key}` : "") : s.text,
     schedulingType: "automatic",
     mode: "customScheduled",
     dueAt: romeToUtc(s.date, s.time),
